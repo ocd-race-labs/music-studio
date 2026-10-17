@@ -147,6 +147,7 @@ create table studio.songs (
   ppq                 integer       not null default 960,
   tempo_bpm           numeric(6, 2) not null default 90,
   tempo_map           jsonb         not null default '[]',        -- [{"tick": 0, "bpm": 90}]
+  swing               numeric(4, 3) not null default 0,           -- 0 straight, 0.75 max; applies to sixteenths
   time_sig_num        smallint      not null default 4,
   time_sig_den        smallint      not null default 4,
   key_tonic           text          not null default 'C',         -- ASCII spelling: C, Db, F#, Bbb
@@ -165,6 +166,7 @@ create table studio.songs (
   constraint songs_ppq_canonical check (ppq = 960),
   constraint songs_tempo         check (tempo_bpm between 20 and 400),
   constraint songs_tempo_map     check (jsonb_typeof(tempo_map) = 'array'),
+  constraint songs_swing         check (swing between 0 and 0.75),
   constraint songs_time_sig_num  check (time_sig_num between 1 and 32),
   constraint songs_time_sig_den  check (time_sig_den in (1, 2, 4, 8, 16, 32)),
   constraint songs_key_tonic     check (key_tonic ~ '^[A-G](bb|b|##|#)?$'),
@@ -270,6 +272,8 @@ create table studio.ideas (
   song_id                 uuid        not null references studio.songs (id) on delete cascade,
   section_id              uuid        references studio.sections (id) on delete set null,
   track_id                uuid        references studio.tracks (id) on delete set null,
+  target_instrument_key     text,                    -- the sound Claude had in mind; pinned like tracks
+  target_instrument_version text,
   kind                    text        not null,
   title                   text        not null,
   prompt                  text,                      -- what was asked, in the person's words
@@ -283,7 +287,10 @@ create table studio.ideas (
   decided_at              timestamptz,
   created_at              timestamptz not null default now(),
   updated_at              timestamptz not null default now(),
-  constraint ideas_kind     check (kind in ('clip', 'pattern', 'melody', 'patch', 'fx_chain', 'lyrics')),
+  constraint ideas_kind     check (kind in ('clip', 'pattern', 'melody', 'chords', 'patch', 'fx_chain', 'lyrics')),
+  constraint ideas_target_fk foreign key (target_instrument_key, target_instrument_version)
+    references catalog.items (key, version) on delete restrict,
+  constraint ideas_target_pair check ((target_instrument_key is null) = (target_instrument_version is null)),
   constraint ideas_status   check (status in ('proposed', 'accepted', 'dismissed', 'invalid')),
   constraint ideas_decided  check (status not in ('accepted', 'dismissed') or decided_at is not null),
   constraint ideas_payload  check (jsonb_typeof(payload) = 'object'),
@@ -310,7 +317,7 @@ create table studio.clips (
   updated_by              uuid        references studio.profiles (id) on delete set null,
   created_at              timestamptz not null default now(),
   updated_at              timestamptz not null default now(),
-  constraint clips_kind      check (kind in ('notes', 'pattern', 'audio')),
+  constraint clips_kind      check (kind in ('notes', 'pattern', 'chords', 'audio')),
   constraint clips_start     check (start_tick >= 0),
   constraint clips_length    check (length_ticks > 0),
   constraint clips_audio_ref check ((kind = 'audio') = (recording_id is not null)),
@@ -391,7 +398,9 @@ create or replace function studio.propose_idea(
   p_track_id       uuid default null,
   p_prompt         text default null,
   p_requested_by   uuid default null,
-  p_schema_version integer default 1
+  p_schema_version integer default 1,
+  p_target_instrument_key     text default null,
+  p_target_instrument_version text default null
 )
 returns uuid
 language plpgsql
@@ -422,10 +431,12 @@ begin
 
   insert into studio.ideas (
     account_id, song_id, section_id, track_id, kind, title, prompt,
-    payload, payload_schema_version, origin, requested_by
+    payload, payload_schema_version, origin, requested_by,
+    target_instrument_key, target_instrument_version
   ) values (
     v_account, p_song_id, p_section_id, p_track_id, p_kind, p_title, p_prompt,
-    p_payload, p_schema_version, 'claude', p_requested_by
+    p_payload, p_schema_version, 'claude', p_requested_by,
+    p_target_instrument_key, p_target_instrument_version
   )
   returning id into v_id;
 
@@ -433,7 +444,7 @@ begin
 end;
 $$;
 
-revoke execute on function studio.propose_idea(uuid, text, text, jsonb, uuid, uuid, text, uuid, integer) from public;
+revoke execute on function studio.propose_idea(uuid, text, text, jsonb, uuid, uuid, text, uuid, integer, text, text) from public;
 
 -- ---------------------------------------------------------------------------
 -- Security: family-only access through row level security
