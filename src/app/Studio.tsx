@@ -133,11 +133,12 @@ export default function Studio({ store, profile, onHome, onSettings }: {
       engine.stop();
       setPlaying(false);
     } else {
-      await engine.play();
+      const ok = await engine.play();
       setAudioReady(true);
       setPlaying(true);
+      if (!ok) showToast(t('soundBlocked', lang));
     }
-  }, []);
+  }, [lang, showToast]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -168,8 +169,10 @@ export default function Studio({ store, profile, onHome, onSettings }: {
   const low = track ? lows[track.id] ?? DEFAULT_LOW[track.instrument?.key ?? ''] ?? 60 : 60;
 
   const startAudio = async () => {
-    await engine.start();
+    const ok = await engine.start();
     setAudioReady(true);
+    if (ok) engine.previewClick();
+    else showToast(t('soundBlocked', lang));
   };
 
   /* ---------- live input */
@@ -320,6 +323,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
         <button type="button" className="btn rec" aria-pressed={rec} onClick={() => setRec((r) => !r)} title="When on, pads and keys write into the loop while it plays">
           <span className="dot" style={{ background: rec ? '#fff' : 'var(--highlight)' }} /> {t('record', lang)}
         </button>
+        <OutMeter />
         <button type="button" className={`play${playing ? ' on' : ''}`} onClick={togglePlay} aria-label={playing ? 'Stop' : 'Play'}>
           <Icon name={playing ? 'stop' : 'play'} size={22} />
         </button>
@@ -435,4 +439,26 @@ export default function Studio({ store, profile, onHome, onSettings }: {
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
+}
+
+/** A small level bar next to Play: if it moves and nothing is heard, the device volume or silent mode is the cause. */
+function OutMeter() {
+  const bar = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    let id = 0;
+    let peak = 0;
+    const tick = () => {
+      const v = engine.outputLevel();
+      peak = Math.max(peak * 0.97, v);
+      const el = bar.current;
+      if (el) {
+        el.style.transform = `scaleX(${v.toFixed(3)})`;
+        el.parentElement!.dataset.peak = peak.toFixed(2);
+      }
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return <span className="outmeter" title="Sound output" aria-hidden="true"><span ref={bar} /></span>;
 }

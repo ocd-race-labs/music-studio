@@ -127,6 +127,8 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .title-input:hover, .title-input:focus { background: var(--raised); }
 .play { width: 52px; height: 52px; border-radius: 999px; border: 0; background: var(--ink); color: var(--ground); display: inline-flex; align-items: center; justify-content: center; }
 .play.on { background: var(--main); color: var(--main-ink); }
+.outmeter { width: 40px; height: 6px; border-radius: 3px; background: var(--raised); border: 1px solid var(--line); overflow: hidden; display: inline-block; flex: none; }
+.outmeter > span { display: block; height: 100%; background: var(--main); transform-origin: left center; transform: scaleX(0); }
 .rec[aria-pressed='true'] { background: var(--highlight); color: #fff; border-color: var(--highlight); }
 .body { display: flex; flex-wrap: wrap; gap: 14px; padding: 14px 16px 18px; flex: 1 1 auto; align-items: flex-start; }
 .tracks { flex: 0 1 230px; min-width: 200px; display: flex; flex-direction: column; gap: 6px; }

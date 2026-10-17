@@ -44,6 +44,7 @@ const STRINGS = {
   saving: { en: 'Saving', es: 'Guardando' },
   close: { en: 'Close', es: 'Cerrar' },
   tapToStart: { en: 'Tap to start the sound', es: 'Toca para activar el sonido' },
+  soundBlocked: { en: 'No sound yet. Turn the volume up, turn off silent mode, then tap again.', es: 'Aún no hay sonido. Sube el volumen, quita el modo silencio y toca de nuevo.' },
   clear: { en: 'Clear', es: 'Quitar' },
   chords: { en: 'Chords', es: 'Acordes' },
   bar: { en: 'Bar', es: 'Compás' },
