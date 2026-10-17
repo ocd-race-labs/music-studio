@@ -52,7 +52,7 @@ export default function App() {
     ? profileFor(route.profileId)?.theme.preset ?? 'daylight'
     : 'daylight';
   useEffect(() => {
-    document.documentElement.dataset.theme = themed;
+    document.documentElement.dataset.studio = themed;
     const meta = document.querySelector('meta[name="theme-color"]');
     meta?.setAttribute('content', themed === 'graphite' ? '#0E0E0F' : themed === 'midnight-jewel' ? '#120F1F' : '#F3F4F6');
   }, [themed]);

@@ -1,6 +1,6 @@
 /* Themes: one set of tokens per profile. Colors carry meaning; level of detail never changes them. */
 :root,
-[data-theme='daylight'] {
+[data-studio='daylight'] {
   --ground: #f3f4f6;
   --panel: #ffffff;
   --raised: #e9ebef;
@@ -23,7 +23,7 @@
   color-scheme: light;
 }
 
-[data-theme='graphite'] {
+[data-studio='graphite'] {
   --ground: #0e0e0f;
   --panel: #161617;
   --raised: #1e1e20;
@@ -46,7 +46,7 @@
   color-scheme: dark;
 }
 
-[data-theme='midnight-jewel'] {
+[data-studio='midnight-jewel'] {
   --ground: #120f1f;
   --panel: #1a1630;
   --raised: #241e3f;
