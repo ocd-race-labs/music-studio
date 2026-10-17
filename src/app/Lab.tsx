@@ -25,9 +25,20 @@ export default function Lab({ store, onHome }: { store: SongStore; onHome: () =>
 
   useEffect(() => { requestPersistence().then(setStorage).catch(() => undefined); }, []);
 
+  const [check, setCheck] = useState<string | null>(null);
+
   const startAudio = async () => {
     await engine.start();
     setInfo(engine.latencyInfo());
+  };
+
+  const testTone = async () => {
+    setCheck('Playing A4 for one second…');
+    const r = await engine.testTone();
+    setInfo(engine.latencyInfo());
+    setCheck(r.peak > 0.05
+      ? `The app made sound (level ${Math.round(r.peak * 100)}%). If you heard nothing, check the device volume, silent mode and output.`
+      : `The app made no sound (audio ${r.state}). Tap the button again; if it repeats, tell Claude this line.`);
   };
 
   return (
@@ -43,12 +54,16 @@ export default function Lab({ store, onHome }: { store: SongStore; onHome: () =>
         <Section title="1. Device and audio timing">
           {!info ? <button type="button" className="btn primary" onClick={startAudio}><Icon name="play" /> Start audio</button> : (
             <table className="small" style={{ borderSpacing: '0 6px' }}><tbody>
+              <tr><td className="muted">Audio</td><td className="mono">{info.state}</td></tr>
+              <tr><td className="muted">Audio session</td><td className="mono">{info.session}</td></tr>
               <tr><td className="muted">Sample rate</td><td className="mono">{info.sampleRate} Hz</td></tr>
               <tr><td className="muted">Base latency</td><td className="mono">{info.baseLatencyMs?.toFixed(1) ?? 'not reported'} ms</td></tr>
               <tr><td className="muted">Output latency</td><td className="mono">{info.outputLatencyMs?.toFixed(1) ?? 'not reported'} ms</td></tr>
               <tr><td className="muted">Scheduling look-ahead</td><td className="mono">{info.lookAheadMs.toFixed(0)} ms</td></tr>
             </tbody></table>
           )}
+          {info && <button type="button" className="btn" onClick={testTone}><Icon name="play" size={18} /> Play test tone</button>}
+          {check && <p className="small" role="status" style={{ margin: 0 }}>{check}</p>}
           <p className="small" style={{ margin: 0 }}>
             Storage: {storage?.persisted ? <span className="ok">kept by the browser</span> : <span className="warn">may be cleared; add to Home Screen on the iPad</span>}
           </p>

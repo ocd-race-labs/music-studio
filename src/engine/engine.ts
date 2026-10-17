@@ -88,6 +88,26 @@ export class StudioEngine {
     for (const ev of ['pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, unlock, { capture: true, passive: true });
   }
 
+  /** One second of A4, for the Lab sound check. Resolves with the loudest output level seen. */
+  async testTone(): Promise<{ state: string; peak: number }> {
+    await this.start();
+    if (!this.master) return { state: Tone.getContext().state, peak: 0 };
+    const tone = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.2 }, volume: -6 });
+    tone.connect(this.master);
+    tone.triggerAttackRelease('A4', 1, Tone.now() + 0.05);
+    let peak = 0;
+    const started = performance.now();
+    await new Promise<void>((done) => {
+      const poll = () => {
+        peak = Math.max(peak, this.outputLevel());
+        if (performance.now() - started < 1300) setTimeout(poll, 30); else done();
+      };
+      poll();
+    });
+    setTimeout(() => tone.dispose(), 500);
+    return { state: Tone.getContext().state, peak };
+  }
+
   /** A short soft tick so a person knows the sound is on. */
   previewClick(): void {
     if (!this.master) return;
@@ -305,9 +325,11 @@ export class StudioEngine {
   }
 
   /** What the device reports about its audio timing, for the Phase 0 latency spike. */
-  latencyInfo(): { sampleRate: number; baseLatencyMs: number | null; outputLatencyMs: number | null; lookAheadMs: number } {
+  latencyInfo(): { state: string; session: string; sampleRate: number; baseLatencyMs: number | null; outputLatencyMs: number | null; lookAheadMs: number } {
     const raw = Tone.getContext().rawContext as AudioContext;
     return {
+      state: Tone.getContext().state,
+      session: (navigator as AudioSessionNav).audioSession?.type ?? 'not available',
       sampleRate: raw.sampleRate,
       baseLatencyMs: typeof raw.baseLatency === 'number' ? raw.baseLatency * 1000 : null,
       outputLatencyMs: typeof raw.outputLatency === 'number' ? raw.outputLatency * 1000 : null,
@@ -328,8 +350,8 @@ function unlockMediaSession(): void {
   const session = (navigator as AudioSessionNav).audioSession;
   if (session) {
     try { session.type = 'playback'; } catch { /* not allowed here */ }
-    return;
   }
+  // Belt and braces on iPhone and iPad: an <audio> element playing also switches the device to playback.
   if (!/iP(hone|ad|od)|Macintosh/.test(navigator.userAgent) || !('ontouchend' in document)) return;
   try {
     if (!silentAudio) {
