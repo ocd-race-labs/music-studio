@@ -6,7 +6,7 @@ import type {
   CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Track,
 } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
-import { loopBars, newId, now } from './factory';
+import { DEFAULT_SWING, defaultFxParams, loopBars, newId, now } from './factory';
 
 const touch = (song: Song, by: string | null): Song => ({ ...song, updated_at: now(), updated_by: by ?? song.updated_by });
 
@@ -183,6 +183,15 @@ export const setFxParam = (song: Song, trackId: string, slot: number, name: stri
     ...t,
     fx_chain: { ...t.fx_chain, slots: t.fx_chain.slots.map((s, i) => (i === slot ? { ...s, params: { ...s.params, [name]: value } } : s)) },
   }), by);
+
+/** Put a pedal's knobs back where a new track starts; on or off stays as it is. */
+export const resetFx = (song: Song, trackId: string, slot: number, by: string | null): Song =>
+  mapTrack(song, trackId, (t) => ({
+    ...t,
+    fx_chain: { ...t.fx_chain, slots: t.fx_chain.slots.map((s, i) => (i === slot ? { ...s, params: defaultFxParams(s.effect.key) } : s)) },
+  }), by);
+
+export const resetSwing = (song: Song, by: string | null): Song => setSwing(song, DEFAULT_SWING, by);
 
 /** Keep an idea: its content replaces the target track's clip content, stamped with the idea it came from. */
 export function keepIdea(song: Song, idea: Idea, trackId: string, by: string | null): Song {

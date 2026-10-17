@@ -9,9 +9,22 @@ import { findItem, title as catalogTitle } from '../packs/core';
 import { chordMidi, diatonicTriads } from '../theory';
 import type { SongStore } from '../store/store';
 import { ChordLane, DrumGrid, Keyboard, NoteGrid, Pads, songKey } from './editors';
+import { autoZoom, ZOOMS } from './zoom';
+import type { Zoom } from './zoom';
 import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panels';
 import { t } from './i18n';
-import { Avatar, downloadText, Icon, Modal, pickFile, slug, useToast } from './ui';
+import { Avatar, downloadText, Icon, Modal, pickFile, slug, useToast, useWidth } from './ui';
+
+/* Zoom is remembered per device: the iPhone, the iPad and the laptop each keep their own. */
+const ZOOM_KEY = 'music-studio.zoom';
+const readZoom = (): Zoom | null => {
+  try {
+    const z = localStorage.getItem(ZOOM_KEY);
+    return z && (ZOOMS as string[]).includes(z) ? (z as Zoom) : null;
+  } catch { return null; }
+};
+const isTouch = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+const ZOOM_LABEL = { fit: 'zoomFit', bar: 'zoomBar', half: 'zoomHalf' } as const;
 
 const DEFAULT_LOW: Record<string, number> = {
   'instrument.bass-808': 36,
@@ -57,6 +70,31 @@ export default function Studio({ store, profile, onHome, onSettings }: {
   const [versions, setVersions] = useState<SongVersion[]>([]);
   const [audioReady, setAudioReady] = useState(engine.started);
   const [toast, showToast] = useToast();
+  const [zoomPref, setZoomPref] = useState<Zoom | null>(readZoom);
+  const [editorRef, editorWidth] = useWidth<HTMLElement>();
+  const touch = useMemo(() => isTouch(), []);
+
+  // Full screen: the grid takes the whole width; the browser goes full screen too where it allows it.
+  const [wide, setWide] = useState(false);
+  const enteredFs = useRef(false);
+  useEffect(() => {
+    const onChange = () => {
+      if (!document.fullscreenElement && enteredFs.current) { enteredFs.current = false; setWide(false); }
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+  const toggleWide = () => {
+    const next = !wide;
+    setWide(next);
+    const root = document.documentElement;
+    if (next && typeof root.requestFullscreen === 'function' && !document.fullscreenElement) {
+      root.requestFullscreen().then(() => { enteredFs.current = true; }).catch(() => undefined);
+    } else if (!next && document.fullscreenElement) {
+      enteredFs.current = false;
+      document.exitFullscreen().catch(() => undefined);
+    }
+  };
 
   /* ---------- load the last song, or start one */
   useEffect(() => {
@@ -288,12 +326,17 @@ export default function Studio({ store, profile, onHome, onSettings }: {
   };
 
   const bars = song ? loopBars(song) : 2;
+  const zoom: Zoom = zoomPref ?? autoZoom(bars * 16, editorWidth, touch);
+  const pickZoom = (z: Zoom) => {
+    setZoomPref(z);
+    try { localStorage.setItem(ZOOM_KEY, z); } catch { /* this browser keeps nothing; the choice lasts the visit */ }
+  };
   const trackTitle = useMemo(() => (track?.instrument ? catalogTitle(track.instrument, lang) : ''), [track, lang]);
 
   if (!song || !track) return <div className="home"><p className="muted">Loading…</p></div>;
 
   return (
-    <div className="studio">
+    <div className={`studio${wide ? ' wide' : ''}`}>
       <header className="topbar">
         <button type="button" className="btn icon" onClick={onHome} aria-label="Home"><Icon name="home" /></button>
         <Avatar profile={profile} onClick={onSettings} label={t('settings', lang)} />
@@ -345,7 +388,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
           ))}
         </nav>
 
-        <main className="editor">
+        <main className="editor" ref={editorRef}>
           <div className="row wrap">
             <h2 className="display grow" style={{ fontSize: 22 }}>{track.name} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{trackTitle}</span></h2>
             {clipKind === 'notes' && (
@@ -353,17 +396,26 @@ export default function Studio({ store, profile, onHome, onSettings }: {
                 {LENGTHS.map((l) => <button key={l.steps} type="button" aria-pressed={noteLen === l.steps} onClick={() => setNoteLen(l.steps)}>{l.label}</button>)}
               </div>
             )}
+            {(clipKind === 'pattern' || clipKind === 'notes') && (
+              <div className="seg" aria-label={t('zoom', lang)}>
+                {ZOOMS.map((z) => <button key={z} type="button" aria-pressed={zoom === z} onClick={() => pickZoom(z)}>{t(ZOOM_LABEL[z], lang)}</button>)}
+              </div>
+            )}
+            <button type="button" className="btn icon" aria-pressed={wide} onClick={toggleWide}
+              aria-label={t(wide ? 'exitFullScreen' : 'fullScreen', lang)} title={t(wide ? 'exitFullScreen' : 'fullScreen', lang)}>
+              <Icon name={wide ? 'shrink' : 'expand'} />
+            </button>
           </div>
 
           {clipKind === 'pattern' && (
             <>
-              <DrumGrid track={track} step={step} lang={lang} onToggle={onToggleHit} onPreview={onPreviewDrum} />
+              <DrumGrid track={track} step={step} zoom={zoom} width={editorWidth} lang={lang} onToggle={onToggleHit} onPreview={onPreviewDrum} />
               <Pads track={track} lang={lang} onHit={padHit} />
             </>
           )}
           {clipKind === 'notes' && (
             <>
-              <NoteGrid song={song} track={track} low={low} step={step} focusBar={focusBar}
+              <NoteGrid song={song} track={track} low={low} step={step} zoom={zoom} width={editorWidth} focusBar={focusBar}
                 onToggle={onToggleNote} onPreview={onPreviewNote}
                 onShift={(d) => setLows((m) => ({ ...m, [track.id]: Math.min(96, Math.max(24, low + d)) }))} />
               <Keyboard song={song} low={low} focusBar={focusBar} onPlay={keyPlay} />
@@ -385,7 +437,9 @@ export default function Studio({ store, profile, onHome, onSettings }: {
               onKit={(r) => apply((x) => C.setInstrument(x, track.id, r, by))}
               onBypass={(slot, b) => apply((x) => C.setFxBypass(x, track.id, slot, b, by))}
               onParam={(slot, name, v) => apply((x) => C.setFxParam(x, track.id, slot, name, v, by))}
-              onSwing={(v) => apply((x) => C.setSwing(x, v, by))} />
+              onSwing={(v) => apply((x) => C.setSwing(x, v, by))}
+              onResetSwing={() => apply((x) => C.resetSwing(x, by))}
+              onResetFx={(slot) => apply((x) => C.resetFx(x, track.id, slot, by))} />
           ) : (
             <TheoryPanel song={song} lang={lang} focusBar={focusBar} onKey={(tonic, mode) => apply((x) => C.setKey(x, tonic, mode, by))} />
           )}

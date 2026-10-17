@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
-  keepIdea, setChord, setKey, setLoopBars, setTempo, toggleHit, toggleNote,
+  keepIdea, resetFx, resetSwing, setChord, setFxBypass, setFxParam, setKey, setLoopBars, setSwing, setTempo, toggleHit, toggleNote,
 } from './commands';
 import { loopSteps, newProfile, newSong } from './factory';
 import { exportSongFile, parseIdeasFile, parseSongFile, withFreshIds } from './files';
@@ -64,6 +64,20 @@ describe('commands', () => {
 
   it('keeps tempo in a playable range', () => {
     expect(setTempo(newSong(me.id), 999, me.id).tempo_bpm).toBe(200);
+  });
+
+  it('resets swing and a pedal to where a new song starts, leaving on or off alone', () => {
+    const fresh = newSong(me.id);
+    const drums = fresh.tracks[0].id;
+    let s = setSwing(fresh, 0.5, me.id);
+    s = setFxBypass(s, drums, 1, false, me.id);
+    s = setFxParam(s, drums, 1, 'feedback', 0.8, me.id);
+    s = setFxParam(s, drums, 2, 'size', 7, me.id);
+    s = resetSwing(resetFx(resetFx(s, drums, 1, me.id), drums, 2, me.id), me.id);
+    expect(s.swing).toBe(fresh.swing);
+    expect(s.tracks[0].fx_chain.slots[1].params).toEqual(fresh.tracks[0].fx_chain.slots[1].params);
+    expect(s.tracks[0].fx_chain.slots[2].params).toEqual(fresh.tracks[0].fx_chain.slots[2].params);
+    expect(s.tracks[0].fx_chain.slots[1].bypass).toBe(false);
   });
 });
 

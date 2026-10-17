@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import type { CSSProperties } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef } from 'react';
+import type { CSSProperties, RefObject } from 'react';
 import { title as catalogTitle } from '../packs/core';
 import { chordMidi, diatonicTriads, noteNameDisplay, spellInKey, tierOf } from '../theory';
 import type { Chord, Key, Tier } from '../theory';
@@ -7,13 +7,39 @@ import type { ChordsContent, Lang, NotesContent, PatternContent, Song, Track } f
 import { BAR_TICKS, STEP_TICKS } from '../domain/types';
 import { loopBars } from '../domain/factory';
 import { t } from './i18n';
+import { cellWidth, DRUM_LABEL, GAP, NOTE_LABEL, visibleSteps } from './zoom';
+import type { Zoom } from './zoom';
 
-const CELL = 30;
-const GAP = 3;
-const PITCH = CELL + GAP;
-const DRUM_LABEL = 78;
-const NOTE_LABEL = 64;
 const ROW_H = 30;
+
+/** Room after the last step so the last page can line up with the left edge, like the others. */
+const pageTail = (width: number, label: number, visible: number, total: number, cell: number) =>
+  visible < total ? Math.max(0, width - label - visible * (cell + GAP)) : 0;
+
+/**
+ * When zoomed in, turn the page as the playhead moves on, like a score.
+ * A new zoom keeps the same part of the loop in view, snapped to a page edge.
+ */
+function useFollow(el: RefObject<HTMLDivElement | null>, step: number, visible: number, total: number, pitch: number) {
+  const page = step >= 0 && visible < total ? Math.floor(step / visible) : -1;
+  const firstStep = useRef(0);
+  useEffect(() => {
+    const node = el.current;
+    if (!node) return;
+    const onScroll = () => { firstStep.current = Math.round(node.scrollLeft / pitch); };
+    node.addEventListener('scroll', onScroll, { passive: true });
+    return () => node.removeEventListener('scroll', onScroll);
+  }, [el, pitch]);
+  useLayoutEffect(() => {
+    const node = el.current;
+    if (!node) return;
+    const startPage = Math.floor(Math.min(firstStep.current, total - 1) / visible);
+    node.scrollLeft = startPage * visible * pitch;
+  }, [el, visible, pitch, total]);
+  useEffect(() => {
+    if (page >= 0 && el.current) el.current.scrollTo({ left: page * visible * pitch });
+  }, [el, page, visible, pitch]);
+}
 
 export const songKey = (song: Song): Key => ({ tonic: song.key_tonic, mode: song.key_mode });
 
@@ -24,10 +50,10 @@ export function chordAtBar(song: Song, bar: number): Chord | null {
   return ev ? diatonicTriads(songKey(song))[ev.degree] ?? null : null;
 }
 
-const Playhead = ({ step, offset, height }: { step: number; offset: number; height?: number }) =>
+const Playhead = ({ step, offset, cell, height }: { step: number; offset: number; cell: number; height?: number }) =>
   step < 0 ? null : (
     <div aria-hidden="true" style={{
-      position: 'absolute', top: 0, height: height ?? '100%', left: offset + step * PITCH, width: CELL,
+      position: 'absolute', top: 0, height: height ?? '100%', left: offset + step * (cell + GAP), width: cell,
       background: 'var(--playhead)', borderRadius: 6, pointerEvents: 'none', zIndex: 3,
       boxShadow: 'inset 0 0 0 2px var(--main)',
     }} />
@@ -35,14 +61,15 @@ const Playhead = ({ step, offset, height }: { step: number; offset: number; heig
 
 /* ---------------------------------------------------------------- drums */
 
-const DrumCells = memo(function DrumCells({ pattern, lang, onToggle, onPreview }: {
+const DrumCells = memo(function DrumCells({ pattern, cell, lang, onToggle, onPreview }: {
   pattern: PatternContent;
+  cell: number;
   lang: Lang;
   onToggle: (row: number, step: number) => void;
   onPreview: (soundKey: string) => void;
 }) {
   return (
-    <div className="grid" style={{ gridTemplateColumns: `${DRUM_LABEL - GAP}px repeat(${pattern.steps}, ${CELL}px)`, padding: 0 }}>
+    <div className="grid" style={{ gridTemplateColumns: `${DRUM_LABEL - GAP}px repeat(${pattern.steps}, ${cell}px)`, padding: 0 }}>
       {pattern.rows.map((row, r) => (
         <div key={row.sound.key} style={{ display: 'contents' }}>
           <button type="button" className="rowlabel" onPointerDown={() => onPreview(row.sound.key)}>
@@ -54,7 +81,7 @@ const DrumCells = memo(function DrumCells({ pattern, lang, onToggle, onPreview }
               <button
                 key={s}
                 type="button"
-                className={`cell${on ? ' on' : ''}${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}`}
+                className={`cell${on ? ' on' : ''}${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}`}
                 aria-label={`${catalogTitle(row.sound, lang)}, step ${s + 1}${on ? ', on' : ''}`}
                 aria-pressed={on}
                 onClick={() => onToggle(r, s)}
@@ -67,19 +94,25 @@ const DrumCells = memo(function DrumCells({ pattern, lang, onToggle, onPreview }
   );
 });
 
-export function DrumGrid({ track, step, lang, onToggle, onPreview }: {
+export function DrumGrid({ track, step, zoom, width, lang, onToggle, onPreview }: {
   track: Track;
   step: number;
+  zoom: Zoom;
+  width: number;
   lang: Lang;
   onToggle: (row: number, step: number) => void;
   onPreview: (soundKey: string) => void;
 }) {
   const pattern = track.clips[0].content as PatternContent;
+  const cell = cellWidth(zoom, pattern.steps, width, DRUM_LABEL);
+  const visible = visibleSteps(zoom, pattern.steps);
+  const scroller = useRef<HTMLDivElement>(null);
+  useFollow(scroller, step, visible, pattern.steps, cell + GAP);
   return (
-    <div className="scroll-x">
-      <div style={{ position: 'relative', width: DRUM_LABEL + pattern.steps * PITCH }}>
-        <DrumCells pattern={pattern} lang={lang} onToggle={onToggle} onPreview={onPreview} />
-        <Playhead step={step} offset={DRUM_LABEL} />
+    <div className="scroll-x" ref={scroller}>
+      <div style={{ position: 'relative', width: DRUM_LABEL + pattern.steps * (cell + GAP) + pageTail(width, DRUM_LABEL, visible, pattern.steps, cell) }}>
+        <DrumCells pattern={pattern} cell={cell} lang={lang} onToggle={onToggle} onPreview={onPreview} />
+        <Playhead step={step} offset={DRUM_LABEL} cell={cell} />
       </div>
     </div>
   );
@@ -89,16 +122,17 @@ export function DrumGrid({ track, step, lang, onToggle, onPreview }: {
 
 const tierClass = (tier: Tier) => tier;
 
-const NoteCells = memo(function NoteCells({ pitches, steps, keyName, focusChord, onToggle, onPreview }: {
+const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focusChord, onToggle, onPreview }: {
   pitches: number[];
   steps: number;
+  cell: number;
   keyName: Key;
   focusChord: Chord | null;
   onToggle: (midi: number, step: number) => void;
   onPreview: (midi: number) => void;
 }) {
   return (
-    <div className="grid" style={{ gridTemplateColumns: `${NOTE_LABEL - GAP}px repeat(${steps}, ${CELL}px)`, padding: 0 }}>
+    <div className="grid" style={{ gridTemplateColumns: `${NOTE_LABEL - GAP}px repeat(${steps}, ${cell}px)`, padding: 0 }}>
       {pitches.map((m) => {
         const tier = tierOf(m, keyName, focusChord);
         const name = noteNameDisplay(m, spellInKey(m, keyName));
@@ -111,7 +145,7 @@ const NoteCells = memo(function NoteCells({ pitches, steps, keyName, focusChord,
               <button
                 key={s}
                 type="button"
-                className={`ncell${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${tier === 'chord' ? ' chordrow' : tier === 'scale' ? ' inscale' : ''}`}
+                className={`ncell${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}${tier === 'chord' ? ' chordrow' : tier === 'scale' ? ' inscale' : ''}`}
                 aria-label={`${name}, step ${s + 1}`}
                 onClick={() => onToggle(m, s)}
               />
@@ -123,11 +157,13 @@ const NoteCells = memo(function NoteCells({ pitches, steps, keyName, focusChord,
   );
 });
 
-export function NoteGrid({ song, track, low, step, focusBar, onToggle, onPreview, onShift }: {
+export function NoteGrid({ song, track, low, step, zoom, width, focusBar, onToggle, onPreview, onShift }: {
   song: Song;
   track: Track;
   low: number;
   step: number;
+  zoom: Zoom;
+  width: number;
   focusBar: number;
   onToggle: (midi: number, step: number) => void;
   onPreview: (midi: number) => void;
@@ -141,15 +177,20 @@ export function NoteGrid({ song, track, low, step, focusBar, onToggle, onPreview
   const above = notes.filter((n) => n.midi > low + 23).length;
   const below = notes.filter((n) => n.midi < low).length;
   const focusChord = chordAtBar(song, focusBar);
+  const cell = cellWidth(zoom, steps, width, NOTE_LABEL);
+  const pitch = cell + GAP;
+  const visibleCount = visibleSteps(zoom, steps);
+  const scroller = useRef<HTMLDivElement>(null);
+  useFollow(scroller, step, visibleCount, steps, pitch);
   return (
     <div className="stack" style={{ gap: 6 }}>
       <div className="row small muted">
         <button type="button" className="btn ghost" onClick={() => onShift(12)} aria-label="Octave up">▲ Octave{above ? ` (${above} above)` : ''}</button>
         <button type="button" className="btn ghost" onClick={() => onShift(-12)} aria-label="Octave down">▼ Octave{below ? ` (${below} below)` : ''}</button>
       </div>
-      <div className="scroll-x" style={{ maxHeight: 520, overflowY: 'auto' }}>
-        <div style={{ position: 'relative', width: NOTE_LABEL + steps * PITCH }}>
-          <NoteCells pitches={pitches} steps={steps} keyName={key} focusChord={focusChord} onToggle={onToggle} onPreview={onPreview} />
+      <div className="scroll-x" ref={scroller} style={{ maxHeight: 520, overflowY: 'auto' }}>
+        <div style={{ position: 'relative', width: NOTE_LABEL + steps * pitch + pageTail(width, NOTE_LABEL, visibleCount, steps, cell) }}>
+          <NoteCells pitches={pitches} steps={steps} cell={cell} keyName={key} focusChord={focusChord} onToggle={onToggle} onPreview={onPreview} />
           {visible.map((n) => {
             const bar = Math.floor(n.tick / BAR_TICKS);
             const tier = tierOf(n.midi, key, chordAtBar(song, bar));
@@ -157,12 +198,12 @@ export function NoteGrid({ song, track, low, step, focusBar, onToggle, onPreview
               position: 'absolute',
               top: (low + 23 - n.midi) * (ROW_H + GAP) + 3,
               height: ROW_H - 6,
-              left: NOTE_LABEL + (n.tick / STEP_TICKS) * PITCH + 1,
-              width: (n.dur / STEP_TICKS) * PITCH - GAP - 2,
+              left: NOTE_LABEL + (n.tick / STEP_TICKS) * pitch + 1,
+              width: Math.max(4, (n.dur / STEP_TICKS) * pitch - GAP - 2),
             };
             return <div key={n.id} className={`note ${tier}`} style={style} title={n.spell} />;
           })}
-          <Playhead step={step} offset={NOTE_LABEL} height={24 * (ROW_H + GAP)} />
+          <Playhead step={step} offset={NOTE_LABEL} cell={cell} height={24 * (ROW_H + GAP)} />
         </div>
       </div>
     </div>

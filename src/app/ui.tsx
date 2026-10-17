@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Profile } from '../domain/types';
 
-type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow';
+type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink';
 
 const PATHS: Record<IconName, ReactNode> = {
   home: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /></>,
@@ -20,7 +20,26 @@ const PATHS: Record<IconName, ReactNode> = {
   mic: <><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3" /></>,
   flask: <><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" /></>,
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+  reset: <><path d="M4.5 13a7.5 7.5 0 1 0 2.2-6.3" /><path d="M4 4v4.5h4.5" /></>,
+  expand: <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />,
+  shrink: <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />,
 };
+
+/** Width of an element, kept current as the screen turns or panels open and close. */
+export function useWidth<T extends HTMLElement>(): [(el: T | null) => void, number] {
+  const [width, setWidth] = useState(0);
+  const observer = useRef<ResizeObserver | null>(null);
+  const ref = useCallback((el: T | null) => {
+    observer.current?.disconnect();
+    observer.current = null;
+    if (!el) return;
+    setWidth(Math.round(el.getBoundingClientRect().width));
+    if (typeof ResizeObserver === 'undefined') return;
+    observer.current = new ResizeObserver((entries) => setWidth(Math.round(entries[0].contentRect.width)));
+    observer.current.observe(el);
+  }, []);
+  return [ref, width];
+}
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return (

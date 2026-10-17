@@ -143,15 +143,27 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .editor { flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .side { flex: 1 1 280px; max-width: 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .scroll-x { overflow-x: auto; overscroll-behavior-x: contain; border-radius: 12px; }
+/* Bar lines: a stronger edge where each bar starts, so the loop reads like a score at any zoom. */
+/* Sticky row names also cover the gaps around them, so scrolled steps never peek through. */
+.grid .rowlabel, .grid .plabel { border-radius: 0; box-shadow: 0 3px 0 var(--ground), 3px 0 0 var(--ground), 3px 3px 0 var(--ground); }
+.cell.barline, .ncell.barline { box-shadow: -3px 0 0 -1px var(--ink-2); }
+.cell.barline.ph, .ncell.barline.ph { box-shadow: -3px 0 0 -1px var(--ink-2), inset 0 0 0 2px var(--main); }
+.btn.reset { width: 36px; min-height: 36px; height: 36px; color: var(--ink-2); }
+.btn.reset:disabled { opacity: 0.35; }
+/* Full screen: tracks become a strip on top, the side panel steps away, the grid gets the width. */
+.studio.wide .side { display: none; }
+.studio.wide .tracks { flex: 1 1 100%; flex-direction: row; overflow-x: auto; }
+.studio.wide .track-btn { min-width: 150px; }
+.studio.wide .editor { flex-basis: 100%; }
 
 /* Grids */
 .grid { display: grid; gap: 3px; padding: 2px; }
-.cell { min-width: 30px; height: 38px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
+.cell { min-width: 0; height: 38px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
 .cell.beat { background: var(--raised); }
 .cell.on { background: var(--cell-on); border-color: var(--cell-on); }
 .cell.ph { box-shadow: inset 0 0 0 2px var(--main); }
 .rowlabel { position: sticky; left: 0; z-index: 2; background: var(--ground); min-width: 74px; height: 38px; border: 0; border-radius: 6px; text-align: left; padding: 0 8px; font-size: 12px; font-weight: 600; }
-.ncell { min-width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); padding: 0; position: relative; }
+.ncell { min-width: 0; height: 30px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); padding: 0; position: relative; }
 .ncell.beat { background: var(--raised); }
 .ncell.inscale { border-color: color-mix(in srgb, var(--tier-scale) 35%, var(--line)); }
 .ncell.chordrow { border-color: color-mix(in srgb, var(--tier-chord) 50%, var(--line)); }

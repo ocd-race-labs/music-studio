@@ -48,6 +48,13 @@ const STRINGS = {
   clear: { en: 'Clear', es: 'Quitar' },
   chords: { en: 'Chords', es: 'Acordes' },
   bar: { en: 'Bar', es: 'Compás' },
+  zoom: { en: 'Zoom', es: 'Zoom' },
+  zoomFit: { en: 'Whole loop', es: 'Todo' },
+  zoomBar: { en: '1 bar', es: '1 compás' },
+  zoomHalf: { en: '½ bar', es: '½ compás' },
+  fullScreen: { en: 'Full screen', es: 'Pantalla completa' },
+  exitFullScreen: { en: 'Exit full screen', es: 'Salir de pantalla completa' },
+  reset: { en: 'Reset', es: 'Restablecer' },
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

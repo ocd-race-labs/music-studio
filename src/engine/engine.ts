@@ -257,6 +257,7 @@ export class StudioEngine {
     transport.stop();
     if (this.repeatId !== null) transport.clear(this.repeatId);
     this.repeatId = null;
+    Tone.getDraw().cancel(0); // drop playhead moves already queued, or the playhead lingers after Stop
     this.stepListeners.forEach((fn) => fn(-1));
   }
 

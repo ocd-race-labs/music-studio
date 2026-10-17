@@ -29,17 +29,22 @@ export function newProfile(name: string, preset: ThemePreset, ring: string): Pro
   };
 }
 
+/** Swing a new song starts with; the reset button returns here. */
+export const DEFAULT_SWING = 0.1;
+
+/** The settings a pedal starts with on a new track; the reset button returns here. */
+export function defaultFxParams(key: string): Record<string, number> {
+  return Object.fromEntries(effectParams(ref(key)).map((p) => [p.name, key === 'effect.reverb' && p.name === 'mix' ? 0.12 : p.default]));
+}
+
 export function defaultFxChain(): FxChain {
   return {
     routing: 'series',
-    slots: ['effect.drive', 'effect.delay', 'effect.reverb'].map((key) => {
-      const r = ref(key);
-      return {
-        effect: r,
-        bypass: key !== 'effect.reverb',
-        params: Object.fromEntries(effectParams(r).map((p) => [p.name, key === 'effect.reverb' && p.name === 'mix' ? 0.12 : p.default])),
-      };
-    }),
+    slots: ['effect.drive', 'effect.delay', 'effect.reverb'].map((key) => ({
+      effect: ref(key),
+      bypass: key !== 'effect.reverb',
+      params: defaultFxParams(key),
+    })),
   };
 }
 
@@ -116,7 +121,7 @@ export function newSong(ownerProfileId: string, title = 'Untitled', bars = 2): S
     ppq: 960,
     tempo_bpm: 90,
     tempo_map: [{ tick: 0, bpm: 90 }],
-    swing: 0.1,
+    swing: DEFAULT_SWING,
     time_sig_num: 4,
     time_sig_den: 4,
     key_tonic: 'C',

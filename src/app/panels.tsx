@@ -1,6 +1,7 @@
 import { effectParams, INSTRUMENTS, title as catalogTitle } from '../packs/core';
 import { diatonicTriads, SCALES, scaleSpellings, spellingToDisplay, TONICS } from '../theory';
 import type { CatalogRef, Idea, Lang, Song, Track } from '../domain/types';
+import { DEFAULT_SWING, defaultFxParams } from '../domain/factory';
 import { t } from './i18n';
 import { Icon } from './ui';
 import { chordAtBar, songKey, TierLegend } from './editors';
@@ -9,7 +10,19 @@ const tonicLabel = (tonic: string) => tonic.replace('b', 'â™­').replace('#', 'â™
 
 /* ---------------------------------------------------------------- producer: mix and pedals */
 
-export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, onBypass, onParam, onSwing }: {
+/** Back to where a new song starts. Disabled while the values are already there. */
+function ResetButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className="btn icon ghost reset" aria-label={label} title={label} disabled={disabled} onClick={onClick}>
+      <Icon name="reset" size={18} />
+    </button>
+  );
+}
+
+const sameParams = (a: Record<string, number>, b: Record<string, number>) =>
+  Object.keys(b).every((k) => Math.abs((a[k] ?? b[k]) - b[k]) < 1e-6);
+
+export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, onBypass, onParam, onSwing, onResetSwing, onResetFx }: {
   song: Song;
   track: Track;
   lang: Lang;
@@ -20,6 +33,8 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
   onBypass: (slot: number, bypass: boolean) => void;
   onParam: (slot: number, name: string, value: number) => void;
   onSwing: (v: number) => void;
+  onResetSwing: () => void;
+  onResetFx: (slot: number) => void;
 }) {
   const kits = INSTRUMENTS.filter((i) => (i.manifest as { type?: string }).type === 'drumkit');
   return (
@@ -46,16 +61,23 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
               ))}
             </div>
           </div>
-          <label className="stack" style={{ gap: 4 }}>
-            <span className="lbl">{t('swing', lang)} <span className="mono">{Math.round(song.swing * 100)}%</span></span>
-            <input type="range" min={0} max={0.75} step={0.01} value={song.swing} onChange={(e) => onSwing(Number(e.target.value))} />
-          </label>
+          <div className="stack" style={{ gap: 4 }}>
+            <div className="row">
+              <label className="lbl grow" htmlFor="swing">{t('swing', lang)} <span className="mono">{Math.round(song.swing * 100)}%</span></label>
+              <ResetButton label={`${t('reset', lang)} ${t('swing', lang)}`} disabled={song.swing === DEFAULT_SWING} onClick={onResetSwing} />
+            </div>
+            <input id="swing" type="range" min={0} max={0.75} step={0.01} value={song.swing} onChange={(e) => onSwing(Number(e.target.value))} />
+          </div>
         </>
       )}
       {track.fx_chain.slots.map((slot, i) => (
         <div key={slot.effect.key} className="stack" style={{ gap: 6, padding: 12, borderRadius: 12, background: 'var(--raised)', opacity: slot.bypass ? 0.75 : 1 }}>
           <div className="row">
             <strong className="grow">{catalogTitle(slot.effect, lang)}</strong>
+            {!slot.bypass && (
+              <ResetButton label={`${t('reset', lang)} ${catalogTitle(slot.effect, lang)}`}
+                disabled={sameParams(slot.params, defaultFxParams(slot.effect.key))} onClick={() => onResetFx(i)} />
+            )}
             <button type="button" className="chip" aria-pressed={!slot.bypass} onClick={() => onBypass(i, !slot.bypass)}>
               {slot.bypass ? 'Off' : 'On'}
             </button>
