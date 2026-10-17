@@ -56,7 +56,14 @@ export class StudioEngine {
   /** Synchronous part of start: unlock audio inside the tap and build the graph. */
   private ensure(): Promise<void> {
     unlockMediaSession();
+    if (!this.started) {
+      // iPhone and iPad: a context created inside the tap starts reliably; the one Tone made at page load may stay suspended.
+      try {
+        Tone.setContext(new Tone.Context({ latencyHint: 'interactive', lookAhead: 0.05 }), true);
+      } catch { /* keep the existing context */ }
+    }
     const resumed = Tone.start().catch(() => undefined);
+    kickWebKit();
     this.bindUnlock();
     if (!this.started) {
       Tone.getContext().lookAhead = 0.05;
@@ -83,6 +90,7 @@ export class StudioEngine {
       if (Tone.getContext().state !== 'running') {
         unlockMediaSession();
         Tone.getContext().resume().catch(() => undefined);
+        kickWebKit();
       }
     };
     for (const ev of ['pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, unlock, { capture: true, passive: true });
@@ -377,4 +385,15 @@ function silentWavDataUri(): string {
   let bin = '';
   bytes.forEach((b) => { bin += String.fromCharCode(b); });
   return `data:audio/wav;base64,${btoa(bin)}`;
+}
+
+/** The old iPhone unlock: play one silent sample inside the tap. */
+function kickWebKit(): void {
+  try {
+    const raw = Tone.getContext().rawContext as unknown as AudioContext;
+    const src = raw.createBufferSource();
+    src.buffer = raw.createBuffer(1, 1, raw.sampleRate);
+    src.connect(raw.destination);
+    src.start(0);
+  } catch { /* best effort */ }
 }

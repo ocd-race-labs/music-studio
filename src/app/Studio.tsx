@@ -172,7 +172,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
     const ok = await engine.start();
     setAudioReady(true);
     if (ok) engine.previewClick();
-    else showToast(t('soundBlocked', lang));
+    else showToast(`${t('soundBlocked', lang)} (${engine.latencyInfo().state})`);
   };
 
   /* ---------- live input */
