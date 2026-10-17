@@ -2,6 +2,8 @@
 
 A family web app to make music: a Musician hat (notes, keys, chords, scale colors) and a Producer hat (beats, sounds, mix, pedals). It runs in the browser on a tablet or a laptop. No account, no server; songs stay on the device.
 
+**Open it:** https://ocd-race-labs.github.io/music-studio/ (on the iPad: Safari, Share, Add to Home Screen, so Safari keeps your songs).
+
 ## What v1 has
 
 - 2 drum kits, synthesized in the browser: boom bap and trap (kick, snare, clap, closed hat, open hat, rim, tom, crash)
