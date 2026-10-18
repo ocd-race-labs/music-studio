@@ -21,8 +21,7 @@ import Desk, { ChannelInspector } from './Desk';
 import type { DeskView } from './Desk';
 import * as MX from '../domain/mix';
 import SoundStudio from './SoundStudio';
-import type { DesignRequest } from './SoundStudio';
-import { rackOf } from './rack';
+import type { Slot } from './sounddraft';
 import BeatAssistant from './BeatAssistant';
 import Hub from './Hub';
 import IdeaStage from './IdeaStage';
@@ -143,7 +142,11 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const [ideaPlace, setIdeaPlace] = useState<Place | null>(null);
   const [ideaWrite, setIdeaWrite] = useState<{ blockId?: string } | null>(null);
   // A signal chain open in the sound studio's designer, possibly for one track of the song (the producer's version).
-  const [design, setDesign] = useState<DesignRequest | null>(null);
+  // The studio's version being made, kept per device: the musician's sound or the producer's.
+  const [soundSlot, setSoundSlotState] = useState<Slot>(() => { try { return localStorage.getItem('music-studio.sound-slot') === 'producer' ? 'producer' : 'musician'; } catch { return 'musician'; } });
+  const setSoundSlot = useCallback((s: Slot) => { setSoundSlotState(s); try { localStorage.setItem('music-studio.sound-slot', s); } catch { /* per-device convenience only */ } }, []);
+  // In the studio, the song plays with the sound being tried on its track.
+  const [audition, setAudition] = useState<Song | null>(null);
   useEffect(() => { store.listSounds(profile.id).then(setSounds).catch(() => setSounds([])); }, [store, profile.id]);
   useEffect(() => { store.listSongs(profile.id).then(setSongList).catch(() => undefined); }, [store, profile.id, room]);
   // Each room keeps its own tools: leaving the musician closes its mixer and stops recording taps.
@@ -212,9 +215,9 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const ideaSong = useMemo(() => (song?.sketch?.order.length ? SK.renderIdea(song, lang) : null), [song, lang]);
   const playIdea = room === 'musician' && !!ideaSong && (stage === 'idea' || hear === 'idea');
   useEffect(() => {
-    const target = playIdea ? ideaSong : song;
+    const target = room === 'sounds' && audition ? audition : playIdea ? ideaSong : song;
     if (target) engine.setSong(target);
-  }, [song, ideaSong, playIdea]);
+  }, [song, ideaSong, playIdea, room, audition]);
   useEffect(() => {
     if (!song) return;
     setSaveState('saving');
@@ -282,8 +285,8 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       if (!ok) showToast(t('soundBlocked', lang));
     }
   }, [lang, showToast]);
-  // A room that does not play the song (the sound studio, the hub) stops it on the way in.
-  useEffect(() => { if ((room === 'sounds' || room === 'hub') && engine.playing) { engine.stop(); setPlaying(false); } }, [room]);
+  // The hub does not play the song: it stops on the way in. The studio keeps it playing, to try sounds in it.
+  useEffect(() => { if (room === 'hub' && engine.playing) { engine.stop(); setPlaying(false); } }, [room]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -829,13 +832,8 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
           <span className="small muted">{t('musicianSound', lang)}: <strong>{soundName(track.instrument, track.sound, lang) || '—'}</strong></span>
           <span className="small muted">{t('producerSound', lang)}: <strong>{track.producer ? soundName(track.producer.instrument, track.producer.sound, lang) : t('noProducerSound', lang)}</strong></span>
           <div className="row wrap" style={{ gap: 6 }}>
-            <button type="button" className="btn small-btn primary" disabled={!track.instrument} onClick={() => {
-              const useP = !!track.producer && track.voice_from === 'producer';
-              const inst = (useP ? track.producer!.instrument : track.instrument) ?? track.instrument!;
-              const snd = useP ? track.producer!.sound : track.sound;
-              setDesign({ base: inst.key, from: inst.key, start: snd ? structuredClone(snd.chain) : rackOf(inst.key), target: { trackId: track.id, trackName: track.name, as: 'producer' } });
-              onRoom('sounds');
-            }}><Icon name="sliders" size={16} /> {t(track.producer ? 'refineProducer' : 'makeProducer', lang)}</button>
+            <button type="button" className="btn small-btn primary" disabled={!track.instrument} onClick={() => { setSoundSlot('producer'); onRoom('sounds'); }}
+              title={t('makeProducerHint', lang)}><Icon name="sliders" size={16} /> {t(track.producer ? 'refineProducer' : 'makeProducer', lang)}</button>
             {track.producer && <button type="button" className="btn small-btn ghost" onClick={() => apply((x) => C.clearProducerSound(x, track.id, by))}>{t('dropProducer', lang)}</button>}
           </div>
         </section>
@@ -870,8 +868,11 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     if (room === 'sounds') {
       return (
         <div className="body room-sounds">
-          <SoundStudio song={song} selectedId={track.id} starred={starred} sounds={sounds} profileId={profile.id} lang={lang}
-            design={design} onDesign={setDesign} onBeat={() => setModal('beat')}
+          <SoundStudio song={song} selectedId={track.id} slot={soundSlot} playing={playing} alone={alone} starred={starred} sounds={sounds} profileId={profile.id} lang={lang}
+            onSelect={setSelected} onSlot={setSoundSlot} onPlay={togglePlay} onAlone={() => setAlone((a) => !a)} onAudition={setAudition}
+            onBeat={() => setModal('beat')} onDesk={() => onRoom('producer')}
+            onVoice={(id, from) => apply((x) => C.setVoiceFrom(x, id, from, by))}
+            onDropProducer={(id) => apply((x) => C.clearProducerSound(x, id, by))}
             onUse={(trackId, key) => {
               const ref = { key, version: '1.0.0' };
               apply((x) => C.setInstrument(x, trackId, ref, by));
@@ -885,10 +886,10 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
               const tr = song.tracks.find((x) => x.id === trackId);
               showToast(t('collectionUsed', lang, { name: sound.name, track: tr?.name ?? '' }));
             }}
-            onProducerSound={(trackId, sound) => {
-              apply((x) => C.setProducerSound(x, trackId, { instrument: sound.base, sound: { id: sound.id, name: sound.name, chain: structuredClone(sound.chain) } }, by));
+            onProducerSound={(trackId, variant) => {
+              apply((x) => C.setProducerSound(x, trackId, variant, by));
               const tr = song.tracks.find((x) => x.id === trackId);
-              showToast(t('producerSoundSet', lang, { name: sound.name, track: tr?.name ?? '' }));
+              showToast(t('producerSoundSet', lang, { name: variant.sound?.name ?? soundName(variant.instrument, undefined, lang), track: tr?.name ?? '' }));
             }}
             onSaveSound={async (sound) => {
               await store.saveSound(sound);
