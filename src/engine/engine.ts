@@ -17,6 +17,54 @@ import { SAMPLED_KITS, SAMPLERS } from '../packs/collection';
 import type { ChainSpec, Groove, Phrase } from '../packs/collection';
 import { createPedal } from './pedals';
 import type { Pedal } from './pedals';
+import { compSettings, consoleOf, driveCurve, echoSeconds, glueSettings, mixOf, qFor, ROOM_SECONDS, stripOf } from '../domain/mix';
+
+/** The desk channel after a track's sound: gain, low cut, compressor, EQ, warmth, and the sends. */
+interface StripNodes {
+  trim: Tone.Gain;
+  hpf: Tone.Filter;
+  comp: Tone.Compressor;
+  compTrim: Tone.Gain;
+  eq: Tone.Filter[];
+  bumps: Tone.Filter[];
+  shaper: Tone.WaveShaper;
+  driveSig: string;
+  /** The compressor is in the path only while it works: off, it adds no look-ahead delay to live playing. */
+  compOn: boolean;
+  room: Tone.Gain;
+  echo: Tone.Gain;
+}
+
+function createStrip(): StripNodes {
+  const trim = new Tone.Gain(1);
+  const hpf = new Tone.Filter({ type: 'highpass', frequency: 5, rolloff: -24 });
+  const comp = new Tone.Compressor({ threshold: 0, ratio: 1, attack: 0.01, release: 0.3, knee: 6 });
+  const compTrim = new Tone.Gain(1);
+  const eq = [
+    new Tone.Filter({ type: 'lowshelf', frequency: 100, gain: 0 }),
+    new Tone.Filter({ type: 'peaking', frequency: 400, gain: 0, Q: 0.9 }),
+    new Tone.Filter({ type: 'peaking', frequency: 2500, gain: 0, Q: 0.9 }),
+    new Tone.Filter({ type: 'highshelf', frequency: 10000, gain: 0 }),
+  ];
+  const bumps = [new Tone.Filter({ type: 'peaking', frequency: 200, gain: 0, Q: 1 }), new Tone.Filter({ type: 'peaking', frequency: 5000, gain: 0, Q: 1 })];
+  const shaper = new Tone.WaveShaper(driveCurve('clean', 0), 2048);
+  shaper.oversample = 'none';
+  trim.chain(hpf, compTrim, ...eq, ...bumps, shaper);
+  comp.connect(compTrim);
+  return { trim, hpf, comp, compTrim, eq, bumps, shaper, driveSig: 'clean:0', compOn: false, room: new Tone.Gain(0), echo: new Tone.Gain(0) };
+}
+const disposeStrip = (x: StripNodes) => [x.trim, x.hpf, x.comp, x.compTrim, ...x.eq, ...x.bumps, x.shaper, x.room, x.echo].forEach((n) => n.dispose());
+
+/** A soft ceiling after the limiter: flat until 0.98, then a gentle knee, so nothing ever clips hard. */
+function softClipCurve(size = 2048): Float32Array<ArrayBuffer> {
+  const c = new Float32Array(new ArrayBuffer(size * 4));
+  for (let i = 0; i < size; i++) {
+    const x = (i / (size - 1)) * 2 - 1;
+    const a = Math.abs(x);
+    c[i] = a <= 0.98 ? x : Math.sign(x) * (0.98 + 0.02 * Math.tanh((a - 0.98) / 0.02));
+  }
+  return c;
+}
 
 interface TrackChannel {
   instrumentKey: string;
@@ -26,6 +74,7 @@ interface TrackChannel {
   /** The pedal chain, in the song's order; rebuilt when pedals are added, removed or moved. */
   pedals: { key: string; pedal: Pedal | null }[];
   chainSig: string;
+  strip: StripNodes;
   channel: Tone.Channel;
   meter: Tone.Meter;
 }
@@ -40,6 +89,24 @@ export class StudioEngine {
   private channels = new Map<string, TrackChannel>();
   private master: Tone.Limiter | null = null;
   private meter: Tone.Meter | null = null;
+  /** The master bus: every channel and return goes here, then glue, tone, the limiter and a soft ceiling. */
+  private bus: Tone.Gain | null = null;
+  private glue: Tone.Compressor | null = null;
+  private glueOn = false;
+  private glueTrim: Tone.Gain | null = null;
+  private body: Tone.Filter | null = null;
+  private air: Tone.Filter | null = null;
+  private limiterTrim: Tone.Gain | null = null;
+  private roomIn: Tone.Gain | null = null;
+  private reverb: Tone.Reverb | null = null;
+  private roomOut: Tone.Gain | null = null;
+  private roomDecay = 0;
+  private echoIn: Tone.Gain | null = null;
+  private delay: Tone.FeedbackDelay | null = null;
+  private echoOut: Tone.Gain | null = null;
+  private analyser: Tone.Analyser | null = null;
+  private lufsFrames: { t: number; ms: number }[] = [];
+  private lufsAll: { sum: number; n: number } = { sum: 0, n: 0 };
   /** When set, only this track sounds: a listening aid, never saved in the song. */
   private focusId: string | null = null;
   private unlockBound = false;
@@ -77,8 +144,34 @@ export class StudioEngine {
       Tone.getContext().lookAhead = 0.05;
       this.meter = new Tone.Meter({ smoothing: 0.5 });
       this.master = new Tone.Limiter(-1);
-      this.master.connect(this.meter);
-      this.master.toDestination();
+      // The limiter's own makeup pushes peaks past its ceiling; this trim takes it back, a soft knee catches the rest.
+      this.limiterTrim = new Tone.Gain(Tone.dbToGain(-0.57));
+      const clip = new Tone.WaveShaper(softClipCurve(), 2048);
+      this.master.chain(this.limiterTrim, clip);
+      clip.connect(this.meter);
+      clip.toDestination();
+      // Loudness as people hear it: K-weighting (a high shelf and a low cut), then the level over time.
+      this.analyser = new Tone.Analyser({ type: 'waveform', size: 2048 });
+      const kShelf = new Tone.Filter({ type: 'highshelf', frequency: 1682, gain: 4 });
+      const kCut = new Tone.Filter({ type: 'highpass', frequency: 38, Q: 0.5 });
+      clip.chain(kShelf, kCut, this.analyser);
+      this.bus = new Tone.Gain(1);
+      this.glue = new Tone.Compressor({ threshold: 0, ratio: 1, attack: 0.03, release: 0.3, knee: 0 });
+      this.glueTrim = new Tone.Gain(1);
+      this.body = new Tone.Filter({ type: 'lowshelf', frequency: 100, gain: 0 });
+      this.air = new Tone.Filter({ type: 'highshelf', frequency: 10000, gain: 0 });
+      this.bus.connect(this.glueTrim);
+      this.glue.chain(this.glueTrim, this.body, this.air, this.master);
+      // Shared returns: a room and an echo, each kept out of the lows and the very top so they never muddy the mix.
+      this.roomIn = new Tone.Gain(1);
+      this.reverb = new Tone.Reverb({ decay: 1.8, preDelay: 0.02, wet: 1 });
+      this.roomDecay = 1.8;
+      this.roomOut = new Tone.Gain(0.8);
+      this.roomIn.chain(this.reverb, new Tone.Filter({ type: 'highpass', frequency: 150 }), new Tone.Filter({ type: 'lowpass', frequency: 8000 }), this.roomOut, this.bus);
+      this.echoIn = new Tone.Gain(1);
+      this.delay = new Tone.FeedbackDelay({ delayTime: 0.5, feedback: 0.3, wet: 1, maxDelay: 4 });
+      this.echoOut = new Tone.Gain(0.7);
+      this.echoIn.chain(this.delay, new Tone.Filter({ type: 'lowpass', frequency: 4500 }), new Tone.Filter({ type: 'highpass', frequency: 150 }), this.echoOut, this.bus);
       this.started = true;
       if (this.song) this.sync(this.song);
     }
@@ -167,6 +260,7 @@ export class StudioEngine {
     transport.bpm.value = song.tempo_bpm;
     transport.swing = song.swing;
     transport.swingSubdivision = '16n';
+    this.applyMaster(song);
 
     const seen = new Set<string>();
     for (const t of song.tracks) {
@@ -191,14 +285,77 @@ export class StudioEngine {
     }
   }
 
+  /** The song's desk: glue, master tone, ceiling and the shared room and echo. */
+  private applyMaster(song: Song): void {
+    if (!this.glue || !this.glueTrim || !this.body || !this.air || !this.master || !this.limiterTrim) return;
+    const m = mixOf(song);
+    const g = glueSettings(m.glue_model, m.glue);
+    // Like the channel compressor, the glue is in the path only while it works.
+    if ((g.ratio > 1) !== this.glueOn && this.bus) {
+      this.glueOn = g.ratio > 1;
+      this.bus.disconnect();
+      this.bus.connect(this.glueOn ? this.glue : this.glueTrim);
+    }
+    this.glue.threshold.value = g.threshold;
+    this.glue.ratio.value = g.ratio;
+    this.glue.attack.value = g.attack;
+    this.glue.release.value = g.release;
+    this.glue.knee.value = g.knee;
+    this.glueTrim.gain.rampTo(Tone.dbToGain(g.trimDb), 0.05);
+    this.body.gain.linearRampTo(m.body_db, 0.05);
+    this.air.gain.linearRampTo(m.air_db, 0.05);
+    this.master.threshold.value = m.ceiling_db;
+    this.limiterTrim.gain.value = Tone.dbToGain(-0.6 * Math.abs(m.ceiling_db) * (1 - 1 / 20));
+    const decay = ROOM_SECONDS[m.room_kind];
+    if (this.reverb && decay !== this.roomDecay) { this.roomDecay = decay; this.reverb.decay = decay; }
+    this.roomOut?.gain.rampTo(m.room_level, 0.05);
+    if (this.delay) {
+      this.delay.delayTime.rampTo(echoSeconds(m.echo_time, song.tempo_bpm), 0.05);
+      this.delay.feedback.rampTo(m.echo_feedback, 0.05);
+    }
+    this.echoOut?.gain.rampTo(m.echo_level, 0.05);
+  }
+
+  /** How loud the song sounds (LUFS, K-weighted): the last 0.4 s, the last 3 s, and everything since Play. */
+  loudness(): { momentary: number; short: number; integrated: number } {
+    const none = { momentary: -Infinity, short: -Infinity, integrated: -Infinity };
+    if (!this.analyser) return none;
+    const data = this.analyser.getValue() as Float32Array;
+    let ms = 0;
+    for (let i = 0; i < data.length; i++) ms += data[i] * data[i];
+    ms /= data.length;
+    const t = performance.now();
+    this.lufsFrames.push({ t, ms });
+    while (this.lufsFrames.length && t - this.lufsFrames[0].t > 3000) this.lufsFrames.shift();
+    const avg = (span: number) => {
+      const f = this.lufsFrames.filter((x) => t - x.t <= span);
+      return f.length ? f.reduce((a, b) => a + b.ms, 0) / f.length : 0;
+    };
+    // Two equal channels downmixed to one: add back the 3 dB of the second channel.
+    const lufs = (v: number) => (v > 1e-10 ? -0.691 + 10 * Math.log10(2 * v) : -Infinity);
+    const momentary = lufs(avg(400));
+    if (this.playing && momentary > -70) { this.lufsAll.sum += avg(400); this.lufsAll.n++; }
+    return { momentary, short: lufs(avg(3000)), integrated: this.lufsAll.n ? lufs(this.lufsAll.sum / this.lufsAll.n) : -Infinity };
+  }
+
+  /** Gain reduction in dB of one channel's compressor, and of the master's glue. */
+  trackReduction(trackId: string): number { return this.channels.get(trackId)?.strip.comp.reduction ?? 0; }
+  glueReduction(): number { return this.glue?.reduction ?? 0; }
+
   private createChannel(t: Track): TrackChannel {
     const item = t.instrument ? findItem(t.instrument) : undefined;
     const voice = buildVoice(item?.manifest, !t.sound);
     const channel = new Tone.Channel({ volume: 0, pan: 0 });
     const meter = new Tone.Meter({ smoothing: 0.6 });
-    channel.connect(this.master!);
+    const strip = createStrip();
+    strip.shaper.connect(channel);
+    channel.connect(this.bus!);
     channel.connect(meter);
-    const ch: TrackChannel = { instrumentKey: t.instrument?.key ?? '', voiceKey: voiceKey(t), voice, pedals: [], chainSig: '', channel, meter };
+    channel.connect(strip.room);
+    channel.connect(strip.echo);
+    strip.room.connect(this.roomIn!);
+    strip.echo.connect(this.echoIn!);
+    const ch: TrackChannel = { instrumentKey: t.instrument?.key ?? '', voiceKey: voiceKey(t), voice, pedals: [], chainSig: '', strip, channel, meter };
     this.buildChain(ch, t);
     return ch;
   }
@@ -214,7 +371,7 @@ export class StudioEngine {
     ch.pedals = slots.map((slot) => ({ key: slot.effect.key, pedal: createPedal(slot.effect.key) }));
     let prev: Tone.ToneAudioNode = ch.voice.output;
     for (const { pedal } of ch.pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
-    prev.connect(ch.channel);
+    prev.connect(ch.strip.trim);
     ch.chainSig = chainSig(t);
   }
 
@@ -226,11 +383,51 @@ export class StudioEngine {
     ch.channel.solo = focus ? false : t.solo;
     if (ch.chainSig !== chainSig(t)) this.buildChain(ch, t);
     [...(t.sound?.chain.slots ?? []), ...t.fx_chain.slots].forEach((slot, i) => ch.pedals[i]?.pedal?.set(slot.params, slot.bypass));
+    this.applyStrip(ch, t);
+  }
+
+  /** The desk channel, read from the track and shaped by the song's console. */
+  private applyStrip(ch: TrackChannel, t: Track): void {
+    const s = stripOf(t);
+    const c = consoleOf(mixOf(this.song ?? ({} as Song)).console);
+    const x = ch.strip;
+    x.trim.gain.rampTo(Tone.dbToGain(s.trim_db), 0.05);
+    x.hpf.frequency.rampTo(s.hpf_hz > 0 ? s.hpf_hz : 5, 0.05);
+    const k = compSettings(c, s.comp);
+    if ((k.ratio > 1) !== x.compOn) {
+      x.compOn = k.ratio > 1;
+      x.hpf.disconnect();
+      x.hpf.connect(x.compOn ? x.comp : x.compTrim);
+    }
+    x.comp.threshold.value = k.threshold;
+    x.comp.ratio.value = k.ratio;
+    x.comp.attack.value = k.attack;
+    x.comp.release.value = k.release;
+    x.comp.knee.value = k.knee;
+    x.compTrim.gain.rampTo(Tone.dbToGain(k.trimDb), 0.05);
+    const [low, lmid, hmid, high] = x.eq;
+    low.frequency.rampTo(s.low_hz, 0.05); low.gain.linearRampTo(s.low_db, 0.05);
+    lmid.frequency.rampTo(s.lmid_hz, 0.05); lmid.gain.linearRampTo(c.bands.lmid.hidden ? 0 : s.lmid_db, 0.05); lmid.Q.value = qFor(c, s.lmid_db);
+    hmid.frequency.rampTo(s.hmid_hz, 0.05); hmid.gain.linearRampTo(s.hmid_db, 0.05); hmid.Q.value = qFor(c, s.hmid_db);
+    high.frequency.rampTo(s.high_hz, 0.05); high.gain.linearRampTo(s.high_db, 0.05);
+    // Classic shelves dip a little before they rise (and the reverse): a small opposite bump next to each.
+    x.bumps[0].frequency.value = Math.min(2000, s.low_hz * 2); x.bumps[0].gain.linearRampTo(c.shelfBump ? -s.low_db / 6 : 0, 0.05);
+    x.bumps[1].frequency.value = Math.max(500, s.high_hz / 2); x.bumps[1].gain.linearRampTo(c.shelfBump ? -s.high_db / 6 : 0, 0.05);
+    const sig = `${c.drive}:${s.drive.toFixed(3)}`;
+    if (sig !== x.driveSig) {
+      x.shaper.curve = driveCurve(c.drive, s.drive);
+      // Oversampling only matters while the curve bends; flat, the channel passes untouched.
+      x.shaper.oversample = s.drive > 0 ? '2x' : 'none';
+      x.driveSig = sig;
+    }
+    x.room.gain.rampTo(s.send_room, 0.05);
+    x.echo.gain.rampTo(s.send_echo, 0.05);
   }
 
   private disposeChannel(ch: TrackChannel): void {
     ch.voice.dispose();
     ch.pedals.forEach(({ pedal }) => pedal?.dispose());
+    disposeStrip(ch.strip);
     ch.channel.dispose();
     ch.meter.dispose();
   }
@@ -267,6 +464,7 @@ export class StudioEngine {
     const transport = Tone.getTransport();
     if (this.repeatId !== null) transport.clear(this.repeatId);
     this.nextStep = fromStep;
+    this.lufsAll = { sum: 0, n: 0 };
     // Count sixteenths ourselves: swing moves the off-beats in time, so deriving the step from time is fragile.
     let counter = 0;
     this.repeatId = transport.scheduleRepeat((time) => {

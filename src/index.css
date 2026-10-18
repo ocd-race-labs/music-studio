@@ -866,3 +866,66 @@ input.field.num { width: 64px; text-align: center; }
 .tpl-strip { display: flex; gap: 2px; width: 100%; height: 14px; }
 .tpl-strip span { flex-basis: 0; border-radius: 3px; }
 .idea-writes { margin: 0; padding-left: 18px; }
+
+/* ---------------------------------------------------------------- knobs */
+.knob { display: inline-flex; flex-direction: column; align-items: center; gap: 0; min-width: 52px; user-select: none; -webkit-user-select: none; touch-action: none; cursor: ns-resize; border-radius: 10px; padding: 2px 0; }
+.knob:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.knob.off { opacity: 0.45; cursor: default; }
+.knob svg { display: block; }
+.knob-track { fill: none; stroke: var(--line); stroke-width: 3.5; stroke-linecap: round; }
+.knob-value { fill: none; stroke: var(--trk, var(--main)); stroke-width: 3.5; stroke-linecap: round; }
+.knob-cap { fill: var(--raised); stroke: var(--line); stroke-width: 1; }
+.knob-line { stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; }
+.knob-label { font-size: 10.5px; font-weight: 700; color: var(--ink-2); line-height: 1.1; text-align: center; max-width: 68px; }
+.knob-num { font-size: 10.5px; color: var(--ink); line-height: 1.2; white-space: nowrap; }
+.knob.fixed { cursor: default; justify-content: center; min-height: 72px; }
+.knob-fixed { font-size: 12px; padding: 6px 8px; border-radius: 8px; background: var(--raised); margin-bottom: 4px; }
+
+/* ---------------------------------------------------------------- the desk */
+.desk { display: flex; flex-direction: column; gap: 8px; flex: none; }
+/* Simple view fills the room's height and the faders take what is left, so a whole channel is in view. */
+.room-producer .board-wrap { flex: 1 1 auto; }
+.desk.v-simple { flex: 1 1 auto; min-height: 430px; }
+.desk.v-simple .desk-row { flex: 1 1 auto; }
+.desk.v-simple .strip-fader { flex: 1 1 auto; height: auto; min-height: 100px; max-height: 260px; }
+.desk-head { gap: 10px; flex-wrap: nowrap; }
+.desk-blurb { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dstrip-foot { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; }
+.dstrip-foot .mono { min-width: 34px; text-align: right; }
+.desk-row { display: flex; gap: 10px; align-items: stretch; min-height: 0; }
+.desk-strips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; flex: 1 1 auto; min-width: 0; }
+.dstrip { flex: none; width: 128px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); box-shadow: inset 0 4px 0 var(--trk, var(--line)); }
+.dstrip.on { border-color: var(--main); background: var(--raised); }
+.dstrip.master { width: 150px; background: var(--raised); box-shadow: inset 0 4px 0 var(--ink-2); flex: none; }
+.dstrip-name { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; min-height: 42px; border: 0; background: transparent; color: var(--ink); padding: 4px 2px 0; text-align: center; }
+.dstrip-name strong, .dstrip-name .small { max-width: 100%; }
+.tag.prod { background: var(--highlight); color: var(--highlight-ink); font-size: 10px; padding: 1px 7px; }
+.dstrip-sec { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; width: 100%; padding-top: 6px; border-top: 1px solid var(--line); }
+.dstrip-sec.col { flex-direction: column; align-items: center; gap: 6px; }
+.dstrip-sec .small-field { width: 100%; min-height: 34px; font-size: 12px; padding: 0 6px; }
+.dstrip .strip-fader, .dstrip.master .strip-fader { display: flex; justify-content: center; align-items: stretch; gap: 8px; height: 150px; }
+.gr { width: 6px; border-radius: 3px; background: var(--raised); border: 1px solid var(--line); overflow: hidden; display: flex; align-items: flex-start; }
+.gr > span { display: block; width: 100%; height: 100%; background: var(--highlight); transform-origin: top center; transform: scaleY(0); }
+.lufs { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.lufs-num { font-size: 20px; }
+.lufs-num[data-hot='true'] { color: var(--highlight); }
+@media (max-width: 720px) { .desk-head { flex-wrap: wrap; } .desk-blurb { flex-basis: 100%; white-space: normal; } .desk.v-simple { min-height: 0; } .desk.v-simple .strip-fader { flex: none; height: 150px; } .desk-row { flex-direction: column; } .dstrip.master { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; } .desk-console select { min-width: 0; } }
+
+/* ---------------------------------------------------------------- the channel inspector */
+.inspector { gap: 10px; }
+.eq-graph { width: 100%; height: auto; border-radius: 10px; background: var(--ground); border: 1px solid var(--line); touch-action: none; --b-low: #f97316; --b-lmid: #2dd4bf; --b-hmid: #a78bfa; --b-high: #38bdf8; }
+.inspector { --b-low: #f97316; --b-lmid: #2dd4bf; --b-hmid: #a78bfa; --b-high: #38bdf8; }
+.eq-grid { stroke: var(--line); stroke-width: 1; }
+.eq-grid.zero { stroke: var(--ink-2); stroke-dasharray: 3 3; }
+.eq-fill { fill: color-mix(in srgb, var(--main) 16%, transparent); }
+.eq-line { fill: none; stroke: var(--main); stroke-width: 2.2; }
+.eq-dot { stroke: var(--panel); stroke-width: 2; cursor: grab; }
+.eq-dot.b-low { fill: var(--b-low); } .eq-dot.b-lmid { fill: var(--b-lmid); } .eq-dot.b-hmid { fill: var(--b-hmid); } .eq-dot.b-high { fill: var(--b-high); }
+.eq-text { font-size: 9px; fill: var(--ink-2); font-family: 'DM Mono', ui-monospace, monospace; }
+.insp-bands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.insp-band { display: flex; align-items: center; justify-content: center; gap: 2px; padding: 4px; border-radius: 10px; background: var(--raised); position: relative; }
+.insp-dot { position: absolute; top: 6px; left: 6px; width: 8px; height: 8px; border-radius: 50%; }
+.insp-row { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 4px; }
+.insp-help { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; color: var(--ink-2); }
+.insp-help dt { font-weight: 700; color: var(--ink); }
+.insp-help dd { margin: 0; }

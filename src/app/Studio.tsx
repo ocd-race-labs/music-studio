@@ -17,7 +17,9 @@ import { ChordLane, DrumGrid, Keyboard, NoteGrid, Pads, songKey } from './editor
 import { autoZoom, ZOOMS } from './zoom';
 import type { Zoom } from './zoom';
 import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panels';
-import MixerBoard from './MixerBoard';
+import Desk, { ChannelInspector } from './Desk';
+import type { DeskView } from './Desk';
+import * as MX from '../domain/mix';
 import SoundStudio from './SoundStudio';
 import type { DesignRequest } from './SoundStudio';
 import { rackOf } from './rack';
@@ -51,6 +53,11 @@ const readLen = (): number => {
     const n = Number(localStorage.getItem(LEN_KEY));
     return [1, 2, 4, 8, 16].includes(n) ? n : 1;
   } catch { return 1; }
+};
+/* The desk view (simple or full) is remembered per device. */
+const DESK_KEY = 'music-studio.desk-view';
+const readDeskView = (fallback: DeskView): DeskView => {
+  try { const v = localStorage.getItem(DESK_KEY); return v === 'simple' || v === 'full' ? v : fallback; } catch { return fallback; }
 };
 const isTouch = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 const ZOOM_LABEL = { fit: 'zoomFit', two: 'zoomTwo', bar: 'zoomBar', half: 'zoomHalf' } as const;
@@ -121,6 +128,8 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const touch = useMemo(() => isTouch(), []);
   // The side panel (key and ideas, or the channel) slides in on narrow screens and sits beside the work on wide ones.
   const [sideOpen, setSideOpen] = useState(false);
+  const [deskView, setDeskViewState] = useState<DeskView>(() => readDeskView(profile.producer_level === 'starter' ? 'simple' : 'full'));
+  const setDeskView = (v: DeskView) => { setDeskViewState(v); try { localStorage.setItem(DESK_KEY, v); } catch { /* lasts this visit */ } };
 
   // Listen to the selected track alone. Not saved in the song: mute and solo stay as they were.
   const [alone, setAlone] = useState(false);
@@ -230,23 +239,32 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     setSong(next);
     setHist({ past: past.current.length, future: future.current.length });
   }, []);
-  const apply = useCallback((fn: (s: Song) => Song) => {
+  // Turning one knob or fader is one step to undo, however many small moves it took.
+  const lastGroup = useRef<{ key: string; at: number } | null>(null);
+  const apply = useCallback((fn: (s: Song) => Song, group?: string) => {
     const prev = songRef.current;
     if (!prev) return;
     const next = fn(prev);
     if (next === prev) return;
-    past.current.push(prev);
-    if (past.current.length > 100) past.current.shift();
+    const at = performance.now();
+    const same = !!group && lastGroup.current?.key === group && at - lastGroup.current.at < 1500;
+    if (!same) {
+      past.current.push(prev);
+      if (past.current.length > 100) past.current.shift();
+    }
+    lastGroup.current = group ? { key: group, at } : null;
     future.current = [];
     commit(next);
   }, [commit]);
   const undo = useCallback(() => {
+    lastGroup.current = null;
     const prev = past.current.pop();
     if (!prev || !songRef.current) return;
     future.current.push(songRef.current);
     commit(prev);
   }, [commit]);
   const redo = useCallback(() => {
+    lastGroup.current = null;
     const next = future.current.pop();
     if (!next || !songRef.current) return;
     past.current.push(songRef.current);
@@ -606,12 +624,16 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       barsOnScreen={focused ? Math.round(view.length / 16) : onScreenBars} focusId={focusId} cursorBar={cursorBar}
       marking={marking} sel={sel} onBarTap={onBarTap} onScrub={scrub} />
   );
-  const mixer = (
-    <MixerBoard song={song} selected={track.id} lang={lang} onSelect={setSelected}
-      onGain={(id, g) => apply((x) => C.setGain(x, id, g, by))}
-      onPan={(id, v) => apply((x) => C.setPan(x, id, v, by))}
+  const desk = (producer: boolean) => (
+    <Desk song={song} selected={track.id} lang={lang} view={producer ? deskView : 'simple'} showConsole={producer} onSelect={setSelected}
+      onStrip={(id, patch) => apply((x) => MX.setStrip(x, id, patch, by), `strip:${id}:${Object.keys(patch).join()}`)}
+      onGain={(id, g) => apply((x) => C.setGain(x, id, g, by), `gain:${id}`)}
+      onPan={(id, v) => apply((x) => C.setPan(x, id, v, by), `pan:${id}`)}
       onMute={(id) => apply((x) => C.toggleMute(x, id, by))}
-      onSolo={(id) => apply((x) => C.toggleSolo(x, id, by))} />
+      onSolo={(id) => apply((x) => C.toggleSolo(x, id, by))}
+      onMix={(patch) => apply((x) => MX.setMix(x, patch, by), `mix:${Object.keys(patch).join()}`)}
+      onConsole={(model) => apply((x) => MX.setConsole(x, model, by))}
+      onView={setDeskView} />
   );
   const aloneBtn = (
     <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
@@ -719,7 +741,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
             <h2 className="display grow" style={{ fontSize: 20 }}>{t('mixerBoard', lang)} <span className="muted small ui-font">{t('mixerBoardHint', lang)}</span></h2>
             <button type="button" className="btn" onClick={() => setBoard(false)}><Icon name="back" size={18} /> {t('backToEditor', lang)}</button>
           </div>
-          {mixer}
+          {desk(false)}
         </section>
       ) : (<>
         <div className="inst-head">
@@ -785,13 +807,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     <main className="work" ref={editorRef}>
       {transport(aloneBtn)}
       <section className="stack board-wrap" aria-label={t('console', lang)}>
-        <div className="row wrap">
-          <h2 className="display grow" style={{ fontSize: 20 }}>{t('console', lang)} <span className="muted small ui-font">{t('consoleHint', lang)}</span></h2>
-          <button type="button" className="btn small-btn collection-btn" onClick={() => onRoom('sounds')} title={t('collectionOpen', lang)}>
-            <Icon name="amp" size={16} /> {t('roomSounds', lang)}
-          </button>
-        </div>
-        {mixer}
+        {desk(true)}
       </section>
       <div className="songmap">
         {structure}
@@ -824,9 +840,14 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
           </div>
         </section>
       )}
+      {room === 'producer' && (
+        <ChannelInspector song={song} track={track} lang={lang}
+          onStrip={(patch) => apply((x) => MX.setStrip(x, track.id, patch, by), `strip:${track.id}:${Object.keys(patch).join()}`)}
+          onReset={() => apply((x) => MX.resetStrip(x, track.id, by))} />
+      )}
       {room === 'producer' ? (
         <MixerPanel song={song} track={track} lang={lang}
-          onGain={(g) => apply((x) => C.setGain(x, track.id, g, by))}
+          onGain={(g) => apply((x) => C.setGain(x, track.id, g, by), `gain:${track.id}`)}
           onMute={() => apply((x) => C.toggleMute(x, track.id, by))}
           onSolo={() => apply((x) => C.toggleSolo(x, track.id, by))}
           onKit={(r) => apply((x) => C.setInstrument(x, track.id, r, by))}

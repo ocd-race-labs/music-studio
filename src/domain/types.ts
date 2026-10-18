@@ -162,6 +162,49 @@ export interface TrackVariant {
   updated_at: string;
 }
 
+/** The six desk characters a song can be mixed on; names describe a style and an era, never a brand. */
+export type ConsoleModel = 'clean' | 'british' | 'inductor' | 'american' | 'modern' | 'compact';
+
+/**
+ * One channel of the producer's desk, after the track's sound: input gain, low cut, compressor, four-band EQ,
+ * warmth (saturation), and sends to the shared room and echo. Part of the mix, saved with the song.
+ */
+export interface ChannelStrip {
+  trim_db: number;
+  /** Low cut frequency in Hz; 0 is off. */
+  hpf_hz: number;
+  low_db: number; low_hz: number;
+  lmid_db: number; lmid_hz: number;
+  hmid_db: number; hmid_hz: number;
+  high_db: number; high_hz: number;
+  /** One-knob compressor, 0 to 1. */
+  comp: number;
+  /** Warmth: how hard the desk's own circuit is pushed, 0 to 1. */
+  drive: number;
+  /** Post-fader sends to the shared returns, 0 to 1. */
+  send_room: number;
+  send_echo: number;
+}
+
+/** The desk of a song: its character, the shared room and echo, and the master bus. */
+export interface MixSettings {
+  console: ConsoleModel;
+  /** Bus compressor that glues the whole song, 0 to 1, and its style. */
+  glue: number;
+  glue_model: 'british' | 'diode' | 'american';
+  /** Master tone: body (lows) and air (highs), in dB. */
+  body_db: number;
+  air_db: number;
+  /** The limiter's ceiling in dB below full scale. */
+  ceiling_db: number;
+  room_kind: 'room' | 'plate' | 'hall';
+  room_level: number;
+  echo_time: '1/8' | '1/4' | '3/8' | '1/2';
+  echo_feedback: number;
+  echo_level: number;
+  schema_version: 1;
+}
+
 export interface Track {
   id: string;
   position: number;
@@ -175,6 +218,8 @@ export interface Track {
   producer?: TrackVariant;
   /** Which sound plays: the musician's (the default) or the producer's. */
   voice_from?: 'musician' | 'producer';
+  /** The channel on the producer's desk. Absent: a flat channel that changes nothing. */
+  strip?: ChannelStrip;
   /** The job this track does in its kit. Older songs have none; it is inferred from the instrument. */
   role?: Role;
   color: string;
@@ -270,6 +315,8 @@ export interface Song {
   length_ticks?: number;
   /** The musician's idea (form, chords, rhythm), kept apart from the detail. */
   sketch?: Sketch;
+  /** The producer's desk: character, returns and master. Absent: a clean desk that changes nothing. */
+  mix?: MixSettings;
   status: 'active' | 'archived';
   origin: Origin;
   schema_version: 1;
