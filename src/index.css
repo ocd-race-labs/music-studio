@@ -349,6 +349,16 @@ h3.sub { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; col
 }
 .track-btn[aria-current='true'] { border-color: var(--main); background: var(--raised); box-shadow: inset 3px 0 0 var(--main); }
 .swatch { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+/* An instrument's icon on a tile of its track's color. */
+.ibadge {
+  --trk: var(--main);
+  display: inline-grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 9px;
+  background: color-mix(in srgb, var(--trk) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--trk) 40%, transparent);
+  color: color-mix(in srgb, var(--trk) 58%, var(--ink));
+}
+.ibadge.sm { width: 24px; height: 24px; border-radius: 7px; }
+.ibadge.lg { width: 40px; height: 40px; border-radius: 12px; }
 .mini { min-width: 32px; min-height: 32px; border-radius: 8px; border: 1px solid var(--line); background: transparent; font-size: 11px; font-weight: 700; color: var(--ink-2); }
 .mini[aria-pressed='true'] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
 .scroll-x { overflow-x: auto; overscroll-behavior-x: contain; border-radius: 12px; }
@@ -575,7 +585,8 @@ input.field.num { width: 64px; text-align: center; }
 .cd-box.es-empty { flex: 1 1 176px; min-width: 168px; max-width: 220px; border-style: dashed; background: transparent; box-shadow: none; }
 .cd-box.es-empty .cd-box-main { gap: 6px; }
 .cd-box-main { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px 10px 6px; border: 0; background: transparent; color: var(--ink); text-align: left; flex: 1; min-height: 92px; min-width: 0; width: 100%; }
-.cd-stage { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+.cd-stage { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); display: inline-flex; align-items: center; gap: 4px; }
+.cd-stage svg { flex: none; color: color-mix(in srgb, var(--stage, var(--ink-2)) 62%, var(--ink)); }
 .cd-name { font-size: 13.5px; line-height: 1.2; overflow-wrap: break-word; hyphens: auto; }
 .cd-sum { font-size: 12px; color: var(--ink-2); line-height: 1.3; }
 .cd-box-foot { display: flex; align-items: center; justify-content: flex-start; gap: 6px; padding: 6px 8px 8px; }
@@ -592,7 +603,7 @@ input.field.num { width: 64px; text-align: center; }
 .cd-plus { position: relative; width: 26px; height: 26px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; padding: 0; opacity: 0.8; }
 .cd-plus:hover, .cd-plus.on { opacity: 1; border-color: var(--main); color: var(--main-text, var(--main)); }
 .cd-add { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; border: 1.5px dashed var(--main); background: color-mix(in srgb, var(--main) 6%, var(--panel)); }
-.cd-add-stage { display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: color-mix(in srgb, var(--stage) 22%, var(--panel)); border: 1px solid var(--stage); color: var(--ink); }
+.cd-add-stage { display: inline-flex; align-items: center; gap: 5px; min-height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: color-mix(in srgb, var(--stage) 22%, var(--panel)); border: 1px solid var(--stage); color: var(--ink); }
 
 /* The chain inside the flow: a labelled group, step 3, between the instrument and the desk. */
 .es-chainwrap { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; padding: 6px 6px 8px; margin: -6px 0; border-radius: 14px; border: 1px dashed var(--line); }
@@ -910,9 +921,42 @@ input.field.num { width: 64px; text-align: center; }
 .cb-slot.empty { background: transparent; border-style: dashed; }
 .cb-slot.sel { border-color: var(--main); box-shadow: inset 0 0 0 2px var(--main); }
 .rhythm { padding-top: 8px; border-top: 1px solid var(--line); }
-.idea-insts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-.idea-inst { display: flex; flex-direction: column; gap: 4px; }
-.idea-accept { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--main); background: color-mix(in srgb, var(--main) 7%, var(--panel)); box-shadow: 0 -8px 20px -14px rgba(0, 0, 0, 0.35); }
+/* What the idea sounds with, and accepting it: one bar at the top. */
+.idea-bar { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px 12px; position: relative; z-index: 6; padding: 10px 12px; }
+.idea-bar-lbl { flex: none; }
+.idea-picks { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; flex: 1 1 520px; }
+.idea-go { flex: none; margin-left: auto; }
+@media (max-width: 1180px) { .idea-bar-lbl { display: none; } }
+.ipick { position: relative; min-width: 150px; flex: 1 1 0; max-width: 290px; }
+.ipick-chip { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; }
+.ipick.open .ipick-chip, .ipick-chip:hover { border-color: var(--main); }
+.ipick-btn { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; min-height: 48px; padding: 4px 8px 4px 8px; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.ipick-txt { gap: 0; min-width: 0; flex: 1; }
+.ipick-txt strong { font-size: 14px; }
+.ipick-role { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+.ipick-btn > svg { flex: none; color: var(--ink-2); transition: transform 0.15s; }
+.ipick.open .ipick-btn > svg { transform: rotate(180deg); }
+.ipick-hear { width: 40px; flex: none; border: 0; border-left: 1px solid var(--line); background: var(--raised); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.ipick-hear:disabled { opacity: 0.4; cursor: default; }
+.ipick-none { --trk: var(--ink-2); }
+.ipick-panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; width: min(720px, calc(100vw - 32px)); display: grid; gap: 10px; padding: 12px;
+  border-radius: 14px; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 22px 48px -16px rgba(0, 0, 0, 0.45); }
+.ipick-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ipick-body { display: grid; gap: 12px; max-height: min(56vh, 470px); overflow: auto; overscroll-behavior: contain; padding-right: 2px; }
+.ipick-group { display: grid; gap: 6px; }
+.ipick-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 6px; }
+.ipick-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.2; font-size: 13.5px; }
+.ipick-item { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 6px; border-radius: 11px; border: 1px solid var(--line); background: var(--panel); min-width: 0; }
+.ipick-item.on { border-color: var(--main); background: color-mix(in srgb, var(--main) 9%, var(--panel)); }
+.ipick-item .ss-play { width: 32px; height: 32px; }
+.ipick-pick { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px; padding: 2px 4px; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; border-radius: 8px; }
+.ipick-pick:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.ipick-pick > svg { flex: none; color: var(--main); }
+@media (max-width: 720px) {
+  .idea-picks { width: 100%; }
+  .ipick { flex: 1 1 100%; max-width: none; }
+  .idea-go { width: 100%; justify-content: center; }
+}
 .idea-empty { gap: 18px; padding: 8px 2px; }
 .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
 .tpl-card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; padding: 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); min-height: 132px; }
@@ -953,8 +997,9 @@ input.field.num { width: 64px; text-align: center; }
 .dstrip { flex: none; width: 128px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); box-shadow: inset 0 4px 0 var(--trk, var(--line)); }
 .dstrip.on { border-color: var(--main); background: var(--raised); }
 .dstrip.master { width: 150px; background: var(--raised); box-shadow: inset 0 4px 0 var(--ink-2); flex: none; }
-.dstrip-name { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; min-height: 42px; border: 0; background: transparent; color: var(--ink); padding: 4px 2px 0; text-align: center; }
+.dstrip-name { flex: none; display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; min-height: 42px; border: 0; background: transparent; color: var(--ink); padding: 4px 2px 0; text-align: center; }
 .dstrip-name strong, .dstrip-name .small { max-width: 100%; }
+.dstrip-name .ibadge { margin-bottom: 2px; }
 .tag.prod { background: var(--highlight); color: var(--highlight-ink); font-size: 10px; padding: 1px 7px; }
 .dstrip-sec { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; width: 100%; padding-top: 6px; border-top: 1px solid var(--line); }
 .dstrip-sec.col { flex-direction: column; align-items: center; gap: 6px; }

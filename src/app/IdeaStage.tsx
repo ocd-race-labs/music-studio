@@ -3,13 +3,12 @@
 // sounds right, it is accepted and written into the detail.
 
 import { useEffect, useState } from 'react';
-import type { CatalogRef, Lang, SectionKind, Sketch, SketchGroove, Song } from '../domain/types';
+import type { Lang, SectionKind, Sketch, SketchGroove, Song } from '../domain/types';
 import * as S from '../domain/sketch';
 import type { Feel, Place } from '../domain/sketch';
 import { kindLabel, SECTION_COLORS } from '../domain/arrange';
-import { ENTRIES, entryOf, GENRES, GROUPS } from '../packs/collection';
+import { GENRES, GROUPS } from '../packs/collection';
 import type { Genre } from '../packs/collection';
-import { findByKey, INSTRUMENTS, title as catalogTitle } from '../packs/core';
 import { chordMidi, chordSymbol, diatonicTriads } from '../theory';
 import { engine } from '../engine/engine';
 import { songKey } from './editors';
@@ -18,15 +17,11 @@ import { namingFor, t } from './i18n';
 import type { StringKey } from './i18n';
 import { Icon } from './ui';
 import { templateFor } from './rack';
+import { InstPicker } from './InstPicker';
 
 const FEEL_LABEL: Record<Feel, StringKey> = { soft: 'feelSoft', normal: 'feelNormal', strong: 'feelStrong', half: 'feelHalf' };
 const TEMPLATE_LABEL: Record<string, StringKey> = { song: 'tplSong', short: 'tplShort', beat: 'tplBeat', loop: 'tplLoop' };
-const CORE_CHORDS = ['instrument.keys-piano', 'instrument.keys-ep', 'instrument.organ', 'instrument.strings-ensemble', 'instrument.choir-aah',
-  'instrument.pad-warm', 'instrument.pad-supersaw', 'instrument.guitar-nylon', 'instrument.guitar-clean', 'instrument.brass-section', 'instrument.vibes'];
-const CORE_BASS = ['instrument.bass-electric', 'instrument.bass-upright', 'instrument.bass-synth', 'instrument.bass-808'];
-const CORE_KITS = INSTRUMENTS.filter((i) => (i.manifest as { type?: string }).type === 'drumkit' && i.pack !== 'collection' && i.key !== 'instrument.perc-latin').map((i) => i.key);
 const genreOfGroup = (g: string): Genre => GROUPS.find((x) => x.id === g)?.genre ?? 'rock';
-const nameOf = (key: string, lang: Lang) => entryOf(key)?.title[lang] ?? catalogTitle({ key, version: '1.0.0' }, lang);
 
 export default function IdeaStage({ song, idea, lang, playing, step, onSketch, onPlace, onAccept, onDetail }: {
   song: Song;
@@ -65,31 +60,16 @@ export default function IdeaStage({ song, idea, lang, playing, step, onSketch, o
   const uses = (id: string) => sketch.order.filter((x) => x === id).length;
   const letter = (id: string) => String.fromCharCode(65 + sketch.blocks.findIndex((b) => b.id === id));
 
-  const chordOptions = [...new Set([...CORE_CHORDS, ...ENTRIES.filter((e) => e.family === 'guitar' || (e.family === 'synth' && !/bass|808|reese|sub|acid/i.test(`${e.instrument} ${e.voice ?? ''}`))).map((e) => e.instrument)])].filter((k) => findByKey(k));
-  const kitOptions = [...ENTRIES.filter((e) => e.family === 'drums').map((e) => e.instrument), ...CORE_KITS].filter((k) => findByKey(k));
-  const bassOptions = [...ENTRIES.filter((e) => e.family === 'bass').map((e) => e.instrument), ...CORE_BASS].filter((k) => findByKey(k));
   const listen = (key: string) => {
     const e = templateFor(key);
     if (e) engine.previewGroove(key, e.groove, song.tempo_bpm, undefined, 1, e.phrase);
     else engine.previewInstrument(key);
   };
-  const instRow = (label: string, value: CatalogRef | null, options: string[], onPick: (k: string | null) => void, allowNone: boolean) => (
-    <label className="idea-inst">
-      <span className="lbl">{label}</span>
-      <span className="row" style={{ gap: 6 }}>
-        <select className="field grow" value={value?.key ?? ''} onChange={(e) => onPick(e.target.value || null)}>
-          {allowNone && <option value="">{t('ideaNoBass', lang)}</option>}
-          {options.map((k) => <option key={k} value={k}>{nameOf(k, lang)}</option>)}
-        </select>
-        <button type="button" className="btn icon" disabled={!value} onClick={(ev) => { ev.preventDefault(); if (value) listen(value.key); }} aria-label={t('listenTo', lang, { name: value ? nameOf(value.key, lang) : '' })}>
-          <Icon name="play" size={16} />
-        </button>
-      </span>
-    </label>
-  );
 
   const changed = !!sketch.accepted_at && sketch.updated_at > sketch.accepted_at;
   const follows = S.detailFollowsForm(song);
+  const when = sketch.accepted_at
+    ? new Date(sketch.accepted_at).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 
   /* ---------------------------------------------------------------- empty: pick a form to start from */
   if (!places.length) {
@@ -120,6 +100,32 @@ export default function IdeaStage({ song, idea, lang, playing, step, onSketch, o
 
   return (
     <section className="idea" aria-label={t('ideaTitle', lang)}>
+      {/* ---------------------------------------------------------------- what the idea sounds with, and accepting it */}
+      <div className="idea-card idea-bar" role="group" aria-label={t('ideaInstruments', lang)}>
+        <span className="lbl idea-bar-lbl">{t('ideaSoundsWith', lang)}</span>
+        <div className="idea-picks">
+          <InstPicker role="chords" label={t('ideaChordsWith', lang)} value={sketch.chords_instrument?.key ?? null} lang={lang} onListen={listen}
+            onPick={(k) => k && onSketch((s) => S.setIdeaInstruments(s, { chords_instrument: { key: k, version: '1.0.0' } }))} />
+          <InstPicker role="drums" label={t('ideaDrumsWith', lang)} value={sketch.drums_instrument?.key ?? null} lang={lang} onListen={listen}
+            onPick={(k) => k && onSketch((s) => S.setIdeaInstruments(s, { drums_instrument: { key: k, version: '1.0.0' } }))} />
+          <InstPicker role="bass" label={t('ideaBassWith', lang)} value={sketch.bass_instrument?.key ?? null} lang={lang} onListen={listen} allowNone
+            onPick={(k) => onSketch((s) => S.setIdeaInstruments(s, { bass_instrument: k ? { key: k, version: '1.0.0' } : null }))} />
+        </div>
+        {!sketch.accepted_at ? (
+          <button type="button" className="btn primary idea-go" onClick={() => onAccept()} title={t('ideaDraftNote', lang)}>
+            <Icon name="check" size={18} /> {t('ideaAcceptShort', lang)}
+          </button>
+        ) : changed ? (
+          <button type="button" className="btn primary idea-go" onClick={() => onAccept()} title={t('ideaChangedNote', lang)}>
+            <Icon name="check" size={18} /> {t('ideaWriteAgain', lang)}
+          </button>
+        ) : (
+          <button type="button" className="btn idea-go" onClick={onDetail} title={t('ideaAcceptedNote', lang, { when })}>
+            {t('ideaToDetail', lang)} <Icon name="arrow" size={18} />
+          </button>
+        )}
+      </div>
+
       {/* ---------------------------------------------------------------- the form */}
       <div className="idea-card">
         <div className="row wrap" style={{ gap: 8 }}>
@@ -213,6 +219,11 @@ export default function IdeaStage({ song, idea, lang, playing, step, onSketch, o
             </div>
             {uses(block.id) > 1 && <span className="tag">{t('ideaUsedTimes', lang, { n: uses(block.id) })}</span>}
             <span className="grow" />
+            {sketch.accepted_at && changed && follows && (
+              <button type="button" className="btn small-btn" onClick={() => onAccept(block.id)} title={t('ideaChangedNote', lang)}>
+                <Icon name="check" size={16} /> {t('ideaWriteBlock', lang, { name: S.blockName(block, lang) })}
+              </button>
+            )}
             <button type="button" className={`btn${looping === block.id && playing ? ' primary' : ''}`}
               onClick={() => { if (looping === block.id && playing) { onPlace(null); setLooping(null); } else { onPlace(sel); setLooping(block.id); } }}>
               <Icon name={looping === block.id && playing ? 'stop' : 'play'} size={18} /> {t(looping === block.id && playing ? 'stop' : 'ideaPlayPart', lang)}
@@ -276,31 +287,6 @@ export default function IdeaStage({ song, idea, lang, playing, step, onSketch, o
         </div>
       )}
 
-      {/* ---------------------------------------------------------------- the instruments of the idea */}
-      <div className="idea-card">
-        <h3 className="sub">{t('ideaInstruments', lang)}</h3>
-        <div className="idea-insts">
-          {instRow(t('ideaChordsWith', lang), sketch.chords_instrument, chordOptions, (k) => k && onSketch((s) => S.setIdeaInstruments(s, { chords_instrument: { key: k, version: '1.0.0' } })), false)}
-          {instRow(t('ideaDrumsWith', lang), sketch.drums_instrument, kitOptions, (k) => k && onSketch((s) => S.setIdeaInstruments(s, { drums_instrument: { key: k, version: '1.0.0' } })), false)}
-          {instRow(t('ideaBassWith', lang), sketch.bass_instrument, bassOptions, (k) => onSketch((s) => S.setIdeaInstruments(s, { bass_instrument: k ? { key: k, version: '1.0.0' } : null })), true)}
-        </div>
-      </div>
-
-      {/* ---------------------------------------------------------------- accept */}
-      <div className="idea-accept">
-        <p className="grow small" style={{ margin: 0 }}>
-          {!sketch.accepted_at ? t('ideaDraftNote', lang)
-            : changed ? t('ideaChangedNote', lang)
-              : t('ideaAcceptedNote', lang, { when: new Date(sketch.accepted_at).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
-        </p>
-        {sketch.accepted_at && changed && follows && block && (
-          <button type="button" className="btn" onClick={() => onAccept(block.id)}>{t('ideaWriteBlock', lang, { name: S.blockName(block, lang) })}</button>
-        )}
-        {(!sketch.accepted_at || changed) && (
-          <button type="button" className="btn primary" onClick={() => onAccept()}><Icon name="check" size={18} /> {t(sketch.accepted_at ? 'ideaWriteAgain' : 'ideaAccept', lang)}</button>
-        )}
-        {sketch.accepted_at && <button type="button" className="btn" onClick={onDetail}>{t('ideaToDetail', lang)} <Icon name="arrow" size={18} /></button>}
-      </div>
     </section>
   );
 }

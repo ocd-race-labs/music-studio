@@ -6,7 +6,7 @@ import type { CatalogRef, Idea, Lang, Song, Track } from '../domain/types';
 import { DEFAULT_SWING, defaultFxParams } from '../domain/factory';
 import { namingFor, t } from './i18n';
 import type { StringKey } from './i18n';
-import { Icon } from './ui';
+import { Icon, TrackBadge } from './ui';
 import { dbLabel, dbOfGain, FADER_MAX_DB, FADER_MIN_DB, gainOfDb } from './levels';
 import { chordAtBar, songKey, TierLegend } from './editors';
 
@@ -81,7 +81,7 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
   return (
     <section className="card stack" aria-label={t('mixer', lang)}>
       <div className="row">
-        <span className="swatch" style={{ background: track.color }} />
+        <TrackBadge track={track} size="sm" />
         <h3 className="grow" style={{ fontSize: 16 }}>{track.name}: {t('mixer', lang).toLowerCase()}</h3>
         <button type="button" className="mini" aria-pressed={track.muted} onClick={onMute} aria-label={t('muteTrack', lang, { name: track.name })} title={t('muteHint', lang)}>M</button>
         <button type="button" className="mini" aria-pressed={track.solo} onClick={onSolo} aria-label={t('soloTrack', lang, { name: track.name })} title={t('soloHint', lang)}>S</button>

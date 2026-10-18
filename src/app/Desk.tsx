@@ -9,7 +9,7 @@ import { CONSOLES, consoleOf, GLUES, mixOf, snapFreq, snapGain, STRIP_FLAT, stri
 import type { Band, ConsoleSpec } from '../domain/mix';
 import { engine } from '../engine/engine';
 import { t } from './i18n';
-import { Icon } from './ui';
+import { Icon, TrackBadge } from './ui';
 import { Knob } from './Knob';
 import { dbLabel, dbOfGain, FADER_MAX_DB, FADER_MIN_DB, gainOfDb, panLabel } from './levels';
 import { eqResponse, LOG_FREQS } from './eqcurve';
@@ -89,6 +89,7 @@ export default function Desk({ song, selected, lang, view, showConsole, onSelect
     return (
       <div key={tr.id} className={`dstrip${tr.id === selected ? ' on' : ''}`} style={{ ['--trk' as string]: tr.color }}>
         <button type="button" className="dstrip-name" onClick={() => onSelect(tr.id)} aria-current={tr.id === selected}>
+          <TrackBadge track={tr} size="sm" />
           <strong className="ellipsis">{tr.name}</strong>
           <span className="small muted ellipsis">{soundName(playing ? playing.instrument : tr.instrument, playing ? playing.sound : tr.sound, lang)}</span>
           {playing && <span className="tag prod">{t('deskProducerTag', lang)}</span>}
@@ -239,7 +240,7 @@ export function ChannelInspector({ song, track, lang, onStrip, onReset }: {
   return (
     <section className="card stack inspector" aria-label={t('deskChannelOf', lang, { name: track.name })}>
       <div className="row">
-        <span className="swatch" style={{ background: track.color }} />
+        <TrackBadge track={track} size="sm" />
         <h3 className="grow" style={{ fontSize: 16 }}>{t('deskChannelOf', lang, { name: track.name })}</h3>
         <button type="button" className="btn small-btn ghost" disabled={flat} onClick={onReset} title={t('deskFlatHint', lang)}><Icon name="reset" size={16} /> {t('deskFlat', lang)}</button>
       </div>

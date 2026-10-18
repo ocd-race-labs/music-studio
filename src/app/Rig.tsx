@@ -10,6 +10,7 @@ import { ref } from '../packs/core';
 import { t } from './i18n';
 import { ChoiceParam, formatParam, PEDAL_BLURB } from './panels';
 import { Icon } from './ui';
+import type { IconName } from './ui';
 import { Knob } from './Knob';
 
 export type Stage = 'pre' | 'pedal' | 'amp' | 'cab' | 'channel' | 'color' | 'space';
@@ -37,6 +38,7 @@ const STAGE_NAME: Record<Stage, { en: string; es: string }> = {
   space: { en: 'Space', es: 'Espacio' },
 };
 export const stageName = (s: Stage, lang: Lang) => STAGE_NAME[s][lang];
+export const STAGE_ICON: Record<Stage, IconName> = { pre: 'knob', pedal: 'pedal', amp: 'amp', cab: 'cab', channel: 'sliders', color: 'tape', space: 'space' };
 /** Short names for the boxes of the flow, where space is tight. */
 const STAGE_SHORT: Record<Stage, { en: string; es: string }> = {
   pre: { en: 'Preamp', es: 'Preamp' }, pedal: { en: 'Pedal', es: 'Pedal' }, amp: { en: 'Amp', es: 'Ampli' }, cab: { en: 'Cabinet', es: 'Gabinete' },
@@ -64,8 +66,8 @@ export const newSlot = (key: string): FxSlot => ({ effect: ref(key), bypass: fal
 export type RigSel = 'track' | 'instrument' | 'out' | number;
 
 export interface RigEnds {
-  track: { name: string; color: string; sum: string };
-  instrument: { name: string; sum: string };
+  track: { name: string; color: string; sum: string; icon: IconName };
+  instrument: { name: string; sum: string; icon: IconName };
   out: { name: string; sum: string; warn?: boolean };
 }
 
@@ -103,10 +105,10 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
     </div>
   );
   const arrow = (k: string) => <div key={k} className="cd-link plain" aria-hidden="true"><span className="cd-arrow" /></div>;
-  const end = (key: 'track' | 'instrument' | 'out', kicker: string, name: string, sum: string, extra?: string, color?: string) => (
+  const end = (key: 'track' | 'instrument' | 'out', kicker: string, name: string, sum: string, icon: IconName, extra?: string, color?: string) => (
     <div role="listitem" key={key} className={`cd-box io es-${key}${sel === key ? ' sel' : ''}${extra ?? ''}`} style={color ? { ['--stage' as string]: color } : undefined}>
       <button type="button" className="cd-box-main" onClick={() => onSel(key)} aria-pressed={sel === key}>
-        <span className="cd-stage">{kicker}</span>
+        <span className="cd-stage"><Icon name={icon} size={14} /> {kicker}</span>
         <strong className="cd-name">{name}</strong>
         <span className="cd-sum">{sum}</span>
       </button>
@@ -120,9 +122,9 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
         el.scrollTo({ left: Math.max(0, box.offsetLeft - 40), behavior: 'smooth' });
       }
     }}>
-      {end('track', t('esStep1', lang), ends.track.name, ends.track.sum, '', ends.track.color)}
+      {end('track', t('esStep1', lang), ends.track.name, ends.track.sum, ends.track.icon, '', ends.track.color)}
       {arrow('a0')}
-      {end('instrument', t('esStep2', lang), ends.instrument.name, ends.instrument.sum)}
+      {end('instrument', t('esStep2', lang), ends.instrument.name, ends.instrument.sum, ends.instrument.icon)}
       <div className="es-chainwrap" role="group" aria-label={t('esStep3', lang)}>
         <span className="es-step">{t('esStep3', lang)} <span className="es-step-n">{chain.slots.length ? t('esUnitsOn', lang, { n: on, of: chain.slots.length }) : t('esNoGear', lang).toLowerCase()}</span></span>
         <div className="es-chainrow">
@@ -141,7 +143,7 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
               return [link(i), (
                 <div role="listitem" key={`b${i}`} className={`cd-box${sel === i ? ' sel' : ''}${slot.bypass ? ' off' : ''}${cut ? ' cut' : ''}`} style={{ ['--stage' as string]: STAGE_COLOR[stage] }}>
                   <button type="button" className="cd-box-main" onClick={() => onSel(i)} aria-pressed={sel === i}>
-                    <span className="cd-stage" title={stageName(stage, lang)}>{STAGE_SHORT[stage][lang]}</span>
+                    <span className="cd-stage" title={stageName(stage, lang)}><Icon name={STAGE_ICON[stage]} size={14} /> {STAGE_SHORT[stage][lang]}</span>
                     <strong className="cd-name">{catalogTitle(slot.effect, lang)}</strong>
                     <span className="cd-sum">{slot.bypass ? t('pedalOff', lang) : unitSummary(slot, lang)}</span>
                   </button>
@@ -156,7 +158,7 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
         </div>
       </div>
       {arrow('a1')}
-      {end('out', t('esStep4', lang), ends.out.name, ends.out.sum, ends.out.warn ? ' warn' : '')}
+      {end('out', t('esStep4', lang), ends.out.name, ends.out.sum, 'sliders', ends.out.warn ? ' warn' : '')}
     </div>
   );
 }
@@ -171,7 +173,7 @@ export function AddUnit({ lang, onPick, onCancel }: { lang: Lang; onPick: (key: 
         if (!list.length) return null;
         return (
           <div key={st} className="row wrap" style={{ gap: 6 }}>
-            <span className="cd-add-stage" style={{ ['--stage' as string]: STAGE_COLOR[st] }}>{stageName(st, lang)}</span>
+            <span className="cd-add-stage" style={{ ['--stage' as string]: STAGE_COLOR[st] }}><Icon name={STAGE_ICON[st]} size={14} /> {stageName(st, lang)}</span>
             {list.map((e) => <button key={e.key} type="button" className="chip" onClick={() => onPick(e.key)}>{e.title[lang]}</button>)}
           </div>
         );
@@ -265,7 +267,7 @@ export function UnitEditor({ slot, index, count, original, listen, lang, onChang
   return (
     <section className="es-unit" style={{ ['--stage' as string]: STAGE_COLOR[stage] }} aria-label={name}>
       <div className="row wrap es-unit-head">
-        <span className="cd-add-stage">{stageName(stage, lang)}</span>
+        <span className="cd-add-stage"><Icon name={STAGE_ICON[stage]} size={14} /> {stageName(stage, lang)}</span>
         <h3 className="grow display" style={{ fontSize: 20 }}>{name}</h3>
         <OnSwitch on={!slot.bypass} lang={lang} label={name} onToggle={onToggle} />
       </div>

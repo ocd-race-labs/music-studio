@@ -8,7 +8,7 @@ import { findItem, title as catalogTitle } from '../packs/core';
 import { scaleById, tonicDisplay } from '../theory';
 import { songDuration } from './Arrange';
 import { namingFor, t } from './i18n';
-import { Icon } from './ui';
+import { Icon, TrackBadge } from './ui';
 import type { Room } from './rooms';
 
 /** The name of a track's sound: a saved sound's name, the Colección title, or the catalog title. */
@@ -45,7 +45,7 @@ export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom,
           <button type="button" className="btn primary" onClick={onNew}><Icon name="plus" size={18} /> {t('newSong', lang)}</button>
         </div>
         <div className="row wrap" style={{ gap: 8 }}>
-          <button type="button" className="btn small-btn beat-btn" onClick={onBeat} title={t('beatOpenHint', lang)}><Icon name="music" size={16} /> {t('beatOpen', lang)}</button>
+          <button type="button" className="btn small-btn beat-btn" onClick={onBeat} title={t('beatOpenHint', lang)}><Icon name="drumpad" size={16} /> {t('beatOpen', lang)}</button>
           <button type="button" className="btn small-btn" onClick={onImport}><Icon name="upload" size={16} /> {t('importSong', lang)}</button>
         </div>
         <ul className="song-rows">
@@ -94,7 +94,7 @@ export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom,
               const from = tr.producer && tr.voice_from === 'producer' ? 'producer' : 'musician';
               return (
                 <div key={tr.id} className="vt-row" role="row">
-                  <span role="cell" className="row" style={{ gap: 8, minWidth: 0 }}><span className="swatch" style={{ background: tr.color }} /><strong className="ellipsis">{tr.name}</strong></span>
+                  <span role="cell" className="row" style={{ gap: 8, minWidth: 0 }}><TrackBadge track={tr} size="sm" /><strong className="ellipsis">{tr.name}</strong></span>
                   <span role="cell" data-k={t('musician', lang)} className={`ellipsis${from === 'musician' ? ' vt-on' : ''}`}>{soundName(tr.instrument, tr.sound, lang) || '—'}</span>
                   <span role="cell" data-k={t('producer', lang)} className={`ellipsis${from === 'producer' ? ' vt-on' : ''}`}>{tr.producer ? soundName(tr.producer.instrument, tr.producer.sound, lang) : <span className="muted">{t('noProducerSound', lang)}</span>}</span>
                   <span role="cell">

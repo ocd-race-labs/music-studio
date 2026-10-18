@@ -12,7 +12,9 @@ import type { CustomSound, FxChain, Lang, Role, Song, StarredInstrument, TrackVa
 import { newId, now, ROLE_NAMES, roleOf } from '../domain/factory';
 import { hasWritten } from '../domain/commands';
 import { t } from './i18n';
-import { Icon } from './ui';
+import { Icon, InstBadge, TrackBadge } from './ui';
+import type { IconName } from './ui';
+import { instIcon, trackIcon } from './instIcon';
 import { familyOf, rackFor, templateFor } from './rack';
 import { AddUnit, insertAt, newSlot, RigFlow, UnitEditor } from './Rig';
 import type { ListenMode, RigSel } from './Rig';
@@ -25,6 +27,7 @@ type Shelf = Genre | 'more';
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const nameOf = (key: string, lang: Lang) => entryOf(key)?.title[lang] ?? (findItem({ key, version: '1.0.0' }) ? catalogTitle({ key, version: '1.0.0' }, lang) : key);
 
+const FAMILY_ICON: Record<Family, IconName> = { drums: 'drums', guitar: 'guitar', bass: 'bass', synth: 'synth' };
 /** The synthesized instruments of the genre kits, as cards: every instrument the app has that is not in the catalog. */
 const CORE = KITS.flatMap((k) => kitSlots(k.key).filter((s) => !entryOf(s.instrument)).map((s) => ({ kit: k, role: s.role, key: s.instrument })))
   .filter((x, i, all) => all.findIndex((y) => y.key === x.key) === i);
@@ -245,8 +248,8 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   const entry = entryOf(draft.base);
   const core = CORE.find((x) => x.key === draft.base);
   const ends = {
-    track: { name: track.name, color: track.color, sum: ROLE_NAMES[lang][roleOf(track)] === track.name ? versionName : `${ROLE_NAMES[lang][roleOf(track)]} · ${versionName}` },
-    instrument: { name: instrumentName, sum: draft.soundId ? t('mySounds', lang) : entry ? entry.era[lang].split(' · ')[0] : core ? t('esCoreKit', lang, { kit: core.kit.title[lang] }) : '' },
+    track: { name: track.name, color: track.color, icon: trackIcon(track), sum: ROLE_NAMES[lang][roleOf(track)] === track.name ? versionName : `${ROLE_NAMES[lang][roleOf(track)]} · ${versionName}` },
+    instrument: { name: instrumentName, icon: instIcon(draft.base), sum: draft.soundId ? t('mySounds', lang) : entry ? entry.era[lang].split(' · ')[0] : core ? t('esCoreKit', lang, { kit: core.kit.title[lang] }) : '' },
     out: {
       name: versionName,
       sum: slot === 'producer' && !track.producer ? t('esNoProducerYet', lang) : plays ? t('esPlaysNow', lang) : t('esNotPlaying', lang),
@@ -290,17 +293,17 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   const usedOn = (k: string) => song.tracks.filter((x) => (x.instrument?.key === k && !x.sound) || (x.producer?.instrument?.key === k && !x.producer.sound)).map((x) => x.name);
   const starOf = (k: string, soundId?: string) => starred.find((x) => x.key === k && (soundId ? x.sound?.id === soundId : !x.sound));
 
-  const [preview, setPreview] = useState<string | null>(null);
-  useEffect(() => { if (!isPlaying) setPreview(null); }, [isPlaying]);
-  const card = (id: string, title: string, sub: string, load: (listen: boolean) => void, opts: { loaded: boolean; now?: boolean; used?: string[]; star?: boolean; reason?: string }) => {
-    const on = preview === id && isPlaying;
+  // The card that shows "playing" is the one heard: the sound in the studio, or what plays now while comparing.
+  const card = (id: string, title: string, sub: string, load: (listen: boolean) => void, opts: { inst: string; loaded: boolean; now?: boolean; used?: string[]; star?: boolean; reason?: string }) => {
+    const on = isPlaying && (abOn && kind !== 'clean' ? !!opts.now : opts.loaded);
     return (
       <div key={id} role="button" tabIndex={0} className={`es-card${opts.loaded ? ' on' : ''}`} aria-pressed={opts.loaded} aria-label={title}
         onClick={() => load(false)} onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); load(false); } }}>
         <button type="button" className={`ss-play${on ? ' on' : ''}`} aria-label={on ? t('stop', lang) : t('listenTo', lang, { name: title })} title={on ? t('stop', lang) : t('listenTo', lang, { name: title })}
-          onClick={(ev) => { ev.stopPropagation(); if (on) { play(); return; } setPreview(id); load(true); }}>
+          onClick={(ev) => { ev.stopPropagation(); if (on) { play(); return; } load(true); }}>
           <Icon name={on ? 'stop' : 'play'} size={14} />
         </button>
+        <InstBadge icon={instIcon(opts.inst)} size="sm" />
         <span className="stack grow" style={{ gap: 1, minWidth: 0 }}>
           <strong className="ellipsis">{title}</strong>
           <span className="small muted ellipsis">{sub}</span>
@@ -316,7 +319,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
     );
   };
   const entryCard = (e: Entry, reason?: string) => card(`e:${e.instrument}${reason ? ':s' : ''}`, e.title[lang], e.era[lang], (listen) => loadCatalog(e.instrument, listen),
-    { loaded: draft.base === e.instrument && !draft.soundId, now: current.base === e.instrument && !current.soundId, used: usedOn(e.instrument), star: !!starOf(e.instrument), reason });
+    { inst: e.instrument, loaded: draft.base === e.instrument && !draft.soundId, now: current.base === e.instrument && !current.soundId, used: usedOn(e.instrument), star: !!starOf(e.instrument), reason });
 
   /* ------------------------------------------------------------ the work area for each box */
 
@@ -332,7 +335,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
           const pick = (s: Slot) => { onSelect(tr.id); onSlot(s); setSel('instrument'); };
           return (
             <div key={tr.id} className={`es-track${tr.id === track.id ? ' on' : ''}`} style={{ ['--trk' as string]: tr.color }}>
-              <div className="row" style={{ gap: 8 }}><span className="swatch" style={{ background: tr.color }} /><strong className="grow ellipsis">{tr.name}</strong>{ROLE_NAMES[lang][roleOf(tr)] !== tr.name && <span className="small muted">{ROLE_NAMES[lang][roleOf(tr)]}</span>}</div>
+              <div className="row" style={{ gap: 8 }}><TrackBadge track={tr} size="sm" /><strong className="grow ellipsis">{tr.name}</strong>{ROLE_NAMES[lang][roleOf(tr)] !== tr.name && <span className="small muted">{ROLE_NAMES[lang][roleOf(tr)]}</span>}</div>
               <button type="button" className={`es-ver${tr.id === track.id && slot === 'musician' ? ' sel' : ''}`} onClick={() => pick('musician')}>
                 <span className="lbl">{t('musician', lang)}{!prodPlays && <span className="es-plays">{t('plays', lang)}</span>}</span>
                 <span className="ellipsis">{tr.sound?.name ?? nameOf(tr.instrument?.key ?? '', lang)}</span>
@@ -439,7 +442,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
           <input className="field" type="search" value={query} placeholder={t('ssSearch', lang)} aria-label={t('ssSearch', lang)}
             onChange={(e) => { setQuery(e.target.value); setSource('catalog'); }} />
         </label>
-        <button type="button" className="btn small-btn beat-btn" onClick={onBeat} title={t('beatOpenHint', lang)}><Icon name="music" size={16} /> <span className="hide-sm">{t('beatOpen', lang)}</span></button>
+        <button type="button" className="btn small-btn beat-btn" onClick={onBeat} title={t('beatOpenHint', lang)}><Icon name="drumpad" size={16} /> <span className="hide-sm">{t('beatOpen', lang)}</span></button>
       </div>
       {source === 'catalog' && (
         <div className="es-filters">
@@ -452,7 +455,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
           {!q && familiesHere.length > 1 && (
             <div className="row wrap" style={{ gap: 6 }}>
               <button type="button" className="chip" aria-pressed={family === 'all'} onClick={() => setFamily('all')}>{t('ssAll', lang)}</button>
-              {familiesHere.map((f) => <button key={f.id} type="button" className="chip" aria-pressed={family === f.id} onClick={() => setFamily(f.id)}>{f.title[lang]}</button>)}
+              {familiesHere.map((f) => <button key={f.id} type="button" className="chip" aria-pressed={family === f.id} onClick={() => setFamily(f.id)}><Icon name={FAMILY_ICON[f.id]} size={16} /> {f.title[lang]}</button>)}
             </div>
           )}
           <label className="row es-fit">
@@ -483,7 +486,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
             <h3 className="ss-group-title">{t('esCoreGroup', lang, { kit: k.title[lang] })}</h3>
             <div className="es-cards">
               {cores.filter((x) => x.kit.key === k.key).map((x) => card(`c:${x.key}`, nameOf(x.key, lang), ROLE_NAMES[lang][x.role], (listen) => loadCatalog(x.key, listen),
-                { loaded: draft.base === x.key && !draft.soundId, now: current.base === x.key && !current.soundId, used: usedOn(x.key), star: !!starOf(x.key) }))}
+                { inst: x.key, loaded: draft.base === x.key && !draft.soundId, now: current.base === x.key && !current.soundId, used: usedOn(x.key), star: !!starOf(x.key) }))}
             </div>
           </div>
         ))}
@@ -503,7 +506,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
           <div className="es-cards">
             {sounds.filter((x) => fit(x.base.key)).map((x) => card(`m:${x.id}`, x.name, t('basedOn', lang, { name: nameOf(x.base.key, lang) }),
               (listen) => loadSound({ id: x.id, name: x.name, base: x.base.key, chain: x.chain }, listen),
-              { loaded: draft.soundId === x.id, now: current.soundId === x.id, star: !!starOf(x.base.key, x.id), used: song.tracks.filter((tr) => tr.sound?.id === x.id || tr.producer?.sound?.id === x.id).map((tr) => tr.name) }))}
+              { inst: x.base.key, loaded: draft.soundId === x.id, now: current.soundId === x.id, star: !!starOf(x.base.key, x.id), used: song.tracks.filter((tr) => tr.sound?.id === x.id || tr.producer?.sound?.id === x.id).map((tr) => tr.name) }))}
           </div>
           {sounds.length > 0 && fitOnly && !sounds.some((x) => fit(x.base.key)) && <p className="muted">{t('esNothingFits', lang, { track: track.name })}</p>}
         </div>
@@ -526,7 +529,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
                   <div key={`${s.key}-${s.sound?.id ?? ''}`} className="es-kitcard">
                     {card(`k:${s.key}:${s.sound?.id ?? ''}`, kitName(s), s.sound ? t('mySounds', lang) : entryOf(s.key)?.era[lang] ?? t('instrumentsCore', lang),
                       (listen) => (s.sound ? loadSound({ id: s.sound.id, name: s.sound.name, base: s.key, chain: s.sound.chain }, listen) : loadCatalog(s.key, listen)),
-                      { loaded: s.sound ? draft.soundId === s.sound.id : draft.base === s.key && !draft.soundId })}
+                      { inst: s.key, loaded: s.sound ? draft.soundId === s.sound.id : draft.base === s.key && !draft.soundId })}
                     <button type="button" className="btn icon ghost es-unstar" onClick={() => onUnstar(s)} aria-label={t('unstar', lang, { name: kitName(s) })} title={t('unstar', lang, { name: kitName(s) })}><Icon name="close" size={16} /></button>
                   </div>
                 ))}
@@ -585,7 +588,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
     <div className={`estudio${bar ? ' with-bar' : ''}`}>
       <div className="es-head">
         <div className="row wrap" style={{ gap: 10, minWidth: 0 }}>
-          <span className="swatch big" style={{ background: track.color }} />
+          <TrackBadge track={track} />
           <h2 className="display es-title ellipsis">{t('trackSoundOf', lang, { name: track.name })}</h2>
           <div className="seg" role="group" aria-label={t('esVersion', lang)}>
             <button type="button" aria-pressed={slot === 'musician'} onClick={() => onSlot('musician')}>{t('musician', lang)}</button>

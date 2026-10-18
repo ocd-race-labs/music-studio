@@ -32,7 +32,7 @@ import { OutMeter, Transport } from './Transport';
 import { t, tn } from './i18n';
 import type { StringKey } from './i18n';
 import type { Mode } from './prefs';
-import { Avatar, downloadText, Icon, LangToggle, Modal, ModeSwitch, pickFile, slug, useToast, useWidth } from './ui';
+import { Avatar, downloadText, Icon, LangToggle, Modal, ModeSwitch, pickFile, KeyBadge, slug, TrackBadge, useToast, useWidth } from './ui';
 import type { Lang } from '../domain/types';
 import { ROOMS } from './rooms';
 import type { Room } from './rooms';
@@ -672,7 +672,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       {song.tracks.map((tr) => (
         <div key={tr.id} className={`row track-line${alone && tr.id !== track.id ? ' quiet' : ''}`} style={{ gap: 4 }}>
           <button type="button" className="track-btn grow" aria-current={tr.id === track.id} onClick={() => setSelected(tr.id)}>
-            <span className="swatch" style={{ background: tr.color }} />
+            <TrackBadge track={tr} size="sm" />
             <span className="stack" style={{ gap: 0, minWidth: 0 }}>
               <strong>{tr.name}</strong>
               <span className="small muted ellipsis">{tr.producer && tr.voice_from === 'producer' ? soundName(tr.producer.instrument, tr.producer.sound, lang) : soundName(tr.instrument, tr.sound, lang)}</span>
@@ -753,7 +753,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
         </section>
       ) : (<>
         <div className="inst-head">
-          <span className="swatch big" style={{ background: track.color }} />
+          <TrackBadge track={track} size="lg" />
           <h2 className="display inst-name">{track.name} <span className="muted small ui-font">{trackTitle}</span></h2>
           {/* The trash belongs to this instrument: it clears what is written here, in the part in view. */}
           <button type="button" className="btn icon clear-btn" onClick={() => setModal('clear')} disabled={!C.hasWritten(song, track.id)}
@@ -829,7 +829,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       <div className="side-close"><button type="button" className="btn icon ghost" onClick={() => setSideOpen(false)} aria-label={t('close', lang)}><Icon name="close" /></button></div>
       {room === 'producer' && (
         <section className="card stack track-sound" aria-label={t('songSounds', lang)}>
-          <div className="row"><span className="swatch" style={{ background: track.color }} /><h3 className="grow" style={{ fontSize: 16 }}>{t('trackSoundOf', lang, { name: track.name })}</h3></div>
+          <div className="row"><TrackBadge track={track} size="sm" /><h3 className="grow" style={{ fontSize: 16 }}>{t('trackSoundOf', lang, { name: track.name })}</h3></div>
           <div className="seg" aria-label={t('plays', lang)}>
             <button type="button" aria-pressed={!(track.producer && track.voice_from === 'producer')} onClick={() => apply((x) => C.setVoiceFrom(x, track.id, 'musician', by))}>{t('musician', lang)}</button>
             <button type="button" aria-pressed={!!track.producer && track.voice_from === 'producer'} disabled={!track.producer} onClick={() => apply((x) => C.setVoiceFrom(x, track.id, 'producer', by))}>{t('producer', lang)}</button>
@@ -1084,6 +1084,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
                     <button type="button" className="mini" onClick={() => engine.previewInstrument(slot.instrument)} aria-label={t('listenTo', lang, { name })} title={t('listenTo', lang, { name })}>
                       <Icon name="play" size={14} />
                     </button>
+                    <KeyBadge k={slot.instrument} size="sm" />
                     <span className="grow stack" style={{ gap: 0, minWidth: 0 }}>
                       <span>{name}</span>
                       <span className="small muted">{ROLE_NAMES[lang][slot.role]}</span>
