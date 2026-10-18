@@ -150,29 +150,64 @@ export const kitSlots = (kitKey: string): KitSlot[] =>
 export interface ParamDef {
   name: string;
   label: { en: string; es: string };
+  /** ratio (shown as %), s, Hz, dB, st (semitones) or bits. */
   unit: string;
   min: number;
   max: number;
   default: number;
+  /** Slider step; whole numbers for semitones and bits. */
+  step?: number;
 }
 
+const P = (name: string, en: string, es: string, unit: string, min: number, max: number, def: number, step?: number): ParamDef =>
+  ({ name, label: { en, es }, unit, min, max, default: def, ...(step ? { step } : {}) });
+const MIX = (def: number) => P('mix', 'Mix', 'Mezcla', 'ratio', 0, 1, def);
+
+/** Pedals. The first three come on every new track; the rest are added from the pedal list. */
 export const EFFECTS = [
-  item('effect', 'effect.drive', 'Drive', 'Saturación', {
-    params: [{ name: 'amount', label: { en: 'Amount', es: 'Cantidad' }, unit: 'ratio', min: 0, max: 1, default: 0.35 }],
-  }),
+  item('effect', 'effect.drive', 'Drive', 'Saturación', { params: [P('amount', 'Amount', 'Cantidad', 'ratio', 0, 1, 0.35)] }),
   item('effect', 'effect.delay', 'Delay', 'Eco', {
-    params: [
-      { name: 'mix', label: { en: 'Mix', es: 'Mezcla' }, unit: 'ratio', min: 0, max: 1, default: 0.25 },
-      { name: 'feedback', label: { en: 'Repeats', es: 'Repeticiones' }, unit: 'ratio', min: 0, max: 0.9, default: 0.35 },
-    ],
+    params: [MIX(0.25), P('feedback', 'Repeats', 'Repeticiones', 'ratio', 0, 0.9, 0.35)],
   }),
   item('effect', 'effect.reverb', 'Reverb', 'Reverberación', {
-    params: [
-      { name: 'mix', label: { en: 'Mix', es: 'Mezcla' }, unit: 'ratio', min: 0, max: 1, default: 0.3 },
-      { name: 'size', label: { en: 'Size', es: 'Tamaño' }, unit: 's', min: 0.5, max: 8, default: 2.5 },
-    ],
+    params: [MIX(0.3), P('size', 'Size', 'Tamaño', 's', 0.5, 8, 2.5)],
   }),
+  item('effect', 'effect.chorus', 'Chorus', 'Chorus', {
+    params: [MIX(0.5), P('rate', 'Speed', 'Velocidad', 'Hz', 0.1, 8, 1.5), P('depth', 'Depth', 'Profundidad', 'ratio', 0, 1, 0.7)],
+  }),
+  item('effect', 'effect.phaser', 'Phaser', 'Phaser', {
+    params: [MIX(0.5), P('rate', 'Speed', 'Velocidad', 'Hz', 0.05, 6, 0.5), P('depth', 'Depth', 'Profundidad', 'ratio', 0, 1, 0.5)],
+  }),
+  item('effect', 'effect.filter-sweep', 'Filter sweep', 'Barrido de filtro', {
+    params: [MIX(1), P('rate', 'Speed', 'Velocidad', 'Hz', 0.05, 8, 0.5), P('depth', 'Depth', 'Profundidad', 'ratio', 0, 1, 0.6)],
+  }),
+  item('effect', 'effect.pump', 'Sidechain pump', 'Bombeo (sidechain)', {
+    params: [P('depth', 'Depth', 'Profundidad', 'ratio', 0, 1, 0.6), P('release', 'Swell', 'Regreso', 'ratio', 0.1, 1, 0.6)],
+  }),
+  item('effect', 'effect.pingpong', 'Ping-pong delay', 'Eco ping-pong', {
+    params: [MIX(0.3), P('feedback', 'Repeats', 'Repeticiones', 'ratio', 0, 0.9, 0.35)],
+  }),
+  item('effect', 'effect.lofi', 'Lo-fi', 'Lo-fi', {
+    params: [MIX(1), P('bits', 'Bits', 'Bits', 'bits', 2, 12, 6, 1), P('tone', 'Tone', 'Tono', 'Hz', 800, 8000, 3500)],
+  }),
+  item('effect', 'effect.radio', 'Radio', 'Radio', {
+    params: [MIX(1), P('focus', 'Focus', 'Foco', 'Hz', 400, 3000, 1200)],
+  }),
+  item('effect', 'effect.octave', 'Octave', 'Octavador', {
+    params: [MIX(0.4), P('pitch', 'Shift', 'Desplazamiento', 'st', -12, 12, 12, 1)],
+  }),
+  item('effect', 'effect.tremolo', 'Tremolo', 'Trémolo', {
+    params: [P('rate', 'Speed', 'Velocidad', 'Hz', 0.5, 16, 6), P('depth', 'Depth', 'Profundidad', 'ratio', 0, 1, 0.6)],
+  }),
+  item('effect', 'effect.compressor', 'Compressor', 'Compresor', { params: [P('amount', 'Amount', 'Cantidad', 'ratio', 0, 1, 0.5)] }),
+  item('effect', 'effect.eq', 'EQ', 'Ecualizador', {
+    params: [P('low', 'Lows', 'Graves', 'dB', -12, 12, 0, 0.5), P('mid', 'Mids', 'Medios', 'dB', -12, 12, 0, 0.5), P('high', 'Highs', 'Agudos', 'dB', -12, 12, 0, 0.5)],
+  }),
+  item('effect', 'effect.widener', 'Stereo width', 'Estéreo ancho', { params: [P('width', 'Width', 'Ancho', 'ratio', 0, 1, 0.7)] }),
 ];
+
+/** Pedals that make echoes and rooms go last in a chain; new pedals go before them. */
+export const SPACE_EFFECTS = ['effect.delay', 'effect.pingpong', 'effect.reverb'];
 
 export const CATALOG: CatalogItem[] = [...DRUM_VOICES, ...ORCH_VOICES, ...LATIN_VOICES, ...INSTRUMENTS, ...KITS, ...EFFECTS];
 

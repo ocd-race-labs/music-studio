@@ -193,10 +193,62 @@ const MELODIC: Record<string, () => MelodicVoice> = {
 
 export const MELODIC_VOICES = Object.keys(MELODIC);
 
+/**
+ * Loudness trims in dB, so every instrument and kit leaves the voice at about the same level
+ * (measured offline with K-weighted loudness; see the loudness test). Mixing starts from equal footing.
+ */
+const TRIM_DB: Record<string, number> = {
+  "bass808": -4.6,
+  "bassElectric": 6.7,
+  "bassSynth": -1.3,
+  "bassUpright": 3,
+  "bellsFm": 20,
+  "brassSection": 15.1,
+  "cello": 5.6,
+  "flute": -4.9,
+  "guitarClean": 7.8,
+  "guitarDist": -0.2,
+  "guitarLead": -5,
+  "guitarNylon": 5.5,
+  "keysEp": 12.9,
+  "keysPiano": 13.7,
+  "kit:boomBap": 0.4,
+  "kit:electro": -1.5,
+  "kit:jazz": 9,
+  "kit:latin": 1.2,
+  "kit:latinPerc": -0.5,
+  "kit:orch": -3,
+  "kit:pop": -0.4,
+  "kit:rock": -0.9,
+  "kit:trap": -1.9,
+  "leadBright": 1.4,
+  "leadSaw": 5.5,
+  "organ": 6.1,
+  "padSupersaw": 21.8,
+  "padWarm": 15.3,
+  "pluck": 11.7,
+  "sax": 4.9,
+  "strings": 12.5,
+  "trumpet": 5.8,
+  "trumpetMute": 1.2,
+  "vibes": 13.6,
+  "violin": 4.4,
+};
+export const LOUDNESS_TRIMS = TRIM_DB;
+
+function withTrim<V extends Voice>(v: V, id: string): V {
+  const db = TRIM_DB[id] ?? 0;
+  if (!db) return v;
+  const gain = new Tone.Gain(Tone.dbToGain(db));
+  v.output.connect(gain);
+  const inner = v.dispose.bind(v);
+  return { ...v, output: gain, dispose() { inner(); gain.dispose(); } };
+}
+
 export function createMelodicVoice(voice: string): MelodicVoice {
   const make = MELODIC[voice];
   if (!make) throw new Error(`Unknown voice: ${voice}`);
-  return make();
+  return withTrim(make(), voice);
 }
 /** How a standard kit sounds: the same eight rows, tuned per genre. */
 interface KitSound {
@@ -242,7 +294,7 @@ const KIT_SOUNDS: Record<string, KitSound> = {
   },
   jazz: {
     kick: { note: 'E1', pitchDecay: 0.02, octaves: 3, decay: 0.22, volume: -8 },
-    snare: { hp: 600, decay: 0.35, volume: -14, noise: 'pink', body: 'C3', bodyVolume: -20 },
+    snare: { hp: 600, decay: 0.35, volume: -7, noise: 'pink', body: 'C3', bodyVolume: -16 },
     hat: { hp: 8000, closed: 0.07, open: 0.5, volume: -20 }, rim: 'C5', tom: { note: 'F2', decay: 0.45 },
     crash: { hp: 6000, decay: 2.4, volume: -24 }, clap: { bp: 1500, volume: -10 },
   },
@@ -277,15 +329,15 @@ function standardKit(k: KitSound): DrumVoice {
     envelope: { attack: 0.001, decay: k.kick.decay, sustain: 0, release: 0.1 }, volume: k.kick.volume,
   }).connect(bus);
   const snareFilter = new Tone.Filter(k.snare.hp, 'highpass').connect(bus);
-  const snare = new Tone.NoiseSynth({ noise: { type: k.snare.noise }, envelope: { attack: 0.001, decay: k.snare.decay, sustain: 0 }, volume: k.snare.volume }).connect(snareFilter);
+  const snare = new Tone.NoiseSynth({ noise: { type: k.snare.noise }, envelope: { attack: 0.001, decay: k.snare.decay, sustain: 0 }, volume: k.snare.volume + 2 }).connect(snareFilter);
   const snareBody = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.12, sustain: 0 }, volume: k.snare.bodyVolume }).connect(bus);
   const clapFilter = new Tone.Filter(k.clap.bp, 'bandpass').connect(bus);
-  const clap = new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.08, sustain: 0 }, volume: k.clap.volume }).connect(clapFilter);
+  const clap = new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.08, sustain: 0 }, volume: k.clap.volume + 15 }).connect(clapFilter);
   const hatFilter = new Tone.Filter(k.hat.hp, 'highpass').connect(bus);
-  const hatClosed = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: k.hat.closed, sustain: 0 }, volume: k.hat.volume }).connect(hatFilter);
-  const hatOpen = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: k.hat.open, sustain: 0 }, volume: k.hat.volume - 2 }).connect(hatFilter);
-  const rim = new Tone.MembraneSynth({ pitchDecay: 0.004, octaves: 1, envelope: { attack: 0.001, decay: 0.05, sustain: 0 }, volume: -10 }).connect(bus);
-  const tom = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 3, envelope: { attack: 0.001, decay: k.tom.decay, sustain: 0 }, volume: -6 }).connect(bus);
+  const hatClosed = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: k.hat.closed, sustain: 0 }, volume: k.hat.volume + 6 }).connect(hatFilter);
+  const hatOpen = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: k.hat.open, sustain: 0 }, volume: k.hat.volume + 1 }).connect(hatFilter);
+  const rim = new Tone.MembraneSynth({ pitchDecay: 0.004, octaves: 1, envelope: { attack: 0.001, decay: 0.05, sustain: 0 }, volume: -7 }).connect(bus);
+  const tom = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 3, envelope: { attack: 0.001, decay: k.tom.decay, sustain: 0 }, volume: -7 }).connect(bus);
   const crashFilter = new Tone.Filter(k.crash.hp, 'highpass').connect(bus);
   const crash = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.002, decay: k.crash.decay, sustain: 0 }, volume: k.crash.volume }).connect(crashFilter);
   const at = nudger();
@@ -318,21 +370,22 @@ function orchestralKit(): DrumVoice {
   const bus = new Tone.Gain(0.9);
   const bassDrum = new Tone.MembraneSynth({ pitchDecay: 0.1, octaves: 2, envelope: { attack: 0.004, decay: 1.1, sustain: 0, release: 0.4 }, volume: 0 }).connect(bus);
   const snareFilter = new Tone.Filter(2500, 'highpass').connect(bus);
-  const snare = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.22, sustain: 0 }, volume: -9 }).connect(snareFilter);
-  const snareBody = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 1.5, envelope: { attack: 0.001, decay: 0.08, sustain: 0 }, volume: -14 }).connect(bus);
-  const jingle = new Tone.MetalSynth({ envelope: { attack: 0.001, decay: 0.18, release: 0.05 }, harmonicity: 5.1, modulationIndex: 32, resonance: 5000, octaves: 1.5, volume: -26 }).connect(bus);
-  jingle.frequency.value = 600;
+  const snare = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.22, sustain: 0 }, volume: -4 }).connect(snareFilter);
+  const snareBody = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 1.5, envelope: { attack: 0.001, decay: 0.08, sustain: 0 }, volume: -9 }).connect(bus);
+  // Jingles: bright resonant noise. (A MetalSynth here refused fast repeats and stopped the beat.)
+  const jingleFilter = new Tone.Filter({ frequency: 7500, type: 'bandpass', Q: 4 }).connect(bus);
+  const jingle = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.16, sustain: 0 }, volume: 3 }).connect(jingleFilter);
   const shakeFilter = new Tone.Filter(6000, 'highpass').connect(bus);
-  const shake = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.002, decay: 0.12, sustain: 0 }, volume: -18 }).connect(shakeFilter);
-  const triangle = new Tone.FMSynth({ harmonicity: 2.76, modulationIndex: 2, envelope: { attack: 0.001, decay: 2.5, sustain: 0, release: 1 }, modulationEnvelope: { attack: 0.001, decay: 1.5, sustain: 0, release: 1 }, volume: -20 }).connect(bus);
+  const shake = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.002, decay: 0.12, sustain: 0 }, volume: -9 }).connect(shakeFilter);
+  const triangle = new Tone.FMSynth({ harmonicity: 2.76, modulationIndex: 2, envelope: { attack: 0.001, decay: 2.5, sustain: 0, release: 1 }, modulationEnvelope: { attack: 0.001, decay: 1.5, sustain: 0, release: 1 }, volume: -10 }).connect(bus);
   const susFilter = new Tone.Filter(5000, 'highpass').connect(bus);
-  const suspended = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.15, decay: 2.5, sustain: 0 }, volume: -22 }).connect(susFilter);
-  const woodblock = new Tone.MembraneSynth({ pitchDecay: 0.002, octaves: 1, envelope: { attack: 0.001, decay: 0.06, sustain: 0 }, volume: -8 }).connect(bus);
-  const timpani = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 1.2, envelope: { attack: 0.003, decay: 1.6, sustain: 0, release: 0.6 }, volume: -2 }).connect(bus);
+  const suspended = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.15, decay: 2.5, sustain: 0 }, volume: -20 }).connect(susFilter);
+  const woodblock = new Tone.MembraneSynth({ pitchDecay: 0.002, octaves: 1, envelope: { attack: 0.001, decay: 0.06, sustain: 0 }, volume: -4 }).connect(bus);
+  const timpani = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 1.2, envelope: { attack: 0.003, decay: 1.6, sustain: 0, release: 0.6 }, volume: -5.5 }).connect(bus);
   const cymFilter = new Tone.Filter(3500, 'highpass').connect(bus);
-  const cymbals = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.002, decay: 2.2, sustain: 0 }, volume: -16 }).connect(cymFilter);
+  const cymbals = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.002, decay: 2.2, sustain: 0 }, volume: -17.5 }).connect(cymFilter);
   const at = nudger();
-  return drumVoice(bus, [bassDrum, snare, snareFilter, snareBody, jingle, shake, shakeFilter, triangle, suspended, susFilter, woodblock, timpani, cymbals, cymFilter], (voice, time, vel) => {
+  return drumVoice(bus, [bassDrum, snare, snareFilter, snareBody, jingle, jingleFilter, shake, shakeFilter, triangle, suspended, susFilter, woodblock, timpani, cymbals, cymFilter], (voice, time, vel) => {
     switch (voice) {
       case 'bassDrum': bassDrum.triggerAttackRelease('C1', '4n', at('bassDrum', time), vel); break;
       case 'snareOrch':
@@ -360,18 +413,18 @@ function latinPercussion(): DrumVoice {
     new Tone.MembraneSynth({ pitchDecay: 0.02, octaves: 1.5, envelope: { attack: 0.001, decay, sustain: 0 }, volume }).connect(bus);
   const congaLow = drum(0.35, -4);
   const congaHigh = drum(0.28, -5);
-  const bongo = drum(0.15, -6);
+  const bongo = drum(0.15, -4);
   const guiroFilter = new Tone.Filter({ frequency: 3000, type: 'bandpass', Q: 3 }).connect(bus);
-  const guiro = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.012, sustain: 0 }, volume: -4 }).connect(guiroFilter);
+  const guiro = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.012, sustain: 0 }, volume: 9 }).connect(guiroFilter);
   const maracaFilter = new Tone.Filter(6000, 'highpass').connect(bus);
-  const maracas = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.003, decay: 0.05, sustain: 0 }, volume: -14 }).connect(maracaFilter);
-  const clave = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 }, volume: -8 }).connect(bus);
+  const maracas = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.003, decay: 0.05, sustain: 0 }, volume: -5 }).connect(maracaFilter);
+  const clave = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 }, volume: -5 }).connect(bus);
   const timbale = new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 1, envelope: { attack: 0.001, decay: 0.3, sustain: 0 }, volume: -8 }).connect(bus);
   const shellFilter = new Tone.Filter(3000, 'highpass').connect(bus);
   const shell = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.1, sustain: 0 }, volume: -18 }).connect(shellFilter);
   const bellFilter = new Tone.Filter({ frequency: 900, type: 'bandpass', Q: 1.5 }).connect(bus);
-  const bellA = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.05 }, volume: -12 }).connect(bellFilter);
-  const bellB = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.05 }, volume: -12 }).connect(bellFilter);
+  const bellA = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.05 }, volume: -10 }).connect(bellFilter);
+  const bellB = new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.05 }, volume: -10 }).connect(bellFilter);
   const at = nudger();
   return drumVoice(bus, [congaLow, congaHigh, bongo, guiro, guiroFilter, maracas, maracaFilter, clave, timbale, shell, shellFilter, bellA, bellB, bellFilter], (voice, time, vel) => {
     switch (voice) {
@@ -405,7 +458,6 @@ export const DRUM_KITS = [...Object.keys(KIT_SOUNDS), 'orch', 'latinPerc'];
 
 /** A synthesized drum kit, by the kit id in its catalog manifest. */
 export function createDrumKit(kit: string): DrumVoice {
-  if (kit === 'orch') return orchestralKit();
-  if (kit === 'latinPerc') return latinPercussion();
-  return standardKit(KIT_SOUNDS[kit] ?? KIT_SOUNDS.boomBap);
+  const v = kit === 'orch' ? orchestralKit() : kit === 'latinPerc' ? latinPercussion() : standardKit(KIT_SOUNDS[kit] ?? KIT_SOUNDS.boomBap);
+  return withTrim(v, `kit:${kit}`);
 }

@@ -12,6 +12,7 @@ import { ChordLane, DrumGrid, Keyboard, NoteGrid, Pads, songKey } from './editor
 import { autoZoom, ZOOMS } from './zoom';
 import type { Zoom } from './zoom';
 import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panels';
+import MixerBoard from './MixerBoard';
 import { namingFor, t, tn } from './i18n';
 import type { Mode } from './prefs';
 import { Avatar, downloadText, Icon, LangToggle, Modal, ModeSwitch, pickFile, slug, useToast, useWidth } from './ui';
@@ -82,7 +83,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   const [lows, setLows] = useState<Record<string, number>>({});
   const [focusBar, setFocusBar] = useState(0);
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [modal, setModal] = useState<null | 'songs' | 'versions' | 'kit' | 'builder'>(null);
+  const [modal, setModal] = useState<null | 'songs' | 'versions' | 'kit' | 'builder' | 'clear'>(null);
   const [pendingKit, setPendingKit] = useState<string | null>(null);
   const [songList, setSongList] = useState<Song[]>([]);
   const [versions, setVersions] = useState<SongVersion[]>([]);
@@ -94,6 +95,8 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
 
   // Listen to the selected track alone. Not saved in the song: mute and solo stay as they were.
   const [alone, setAlone] = useState(false);
+  // The producer's mixer takes the editor's place while it is open.
+  const [board, setBoard] = useState(false);
 
   // Full screen: the grid takes the whole width; the browser goes full screen too where it allows it.
   const [wide, setWide] = useState(false);
@@ -418,6 +421,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         <button type="button" className="btn" onClick={openSongs} aria-label={t('songs', lang)}><Icon name="menu" size={18} /> <span className="hide-sm">{t('songs', lang)}</span></button>
         <button type="button" className="btn icon" onClick={undo} disabled={!hist.past} aria-label={t('undo', lang)}><Icon name="undo" /></button>
         <button type="button" className="btn icon" onClick={redo} disabled={!hist.future} aria-label={t('redo', lang)}><Icon name="redo" /></button>
+        <button type="button" className="btn icon" onClick={() => setModal('clear')} disabled={!C.hasWritten(song)} aria-label={t('clearOpen', lang)} title={t('clearOpen', lang)}><Icon name="trash" /></button>
         <span className="small muted hide-sm" aria-live="polite" style={{ minWidth: 70 }}>{saveState === 'saving' ? t('saving', lang) : t('saved', lang)}</span>
         </div>
         <div className="tb-group tb-right">
@@ -485,14 +489,32 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
                   <Icon name={isStarred(tr.instrument.key, roleOf(tr)) ? 'starFill' : 'star'} size={16} />
                 </button>
               )}
-              <button type="button" className="mini" aria-pressed={tr.muted} onClick={() => apply((x) => C.toggleMute(x, tr.id, by))} aria-label={t('muteTrack', lang, { name: tr.name })}>M</button>
+              <button type="button" className="mini" aria-pressed={tr.muted} onClick={() => apply((x) => C.toggleMute(x, tr.id, by))} aria-label={t('muteTrack', lang, { name: tr.name })} title={t('muteHint', lang)}>M</button>
             </div>
           ))}
         </nav>
 
         <main className="editor" ref={editorRef}>
+          {hat === 'producer' && board ? (
+            <>
+              <div className="row wrap">
+                <h2 className="display grow" style={{ fontSize: 22 }}>{t('mixerBoard', lang)} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{t('mixerBoardHint', lang)}</span></h2>
+                <button type="button" className="btn" aria-pressed={board} onClick={() => setBoard(false)}><Icon name="sliders" size={18} /> {t('backToEditor', lang)}</button>
+              </div>
+              <MixerBoard song={song} selected={track.id} lang={lang} onSelect={setSelected}
+                onGain={(id, g) => apply((x) => C.setGain(x, id, g, by))}
+                onPan={(id, v) => apply((x) => C.setPan(x, id, v, by))}
+                onMute={(id) => apply((x) => C.toggleMute(x, id, by))}
+                onSolo={(id) => apply((x) => C.toggleSolo(x, id, by))} />
+            </>
+          ) : (<>
           <div className="row wrap">
             <h2 className="display grow" style={{ fontSize: 22 }}>{track.name} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{trackTitle}</span></h2>
+            {hat === 'producer' && (
+              <button type="button" className="btn" onClick={() => setBoard(true)} title={t('mixerBoardHint', lang)}>
+                <Icon name="sliders" size={18} /> <span className="hide-sm">{t('mixerBoard', lang)}</span>
+              </button>
+            )}
             <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
               aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
               <Icon name="headphones" size={18} /> <span className="hide-sm">{t('onlyThis', lang)}</span>
@@ -535,6 +557,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
               onSet={(bar, degree) => { apply((x) => C.setChord(x, track.id, bar, degree, by)); setFocusBar(bar); }}
               onPreview={(midis) => engine.previewNotes(track.id, midis.map((m) => ({ midi: m, at: 0, dur: 0.9, vel: 0.6 })))} />
           )}
+          </>)}
         </main>
 
         <aside className="side">
@@ -548,7 +571,9 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
               onParam={(slot, name, v) => apply((x) => C.setFxParam(x, track.id, slot, name, v, by))}
               onSwing={(v) => apply((x) => C.setSwing(x, v, by))}
               onResetSwing={() => apply((x) => C.resetSwing(x, by))}
-              onResetFx={(slot) => apply((x) => C.resetFx(x, track.id, slot, by))} />
+              onResetFx={(slot) => apply((x) => C.resetFx(x, track.id, slot, by))}
+              onAddFx={(key) => apply((x) => C.addFx(x, track.id, key, by))}
+              onRemoveFx={(slot) => apply((x) => C.removeFx(x, track.id, slot, by))} />
           ) : (
             <TheoryPanel song={song} lang={lang} focusBar={focusBar} onKey={(tonic, mode) => apply((x) => C.setKey(x, tonic, mode, by))} />
           )}
@@ -596,6 +621,27 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
               <button type="button" className="btn" onClick={() => { apply(() => ({ ...v.snapshot, updated_at: new Date().toISOString() })); setModal(null); showToast(t('versionRestored', lang, { n: v.version_no })); }}>{t('restore', lang)}</button>
             </div>
           ))}
+        </Modal>
+      )}
+
+      {modal === 'clear' && (
+        <Modal title={t('clearTitle', lang)} closeLabel={t('close', lang)} onClose={() => setModal(null)}>
+          <div className="row warn-box" role="alert">
+            <Icon name="warning" size={28} />
+            <p style={{ margin: 0 }}><strong>{t('clearBody', lang)}</strong></p>
+          </div>
+          <p className="muted" style={{ margin: 0 }}>{t('clearKeeps', lang)}</p>
+          <div className="row wrap" style={{ justifyContent: 'flex-end' }}>
+            <button type="button" className="btn ghost" onClick={() => setModal(null)}>{t('cancel', lang)}</button>
+            {C.hasWritten(song, track.id) && (
+              <button type="button" className="btn" onClick={() => { apply((x) => C.clearWritten(x, track.id, by)); setModal(null); showToast(t('cleared', lang)); }}>
+                {t('clearTrack', lang, { name: track.name })}
+              </button>
+            )}
+            <button type="button" className="btn danger" onClick={() => { apply((x) => C.clearWritten(x, null, by)); setModal(null); showToast(t('cleared', lang)); }}>
+              <Icon name="trash" size={18} /> {t('clearAll', lang)}
+            </button>
+          </div>
         </Modal>
       )}
 

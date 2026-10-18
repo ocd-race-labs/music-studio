@@ -1,5 +1,5 @@
 // The audio engine: reads the song, never edits it. One channel per track:
-// voice -> drive -> delay -> reverb -> channel (volume, pan, mute, solo) -> master.
+// voice -> pedals in the song's order -> channel (volume, pan, mute, solo) -> master.
 // No AudioWorklets: they need blob: or same-origin module loads that some hosts block,
 // and they cost the most CPU on a tablet.
 
@@ -11,16 +11,17 @@ import { PPQ, STEP_TICKS } from '../domain/types';
 import { loopSteps } from '../domain/factory';
 import { createDrumKit, createMelodicVoice } from './voices';
 import type { Voice } from './voices';
+import { createPedal } from './pedals';
+import type { Pedal } from './pedals';
 
 interface TrackChannel {
   instrumentKey: string;
   voice: Voice;
-  drive: Tone.Distortion;
-  delay: Tone.FeedbackDelay;
-  reverb: Tone.Reverb;
-  reverbSize: number;
-  reverbTimer: ReturnType<typeof setTimeout> | null;
+  /** The pedal chain, in the song's order; rebuilt when pedals are added, removed or moved. */
+  pedals: { key: string; pedal: Pedal | null }[];
+  chainSig: string;
   channel: Tone.Channel;
+  meter: Tone.Meter;
 }
 
 type AudioSessionNav = Navigator & { audioSession?: { type: string } };
@@ -187,16 +188,25 @@ export class StudioEngine {
     const voice: Voice = manifest.type === 'drumkit'
       ? createDrumKit(manifest.kit ?? 'boomBap')
       : createMelodicVoice(manifest.voice ?? 'keysEp');
-    const drive = new Tone.Distortion(0.35);
-    const delay = new Tone.FeedbackDelay('8n.', 0.35);
-    const reverb = new Tone.Reverb({ decay: 2.5, preDelay: 0.01, wet: 0 });
     const channel = new Tone.Channel({ volume: 0, pan: 0 });
-    voice.output.connect(drive);
-    drive.connect(delay);
-    delay.connect(reverb);
-    reverb.connect(channel);
+    const meter = new Tone.Meter({ smoothing: 0.6 });
     channel.connect(this.master!);
-    return { instrumentKey: t.instrument?.key ?? '', voice, drive, delay, reverb, reverbSize: 2.5, reverbTimer: null, channel };
+    channel.connect(meter);
+    const ch: TrackChannel = { instrumentKey: t.instrument?.key ?? '', voice, pedals: [], chainSig: '', channel, meter };
+    this.buildChain(ch, t);
+    return ch;
+  }
+
+  /** Wire voice -> pedals -> channel for the track's current chain. */
+  private buildChain(ch: TrackChannel, t: Track): void {
+    ch.voice.output.disconnect();
+    ch.pedals.forEach(({ pedal }) => pedal?.dispose());
+    // Unknown pedals (from a newer file) keep their place in the list but pass the sound through.
+    ch.pedals = t.fx_chain.slots.map((slot) => ({ key: slot.effect.key, pedal: createPedal(slot.effect.key) }));
+    let prev: Tone.ToneAudioNode = ch.voice.output;
+    for (const { pedal } of ch.pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
+    prev.connect(ch.channel);
+    ch.chainSig = t.fx_chain.slots.map((s) => s.effect.key).join('|');
   }
 
   private applyMix(ch: TrackChannel, t: Track): void {
@@ -205,31 +215,23 @@ export class StudioEngine {
     const focus = this.focusId !== null && this.song?.tracks.some((x) => x.id === this.focusId) ? this.focusId : null;
     ch.channel.mute = focus ? t.id !== focus : t.muted;
     ch.channel.solo = focus ? false : t.solo;
-    for (const slot of t.fx_chain.slots) {
-      const p = slot.params;
-      if (slot.effect.key === 'effect.drive') {
-        ch.drive.wet.value = slot.bypass ? 0 : 1;
-        ch.drive.distortion = p.amount ?? 0.35;
-      } else if (slot.effect.key === 'effect.delay') {
-        ch.delay.wet.value = slot.bypass ? 0 : (p.mix ?? 0.25);
-        ch.delay.feedback.value = p.feedback ?? 0.35;
-      } else if (slot.effect.key === 'effect.reverb') {
-        ch.reverb.wet.value = slot.bypass ? 0 : (p.mix ?? 0.3);
-        const size = Math.max(0.3, Math.min(8, p.size ?? 2.5));
-        if (Math.abs(size - ch.reverbSize) > 0.04) {
-          // A new size rebuilds the room's echo; wait until the slider rests.
-          ch.reverbSize = size;
-          if (ch.reverbTimer) clearTimeout(ch.reverbTimer);
-          ch.reverbTimer = setTimeout(() => { ch.reverbTimer = null; ch.reverb.decay = size; }, 250);
-        }
-      }
-    }
+    if (ch.chainSig !== t.fx_chain.slots.map((x) => x.effect.key).join('|')) this.buildChain(ch, t);
+    t.fx_chain.slots.forEach((slot, i) => ch.pedals[i]?.pedal?.set(slot.params, slot.bypass));
   }
 
   private disposeChannel(ch: TrackChannel): void {
-    if (ch.reverbTimer) clearTimeout(ch.reverbTimer);
     ch.voice.dispose();
-    [ch.drive, ch.delay, ch.reverb, ch.channel].forEach((n) => n.dispose());
+    ch.pedals.forEach(({ pedal }) => pedal?.dispose());
+    ch.channel.dispose();
+    ch.meter.dispose();
+  }
+
+  /** Level 0..1 of one track after its fader, for the mixer. */
+  trackLevel(trackId: string): number {
+    const m = this.channels.get(trackId)?.meter;
+    if (!m) return 0;
+    const db = m.getValue() as number;
+    return Number.isFinite(db) ? Math.max(0, Math.min(1, (db + 54) / 54)) : 0;
   }
 
   async play(): Promise<boolean> {
@@ -264,6 +266,7 @@ export class StudioEngine {
     if (this.repeatId !== null) transport.clear(this.repeatId);
     this.repeatId = null;
     Tone.getDraw().cancel(0); // drop playhead moves already queued, or the playhead lingers after Stop
+    for (const ch of this.channels.values()) ch.pedals.forEach(({ pedal }) => pedal?.rest?.());
     this.stepListeners.forEach((fn) => fn(-1));
   }
 
@@ -273,6 +276,10 @@ export class StudioEngine {
 
   private playStep(song: Song, step: number, time: number): void {
     const stepStart = step * STEP_TICKS;
+    if (step % 4 === 0) {
+      const beat = 60 / song.tempo_bpm;
+      for (const ch of this.channels.values()) ch.pedals.forEach(({ pedal }) => pedal?.onBeat?.(time, beat));
+    }
     const key = { tonic: song.key_tonic, mode: song.key_mode };
     for (const t of song.tracks) {
       const ch = this.channels.get(t.id);

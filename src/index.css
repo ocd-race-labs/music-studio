@@ -122,29 +122,36 @@
   color-scheme: dark;
 }
 
+/* Magdalena's palette in light: the same turquoise, magenta and purple as in dark, on a light violet ground.
+   Fills keep the agreed colors; a darker edge keeps the on state visible against white. */
 [data-studio='midnight-jewel'][data-mode='light'] {
-  --ground: #f6f4fd;
+  --ground: #f3f0fc;
   --panel: #ffffff;
-  --raised: #ece8fa;
-  --line: #d9d2f2;
+  --raised: #ebe6fa;
+  --line: #d4cbef;
   --ink: #1a1630;
   --ink-2: #4b4470;
-  --main: #0f766e;
-  --main-ink: #ffffff;
-  --highlight: #be185d;
-  --highlight-ink: #ffffff;
-  --accent: #7c5ce0;
-  --tier-chord: #0f8c7e;
-  --tier-scale: #7c5ce0;
-  --tier-outside: #fce7f1;
-  --tier-outside-line: #be185d;
+  --main: #2dd4bf;
+  --main-ink: #0c2a27;
+  --main-text: #0f766e;
+  --main-edge: #14a594;
+  --highlight: #f0509e;
+  --highlight-ink: #2a0716;
+  --accent: #a78bfa;
+  --tier-chord: #2dd4bf;
+  --tier-scale: #a78bfa;
+  --tier-outside: #fde4f0;
+  --tier-outside-line: #f0509e;
   --key-white: #ffffff;
-  --key-black: #2a2346;
-  --cell-on: #0f8c7e;
-  --playhead: rgba(15, 140, 126, 0.12);
-  --focus: #0f766e;
+  --key-black: #241e3f;
+  --cell-on: #2dd4bf;
+  --playhead: rgba(45, 212, 191, 0.18);
+  --focus: #7c5ce0;
   color-scheme: light;
 }
+[data-studio='midnight-jewel'][data-mode='light'] .cell.on { box-shadow: inset 0 0 0 1.5px var(--main-edge); }
+[data-studio='midnight-jewel'][data-mode='light'] .note.chord { box-shadow: 0 0 0 1.5px var(--main-edge); }
+[data-studio='midnight-jewel'][data-mode='light'] .note.scale { box-shadow: 0 0 0 1.5px #8b6ff0; }
 
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; min-height: 100%; }
@@ -263,6 +270,22 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
   background: var(--panel); color: var(--ink); border: 1px solid var(--main); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   max-width: calc(100vw - 32px); font-size: 14px; font-weight: 600;
 }
+/* Producer mixer: one strip per track, faders in dB, meters after the fader. */
+.board { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; align-items: stretch; }
+.strip { flex: 0 0 112px; width: 112px; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); text-align: center; }
+.strip.on { border-color: var(--main); background: var(--raised); }
+.strip.master { flex-basis: 84px; width: 84px; background: var(--raised); }
+.strip-name { display: flex; flex-direction: column; align-items: center; gap: 2px; border: 0; background: transparent; color: var(--ink); padding: 0; min-height: 52px; min-width: 0; }
+.strip-name strong, .strip-name .small { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.strip-pan input { width: 100%; }
+.strip-fader { display: flex; justify-content: center; align-items: stretch; gap: 10px; height: 220px; }
+.fader { writing-mode: vertical-lr; direction: rtl; width: 36px; height: 100%; margin: 0; }
+.vmeter { width: 8px; border-radius: 4px; background: var(--raised); border: 1px solid var(--line); overflow: hidden; display: flex; align-items: flex-end; }
+.vmeter.wide { width: 16px; }
+.vmeter > span { display: block; width: 100%; height: 100%; background: linear-gradient(to top, var(--main) 70%, var(--highlight)); transform-origin: bottom center; transform: scaleY(0); }
+.pedal { gap: 6px; padding: 12px; border-radius: 12px; background: var(--raised); }
+.warn-box { gap: 12px; align-items: flex-start; padding: 14px; border-radius: 12px; border: 1.5px solid var(--highlight); background: color-mix(in srgb, var(--highlight) 12%, var(--panel)); }
+.warn-box svg { color: var(--highlight); flex: none; }
 .btn.danger { background: var(--highlight); color: var(--highlight-ink); border-color: var(--highlight); }
 .btn.reset { width: 36px; min-height: 36px; height: 36px; color: var(--ink-2); }
 .btn.reset:disabled { opacity: 0.35; }
@@ -331,7 +354,7 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .start-overlay { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--ground) 86%, transparent); }
 .meter { height: 10px; border-radius: 999px; background: var(--raised); overflow: hidden; }
 .meter > div { height: 100%; background: var(--main); transition: width 80ms linear; }
-.ok { color: var(--main); font-weight: 700; }
+.ok { color: var(--main-text, var(--main)); font-weight: 700; }
 .warn { color: var(--highlight); font-weight: 700; }
 
 @media (max-width: 720px) {

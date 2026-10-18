@@ -63,7 +63,7 @@ export function useAppearance() {
 export const GROUND: Record<ThemePreset, Record<Mode, string>> = {
   daylight: { light: '#F3F4F6', dark: '#141518' },
   graphite: { light: '#F4F4F5', dark: '#0E0E0F' },
-  'midnight-jewel': { light: '#F6F4FD', dark: '#120F1F' },
+  'midnight-jewel': { light: '#F3F0FC', dark: '#120F1F' },
 };
 
 /** Small previews of each palette for the home cards and settings. */
@@ -74,7 +74,7 @@ export const PREVIEW: Record<ThemePreset, Record<Mode, { ground: string; panel: 
   },
   'midnight-jewel': {
     dark: { ground: '#120F1F', panel: '#1A1630', ink: '#F4F1FF', ink2: '#B9B2D9', line: '#342C55', main: '#2DD4BF', mainInk: '#0C2A27', bars: [['#2DD4BF', '#2DD4BF'], ['#A78BFA', '#A78BFA'], ['#F0509E', '#38BDF8']] },
-    light: { ground: '#ECE8FA', panel: '#FFFFFF', ink: '#1A1630', ink2: '#4B4470', line: '#D9D2F2', main: '#0F766E', mainInk: '#FFFFFF', bars: [['#0F8C7E', '#0F8C7E'], ['#7C5CE0', '#7C5CE0'], ['#BE185D', '#0284C7']] },
+    light: { ground: '#EBE6FA', panel: '#FFFFFF', ink: '#1A1630', ink2: '#4B4470', line: '#D4CBEF', main: '#2DD4BF', mainInk: '#0C2A27', bars: [['#2DD4BF', '#2DD4BF'], ['#A78BFA', '#A78BFA'], ['#F0509E', '#38BDF8']] },
   },
   daylight: {
     light: { ground: '#E9EBEF', panel: '#FFFFFF', ink: '#15171C', ink2: '#4A4F5A', line: '#D5D8DE', main: '#C2410C', mainInk: '#FFFFFF', bars: [['#C9CDD4', '#C9CDD4'], ['#C2410C', '#AEB3BC'], ['#AEB3BC', '#C9CDD4']] },

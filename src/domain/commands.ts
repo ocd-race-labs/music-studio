@@ -7,7 +7,7 @@ import type {
 } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
 import { DEFAULT_SWING, defaultFxParams, loopBars, newId, now, retarget, roleOf, switchKit as switchKitOf } from './factory';
-import { ref, rowFor } from '../packs/core';
+import { ref, rowFor, SPACE_EFFECTS } from '../packs/core';
 import type { KitSlot } from '../packs/core';
 import type { Lang } from './types';
 
@@ -154,6 +154,34 @@ export function toggleNote(song: Song, trackId: string, midi: number, step: numb
   }), by);
 }
 
+/** Empty one clip: no notes, no hits, no chords. Instrument, mix and pedals stay. */
+const emptyClip = (c: Clip): Clip => {
+  if (c.kind === 'notes') return { ...c, content: { notes: [] } };
+  if (c.kind === 'chords') return { ...c, content: { chords: [] } };
+  if (c.kind === 'pattern') {
+    const p = c.content as PatternContent;
+    return { ...c, content: { steps: p.steps, rows: p.rows.map((r) => ({ ...r, hits: [] })) } };
+  }
+  return c;
+};
+
+/** The trash button: clear what is written in one track, or in every track when no track is given. */
+export function clearWritten(song: Song, trackId: string | null, by: string | null): Song {
+  const at = now();
+  return touch({
+    ...song,
+    tracks: song.tracks.map((t) => (trackId && t.id !== trackId ? t : { ...t, clips: t.clips.map((c) => ({ ...emptyClip(c), updated_at: at })), updated_at: at })),
+  }, by);
+}
+
+/** True when a track (or the song) has notes, hits or chords. */
+export function hasWritten(song: Song, trackId: string | null = null): boolean {
+  return song.tracks.some((t) => (!trackId || t.id === trackId) && t.clips.some((c) => {
+    const x = c.content as { notes?: unknown[]; chords?: unknown[]; rows?: { hits: unknown[] }[] };
+    return (x.notes?.length ?? 0) > 0 || (x.chords?.length ?? 0) > 0 || (x.rows ?? []).some((r) => r.hits.length > 0);
+  }));
+}
+
 /** Hold and drag: one sustained note across the cells, replacing what that pitch had there. */
 export function setNoteSpan(song: Song, trackId: string, midi: number, fromStep: number, lengthSteps: number, by: string | null): Song {
   const tick = fromStep * STEP_TICKS;
@@ -176,7 +204,11 @@ export function setChord(song: Song, trackId: string, bar: number, degree: numbe
 }
 
 export const setGain = (song: Song, trackId: string, gain: number, by: string | null): Song =>
-  mapTrack(song, trackId, (t) => ({ ...t, gain: Math.min(1, Math.max(0, gain)) }), by);
+  mapTrack(song, trackId, (t) => ({ ...t, gain: Math.min(2, Math.max(0, gain)) }), by);
+
+/** Pan: -1 left, 0 centre, 1 right. */
+export const setPan = (song: Song, trackId: string, pan: number, by: string | null): Song =>
+  mapTrack(song, trackId, (t) => ({ ...t, pan: Math.min(1, Math.max(-1, pan)) }), by);
 
 export const toggleMute = (song: Song, trackId: string, by: string | null): Song =>
   mapTrack(song, trackId, (t) => ({ ...t, muted: !t.muted }), by);
@@ -205,6 +237,21 @@ export const setFxParam = (song: Song, trackId: string, slot: number, name: stri
   }), by);
 
 /** Put a pedal's knobs back where a new track starts; on or off stays as it is. */
+/** Add a pedal to a track, on, with its starting settings. Echo and room pedals stay last, so it goes before them. */
+export function addFx(song: Song, trackId: string, key: string, by: string | null): Song {
+  return mapTrack(song, trackId, (t) => {
+    const slots = t.fx_chain.slots;
+    const at = slots.findIndex((x) => SPACE_EFFECTS.includes(x.effect.key));
+    const slot = { effect: ref(key), bypass: false, params: defaultFxParams(key) };
+    const next = at < 0 || SPACE_EFFECTS.includes(key) ? [...slots, slot] : [...slots.slice(0, at), slot, ...slots.slice(at)];
+    return { ...t, fx_chain: { ...t.fx_chain, slots: next } };
+  }, by);
+}
+
+/** Take a pedal off a track. */
+export const removeFx = (song: Song, trackId: string, slot: number, by: string | null): Song =>
+  mapTrack(song, trackId, (t) => ({ ...t, fx_chain: { ...t.fx_chain, slots: t.fx_chain.slots.filter((_, i) => i !== slot) } }), by);
+
 export const resetFx = (song: Song, trackId: string, slot: number, by: string | null): Song =>
   mapTrack(song, trackId, (t) => ({
     ...t,

@@ -1,9 +1,11 @@
-import { effectParams, INSTRUMENTS, KITS, swapsFor, title as catalogTitle } from '../packs/core';
+import { EFFECTS, effectParams, INSTRUMENTS, KITS, swapsFor, title as catalogTitle } from '../packs/core';
+import type { ParamDef } from '../packs/core';
 import { chordSymbol, diatonicTriads, SCALES, scaleSpellings, spellingToDisplay, tonicDisplay, TONICS } from '../theory';
 import type { CatalogRef, Idea, Lang, Song, Track } from '../domain/types';
 import { DEFAULT_SWING, defaultFxParams } from '../domain/factory';
 import { namingFor, t } from './i18n';
 import { Icon } from './ui';
+import { dbLabel, dbOfGain, FADER_MAX_DB, FADER_MIN_DB, gainOfDb } from './levels';
 import { chordAtBar, songKey, TierLegend } from './editors';
 
 
@@ -21,7 +23,37 @@ function ResetButton({ label, disabled, onClick }: { label: string; disabled: bo
 const sameParams = (a: Record<string, number>, b: Record<string, number>) =>
   Object.keys(b).every((k) => Math.abs((a[k] ?? b[k]) - b[k]) < 1e-6);
 
-export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, onBypass, onParam, onSwing, onResetSwing, onResetFx }: {
+/** What each pedal does, in a line; real terms, explained where they appear. */
+const PEDAL_BLURB: Record<string, { en: string; es: string }> = {
+  'effect.drive': { en: 'Pushes the sound until it gets gritty, like an amp turned up.', es: 'Empuja el sonido hasta que se ensucia, como un amplificador a tope.' },
+  'effect.delay': { en: 'Echoes that repeat in time with the beat.', es: 'Ecos que se repiten a tiempo con el beat.' },
+  'effect.reverb': { en: 'The room: from a small studio to a cathedral.', es: 'La sala: de un estudio chico a una catedral.' },
+  'effect.chorus': { en: 'Doubles the sound slightly out of tune: wide and shimmering, 80s and dream pop.', es: 'Duplica el sonido un poco desafinado: ancho y brillante, de los 80 y el dream pop.' },
+  'effect.phaser': { en: 'A slow swirl that sweeps through the sound; psychedelic and funky.', es: 'Un remolino lento que recorre el sonido; psicodélico y funky.' },
+  'effect.filter-sweep': { en: 'A filter that opens and closes by itself; the classic electronic build.', es: 'Un filtro que se abre y se cierra solo; el clásico de la electrónica.' },
+  'effect.pump': { en: 'Ducks on every beat and swells back, as if the kick pushed the track. House and EDM.', es: 'Baja en cada tiempo y vuelve a subir, como si el bombo empujara la pista. House y EDM.' },
+  'effect.pingpong': { en: 'Echoes that bounce left and right.', es: 'Ecos que rebotan de izquierda a derecha.' },
+  'effect.lofi': { en: 'Fewer bits and a darker tone: an old sampler or a cassette. Lo-fi hip hop.', es: 'Menos bits y un tono más oscuro: un sampler antiguo o un cassette. Lo-fi hip hop.' },
+  'effect.radio': { en: 'Only the middle of the sound, like a phone or an old radio. Great on vocals.', es: 'Solo el centro del sonido, como un teléfono o una radio antigua. Ideal en voces.' },
+  'effect.octave': { en: 'Adds the same notes higher or lower; up for sparkle, down for weight.', es: 'Suma las mismas notas más agudas o más graves; arriba da brillo, abajo da peso.' },
+  'effect.tremolo': { en: 'The volume pulses up and down; surf guitar and vintage keys.', es: 'El volumen late arriba y abajo; guitarra surf y teclados vintage.' },
+  'effect.compressor': { en: 'Evens out loud and soft so the track sounds closer and punchier.', es: 'Empareja lo fuerte y lo suave para que la pista suene más cerca y con más golpe.' },
+  'effect.eq': { en: 'More or less lows, mids and highs.', es: 'Más o menos graves, medios y agudos.' },
+  'effect.widener': { en: 'Spreads the sound wider across left and right.', es: 'Abre el sonido más ancho entre izquierda y derecha.' },
+};
+
+function formatParam(p: ParamDef, v: number): string {
+  switch (p.unit) {
+    case 's': return `${v.toFixed(1)} s`;
+    case 'Hz': return v >= 100 ? `${Math.round(v)} Hz` : `${v.toFixed(1)} Hz`;
+    case 'dB': return `${v > 0 ? '+' : ''}${v.toFixed(1)} dB`;
+    case 'st': return `${v > 0 ? '+' : ''}${Math.round(v)} st`;
+    case 'bits': return `${Math.round(v)} bits`;
+    default: return `${Math.round(v * 100)}%`;
+  }
+}
+
+export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, onBypass, onParam, onSwing, onResetSwing, onResetFx, onAddFx, onRemoveFx }: {
   song: Song;
   track: Track;
   lang: Lang;
@@ -34,19 +66,22 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
   onSwing: (v: number) => void;
   onResetSwing: () => void;
   onResetFx: (slot: number) => void;
+  onAddFx: (key: string) => void;
+  onRemoveFx: (slot: number) => void;
 }) {
   const swaps = track.instrument ? swapsFor(track.instrument.key) : [];
+  const available = EFFECTS.filter((e) => !track.fx_chain.slots.some((x) => x.effect.key === e.key));
   return (
     <section className="card stack" aria-label={t('mixer', lang)}>
       <div className="row">
         <span className="swatch" style={{ background: track.color }} />
         <h3 className="grow" style={{ fontSize: 16 }}>{track.name}: {t('mixer', lang).toLowerCase()}</h3>
-        <button type="button" className="mini" aria-pressed={track.muted} onClick={onMute} aria-label={t('muteTrack', lang, { name: track.name })}>M</button>
-        <button type="button" className="mini" aria-pressed={track.solo} onClick={onSolo} aria-label={t('soloTrack', lang, { name: track.name })}>S</button>
+        <button type="button" className="mini" aria-pressed={track.muted} onClick={onMute} aria-label={t('muteTrack', lang, { name: track.name })} title={t('muteHint', lang)}>M</button>
+        <button type="button" className="mini" aria-pressed={track.solo} onClick={onSolo} aria-label={t('soloTrack', lang, { name: track.name })} title={t('soloHint', lang)}>S</button>
       </div>
       <label className="stack" style={{ gap: 4 }}>
-        <span className="lbl">{t('volume', lang)} <span className="mono">{track.gain <= 0.0001 ? '-∞' : (20 * Math.log10(track.gain)).toFixed(1)} dB</span></span>
-        <input type="range" min={0} max={1} step={0.01} value={track.gain} onChange={(e) => onGain(Number(e.target.value))} />
+        <span className="lbl">{t('volume', lang)} <span className="mono">{dbLabel(track.gain)} dB</span></span>
+        <input type="range" min={FADER_MIN_DB} max={FADER_MAX_DB} step={0.5} value={dbOfGain(track.gain)} onChange={(e) => onGain(gainOfDb(Number(e.target.value)))} />
       </label>
       {swaps.length > 1 && (
         <label className="stack" style={{ gap: 4 }}>
@@ -70,26 +105,47 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
           </div>
         </>
       )}
+      <h4 style={{ fontSize: 14, margin: '4px 0 0' }}>{t('pedals', lang)}</h4>
       {track.fx_chain.slots.map((slot, i) => (
-        <div key={slot.effect.key} className="stack" style={{ gap: 6, padding: 12, borderRadius: 12, background: 'var(--raised)', opacity: slot.bypass ? 0.75 : 1 }}>
-          <div className="row">
+        <div key={slot.effect.key} className="stack pedal" style={{ opacity: slot.bypass ? 0.75 : 1 }}>
+          <div className="row" style={{ gap: 6 }}>
             <strong className="grow">{catalogTitle(slot.effect, lang)}</strong>
+            <button type="button" className="btn icon ghost reset" onClick={() => onRemoveFx(i)}
+              aria-label={t('removePedal', lang, { name: catalogTitle(slot.effect, lang) })} title={t('removePedal', lang, { name: catalogTitle(slot.effect, lang) })}>
+              <Icon name="close" size={16} />
+            </button>
+          </div>
+          {PEDAL_BLURB[slot.effect.key] && <span className="small muted">{PEDAL_BLURB[slot.effect.key][lang]}</span>}
+          <div className="row" style={{ gap: 6 }}>
+            <button type="button" className="chip" aria-pressed={!slot.bypass} onClick={() => onBypass(i, !slot.bypass)}>
+              {t(slot.bypass ? 'pedalOff' : 'pedalOn', lang)}
+            </button>
+            <span className="grow" />
             {!slot.bypass && (
               <ResetButton label={`${t('reset', lang)} ${catalogTitle(slot.effect, lang)}`}
                 disabled={sameParams(slot.params, defaultFxParams(slot.effect.key))} onClick={() => onResetFx(i)} />
             )}
-            <button type="button" className="chip" aria-pressed={!slot.bypass} onClick={() => onBypass(i, !slot.bypass)}>
-              {t(slot.bypass ? 'pedalOff' : 'pedalOn', lang)}
-            </button>
           </div>
-          {!slot.bypass && effectParams(slot.effect).map((p) => (
-            <label key={p.name} className="stack" style={{ gap: 2 }}>
-              <span className="lbl">{p.label[lang]} <span className="mono">{p.unit === 's' ? `${(slot.params[p.name] ?? p.default).toFixed(1)} s` : `${Math.round((slot.params[p.name] ?? p.default) * 100)}%`}</span></span>
-              <input type="range" min={p.min} max={p.max} step={(p.max - p.min) / 100} value={slot.params[p.name] ?? p.default} onChange={(e) => onParam(i, p.name, Number(e.target.value))} />
-            </label>
-          ))}
+          {!slot.bypass && effectParams(slot.effect).map((p) => {
+            const v = slot.params[p.name] ?? p.default;
+            return (
+              <label key={p.name} className="stack" style={{ gap: 2 }}>
+                <span className="lbl">{p.label[lang]} <span className="mono">{formatParam(p, v)}</span></span>
+                <input type="range" min={p.min} max={p.max} step={p.step ?? (p.max - p.min) / 100} value={v} onChange={(e) => onParam(i, p.name, Number(e.target.value))} />
+              </label>
+            );
+          })}
         </div>
       ))}
+      {available.length > 0 && (
+        <label className="stack" style={{ gap: 4 }}>
+          <span className="lbl">{t('addPedal', lang)}</span>
+          <select className="field" value="" onChange={(e) => { if (e.target.value) onAddFx(e.target.value); }}>
+            <option value="">{t('choosePedal', lang)}</option>
+            {available.map((e) => <option key={e.key} value={e.key}>{e.title[lang]}</option>)}
+          </select>
+        </label>
+      )}
     </section>
   );
 }
