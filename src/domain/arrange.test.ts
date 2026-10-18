@@ -88,6 +88,14 @@ describe('song form', () => {
     expect(copySection(big, big.sections[0].id, 95, 'insert', 'es', me.id)).toBe(big);
   });
 
+  it('repeating can grow the same part instead: a 2-bar groove becomes an 8-bar verse', () => {
+    let s = song8();
+    s = repeatSection(s, s.sections[0].id, 3, 'es', me.id, true);
+    expect(names(s)).toEqual(['Intro@0+8', 'Verso@8+4', 'Coro@12+2']);
+    expect(songBars(s)).toBe(14);
+    expect(bass(s).map(([t]) => t / 16).slice(0, 8)).toEqual([0, 1, 0 + 2, 1 + 2, 4, 5, 6, 7]);
+  });
+
   it('deletes a part with its bars and closes the gap', () => {
     let s = song8();
     s = deleteSectionBars(s, s.sections[1].id, 'es', me.id);

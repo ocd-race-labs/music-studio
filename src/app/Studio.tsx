@@ -489,9 +489,9 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
     const name = song?.sections.find((x) => x.id === id)?.name ?? '';
     tryApply((x) => A.copySection(x, id, atBar, mode, lang, by), () => { showToast(t('copied', lang, { name, bar: atBar + 1 })); });
   };
-  const repeatPart = (id: string, times: number) => {
+  const repeatPart = (id: string, times: number, extend: boolean) => {
     const name = song?.sections.find((x) => x.id === id)?.name ?? '';
-    tryApply((x) => A.repeatSection(x, id, times, lang, by), () => { showToast(t('repeated', lang, { name, n: times })); });
+    tryApply((x) => A.repeatSection(x, id, times, lang, by, extend), () => { showToast(t('repeated', lang, { name, n: times })); });
   };
   const deletePartBars = (id: string) => {
     const name = song?.sections.find((x) => x.id === id)?.name ?? '';

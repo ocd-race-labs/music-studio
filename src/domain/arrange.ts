@@ -234,18 +234,32 @@ export function copySection(song: Song, id: string, atBar: number, mode: CopyMod
   return done(song, { length_ticks: length, tracks, sections: tidy([...carve(sections, at, at + len), copy], lang) }, by);
 }
 
-/** Play a section `times` more times right after itself: each copy goes in before what came next. */
-export function repeatSection(song: Song, id: string, times: number, lang: Lang, by: string | null): Song {
+/**
+ * Play a section `times` more times right after itself; each copy goes in before what came next.
+ * With `extend`, the copies become part of the same section (a 2-bar groove grows into a 16-bar verse);
+ * otherwise each copy is a section of its own (Chorus 1, Chorus 2).
+ */
+export function repeatSection(song: Song, id: string, times: number, lang: Lang, by: string | null, extend = false): Song {
+  const original = song.sections.find((s) => s.id === id);
+  if (!original) return song;
   let next = song;
-  let current = song.sections.find((s) => s.id === id);
+  let current: Section | undefined = original;
+  let made = 0;
   for (let i = 0; i < Math.max(0, Math.round(times)) && current; i++) {
-    const after = current.start_tick + current.length_ticks;
+    const after: number = current.start_tick + current.length_ticks;
     const moved = copySection(next, id, after / BAR_TICKS, 'insert', lang, by);
     if (moved === next) break;
     next = moved;
+    made++;
     current = next.sections.find((s) => s.start_tick === after) ?? current;
   }
-  return next;
+  if (!extend || !made) return next;
+  const from = original.start_tick + original.length_ticks;
+  const to = from + original.length_ticks * made;
+  const sections = next.sections
+    .filter((s) => s.id === id || s.start_tick < from || s.start_tick >= to)
+    .map((s) => (s.id === id ? { ...s, length_ticks: original.length_ticks * (made + 1) } : s));
+  return { ...next, sections: tidy(sections, lang) };
 }
 
 /** Remove a section and its bars: the notes in it go, and the rest of the song moves up to close the gap. */

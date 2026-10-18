@@ -54,7 +54,7 @@ export function StructureBar({ song, lang, focusId, marking, sel, onFocus, onMar
   onRename: (id: string, name: string) => void;
   onKind: (id: string, kind: SectionKind) => void;
   onCopy: (id: string, atBar: number, mode: CopyMode) => void;
-  onRepeat: (id: string, times: number) => void;
+  onRepeat: (id: string, times: number, extend: boolean) => void;
   onUnmark: (id: string) => void;
   onDeleteBars: (id: string) => void;
 }) {
@@ -121,7 +121,7 @@ function SectionActions({ song, section, lang, onRename, onKind, onCopy, onRepea
   onRename: (id: string, name: string) => void;
   onKind: (id: string, kind: SectionKind) => void;
   onCopy: (id: string, atBar: number, mode: CopyMode) => void;
-  onRepeat: (id: string, times: number) => void;
+  onRepeat: (id: string, times: number, extend: boolean) => void;
   onUnmark: (id: string) => void;
   onDeleteBars: (id: string) => void;
 }) {
@@ -134,6 +134,7 @@ function SectionActions({ song, section, lang, onRename, onKind, onCopy, onRepea
   useEffect(() => { setAt(String(total + 1)); }, [total]);
   const [mode, setMode] = useState<CopyMode>('insert');
   const [times, setTimes] = useState('1');
+  const [extend, setExtend] = useState(true);
   const atBar = Math.max(1, Math.min(MAX_BARS, Math.round(Number(at) || total + 1)));
   const grows = mode === 'insert' ? Math.max(total, atBar - 1) + n : Math.max(total, atBar - 1 + n);
   return (
@@ -162,8 +163,12 @@ function SectionActions({ song, section, lang, onRename, onKind, onCopy, onRepea
         <span className="small">{t('repeatAfter', lang)}</span>
         <input className="field mono num" inputMode="numeric" value={times} aria-label={t('repeatTimes', lang)} onChange={(e) => setTimes(e.target.value.replace(/[^0-9]/g, ''))} />
         <span className="small">{t('times', lang)}</span>
+        <div className="seg" aria-label={t('repeatHow', lang)}>
+          <button type="button" aria-pressed={extend} onClick={() => setExtend(true)} title={t('repeatExtendHint', lang)}>{t('repeatExtend', lang)}</button>
+          <button type="button" aria-pressed={!extend} onClick={() => setExtend(false)} title={t('repeatNewHint', lang)}>{t('repeatNew', lang)}</button>
+        </div>
         <button type="button" className="btn small-btn" disabled={!Number(times) || total + n * Number(times) > MAX_BARS}
-          onClick={() => onRepeat(section.id, Math.min(32, Number(times)))}>{t('repeat', lang)}</button>
+          onClick={() => onRepeat(section.id, Math.min(32, Number(times)), extend)}>{t('repeat', lang)}</button>
         <span className="grow" />
         <button type="button" className="btn ghost small-btn" onClick={() => onUnmark(section.id)} title={t('unmarkHint', lang)}>{t('unmark', lang)}</button>
         <button type="button" className="btn danger small-btn" onClick={() => onDeleteBars(section.id)} title={t('deleteBarsHint', lang)}>
