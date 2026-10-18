@@ -525,3 +525,4 @@ input.field.num { width: 64px; text-align: center; }
 .cl-trouble svg { flex: none; color: var(--highlight); margin-top: 1px; }
 @media (prefers-reduced-motion: reduce) { .cl-reading { animation: none; } }
 .cl-player .btn[aria-pressed='true'] { background: var(--main); color: var(--main-ink); border-color: var(--main); }
+.clear-btn:not(:disabled) svg { color: var(--highlight); }

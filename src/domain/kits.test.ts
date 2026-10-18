@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keepIdea, setInstrument, switchKit, toggleNote } from './commands';
+import { hasWritten, keepIdea, setInstrument, switchKit, toggleNote } from './commands';
 import { newProfile, newSong, roleOf, slotsFor } from './factory';
 import type { Idea, NotesContent, PatternContent, Song } from './types';
 import {
@@ -180,5 +180,16 @@ describe('long notes', () => {
     // Never past the end of the loop.
     s = setNoteSpan(s, lead, 67, 30, 8, me.id);
     expect(notes(s, 4).find((n) => n.midi === 67)?.dur).toBe(2 * 240);
+  });
+});
+
+describe('starting a song', () => {
+  it('the first song of a profile brings an example beat and chords', () => {
+    expect(hasWritten(newSong(me.id, 'First', 2, 'es'))).toBe(true);
+  });
+  it('a new song, or starting blank in another kit, brings nothing', () => {
+    for (const k of KITS) expect([k.key, hasWritten(newSong(me.id, 'Blank', 2, 'es', k.key, [], false))]).toEqual([k.key, false]);
+    const blank = newSong(me.id, 'Blank', 4, 'es', 'kit.latin', [], false);
+    expect(blank.tracks.length).toBe(newSong(me.id, 'x', 4, 'es', 'kit.latin').tracks.length);
   });
 });

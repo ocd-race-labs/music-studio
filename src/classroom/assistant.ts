@@ -16,10 +16,11 @@ export const OUTSIDE: Record<Lang, string> = {
   en: 'That question is outside the limits your dad set for this assistant. Talk to him directly.',
 };
 
-/** When a question sounds like she is sad, scared or hurt: kind, and toward a trusted adult. */
+/** When a question sounds like she is sad, scared or hurt: kind, and toward her dad first, then her mom, then an adult
+    her parents know (never a stranger). */
 export const CARE: Record<Lang, string> = {
-  es: 'Gracias por contármelo. Eso es muy importante, y yo solo sé de música. Cuéntaselo ahora a tu papá o a otro adulto de confianza, como tu mamá o tu profesora: ellos te van a ayudar.',
-  en: 'Thank you for telling me. That is really important, and I only know about music. Please tell your dad or another grown-up you trust, like your mom or your teacher, right now: they will help you.',
+  es: 'Gracias por contármelo. Eso es muy importante, y yo solo sé de música. Cuéntaselo ahora a tu papá. También se lo puedes contar a tu mamá, o a otro adulto de confianza que tus papás conozcan. Ellos te van a ayudar.',
+  en: 'Thank you for telling me. That is really important, and I only know about music. Tell your dad right now. You can also tell your mom, or another grown-up you trust whom your parents know. They will help you.',
 };
 
 const HELLO: Record<Lang, string> = {

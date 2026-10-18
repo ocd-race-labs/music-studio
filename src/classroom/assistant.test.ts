@@ -107,6 +107,15 @@ describe('Classroom assistant guardrails', () => {
     expect(ask('Me pegan', 'en').text).toBe(CARE.en);
   });
 
+  it('the care message sends her to dad first, then mom, then an adult her parents know', () => {
+    const es = CARE.es;
+    expect(es.indexOf('tu papá')).toBeGreaterThan(-1);
+    expect(es.indexOf('tu papá')).toBeLessThan(es.indexOf('tu mamá'));
+    expect(es.indexOf('tu mamá')).toBeLessThan(es.indexOf('adulto de confianza que tus papás conozcan'));
+    expect(CARE.en.indexOf('your dad')).toBeLessThan(CARE.en.indexOf('your mom'));
+    expect(CARE.en).toMatch(/whom your parents know/);
+  });
+
   it('nervous about music gets encouragement and dad, never the outside message', () => {
     const r = ask('Estoy nerviosa por el concierto de la orquesta', 'es');
     expect(r.kind).toBe('care');

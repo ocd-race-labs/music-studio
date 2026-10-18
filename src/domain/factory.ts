@@ -189,17 +189,22 @@ function trackFor(slot: KitSlot, position: number, name: string, bars: number, o
   return track(position, name, drums ? 'drums' : 'instrument', ref(slot.instrument), c, slot.role);
 }
 
-export function newSong(ownerProfileId: string, title = 'Untitled', bars = 2, lang: Lang = 'en', kitKey: string = DEFAULT_KIT, starred: StarredInstrument[] = []): Song {
+/**
+ * A new song. With `example`, the first one a profile gets: a starting beat and four chords to hear right away.
+ * Without it the song starts empty: the person decides what goes in (a catalog of example beats, opened on request,
+ * is planned).
+ */
+export function newSong(ownerProfileId: string, title = 'Untitled', bars = 2, lang: Lang = 'en', kitKey: string = DEFAULT_KIT, starred: StarredInstrument[] = [], example = true): Song {
   const t = now();
   const length = bars * BAR_TICKS;
-  const chords = { chords: Array.from({ length: bars }, (_, i) => ({ id: newId(), tick: i * BAR_TICKS, dur: BAR_TICKS, degree: [0, 4, 5, 3][i % 4] })) };
+  const chords = !example ? undefined : { chords: Array.from({ length: bars }, (_, i) => ({ id: newId(), tick: i * BAR_TICKS, dur: BAR_TICKS, degree: [0, 4, 5, 3][i % 4] })) };
   const slots = slotsFor(kitKey, starred);
   const counts: Partial<Record<Role, number>> = {};
   let starterUsed = false;
   const tracks = slots.map((slot, i) => {
     const n = (counts[slot.role] = (counts[slot.role] ?? 0) + 1);
     // One starting beat per family: the first drum track, plus the latin percussion that completes it.
-    const starter = isDrumKit(slot.instrument) && (!starterUsed || slot.instrument === 'instrument.perc-latin');
+    const starter = example && isDrumKit(slot.instrument) && (!starterUsed || slot.instrument === 'instrument.perc-latin');
     if (starter) starterUsed = true;
     return trackFor(slot, i + 1, roleName(slot.role, lang, n), bars, { starter, chords: n === 1 ? chords : undefined });
   });

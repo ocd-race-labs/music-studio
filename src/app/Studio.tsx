@@ -307,7 +307,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
     setModal(null);
   };
   const createSong = async () => {
-    const s = newSong(profile.id, t('songN', lang, { n: songList.length + 1 }), 2, lang, song?.kit_key ?? profile.last_kit ?? DEFAULT_KIT, profile.starred ?? []);
+    const s = newSong(profile.id, t('songN', lang, { n: songList.length + 1 }), 2, lang, song?.kit_key ?? profile.last_kit ?? DEFAULT_KIT, profile.starred ?? [], false);
     await store.saveSong(s);
     await switchTo(s);
   };
@@ -342,7 +342,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   };
   const startBlankIn = async (key: string) => {
     const count = (await store.listSongs(profile.id)).length;
-    const s = newSong(profile.id, t('songN', lang, { n: count + 1 }), song ? loopBars(song) : 2, lang, key, starred);
+    const s = newSong(profile.id, t('songN', lang, { n: count + 1 }), song ? loopBars(song) : 2, lang, key, starred, false);
     await store.saveSong(s);
     rememberKit(key);
     setPendingKit(null);
@@ -539,7 +539,6 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         <button type="button" className="btn" onClick={openSongs} aria-label={t('songs', lang)}><Icon name="menu" size={18} /> <span className="hide-sm">{t('songs', lang)}</span></button>
         <button type="button" className="btn icon" onClick={undo} disabled={!hist.past} aria-label={t('undo', lang)}><Icon name="undo" /></button>
         <button type="button" className="btn icon" onClick={redo} disabled={!hist.future} aria-label={t('redo', lang)}><Icon name="redo" /></button>
-        <button type="button" className="btn icon" onClick={() => setModal('clear')} disabled={!C.hasWritten(song)} aria-label={t('clearOpen', lang)} title={t('clearOpen', lang)}><Icon name="trash" /></button>
         <span className="small muted hide-sm" aria-live="polite" style={{ minWidth: 70 }}>{saveState === 'saving' ? t('saving', lang) : t('saved', lang)}</span>
         </div>
         <div className="tb-group tb-right">
@@ -647,6 +646,8 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
               aria-label={t(wide ? 'exitFullScreen' : 'fullScreen', lang)} title={t(wide ? 'exitFullScreen' : 'fullScreen', lang)}>
               <Icon name={wide ? 'shrink' : 'expand'} />
             </button>
+            {/* Beside the grid it clears, far from the profile button. */}
+            <button type="button" className="btn icon clear-btn" onClick={() => setModal('clear')} disabled={!C.hasWritten(song)} aria-label={t('clearOpen', lang)} title={t('clearOpen', lang)}><Icon name="trash" /></button>
           </div>
 
           <StructureBar song={song} lang={lang} focusId={focusId} marking={marking} sel={sel}
