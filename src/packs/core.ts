@@ -3,12 +3,13 @@
 // Keys and versions follow the catalog rules: kind.name@x.y.z, never edited once published.
 
 import type { CatalogRef, Role } from '../domain/types';
+import { ENTRIES, SAMPLED_KITS } from './collection';
 
 export interface CatalogItem {
   key: string;
   version: string;
   kind: 'instrument' | 'sound' | 'effect' | 'kit';
-  pack: 'core';
+  pack: 'core' | 'collection';
   status: 'active' | 'deprecated';
   title: { en: string; es: string };
   license: string;
@@ -38,7 +39,7 @@ export const DRUM_VOICES = [
   item('sound', 'sound.hat-open', 'Open hat', 'Hi-hat abierto', { voice: 'hatOpen' }),
   item('sound', 'sound.rim', 'Rim', 'Aro', { voice: 'rim' }),
   item('sound', 'sound.tom', 'Tom', 'Tom', { voice: 'tom' }),
-  item('sound', 'sound.crash', 'Crash', 'Platillo', { voice: 'crash' }),
+  item('sound', 'sound.crash', 'Crash', 'Crash', { voice: 'crash' }),
 ];
 
 /** Orchestral percussion, row by row in the same places as a standard kit (kick → bass drum, and so on). */
@@ -65,10 +66,22 @@ export const LATIN_VOICES = [
   item('sound', 'sound.cowbell', 'Cowbell', 'Cencerro', { voice: 'cowbell' }),
 ];
 
+/** The extra rows of a full rock kit: two toms, a ride and a china. Kick, snare, hats and crash are shared. */
+export const FULL_KIT_VOICES = [
+  item('sound', 'sound.tom-1', 'Tom 1', 'Tom 1', { voice: 'tom1' }),
+  item('sound', 'sound.tom-2', 'Tom 2', 'Tom 2', { voice: 'tom2' }),
+  item('sound', 'sound.ride', 'Ride', 'Ride', { voice: 'ride' }),
+  item('sound', 'sound.china', 'China', 'China', { voice: 'china' }),
+];
+
 const keysOf = (list: CatalogItem[]) => list.map((i) => i.key);
 export const STANDARD_ROWS = keysOf(DRUM_VOICES);
 export const ORCH_ROWS = keysOf(ORCH_VOICES);
 export const LATIN_ROWS = keysOf(LATIN_VOICES);
+/** A full kit as a drummer sets it up: kick, snare, two toms, hi-hat closed and open, ride, crash, china. */
+export const FULL_ROWS = [
+  'sound.kick', 'sound.snare', 'sound.tom-1', 'sound.tom-2', 'sound.hat-closed', 'sound.hat-open', 'sound.ride', 'sound.crash', 'sound.china',
+];
 
 /* ---------------------------------------------------------------- instruments */
 
@@ -78,7 +91,7 @@ const kit = (key: string, en: string, es: string, kitId: string, rows: string[] 
 const synth = (key: string, en: string, es: string, voice: string, low: number) =>
   item('instrument', key, en, es, { type: 'synth', voice, low });
 
-export const INSTRUMENTS = [
+const CORE_INSTRUMENTS = [
   kit('instrument.drums-boom-bap', 'Drums: boom bap', 'Batería: boom bap', 'boomBap'),
   kit('instrument.drums-trap', 'Drums: trap', 'Batería: trap', 'trap'),
   kit('instrument.drums-pop', 'Drums: pop', 'Batería: pop', 'pop'),
@@ -121,6 +134,19 @@ export const INSTRUMENTS = [
   synth('instrument.guitar-nylon', 'Nylon guitar', 'Guitarra acústica', 'guitarNylon', 48),
 ];
 
+/** Colección drum kits: recorded kits processed into the sound of a style and era (see packs/collection). */
+export const COLLECTION_INSTRUMENTS: CatalogItem[] = ENTRIES.filter((e) => e.family === 'drums').map((e) => {
+  const set = e.instrument.replace('instrument.drums-', '');
+  const spec = SAMPLED_KITS[set] as { license?: string; source?: string } | undefined;
+  return {
+    kind: 'instrument', key: e.instrument, version: '1.0.0', pack: 'collection', status: 'active',
+    title: { en: `Drums: ${e.title.en}`, es: `Batería: ${e.title.es}` },
+    license: spec?.license ?? 'CC0 1.0', source: spec?.source ?? 'music-studio collection',
+    manifest: { type: 'drumkit', kit: 'sampled', set, rows: FULL_ROWS },
+  };
+});
+export const INSTRUMENTS: CatalogItem[] = [...CORE_INSTRUMENTS, ...COLLECTION_INSTRUMENTS];
+
 /* ---------------------------------------------------------------- kits by genre */
 
 export interface KitSlot { role: Role; instrument: string }
@@ -157,11 +183,15 @@ export interface ParamDef {
   default: number;
   /** Slider step; whole numbers for semitones and bits. */
   step?: number;
+  /** For unit "choice": the name of each value 0, 1, 2… shown as buttons. */
+  choices?: { en: string; es: string }[];
 }
 
 const P = (name: string, en: string, es: string, unit: string, min: number, max: number, def: number, step?: number): ParamDef =>
   ({ name, label: { en, es }, unit, min, max, default: def, ...(step ? { step } : {}) });
 const MIX = (def: number) => P('mix', 'Mix', 'Mezcla', 'ratio', 0, 1, def);
+const CHOICE = (name: string, en: string, es: string, choices: [string, string][], def: number): ParamDef =>
+  ({ ...P(name, en, es, 'choice', 0, choices.length - 1, def, 1), choices: choices.map(([e, s]) => ({ en: e, es: s })) });
 
 /** Pedals. The first three come on every new track; the rest are added from the pedal list. */
 export const EFFECTS = [
@@ -204,10 +234,52 @@ export const EFFECTS = [
     params: [P('low', 'Lows', 'Graves', 'dB', -12, 12, 0, 0.5), P('mid', 'Mids', 'Medios', 'dB', -12, 12, 0, 0.5), P('high', 'Highs', 'Agudos', 'dB', -12, 12, 0, 0.5)],
   }),
   item('effect', 'effect.widener', 'Stereo width', 'Estéreo ancho', { params: [P('width', 'Width', 'Ancho', 'ratio', 0, 1, 0.7)] }),
+
+  /* Studio gear, as recording software models it: preamp, compressor styles, amp, speaker cabinet, tape, gated room. */
+  item('effect', 'effect.preamp', 'Preamp', 'Preamplificador', {
+    params: [
+      CHOICE('character', 'Character', 'Carácter', [['Clean', 'Limpio'], ['Transformer', 'Transformador'], ['Tube', 'Válvula']], 2),
+      P('drive', 'Drive', 'Ganancia', 'ratio', 0, 1, 0.3),
+      P('lowcut', 'Low cut', 'Corte de graves', 'Hz', 20, 300, 30),
+    ],
+  }),
+  item('effect', 'effect.comp-studio', 'Studio compressor', 'Compresor de estudio', {
+    params: [
+      CHOICE('style', 'Style', 'Estilo', [['Fast (FET)', 'Rápido (FET)'], ['Smooth (opto)', 'Suave (óptico)'], ['Glue (bus)', 'Pegamento (bus)']], 0),
+      P('amount', 'Amount', 'Cantidad', 'ratio', 0, 1, 0.5),
+      MIX(1),
+    ],
+  }),
+  item('effect', 'effect.amp', 'Amp', 'Amplificador', {
+    params: [
+      CHOICE('model', 'Model', 'Modelo', [['Clean', 'Limpio'], ['Crunch', 'Crunch'], ['High gain', 'Alta ganancia'], ['Bass', 'Bajo']], 1),
+      P('gain', 'Gain', 'Ganancia', 'ratio', 0, 1, 0.5),
+      P('bass', 'Bass', 'Graves', 'dB', -12, 12, 0, 0.5),
+      P('mid', 'Middle', 'Medios', 'dB', -12, 12, 0, 0.5),
+      P('treble', 'Treble', 'Agudos', 'dB', -12, 12, 0, 0.5),
+      P('level', 'Level', 'Volumen', 'dB', -12, 6, 0, 0.5),
+    ],
+  }),
+  item('effect', 'effect.cab', 'Cabinet', 'Gabinete', {
+    params: [
+      CHOICE('model', 'Speakers', 'Parlantes', [['1x12 open', '1x12 abierto'], ['2x12', '2x12'], ['4x12 closed', '4x12 cerrado'], ['Bass 8x10', 'Bajo 8x10'], ['Bass 1x15', 'Bajo 1x15']], 2),
+      P('mic', 'Mic: center to edge', 'Micrófono: del centro al borde', 'ratio', 0, 1, 0.3),
+    ],
+  }),
+  item('effect', 'effect.tape', 'Tape', 'Cinta', {
+    params: [
+      CHOICE('speed', 'Speed', 'Velocidad', [['15 ips', '15 ips'], ['30 ips', '30 ips']], 0),
+      P('drive', 'Saturation', 'Saturación', 'ratio', 0, 1, 0.4),
+      MIX(1),
+    ],
+  }),
+  item('effect', 'effect.gated-room', 'Gated room', 'Sala con compuerta', {
+    params: [MIX(0.35), P('length', 'Length', 'Largo', 's', 0.12, 0.8, 0.32)],
+  }),
 ];
 
 /** Pedals that make echoes and rooms go last in a chain; new pedals go before them. */
-export const SPACE_EFFECTS = ['effect.delay', 'effect.pingpong', 'effect.reverb'];
+export const SPACE_EFFECTS = ['effect.delay', 'effect.pingpong', 'effect.reverb', 'effect.gated-room'];
 
 /** Pedals by what they do, in the order sound flows through them: shape it, color it, move it, place it in a room. */
 export type PedalGroup = 'control' | 'color' | 'movement' | 'space';
@@ -218,11 +290,13 @@ const GROUP_OF: Record<string, PedalGroup> = {
   'effect.chorus': 'movement', 'effect.phaser': 'movement', 'effect.filter-sweep': 'movement', 'effect.tremolo': 'movement',
   'effect.pump': 'movement', 'effect.octave': 'movement',
   'effect.delay': 'space', 'effect.pingpong': 'space', 'effect.reverb': 'space', 'effect.widener': 'space',
+  'effect.preamp': 'color', 'effect.amp': 'color', 'effect.cab': 'color', 'effect.tape': 'color',
+  'effect.comp-studio': 'control', 'effect.gated-room': 'space',
 };
 export const pedalGroup = (key: string): PedalGroup => GROUP_OF[key] ?? 'color';
 export const pedalRank = (key: string): number => PEDAL_GROUPS.indexOf(pedalGroup(key));
 
-export const CATALOG: CatalogItem[] = [...DRUM_VOICES, ...ORCH_VOICES, ...LATIN_VOICES, ...INSTRUMENTS, ...KITS, ...EFFECTS];
+export const CATALOG: CatalogItem[] = [...DRUM_VOICES, ...ORCH_VOICES, ...LATIN_VOICES, ...FULL_KIT_VOICES, ...INSTRUMENTS, ...KITS, ...EFFECTS];
 
 export const ref = (key: string): CatalogRef => {
   const found = CATALOG.find((c) => c.key === key);
@@ -263,12 +337,40 @@ export const rowIndex = (soundKey: string): number => {
   return -1;
 };
 
-/** The row of this kit in the same place as a row of any other kit. */
-export const rowFor = (instrumentKey: string, soundKey: string): string => {
-  const rows = rowsOf(instrumentKey);
-  if (rows.includes(soundKey)) return soundKey;
-  return rows[rowIndex(soundKey)] ?? soundKey;
+/** Rows that can play a row a kit lacks, nearest first: a floor tom plays on the one tom, a china on the crash. */
+const STAND_IN: Record<string, string[]> = {
+  'sound.tom': ['sound.tom-1', 'sound.tom-2'],
+  'sound.tom-1': ['sound.tom', 'sound.tom-2'],
+  'sound.tom-2': ['sound.tom', 'sound.tom-1'],
+  'sound.ride': ['sound.hat-closed'],
+  'sound.china': ['sound.crash'],
+  'sound.clap': ['sound.snare'],
+  'sound.rim': ['sound.snare'],
 };
+
+/**
+ * Where a row of any kit plays in a kit with these rows. Kits of the same shape match by place (kick, bass drum
+ * and tumba are all row 0); otherwise the row goes through its standard name and its stand-ins. Undefined when
+ * nothing fits.
+ */
+export function resolveRow(rows: string[], soundKey: string): string | undefined {
+  if (rows.includes(soundKey)) return soundKey;
+  const shape = rows.join();
+  const family = ROW_FAMILIES.some((f) => f.join() === shape);
+  const place = rowIndex(soundKey);
+  if (family && place >= 0) return rows[place];
+  const standard = place >= 0 ? STANDARD_ROWS[place] : soundKey;
+  for (const key of [standard, ...(STAND_IN[standard] ?? [])]) {
+    if (rows.includes(key)) return key;
+    const at = STANDARD_ROWS.indexOf(key);
+    if (family && at >= 0) return rows[at];
+  }
+  return undefined;
+}
+
+/** The row of this kit that plays a row of any other kit. */
+export const rowFor = (instrumentKey: string, soundKey: string): string =>
+  resolveRow(rowsOf(instrumentKey), soundKey) ?? soundKey;
 
 /** The synth voice that plays a drum row on a given kit; any kit's pattern plays on any other kit. */
 export const rowVoice = (instrumentKey: string, soundKey: string): string | undefined =>

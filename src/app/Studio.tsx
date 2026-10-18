@@ -7,7 +7,7 @@ import { LengthStepper, SongTimeline, StructureBar } from './Arrange';
 import type { GridFrame } from './editors';
 import type { Jump, MarkSel, View } from './timegrid';
 import { exportSongFile, parseIdeasFile, parseSongFile, SONG_FILE_EXT, withFreshIds } from '../domain/files';
-import type { Hat, Idea, NotesContent, PatternContent, Profile, Role, SectionKind, Song, SongVersion, ChordsContent, StarredInstrument } from '../domain/types';
+import type { CustomSound, Hat, Idea, NotesContent, PatternContent, Profile, Role, SectionKind, Song, SongVersion, ChordsContent, StarredInstrument } from '../domain/types';
 import { PPQ, STEP_TICKS } from '../domain/types';
 import { engine } from '../engine/engine';
 import { CUSTOM_KIT, DEFAULT_KIT, findItem, KITS, kitSlots, kitTitle, lowOf, title as catalogTitle } from '../packs/core';
@@ -18,6 +18,7 @@ import { autoZoom, ZOOMS } from './zoom';
 import type { Zoom } from './zoom';
 import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panels';
 import MixerBoard from './MixerBoard';
+import Collection from './Collection';
 import { namingFor, t, tn } from './i18n';
 import type { Mode } from './prefs';
 import { Avatar, downloadText, Icon, LangToggle, Modal, ModeSwitch, pickFile, slug, useToast, useWidth } from './ui';
@@ -105,7 +106,13 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   // The musician's mixer takes the editor's place while it is open.
   const [board, setBoard] = useState(false);
   // Each hat has its own room: switching closes the musician's mixer and stops recording taps.
-  const switchHat = (h: Hat) => { setHat(h); setBoard(false); if (h === 'producer') setRec(false); };
+  // The Colección opens in the producer's room, in place of the console.
+  const [shelf, setShelf] = useState(false);
+  const [sounds, setSounds] = useState<CustomSound[]>([]);
+  useEffect(() => {
+    if (shelf) store.listSounds(profile.id).then(setSounds).catch(() => setSounds([]));
+  }, [shelf, store, profile.id]);
+  const switchHat = (h: Hat) => { setHat(h); setBoard(false); setShelf(false); if (h === 'producer') setRec(false); };
 
   /* Song form: one part in view (and on repeat), mark mode, where play starts, what the grid shows. */
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -520,7 +527,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   };
   useEffect(() => { engine.setFocus(alone && track ? track.id : null); }, [alone, track]);
   useEffect(() => () => engine.setFocus(null), []);
-  const trackTitle = useMemo(() => (track?.instrument ? catalogTitle(track.instrument, lang) : ''), [track, lang]);
+  const trackTitle = useMemo(() => (track?.sound ? track.sound.name : track?.instrument ? catalogTitle(track.instrument, lang) : ''), [track, lang]);
 
   if (!song || !track) return <div className="home"><p className="muted">{t('loading', lang)}</p></div>;
 
@@ -593,7 +600,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
                 <span className="swatch" style={{ background: tr.color }} />
                 <span className="stack" style={{ gap: 0, minWidth: 0 }}>
                   <strong>{tr.name}</strong>
-                  <span className="small muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tr.instrument && findItem(tr.instrument) ? catalogTitle(tr.instrument, lang) : ''}</span>
+                  <span className="small muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tr.sound ? tr.sound.name : tr.instrument && findItem(tr.instrument) ? catalogTitle(tr.instrument, lang) : ''}</span>
                 </span>
               </button>
               {tr.instrument && (
@@ -611,12 +618,39 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         </nav>
 
         <main className="editor" ref={editorRef}>
-          {hat === 'producer' ? (
+          {hat === 'producer' && shelf ? (
+            <Collection song={song} selectedId={track.id} profileId={profile.id} lang={lang} sounds={sounds} onClose={() => setShelf(false)}
+              onUse={(trackId, key) => {
+                const ref = { key, version: '1.0.0' };
+                apply((x) => C.setInstrument(x, trackId, ref, by));
+                setSelected(trackId);
+                const tr = song.tracks.find((x) => x.id === trackId);
+                showToast(t('collectionUsed', lang, { name: catalogTitle(ref, lang), track: tr?.name ?? '' }));
+              }}
+              onUseSound={(trackId, sound) => {
+                apply((x) => C.applySound(x, trackId, sound, by));
+                setSelected(trackId);
+                const tr = song.tracks.find((x) => x.id === trackId);
+                showToast(t('collectionUsed', lang, { name: sound.name, track: tr?.name ?? '' }));
+              }}
+              onSaveSound={async (sound) => {
+                await store.saveSound(sound);
+                setSounds(await store.listSounds(profile.id));
+                showToast(t('mySoundSaved', lang, { name: sound.name }));
+              }}
+              onDeleteSound={async (id) => {
+                await store.deleteSound(id);
+                setSounds(await store.listSounds(profile.id));
+              }} />
+          ) : hat === 'producer' ? (
             /* The producer works from the control room: the console, the song's structure and the pedals at the side.
                Writing and recording notes is the musician's job (the other hat). */
             <>
               <div className="row wrap">
                 <h2 className="display grow" style={{ fontSize: 22 }}>{t('console', lang)} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{t('consoleHint', lang)}</span></h2>
+                <button type="button" className="btn collection-btn" onClick={() => setShelf(true)} title={t('collectionOpen', lang)}>
+                  <Icon name="crate" size={18} /> {t('collection', lang)}
+                </button>
                 <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
                   aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
                   <Icon name="headphones" size={18} /> <span className="hide-sm">{t('onlyThis', lang)}</span>

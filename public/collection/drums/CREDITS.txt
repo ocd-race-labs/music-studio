@@ -1,0 +1,17 @@
+Music Studio Colección: rock drum kits
+
+Each kit was built from one of these free libraries. Hits were chosen and edited, microphones mixed, and every kit
+tuned, equalized, compressed and placed in rooms for its style. Kit names describe a style and an era only.
+
+- SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali. Public domain / free use.
+  https://github.com/sfzinstruments/SMDrums
+  Kits: Estudio 60, Arena 80 compuerta, Pop punk 90; china in Garage revival and Punk 77.
+- Big Rusty Drums by Karoryfer Samples. CC0 1.0.
+  https://github.com/sfzinstruments/karoryfer.big-rusty-drums
+  Kits: Escalera de piedra, Grunge 90.
+- MuldjordKit by Lars Muldjord / DrumGizmo. CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+  https://github.com/sfzinstruments/DrumGizmo.MuldjordKit
+  Kits: Alternativo moderno, Thrash 80, Metal moderno.
+- DRSKit by DrumGizmo (Lars Muldjord, Bent Bisballe Nyeng) and Jes Eiler / DRSDrums. CC BY 4.0.
+  https://github.com/sfzinstruments/DrumGizmo.DRSKit
+  Kits: Garage revival, Punk 77.

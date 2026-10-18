@@ -1,0 +1,1202 @@
+{
+ "rock-studio-60": {
+  "id": "rock-studio-60",
+  "trimDb": -3.2,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Public domain (free use)",
+  "source": "SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 415311
+ },
+ "rock-stairwell-70": {
+  "id": "rock-stairwell-70",
+  "trimDb": -5.0,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC0 1.0",
+  "source": "Big Rusty Drums by Karoryfer Samples",
+  "bytes": 915235
+ },
+ "rock-arena-80": {
+  "id": "rock-arena-80",
+  "trimDb": -4.1,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Public domain (free use)",
+  "source": "SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 403971
+ },
+ "rock-grunge-90": {
+  "id": "rock-grunge-90",
+  "trimDb": -1.8,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC0 1.0",
+  "source": "Big Rusty Drums by Karoryfer Samples",
+  "bytes": 582076
+ },
+ "rock-alt-2000": {
+  "id": "rock-alt-2000",
+  "trimDb": 0.6,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC-BY 4.0",
+  "source": "MuldjordKit by Lars Muldjord / DrumGizmo",
+  "bytes": 544043
+ },
+ "rock-garage": {
+  "id": "rock-garage",
+  "trimDb": -2.8,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC-BY 4.0 + Public domain (free use)",
+  "source": "DRSKit by DrumGizmo (Lars Muldjord, Bent Bisballe Nyeng) and Jes Eiler / DRSDrums; SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 503446
+ },
+ "metal-thrash-80": {
+  "id": "metal-thrash-80",
+  "trimDb": -1.7,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC-BY 4.0",
+  "source": "MuldjordKit by Lars Muldjord / DrumGizmo",
+  "bytes": 362280
+ },
+ "metal-modern": {
+  "id": "metal-modern",
+  "trimDb": -0.7,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC-BY 4.0",
+  "source": "MuldjordKit by Lars Muldjord / DrumGizmo",
+  "bytes": 377638
+ },
+ "punk-77": {
+  "id": "punk-77",
+  "trimDb": -0.3,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC-BY 4.0 + Public domain (free use)",
+  "source": "DRSKit by DrumGizmo (Lars Muldjord, Bent Bisballe Nyeng) and Jes Eiler / DRSDrums; SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 410918
+ },
+ "punk-pop-90": {
+  "id": "punk-pop-90",
+  "trimDb": 0.7,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "tom1": {
+    "layers": [
+     [
+      "tom1-m1.mp3"
+     ],
+     [
+      "tom1-h1.mp3"
+     ]
+    ]
+   },
+   "tom2": {
+    "layers": [
+     [
+      "tom2-m1.mp3"
+     ],
+     [
+      "tom2-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "ride": {
+    "layers": [
+     [
+      "ride-m1.mp3"
+     ],
+     [
+      "ride-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   },
+   "china": {
+    "layers": [
+     [
+      "china-m1.mp3"
+     ],
+     [
+      "china-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Public domain (free use)",
+  "source": "SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 492110
+ }
+}

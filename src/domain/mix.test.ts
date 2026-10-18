@@ -1,3 +1,4 @@
+import { SAMPLED_KITS } from '../packs/collection';
 import { describe, expect, it } from 'vitest';
 import { addFx, clearWritten, hasWritten, removeFx, setGain, setPan, toggleNote } from './commands';
 import { newProfile, newSong } from './factory';
@@ -56,7 +57,9 @@ describe('mixer', () => {
 
   it('every instrument and kit has a loudness trim', () => {
     for (const i of INSTRUMENTS) {
-      const m = i.manifest as { type: string; kit?: string; voice?: string };
+      const m = i.manifest as { type: string; kit?: string; voice?: string; set?: string };
+      // Recorded Colección kits carry their own trim, measured when they are processed.
+      if (m.kit === 'sampled') { expect(SAMPLED_KITS[m.set!]?.trimDb, i.key).toBeTypeOf('number'); continue; }
       const id = m.type === 'drumkit' ? `kit:${m.kit}` : m.voice!;
       expect(LOUDNESS_TRIMS[id], i.key).toBeTypeOf('number');
     }

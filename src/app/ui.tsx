@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { Lang, Profile } from '../domain/types';
 import { t } from './i18n';
 
-type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music';
+type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music' | 'crate';
 
 const PATHS: Record<IconName, ReactNode> = {
   home: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /></>,
@@ -37,6 +37,8 @@ const PATHS: Record<IconName, ReactNode> = {
   chat: <path d="M4 5h16v11H9l-5 4z" />,
   speaker: <><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /></>,
   music: <><path d="M9 18V5.5l11-2V16" /><circle cx="6.5" cy="18" r="2.6" fill="currentColor" /><circle cx="17.5" cy="16" r="2.6" fill="currentColor" /></>,
+  // A crate of records: the Colección.
+  crate: <><rect x="3" y="12" width="18" height="8.5" rx="1.5" /><path d="M6.5 12V5.5h3.5V12M11.5 12V4h3.5v8M16.5 12V6.5h2.5V12" /><path d="M9 16.2h6" /></>,
   starFill: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill="currentColor" />,
 };
 

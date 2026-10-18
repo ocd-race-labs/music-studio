@@ -4,7 +4,7 @@
 import { openDB } from 'idb';
 import type { DBSchema, IDBPDatabase } from 'idb';
 import { newId, now } from '../domain/factory';
-import type { Idea, Profile, Recording, Song, SongVersion } from '../domain/types';
+import type { CustomSound, Idea, Profile, Recording, Song, SongVersion } from '../domain/types';
 
 export interface SongStore {
   listProfiles(): Promise<Profile[]>;
@@ -22,6 +22,11 @@ export interface SongStore {
   saveRecording(rec: Recording, audio: Blob): Promise<void>;
   getRecordingAudio(id: string): Promise<Blob | undefined>;
   listRecordings(profileId: string): Promise<Recording[]>;
+  /** Sounds a profile made in the Colección (newest first). */
+  listSounds(profileId: string): Promise<CustomSound[]>;
+  saveSound(sound: CustomSound): Promise<void>;
+  /** Removed from the profile's Colección; songs that use it keep their copy. */
+  deleteSound(id: string): Promise<void>;
   getMeta<T>(key: string): Promise<T | undefined>;
   setMeta<T>(key: string, value: T): Promise<void>;
 }
@@ -33,6 +38,7 @@ interface StudioDB extends DBSchema {
   ideas: { key: string; value: Idea; indexes: { by_song: string } };
   recordings: { key: string; value: Recording; indexes: { by_profile: string } };
   audio: { key: string; value: Blob };
+  sounds: { key: string; value: CustomSound; indexes: { by_profile: string } };
   meta: { key: string; value: unknown };
 }
 
@@ -41,15 +47,19 @@ export const byOrder = (list: Profile[]): Profile[] =>
   [...list].sort((a, b) => (a.order ?? 1e9) - (b.order ?? 1e9) || a.created_at.localeCompare(b.created_at));
 
 export async function openBrowserStore(name = 'music-studio'): Promise<SongStore> {
-  const db: IDBPDatabase<StudioDB> = await openDB<StudioDB>(name, 1, {
-    upgrade(d) {
-      d.createObjectStore('profiles', { keyPath: 'id' });
-      d.createObjectStore('songs', { keyPath: 'id' }).createIndex('by_owner', 'owner_profile_id');
-      d.createObjectStore('song_versions', { keyPath: 'id' }).createIndex('by_song', 'song_id');
-      d.createObjectStore('ideas', { keyPath: 'id' }).createIndex('by_song', 'song_id');
-      d.createObjectStore('recordings', { keyPath: 'id' }).createIndex('by_profile', 'profile_id');
-      d.createObjectStore('audio');
-      d.createObjectStore('meta');
+  // Version 2 adds the Colección's saved sounds; a device on version 1 keeps everything and gains the new store.
+  const db: IDBPDatabase<StudioDB> = await openDB<StudioDB>(name, 2, {
+    upgrade(d, oldVersion) {
+      if (oldVersion < 1) {
+        d.createObjectStore('profiles', { keyPath: 'id' });
+        d.createObjectStore('songs', { keyPath: 'id' }).createIndex('by_owner', 'owner_profile_id');
+        d.createObjectStore('song_versions', { keyPath: 'id' }).createIndex('by_song', 'song_id');
+        d.createObjectStore('ideas', { keyPath: 'id' }).createIndex('by_song', 'song_id');
+        d.createObjectStore('recordings', { keyPath: 'id' }).createIndex('by_profile', 'profile_id');
+        d.createObjectStore('audio');
+        d.createObjectStore('meta');
+      }
+      if (oldVersion < 2) d.createObjectStore('sounds', { keyPath: 'id' }).createIndex('by_profile', 'profile_id');
     },
   });
 
@@ -58,7 +68,7 @@ export async function openBrowserStore(name = 'music-studio'): Promise<SongStore
       return byOrder((await db.getAll('profiles')).filter((p) => p.status === 'active'));
     },
     async clearAll() {
-      for (const name of ['profiles', 'songs', 'song_versions', 'ideas', 'recordings', 'audio', 'meta'] as const) await db.clear(name);
+      for (const name of ['profiles', 'songs', 'song_versions', 'ideas', 'recordings', 'audio', 'sounds', 'meta'] as const) await db.clear(name);
     },
     async saveProfile(p) {
       await db.put('profiles', { ...p, updated_at: now() });
@@ -109,6 +119,18 @@ export async function openBrowserStore(name = 'music-studio'): Promise<SongStore
     getRecordingAudio: (id) => db.get('audio', id),
     async listRecordings(profileId) {
       return (await db.getAllFromIndex('recordings', 'by_profile', profileId)).sort((a, b) => b.created_at.localeCompare(a.created_at));
+    },
+    async listSounds(profileId) {
+      return (await db.getAllFromIndex('sounds', 'by_profile', profileId))
+        .filter((x) => x.status === 'active')
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    },
+    async saveSound(sound) {
+      await db.put('sounds', { ...sound, updated_at: now() });
+    },
+    async deleteSound(id) {
+      const x = await db.get('sounds', id);
+      if (x) await db.put('sounds', { ...x, status: 'archived', updated_at: now() });
     },
     async getMeta<T>(key: string) {
       return (await db.get('meta', key)) as T | undefined;

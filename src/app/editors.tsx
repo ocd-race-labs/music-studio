@@ -441,7 +441,7 @@ export function ChordLane({ song, track, step, lang, width, frame, onSet, onPrev
 export function Pads({ track, lang, onHit }: { track: Track; lang: Lang; onHit: (row: number, soundKey: string) => void }) {
   const rows = (track.clips[0].content as PatternContent).rows;
   return (
-    <div className="pads">
+    <div className="pads" data-n={rows.length}>
       {rows.map((r, i) => (
         <button
           key={r.sound.key}

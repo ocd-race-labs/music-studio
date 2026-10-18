@@ -3,7 +3,7 @@ import { hasWritten, keepIdea, setInstrument, switchKit, toggleNote } from './co
 import { newProfile, newSong, roleOf, slotsFor } from './factory';
 import type { Idea, NotesContent, PatternContent, Song } from './types';
 import {
-  CATALOG, CUSTOM_KIT, findByKey, INSTRUMENTS, isDrumKit, KITS, kitSlots, ref, rowsOf, rowVoice, swapsFor,
+  CATALOG, CUSTOM_KIT, findByKey, INSTRUMENTS, isDrumKit, KITS, kitSlots, ref, resolveRow, rowsOf, rowVoice, swapsFor,
 } from '../packs/core';
 import { DRUM_KITS, MELODIC_VOICES } from '../engine/voices';
 
@@ -19,7 +19,7 @@ describe('catalog of kits', () => {
   it('every instrument has a voice the engine can build', () => {
     for (const i of INSTRUMENTS) {
       const m = i.manifest as { type: string; kit?: string; voice?: string };
-      if (m.type === 'drumkit') expect(DRUM_KITS, i.key).toContain(m.kit);
+      if (m.type === 'drumkit') expect([...DRUM_KITS, 'sampled'], i.key).toContain(m.kit);
       else expect(MELODIC_VOICES, i.key).toContain(m.voice);
     }
   });
@@ -191,5 +191,73 @@ describe('starting a song', () => {
     for (const k of KITS) expect([k.key, hasWritten(newSong(me.id, 'Blank', 2, 'es', k.key, [], false))]).toEqual([k.key, false]);
     const blank = newSong(me.id, 'Blank', 4, 'es', 'kit.latin', [], false);
     expect(blank.tracks.length).toBe(newSong(me.id, 'x', 4, 'es', 'kit.latin').tracks.length);
+  });
+});
+
+describe('full kits (Colección)', () => {
+  const hitsOf = (s: Song, key: string) => pattern(s, 0).rows.find((r) => r.sound.key === key)?.hits.map((h) => h.step) ?? [];
+  const withRow = (s: Song, key: string, steps: number[]) => ({
+    ...s,
+    tracks: s.tracks.map((t, i) => (i === 0 ? { ...t, clips: [{ ...t.clips[0], content: {
+      ...pattern(s, 0), rows: pattern(s, 0).rows.map((r) => (r.sound.key === key ? { ...r, hits: steps.map((step) => ({ step, vel: 0.8 })) } : r)),
+    } }] } : t)),
+  });
+
+  it('rows of any kit find their place in a full kit and back', () => {
+    const full = ['sound.kick', 'sound.snare', 'sound.tom-1', 'sound.tom-2', 'sound.hat-closed', 'sound.hat-open', 'sound.ride', 'sound.crash', 'sound.china'];
+    expect(resolveRow(full, 'sound.tom')).toBe('sound.tom-1');
+    expect(resolveRow(full, 'sound.clap')).toBe('sound.snare');
+    expect(resolveRow(full, 'sound.bass-drum')).toBe('sound.kick');
+    expect(resolveRow(full, 'sound.tambourine')).toBe('sound.snare');
+    expect(resolveRow(rowsOf('instrument.drums-rock'), 'sound.ride')).toBe('sound.hat-closed');
+    expect(resolveRow(rowsOf('instrument.drums-rock'), 'sound.china')).toBe('sound.crash');
+    expect(resolveRow(rowsOf('instrument.drums-orch'), 'sound.tom-2')).toBe('sound.timpani');
+  });
+
+  it('moving a beat to a full kit keeps every hit, merging rows it has no place for', () => {
+    let s = newSong(me.id, 'x', 2, 'en', 'kit.rock');
+    s = withRow(s, 'sound.clap', [4]);
+    s = withRow(s, 'sound.tom', [30]);
+    const kick = hitsOf(s, 'sound.kick');
+    const snare = hitsOf(s, 'sound.snare');
+    const full = setInstrument(s, s.tracks[0].id, { key: 'instrument.drums-rock-stairwell-70', version: '1.0.0' }, me.id);
+    expect(pattern(full, 0).rows.map((r) => r.sound.key)).toEqual(rowsOf('instrument.drums-rock-stairwell-70'));
+    expect(hitsOf(full, 'sound.kick')).toEqual(kick);
+    expect(hitsOf(full, 'sound.snare')).toEqual([...new Set([...snare, 4])].sort((a, b) => a - b));
+    expect(hitsOf(full, 'sound.tom-1')).toEqual([30]);
+    // And back: the floor tom and the ride play on the standard kit's tom and closed hat.
+    let f2 = withRow(full, 'sound.tom-2', [31]);
+    f2 = withRow(f2, 'sound.ride', [1]);
+    const back = setInstrument(f2, f2.tracks[0].id, ref('instrument.drums-rock'), me.id);
+    expect(hitsOf(back, 'sound.tom')).toEqual([30, 31]);
+    expect(hitsOf(back, 'sound.hat-closed')).toContain(1);
+  });
+
+  it('every Colección kit is a drum kit with the nine pieces', () => {
+    for (const i of INSTRUMENTS.filter((x) => x.pack === 'collection' && isDrumKit(x.key))) {
+      expect(rowsOf(i.key), i.key).toHaveLength(9);
+      for (const row of rowsOf(i.key)) expect(rowVoice(i.key, row), `${i.key} ${row}`).toBeTruthy();
+    }
+  });
+});
+
+describe('my sounds', () => {
+  it('a saved sound puts its instrument and a copy of its chain on the track; another instrument removes it', async () => {
+    const { applySound } = await import('./commands');
+    const s = newSong(me.id, 'x', 2, 'en', 'kit.rock');
+    const chain = { routing: 'series' as const, slots: [{ effect: ref('effect.tape'), bypass: false, params: { speed: 1, drive: 0.6, mix: 1 } }] };
+    const sound = {
+      id: 'snd', profile_id: me.id, name: 'Mi escalera', base: ref('instrument.drums-rock-stairwell-70'), chain, chain_schema_version: 1 as const,
+      status: 'active' as const, origin: 'person' as const, created_at: '', updated_at: '',
+    };
+    const kicks = pattern(s, 0).rows[0].hits;
+    const next = applySound(s, s.tracks[0].id, sound, me.id);
+    expect(next.tracks[0].instrument?.key).toBe('instrument.drums-rock-stairwell-70');
+    expect(next.tracks[0].sound?.name).toBe('Mi escalera');
+    expect(next.tracks[0].sound?.chain).toEqual(chain);
+    expect(next.tracks[0].sound?.chain).not.toBe(chain);
+    expect(pattern(next, 0).rows[0].hits).toEqual(kicks);
+    const plain = setInstrument(next, next.tracks[0].id, ref('instrument.drums-rock'), me.id);
+    expect(plain.tracks[0].sound).toBeUndefined();
   });
 });

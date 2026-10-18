@@ -1,7 +1,7 @@
 // An in-memory song store: same interface, nothing kept. Used for the Guest profile.
 
 import { newId, now } from '../domain/factory';
-import type { Idea, Profile, Recording, Song, SongVersion } from '../domain/types';
+import type { CustomSound, Idea, Profile, Recording, Song, SongVersion } from '../domain/types';
 import { byOrder } from './store';
 import type { SongStore } from './store';
 
@@ -13,9 +13,10 @@ export function memoryStore(): SongStore {
   const recordings = new Map<string, Recording>();
   const audio = new Map<string, Blob>();
   const meta = new Map<string, unknown>();
+  const sounds = new Map<string, CustomSound>();
   return {
     async listProfiles() { return byOrder([...profiles.values()].filter((p) => p.status === 'active')); },
-    async clearAll() { for (const m of [profiles, songs, versions, ideas, recordings, audio, meta]) m.clear(); },
+    async clearAll() { for (const m of [profiles, songs, versions, ideas, recordings, audio, sounds, meta]) m.clear(); },
     async saveProfile(p) { profiles.set(p.id, p); },
     async listSongs(profileId) {
       return [...songs.values()].filter((s) => s.owner_profile_id === profileId && s.status === 'active')
@@ -41,6 +42,15 @@ export function memoryStore(): SongStore {
     async saveRecording(rec, blob) { recordings.set(rec.id, rec); audio.set(rec.id, blob); },
     async getRecordingAudio(id) { return audio.get(id); },
     async listRecordings(profileId) { return [...recordings.values()].filter((r) => r.profile_id === profileId); },
+    async listSounds(profileId) {
+      return [...sounds.values()].filter((x) => x.profile_id === profileId && x.status === 'active')
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    },
+    async saveSound(sound) { sounds.set(sound.id, { ...sound, updated_at: now() }); },
+    async deleteSound(id) {
+      const x = sounds.get(id);
+      if (x) sounds.set(id, { ...x, status: 'archived' });
+    },
     async getMeta<T>(key: string) { return meta.get(key) as T | undefined; },
     async setMeta(key, value) { meta.set(key, value); },
   };

@@ -26,7 +26,7 @@ const sameParams = (a: Record<string, number>, b: Record<string, number>) =>
   Object.keys(b).every((k) => Math.abs((a[k] ?? b[k]) - b[k]) < 1e-6);
 
 /** What each pedal does, in a line; real terms, explained where they appear. */
-const PEDAL_BLURB: Record<string, { en: string; es: string }> = {
+export const PEDAL_BLURB: Record<string, { en: string; es: string }> = {
   'effect.drive': { en: 'Pushes the sound until it gets gritty, like an amp turned up.', es: 'Empuja el sonido hasta que se ensucia, como un amplificador a tope.' },
   'effect.delay': { en: 'Echoes that repeat in time with the beat.', es: 'Ecos que se repiten a tiempo con el beat.' },
   'effect.reverb': { en: 'The room: from a small studio to a cathedral.', es: 'La sala: de un estudio chico a una catedral.' },
@@ -42,9 +42,15 @@ const PEDAL_BLURB: Record<string, { en: string; es: string }> = {
   'effect.compressor': { en: 'Evens out loud and soft so the track sounds closer and punchier.', es: 'Empareja lo fuerte y lo suave para que la pista suene más cerca y con más golpe.' },
   'effect.eq': { en: 'More or less lows, mids and highs.', es: 'Más o menos graves, medios y agudos.' },
   'effect.widener': { en: 'Spreads the sound wider across left and right.', es: 'Abre el sonido más ancho entre izquierda y derecha.' },
+  'effect.preamp': { en: 'The first stage of a mixing desk: clean, round like a transformer, or warm like a tube when pushed.', es: 'La primera etapa de una consola: limpia, redonda como un transformador o cálida como una válvula cuando se empuja.' },
+  'effect.comp-studio': { en: 'Three classic compressors: fast and gritty for punch, smooth for voices, gentle glue for a whole kit. Mix blends it in parallel.', es: 'Tres compresores clásicos: rápido y con carácter para el golpe, suave para voces, pegamento para todo un kit. La mezcla lo suma en paralelo.' },
+  'effect.amp': { en: 'A guitar or bass amplifier: how hard it is pushed and its bass, middle and treble knobs.', es: 'Un amplificador de guitarra o bajo: cuánto se empuja y sus perillas de graves, medios y agudos.' },
+  'effect.cab': { en: 'The speaker box after the amp, as a microphone hears it; toward the edge sounds darker.', es: 'La caja de parlantes después del amplificador, como la escucha un micrófono; hacia el borde suena más oscuro.' },
+  'effect.tape': { en: 'Recording to tape: soft saturation, a bump in the lows and gentler highs.', es: 'Grabar en cinta: saturación suave, un realce en los graves y agudos más suaves.' },
+  'effect.gated-room': { en: 'A big room cut off sharply after each hit: the 80s drum sound.', es: 'Una sala grande que se corta en seco después de cada golpe: el sonido de batería de los 80.' },
 };
 
-function formatParam(p: ParamDef, v: number): string {
+export function formatParam(p: ParamDef, v: number): string {
   switch (p.unit) {
     case 's': return `${v.toFixed(1)} s`;
     case 'Hz': return v >= 100 ? `${Math.round(v)} Hz` : `${v.toFixed(1)} Hz`;
@@ -178,6 +184,20 @@ function Pedalboard({ track, lang, onBypass, onParam, onResetFx, onAddFx, onRemo
   );
 }
 
+/** A setting with named values (amp model, compressor style): one button per value. */
+export function ChoiceParam({ p, value, lang, disabled, onChange }: { p: ParamDef; value: number; lang: Lang; disabled?: boolean; onChange: (v: number) => void }) {
+  return (
+    <div className="stack" style={{ gap: 4 }} role="group" aria-label={p.label[lang]}>
+      <span className="lbl">{p.label[lang]}</span>
+      <div className="row wrap" style={{ gap: 4 }}>
+        {p.choices!.map((c, i) => (
+          <button key={c.en} type="button" className="chip" disabled={disabled} aria-pressed={Math.round(value) === i} onClick={() => onChange(i)}>{c[lang]}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PedalEditor({ slot, lang, onBypass, onParam, onReset, onRemove, onClose }: {
   slot: Track['fx_chain']['slots'][number];
   lang: Lang;
@@ -203,6 +223,7 @@ function PedalEditor({ slot, lang, onBypass, onParam, onReset, onRemove, onClose
       {PEDAL_BLURB[slot.effect.key] && <span className="small muted">{PEDAL_BLURB[slot.effect.key][lang]}</span>}
       {effectParams(slot.effect).map((p) => {
         const v = slot.params[p.name] ?? p.default;
+        if (p.choices) return <ChoiceParam key={p.name} p={p} value={v} lang={lang} disabled={slot.bypass} onChange={(x) => onParam(p.name, x)} />;
         return (
           <label key={p.name} className="stack" style={{ gap: 2 }}>
             <span className="lbl">{p.label[lang]} <span className="mono">{formatParam(p, v)}</span></span>

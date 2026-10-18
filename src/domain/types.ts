@@ -124,12 +124,39 @@ export interface FxChain {
 
 export type TrackKind = 'instrument' | 'drums' | 'audio';
 
+/**
+ * A sound a person made in the Colección: a catalog instrument heard through a studio chain (preamp, compressor,
+ * amp, cabinet, tape, room…), kept in their profile. Using it on a track copies it into the track, so the song
+ * sounds the same on any device and later edits to the saved sound never change a finished song.
+ */
+export interface CustomSound {
+  id: string;
+  profile_id: string;
+  name: string;
+  base: CatalogRef;
+  chain: FxChain;
+  chain_schema_version: 1;
+  status: 'active' | 'archived';
+  origin: Origin;
+  created_at: string;
+  updated_at: string;
+}
+
+/** The copy of a saved sound a track plays: its chain runs between the instrument and the track's pedals. */
+export interface TrackSound {
+  id: string;
+  name: string;
+  chain: FxChain;
+}
+
 export interface Track {
   id: string;
   position: number;
   name: string;
   kind: TrackKind;
   instrument: CatalogRef | null;
+  /** A saved sound from the Colección on top of the instrument; changing the instrument removes it. */
+  sound?: TrackSound;
   /** The job this track does in its kit. Older songs have none; it is inferred from the instrument. */
   role?: Role;
   color: string;

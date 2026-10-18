@@ -1,4 +1,4 @@
-import { CUSTOM_KIT, DEFAULT_KIT, effectParams, isDrumKit, kitSlots, ORCH_ROWS, LATIN_ROWS, ref, roleOfInstrument, ROLES, rowsOf } from '../packs/core';
+import { CUSTOM_KIT, DEFAULT_KIT, effectParams, isDrumKit, kitSlots, ref, resolveRow, roleOfInstrument, ROLES, rowsOf } from '../packs/core';
 import type { KitSlot } from '../packs/core';
 import type { CatalogRef, Clip, ClipKind, FxChain, Lang, Profile, Role, Song, StarredInstrument, ThemePreset, Track, TrackKind } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
@@ -251,11 +251,23 @@ export function retarget(t: Track, instrumentKey: string, role: Role, name: stri
   const clips = t.clips.map((c) => {
     if (c.kind !== 'pattern' || !drums) return c;
     const p = c.content as { steps: number; rows: { sound: CatalogRef; hits: { step: number; vel: number }[] }[] };
-    const placeOf = (key: string) => [DRUM_ROW_KEYS, ORCH_ROWS, LATIN_ROWS].map((rows) => rows.indexOf(key)).find((i) => i >= 0) ?? -1;
-    const rows = rowsOf(instrumentKey).map((key, i) => ({ sound: ref(key), hits: p.rows.find((r) => placeOf(r.sound.key) === i)?.hits ?? [] }));
+    // Each old row lands on the row that plays it in the new kit; two rows landing together keep every hit.
+    const target = rowsOf(instrumentKey);
+    const merged = new Map<string, Map<number, number>>(target.map((k) => [k, new Map()]));
+    for (const r of p.rows) {
+      const dest = resolveRow(target, r.sound.key);
+      const into = dest ? merged.get(dest) : undefined;
+      if (!into) continue;
+      for (const h of r.hits) into.set(h.step, Math.max(into.get(h.step) ?? 0, h.vel));
+    }
+    const rows = target.map((key) => ({
+      sound: ref(key),
+      hits: [...merged.get(key)!].map(([step, vel]) => ({ step, vel })).sort((a, b) => a.step - b.step),
+    }));
     return { ...c, content: { steps: p.steps, rows }, updated_at: at };
   });
-  return { ...t, name, role, instrument: ref(instrumentKey), clips, updated_at: at };
+  const { sound: _sound, ...rest } = t; // a saved sound belongs to the instrument it was made on
+  return { ...rest, name, role, instrument: ref(instrumentKey), clips, updated_at: at };
 }
 
 /**

@@ -3,8 +3,7 @@
 
 import { noteNameAscii, spellInKey } from '../theory';
 import type {
-  CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Track,
-} from './types';
+  CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Track, CustomSound } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
 import { DEFAULT_SWING, defaultFxParams, newId, now, retarget, roleOf, switchKit as switchKitOf } from './factory';
 import { pedalRank, ref, rowFor } from '../packs/core';
@@ -167,6 +166,13 @@ export const toggleSolo = (song: Song, trackId: string, by: string | null): Song
 /** Another instrument for one track; drum rows follow by place, the role stays. */
 export const setInstrument = (song: Song, trackId: string, instrument: CatalogRef, by: string | null): Song =>
   mapTrack(song, trackId, (t) => retarget(t, instrument.key, roleOf(t), t.name), by);
+
+/** Put a saved sound on a track: its instrument (the beat or notes move as with any swap) plus its studio chain. */
+export const applySound = (song: Song, trackId: string, sound: CustomSound, by: string | null): Song =>
+  mapTrack(song, trackId, (t) => ({
+    ...retarget(t, sound.base.key, roleOf(t), t.name),
+    sound: { id: sound.id, name: sound.name, chain: structuredClone(sound.chain) },
+  }), by);
 
 /** Move the whole song to another kit, keeping what was written (see factory.switchKit). */
 export const switchKit = (song: Song, kitKey: string, slots: KitSlot[], lang: Lang, by: string | null): Song =>

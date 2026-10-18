@@ -233,6 +233,7 @@ create table studio.tracks (
   pan                 numeric(4, 3) not null default 0,     -- -1 left, 0 centre, 1 right
   fx_chain            jsonb         not null default '{"routing": "series", "slots": []}',
   fx_schema_version   integer       not null default 1,
+  sound               jsonb,                               -- copy of a saved Colección sound (id, name, chain); runs before fx_chain
   origin              text          not null default 'person',
   created_by          uuid          references studio.profiles (id) on delete set null,
   updated_by          uuid          references studio.profiles (id) on delete set null,
@@ -251,10 +252,35 @@ create table studio.tracks (
   constraint tracks_gain        check (gain between 0 and 4),
   constraint tracks_pan         check (pan between -1 and 1),
   constraint tracks_fx_object   check (jsonb_typeof(fx_chain) = 'object'),
+  constraint tracks_sound_object check (sound is null or jsonb_typeof(sound) = 'object'),
   constraint tracks_origin      check (origin in ('person', 'claude', 'pack', 'system'))
 );
 
 create index tracks_instrument_idx on studio.tracks (instrument_key, instrument_version);
+
+-- Sounds a profile made in the Colección: a catalog instrument heard through a studio chain. Using one copies it
+-- into the track (tracks.sound), so later edits never change a finished song.
+create table studio.sounds (
+  id                    uuid        primary key default gen_random_uuid(),
+  account_id            uuid        not null default auth.uid() references auth.users (id) on delete cascade,
+  profile_id            uuid        not null references studio.profiles (id) on delete cascade,
+  name                  text        not null,
+  base_key              text        not null,
+  base_version          text        not null,
+  chain                 jsonb       not null,
+  chain_schema_version  integer     not null default 1,
+  status                text        not null default 'active',
+  origin                text        not null default 'person',
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now(),
+  constraint sounds_base_fk foreign key (base_key, base_version) references catalog.items (key, version) on delete restrict,
+  constraint sounds_name   check (length(name) between 1 and 60),
+  constraint sounds_chain  check (jsonb_typeof(chain) = 'object'),
+  constraint sounds_status check (status in ('active', 'archived')),
+  constraint sounds_origin check (origin in ('person', 'claude', 'pack', 'system'))
+);
+
+create index sounds_profile_idx on studio.sounds (profile_id);
 
 create table studio.recordings (
   id            uuid        primary key default gen_random_uuid(),
@@ -383,6 +409,7 @@ create trigger profiles_touch    before update on studio.profiles    for each ro
 create trigger songs_touch       before update on studio.songs       for each row execute function studio.touch_updated_at();
 create trigger sections_touch    before update on studio.sections    for each row execute function studio.touch_updated_at();
 create trigger tracks_touch      before update on studio.tracks      for each row execute function studio.touch_updated_at();
+create trigger sounds_touch      before update on studio.sounds      for each row execute function studio.touch_updated_at();
 create trigger ideas_touch       before update on studio.ideas       for each row execute function studio.touch_updated_at();
 create trigger clips_touch       before update on studio.clips       for each row execute function studio.touch_updated_at();
 create trigger lyric_lines_touch before update on studio.lyric_lines for each row execute function studio.touch_updated_at();
@@ -391,6 +418,7 @@ create trigger lyric_lines_touch before update on studio.lyric_lines for each ro
 create trigger songs_same_account_owner       before insert or update on studio.songs         for each row execute function studio.ensure_same_account('studio.profiles', 'owner_profile_id');
 create trigger sections_same_account_song     before insert or update on studio.sections      for each row execute function studio.ensure_same_account('studio.songs', 'song_id');
 create trigger tracks_same_account_song       before insert or update on studio.tracks        for each row execute function studio.ensure_same_account('studio.songs', 'song_id');
+create trigger sounds_same_account_owner      before insert or update on studio.sounds        for each row execute function studio.ensure_same_account('studio.profiles', 'profile_id');
 create trigger recordings_same_account_owner  before insert or update on studio.recordings    for each row execute function studio.ensure_same_account('studio.profiles', 'profile_id');
 create trigger recordings_same_account_song   before insert or update on studio.recordings    for each row execute function studio.ensure_same_account('studio.songs', 'song_id');
 create trigger ideas_same_account_song        before insert or update on studio.ideas         for each row execute function studio.ensure_same_account('studio.songs', 'song_id');
@@ -474,6 +502,7 @@ alter table studio.ideas        enable row level security;
 alter table studio.clips        enable row level security;
 alter table studio.lyric_lines  enable row level security;
 alter table studio.song_versions enable row level security;
+alter table studio.sounds       enable row level security;
 
 create policy catalog_read on catalog.items
   for select to authenticated using (true);
@@ -503,6 +532,9 @@ create policy family_rows on studio.lyric_lines
   for all to authenticated
   using (account_id = (select auth.uid())) with check (account_id = (select auth.uid()));
 create policy family_rows on studio.song_versions
+  for all to authenticated
+  using (account_id = (select auth.uid())) with check (account_id = (select auth.uid()));
+create policy family_rows on studio.sounds
   for all to authenticated
   using (account_id = (select auth.uid())) with check (account_id = (select auth.uid()));
 
