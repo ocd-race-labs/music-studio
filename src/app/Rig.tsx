@@ -69,8 +69,19 @@ export interface RigEnds {
   out: { name: string; sum: string; warn?: boolean };
 }
 
-/** The diagram itself: source, instrument, units, destination, with a + between boxes to add a unit there. */
-export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle, onUpTo, onAdd, onStarter }: {
+/** A switch whose position shows its state: on or off, never what pressing it would do. */
+export function OnSwitch({ on, label, lang, onToggle, small }: { on: boolean; label: string; lang: Lang; onToggle: () => void; small?: boolean }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label={label} className={`es-sw${on ? ' on' : ''}${small ? ' small' : ''}`} onClick={onToggle}
+      title={t(on ? 'turnOff' : 'turnOn', lang)}>
+      <span className="es-sw-track" aria-hidden="true"><span className="es-sw-thumb" /></span>
+      <span className="es-sw-txt">{t(on ? 'esOn' : 'esOff', lang)}</span>
+    </button>
+  );
+}
+
+/** The diagram itself: 1 track, 2 instrument, 3 the chain's units, 4 the desk, with a + between units to add one there. */
+export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle, onAdd, onStarter }: {
   chain: FxChain;
   ends: RigEnds;
   sel: RigSel;
@@ -79,7 +90,6 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
   lang: Lang;
   onSel: (s: RigSel) => void;
   onToggle: (i: number) => void;
-  onUpTo: (i: number) => void;
   onAdd: (at: number | null) => void;
   /** Load the family's starting rack when the chain is empty. */
   onStarter: () => void;
@@ -102,6 +112,7 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
       </button>
     </div>
   );
+  const on = chain.slots.filter((x) => !x.bypass).length;
   return (
     <div className="cd-flow es-flow" role="list" aria-label={t('esFlow', lang)} ref={(el) => {
       const box = el?.querySelector<HTMLElement>('.cd-box.sel');
@@ -109,43 +120,43 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
         el.scrollTo({ left: Math.max(0, box.offsetLeft - 40), behavior: 'smooth' });
       }
     }}>
-      {end('track', t('esTrack', lang), ends.track.name, ends.track.sum, '', ends.track.color)}
+      {end('track', t('esStep1', lang), ends.track.name, ends.track.sum, '', ends.track.color)}
       {arrow('a0')}
-      {end('instrument', t('cdInstrument', lang), ends.instrument.name, ends.instrument.sum)}
-      {chain.slots.length === 0 ? (<>
-        {link(0)}
-        <div role="listitem" className="cd-box es-empty">
-          <div className="cd-box-main">
-            <span className="cd-stage">{t('esNoGear', lang)}</span>
-            <span className="cd-sum">{t('esNoGearHint', lang)}</span>
-            <button type="button" className="btn small-btn" onClick={onStarter}><Icon name="plus" size={14} /> {t('esStarter', lang)}</button>
-          </div>
-        </div>
-        {arrow('a1')}
-      </>) : (<>
-        {chain.slots.map((slot, i) => {
-          const stage = stageOf(slot.effect.key);
-          const cut = upTo !== null && i > upTo;
-          return [link(i), (
-            <div role="listitem" key={`b${i}`} className={`cd-box${sel === i ? ' sel' : ''}${slot.bypass ? ' off' : ''}${cut ? ' cut' : ''}`} style={{ ['--stage' as string]: STAGE_COLOR[stage] }}>
-              <button type="button" className="cd-box-main" onClick={() => onSel(i)} aria-pressed={sel === i}>
-                <span className="cd-stage" title={stageName(stage, lang)}>{STAGE_SHORT[stage][lang]}</span>
-                <strong className="cd-name">{catalogTitle(slot.effect, lang)}</strong>
-                <span className="cd-sum">{slot.bypass ? t('pedalOff', lang) : unitSummary(slot, lang)}</span>
-              </button>
-              <div className="cd-box-foot">
-                <button type="button" className="cd-led" aria-pressed={!slot.bypass} onClick={() => onToggle(i)}
-                  aria-label={`${catalogTitle(slot.effect, lang)}: ${t(slot.bypass ? 'pedalOff' : 'pedalOn', lang)}`} title={t(slot.bypass ? 'turnOn' : 'turnOff', lang)} />
-                <button type="button" className={`cd-upto${upTo === i ? ' on' : ''}`} onClick={() => onUpTo(i)} aria-pressed={upTo === i} title={t('cdUpToHint', lang)} aria-label={`${t('cdUpTo', lang)}: ${catalogTitle(slot.effect, lang)}`}>
-                  <Icon name="headphones" size={14} /> <span className="cd-upto-txt">{t('cdUpTo', lang)}</span>
-                </button>
+      {end('instrument', t('esStep2', lang), ends.instrument.name, ends.instrument.sum)}
+      <div className="es-chainwrap" role="group" aria-label={t('esStep3', lang)}>
+        <span className="es-step">{t('esStep3', lang)} <span className="es-step-n">{chain.slots.length ? t('esUnitsOn', lang, { n: on, of: chain.slots.length }) : t('esNoGear', lang).toLowerCase()}</span></span>
+        <div className="es-chainrow">
+          {chain.slots.length === 0 ? (<>
+            {link(0)}
+            <div role="listitem" className="cd-box es-empty">
+              <div className="cd-box-main">
+                <span className="cd-sum">{t('esNoGearHint', lang)}</span>
+                <button type="button" className="btn small-btn" onClick={onStarter}><Icon name="plus" size={14} /> {t('esStarter', lang)}</button>
               </div>
             </div>
-          )];
-        })}
-        {link(chain.slots.length)}
-      </>)}
-      {end('out', t('esToDesk', lang), ends.out.name, ends.out.sum, ends.out.warn ? ' warn' : '')}
+          </>) : (<>
+            {chain.slots.map((slot, i) => {
+              const stage = stageOf(slot.effect.key);
+              const cut = upTo !== null && i > upTo;
+              return [link(i), (
+                <div role="listitem" key={`b${i}`} className={`cd-box${sel === i ? ' sel' : ''}${slot.bypass ? ' off' : ''}${cut ? ' cut' : ''}`} style={{ ['--stage' as string]: STAGE_COLOR[stage] }}>
+                  <button type="button" className="cd-box-main" onClick={() => onSel(i)} aria-pressed={sel === i}>
+                    <span className="cd-stage" title={stageName(stage, lang)}>{STAGE_SHORT[stage][lang]}</span>
+                    <strong className="cd-name">{catalogTitle(slot.effect, lang)}</strong>
+                    <span className="cd-sum">{slot.bypass ? t('pedalOff', lang) : unitSummary(slot, lang)}</span>
+                  </button>
+                  <div className="cd-box-foot">
+                    <OnSwitch small on={!slot.bypass} lang={lang} label={catalogTitle(slot.effect, lang)} onToggle={() => onToggle(i)} />
+                  </div>
+                </div>
+              )];
+            })}
+            {link(chain.slots.length)}
+          </>)}
+        </div>
+      </div>
+      {arrow('a1')}
+      {end('out', t('esStep4', lang), ends.out.name, ends.out.sum, ends.out.warn ? ' warn' : '')}
     </div>
   );
 }
@@ -170,6 +181,52 @@ export function AddUnit({ lang, onPick, onCancel }: { lang: Lang; onPick: (key: 
   );
 }
 
+/** What each model of a unit sounds like, shown under its choice. */
+const CHOICE_HINT: Record<string, { en: string; es: string }[]> = {
+  'effect.preamp': [
+    { en: 'Transparent: more level, no color.', es: 'Transparente: más nivel, sin color.' },
+    { en: 'Rounds the sound and fattens the lows.', es: 'Redondea el sonido y engorda los graves.' },
+    { en: 'Warm; it gets gritty when pushed.', es: 'Cálida; se ensucia cuando la empujas.' },
+  ],
+  'effect.comp-studio': [
+    { en: 'Fast and punchy: grabs every hit.', es: 'Rápido y con golpe: agarra cada golpe.' },
+    { en: 'Slow and smooth: evens out without being heard.', es: 'Lento y suave: empareja sin que se note.' },
+    { en: 'Gentle: holds the parts together.', es: 'Suave: mantiene todo unido.' },
+  ],
+  'effect.amp': [
+    { en: 'Clean and bright, no grit.', es: 'Limpio y brillante, sin suciedad.' },
+    { en: 'Breaks up when you play hard.', es: 'Se ensucia cuando tocas fuerte.' },
+    { en: 'Heavy distortion, for metal and walls of guitars.', es: 'Mucha distorsión, para metal y muros de guitarras.' },
+    { en: 'Round and deep, made for the bass.', es: 'Redondo y profundo, hecho para el bajo.' },
+  ],
+  'effect.cab': [
+    { en: 'Open back: airy, small room.', es: 'Abierto atrás: aireado, de sala chica.' },
+    { en: 'Two speakers: balanced, rock and pop.', es: 'Dos parlantes: equilibrado, rock y pop.' },
+    { en: 'Closed and big: tight lows, heavy rock.', es: 'Cerrado y grande: graves firmes, rock pesado.' },
+    { en: 'Eight bass speakers: big and punchy.', es: 'Ocho parlantes de bajo: grande y con golpe.' },
+    { en: 'One big speaker: deep and round.', es: 'Un parlante grande: profundo y redondo.' },
+  ],
+  'effect.tape': [
+    { en: 'Slower tape: warmer, rounder lows.', es: 'Cinta más lenta: más cálida, graves redondos.' },
+    { en: 'Faster tape: cleaner and brighter.', es: 'Cinta más rápida: más limpia y brillante.' },
+  ],
+};
+
+/** Each model comes with its usual settings, so changing the model is heard and seen at once. */
+const MODEL_PRESET: Record<string, Record<string, number>[]> = {
+  'effect.preamp': [{ drive: 0.2, lowcut: 30 }, { drive: 0.4, lowcut: 40 }, { drive: 0.55, lowcut: 50 }],
+  'effect.comp-studio': [{ amount: 0.5, mix: 1 }, { amount: 0.4, mix: 1 }, { amount: 0.3, mix: 1 }],
+  'effect.amp': [
+    { gain: 0.3, bass: 0, mid: 0, treble: 2, level: 0 },
+    { gain: 0.55, bass: 1, mid: 2, treble: 1, level: -2 },
+    { gain: 0.8, bass: 3, mid: -3, treble: 2, level: -4 },
+    { gain: 0.3, bass: 3, mid: 0, treble: -2, level: 0 },
+  ],
+  'effect.cab': [{ mic: 0.3 }, { mic: 0.3 }, { mic: 0.35 }, { mic: 0.2 }, { mic: 0.2 }],
+  'effect.tape': [{ drive: 0.45 }, { drive: 0.25 }],
+};
+export const modelPreset = (key: string, index: number): Record<string, number> => MODEL_PRESET[key]?.[index] ?? {};
+
 /** A unit's knobs, laid out like a rack unit: model choices first, then the knobs. */
 function ParamKnob({ p, value, lang, onChange }: { p: ParamDef; value: number; lang: Lang; onChange: (v: number) => void }) {
   const step = p.step ?? 0;
@@ -179,18 +236,20 @@ function ParamKnob({ p, value, lang, onChange }: { p: ParamDef; value: number; l
     label={p.label[lang]} display={formatParam(p, value)} onChange={onChange} />;
 }
 
-export function UnitEditor({ slot, index, count, original, without, lang, onChange, onSwap, onToggle, onWithout, onMove, onRestore, onRemove }: {
+export type ListenMode = 'all' | 'upto' | 'without';
+
+export function UnitEditor({ slot, index, count, original, listen, lang, onChange, onSwap, onToggle, onListen, onMove, onRestore, onRemove }: {
   slot: FxSlot;
   index: number;
   count: number;
   /** The same unit in the sound as it comes, to put it back. */
   original?: FxSlot;
-  without: boolean;
+  listen: ListenMode;
   lang: Lang;
   onChange: (params: Record<string, number>) => void;
   onSwap: (key: string) => void;
   onToggle: () => void;
-  onWithout: () => void;
+  onListen: (m: ListenMode) => void;
   onMove: (d: -1 | 1) => void;
   onRestore: () => void;
   onRemove: () => void;
@@ -201,28 +260,45 @@ export function UnitEditor({ slot, index, count, original, without, lang, onChan
   const knobs = params.filter((p) => !p.choices);
   const others = EFFECTS.filter((e) => stageOf(e.key) === stage && e.key !== slot.effect.key);
   const same = !!original && original.bypass === slot.bypass && Object.keys({ ...original.params, ...slot.params }).every((k) => Math.abs((original.params[k] ?? 0) - (slot.params[k] ?? 0)) < 1e-6);
+  const name = catalogTitle(slot.effect, lang);
+  const hints = CHOICE_HINT[slot.effect.key];
   return (
-    <section className="es-unit" style={{ ['--stage' as string]: STAGE_COLOR[stage] }} aria-label={catalogTitle(slot.effect, lang)}>
+    <section className="es-unit" style={{ ['--stage' as string]: STAGE_COLOR[stage] }} aria-label={name}>
       <div className="row wrap es-unit-head">
         <span className="cd-add-stage">{stageName(stage, lang)}</span>
-        <h3 className="grow display" style={{ fontSize: 20 }}>{catalogTitle(slot.effect, lang)}</h3>
-        <button type="button" className="chip" aria-pressed={!slot.bypass} onClick={onToggle}>{t(slot.bypass ? 'pedalOff' : 'pedalOn', lang)}</button>
-        <button type="button" className="btn small-btn" aria-pressed={without} onClick={onWithout} title={t('cdWithoutHint', lang)}>
-          <Icon name="headphones" size={16} /> {t(without ? 'cdWithoutOn' : 'cdWithout', lang)}
-        </button>
+        <h3 className="grow display" style={{ fontSize: 20 }}>{name}</h3>
+        <OnSwitch on={!slot.bypass} lang={lang} label={name} onToggle={onToggle} />
       </div>
       {PEDAL_BLURB[slot.effect.key] && <p className="small muted" style={{ margin: 0 }}>{PEDAL_BLURB[slot.effect.key][lang]}</p>}
       <div className="es-unit-body">
-        {choices.map((p) => <ChoiceParam key={p.name} p={p} value={slot.params[p.name] ?? p.default} lang={lang} onChange={(v) => onChange({ ...slot.params, [p.name]: v })} />)}
+        {choices.map((p) => {
+          const v = Math.round(slot.params[p.name] ?? p.default);
+          return (
+            <div key={p.name} className="stack es-choice" style={{ gap: 4 }}>
+              <ChoiceParam p={p} value={v} lang={lang} onChange={(x) => onChange({ ...slot.params, [p.name]: x, ...modelPreset(slot.effect.key, Math.round(x)) })} />
+              {hints?.[v] && <span className="small muted">{hints[v][lang]}</span>}
+            </div>
+          );
+        })}
         {knobs.length > 0 && (
           <div className="es-knobs" role="group" aria-label={t('esKnobs', lang)}>
             {knobs.map((p) => <ParamKnob key={p.name} p={p} value={slot.params[p.name] ?? p.default} lang={lang} onChange={(v) => onChange({ ...slot.params, [p.name]: v })} />)}
           </div>
         )}
       </div>
+      {choices.length > 0 && <p className="small muted" style={{ margin: 0 }}>{t('esModelHint', lang)}</p>}
+      <div className="es-listenmode">
+        <span className="lbl">{t('esHear', lang)}</span>
+        <div className="seg small-seg" role="group" aria-label={t('esHear', lang)}>
+          <button type="button" aria-pressed={listen === 'all'} onClick={() => onListen('all')}>{t('esHearAll', lang)}</button>
+          <button type="button" aria-pressed={listen === 'upto'} onClick={() => onListen('upto')}>{t('esHearUpTo', lang)}</button>
+          <button type="button" aria-pressed={listen === 'without'} onClick={() => onListen('without')}>{t('esHearWithout', lang)}</button>
+        </div>
+        <span className="small muted">{t(listen === 'all' ? 'esHearAllHint' : listen === 'upto' ? 'esHearUpToHint' : 'esHearWithoutHint', lang)}</span>
+      </div>
       <div className="row wrap" style={{ gap: 6 }}>
-        <button type="button" className="btn small-btn ghost" onClick={() => onMove(-1)} disabled={index === 0}>← {t('cdEarlier', lang)}</button>
-        <button type="button" className="btn small-btn ghost" onClick={() => onMove(1)} disabled={index === count - 1}>{t('cdLater', lang)} →</button>
+        <button type="button" className="btn small-btn ghost" onClick={() => onMove(-1)} disabled={index === 0} title={t('esMoveHint', lang)}>← {t('esMoveEarlier', lang)}</button>
+        <button type="button" className="btn small-btn ghost" onClick={() => onMove(1)} disabled={index === count - 1} title={t('esMoveHint', lang)}>{t('esMoveLater', lang)} →</button>
         {others.length > 0 && (
           <label className="row" style={{ gap: 6 }}>
             <span className="small muted">{t('esSwap', lang)}</span>
