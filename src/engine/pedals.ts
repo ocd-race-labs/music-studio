@@ -197,21 +197,27 @@ function shape(fn: (x: number) => number, n = 2048): Float32Array {
   return c;
 }
 
-/** Clean (solid state): straight until near the top, then a firm knee. Transformer: soft and round. Tube: soft and lopsided (even harmonics). */
+/** A biased tanh: lopsided like a triode (even harmonics), with a slope of 1 at silence so quiet sounds keep their level. */
+const biasedTanh = (k: number, b: number) => {
+  const off = Math.tanh(k * b);
+  const slope = k * (1 - off * off);
+  return (x: number) => (Math.tanh(k * (x + b)) - off) / slope;
+};
+
+/**
+ * Transfer curves. Each has a slope of 1 near silence, so a unit adds color without jumping in level; louder
+ * signals bend. Clean (solid state): straight until near the top, then a firm knee. Transformer: soft and round.
+ * Tube: soft and lopsided.
+ */
 const PREAMP_CURVES = [
   shape((x) => (Math.abs(x) < 0.7 ? x : Math.sign(x) * (0.7 + 0.3 * Math.tanh((Math.abs(x) - 0.7) / 0.3)))),
-  shape((x) => Math.tanh(1.4 * x) / Math.tanh(1.4)),
-  (() => {
-    const k = 1.6;
-    const b = 0.22;
-    const off = Math.tanh(k * b);
-    const top = Math.max(Math.abs(Math.tanh(k * (1 + b)) - off), Math.abs(Math.tanh(k * (-1 + b)) - off));
-    return shape((x) => (Math.tanh(k * (x + b)) - off) / top);
-  })(),
+  shape((x) => Math.tanh(1.4 * x) / 1.4),
+  shape(biasedTanh(1.6, 0.22)),
 ];
-const softClip = shape((x) => Math.tanh(1.2 * x) / Math.tanh(1.2));
+const softClip = shape((x) => Math.tanh(1.2 * x) / 1.2);
 const tubeClip = PREAMP_CURVES[2];
-const hardClip = shape((x) => Math.tanh(2.5 * x) / Math.tanh(2.5));
+const hardClip = shape((x) => Math.tanh(2.5 * x) / 2.5);
+const tapeCurve = shape(biasedTanh(1.3, 0.05));
 
 const idx = (p: Record<string, number>, name: string, n: number, fallback: number) =>
   Math.max(0, Math.min(n - 1, Math.round(num(p, name, fallback))));
@@ -221,10 +227,10 @@ const idx = (p: Record<string, number>, name: string, n: number, fallback: numbe
  * (Fender scoops deep and low, Marshall shallower and higher; the mid knob moves the notch, it never boosts).
  */
 const AMP_MODELS = [
-  /* clean, American */ { tight: 70, pre: 12, pre2: 0, inter: 9000, bassF: 120, midF: 550, midQ: 0.6, midDb: -9, trebleF: 3000, curve: softClip, curve2: softClip, trim: 6 },
-  /* crunch, British */ { tight: 80, pre: 28, pre2: 8, inter: 7000, bassF: 150, midF: 720, midQ: 0.7, midDb: -5, trebleF: 2500, curve: tubeClip, curve2: softClip, trim: -6 },
-  /* high gain */ { tight: 180, pre: 30, pre2: 22, inter: 8000, bassF: 120, midF: 420, midQ: 0.6, midDb: -6, trebleF: 3000, curve: tubeClip, curve2: hardClip, trim: -9 },
-  /* bass */ { tight: 35, pre: 16, pre2: 0, inter: 6000, bassF: 150, midF: 700, midQ: 0.6, midDb: -4, trebleF: 2500, curve: tubeClip, curve2: softClip, trim: -1 },
+  /* clean, American */ { tight: 70, pre: 12, pre2: 0, inter: 9000, bassF: 120, midF: 550, midQ: 0.6, midDb: -9, trebleF: 3000, curve: softClip, curve2: softClip, trim: 4.6, comp: 9 },
+  /* crunch, British */ { tight: 80, pre: 28, pre2: 8, inter: 7000, bassF: 150, midF: 720, midQ: 0.7, midDb: -5, trebleF: 2500, curve: tubeClip, curve2: softClip, trim: -3.4, comp: 11 },
+  /* high gain */ { tight: 180, pre: 30, pre2: 22, inter: 8000, bassF: 120, midF: 420, midQ: 0.6, midDb: -6, trebleF: 3000, curve: tubeClip, curve2: hardClip, trim: -5.2, comp: 4 },
+  /* bass */ { tight: 35, pre: 16, pre2: 0, inter: 6000, bassF: 150, midF: 700, midQ: 0.6, midDb: -4, trebleF: 2500, curve: tubeClip, curve2: softClip, trim: 1.2, comp: 10.7 },
 ];
 
 /** Speaker cabinets as a microphone hears them, fitted to measured cabinet responses: low cut, box bump, mid dip, presence, top cliff. */
@@ -238,9 +244,10 @@ const CABS = [
 
 /** Compressor styles: fast and gritty, slow and smooth, or gentle glue for a whole group. */
 const COMP_STYLES = [
-  { attack: 0.0006, release: 0.06, knee: 2, ratio: (a: number) => 4 + 16 * a, threshold: (a: number) => -8 - 30 * a, grit: true },
-  { attack: 0.012, release: 0.45, knee: 14, ratio: (a: number) => 2.5 + 2 * a, threshold: (a: number) => -6 - 28 * a, grit: false },
-  { attack: 0.03, release: 0.12, knee: 4, ratio: (a: number) => 2 + 2 * a, threshold: (a: number) => -4 - 20 * a, grit: false },
+  // The browser's compressor already adds makeup gain of its own; `makeup` only levels the three styles.
+  { attack: 0.0006, release: 0.06, knee: 2, ratio: (a: number) => 4 + 16 * a, threshold: (a: number) => -8 - 30 * a, grit: true, makeup: -3 },
+  { attack: 0.012, release: 0.45, knee: 14, ratio: (a: number) => 2.5 + 2 * a, threshold: (a: number) => -6 - 28 * a, grit: false, makeup: -2.5 },
+  { attack: 0.03, release: 0.12, knee: 4, ratio: (a: number) => 2 + 2 * a, threshold: (a: number) => -4 - 20 * a, grit: false, makeup: -3.3 },
 ];
 
 /** A dense burst of noise that stops dead: the room of the 80s gated drum sound. */
@@ -277,8 +284,9 @@ const STUDIO: Record<string, () => Pedal> = {
       const c = idx(p, 'character', 3, 2);
       if (c !== character) { character = c; sat.curve = PREAMP_CURVES[c]; }
       const drive = num(p, 'drive', 0.3);
+      // Push in, then take back what the bend did not already take (measured on a guitar): the level stays put.
       push.gain.rampTo(Tone.dbToGain(drive * 30), 0.05);
-      back.gain.rampTo(Tone.dbToGain(-drive * 25), 0.05);
+      back.gain.rampTo(Tone.dbToGain(16.5 * Math.pow(drive, 2.42) - drive * 30), 0.05);
       cut.frequency.rampTo(num(p, 'lowcut', 30), 0.05);
       return 1;
     });
@@ -296,7 +304,7 @@ const STUDIO: Record<string, () => Pedal> = {
       comp.ratio.value = st.ratio(a);
       comp.threshold.value = st.threshold(a);
       grit.curve = st.grit ? softClip : shape((x) => x, 2);
-      makeup.gain.value = Tone.dbToGain(-st.threshold(a) * 0.35);
+      makeup.gain.value = Tone.dbToGain(st.makeup + 6 * (a - 0.5));
       return num(p, 'mix', 1);
     }, [], 0.006);
   },
@@ -336,7 +344,8 @@ const STUDIO: Record<string, () => Pedal> = {
       // The mid knob makes the notch shallower or deeper; at full it is nearly flat, never a boost.
       mid.gain.value = Math.min(0, v.midDb + num(p, 'mid', 0) * 0.75);
       high.gain.value = num(p, 'treble', 0);
-      out.gain.rampTo(Tone.dbToGain(num(p, 'level', 0) + v.trim - g * 4), 0.05);
+      // Levelled per voicing (measured), so turning the amp on or the gain up does not jump in volume.
+      out.gain.rampTo(Tone.dbToGain(num(p, 'level', 0) + v.trim - g * v.comp), 0.05);
       return 1;
     });
   },
@@ -371,7 +380,7 @@ const STUDIO: Record<string, () => Pedal> = {
   },
   'effect.tape': () => {
     const push = new Tone.Gain(1);
-    const sat = new Tone.WaveShaper(shape((x) => (Math.tanh(1.3 * (x + 0.05)) - Math.tanh(1.3 * 0.05)) / Math.tanh(1.3)));
+    const sat = new Tone.WaveShaper(tapeCurve);
     sat.oversample = '2x';
     const back = new Tone.Gain(1);
     const bump = new Tone.Filter({ type: 'peaking', frequency: 60, Q: 1.0 });

@@ -47,6 +47,9 @@ function trimLead(buf: AudioBuffer, ctx: BaseAudioContext): AudioBuffer {
   return out;
 }
 
+/** A buffer already decoded, or undefined (still loading or failed). */
+export const cachedBuffer = (url: string): AudioBuffer | undefined => ready.get(url);
+
 export function loadBuffer(url: string): Promise<AudioBuffer | null> {
   let p = cache.get(url);
   if (!p) {

@@ -8,12 +8,13 @@ import { findByKey, findItem, lowOf, resolveRow, rowsOf, rowVoice, STANDARD_ROWS
 import { chordMidi, diatonicTriads } from '../theory';
 import type { ChordsContent, FxChain, NotesContent, PatternContent, Song, Track } from '../domain/types';
 import { PPQ, STEP_TICKS } from '../domain/types';
-import { loopSteps } from '../domain/factory';
+import { defaultFxParams, loopSteps } from '../domain/factory';
 import { createDrumKit, createMelodicVoice } from './voices';
 import type { Voice } from './voices';
 import { createSampledKit, loadKit } from './sampled';
-import { SAMPLED_KITS } from '../packs/collection';
-import type { Groove } from '../packs/collection';
+import { createSampler, loadSampler } from './sampler';
+import { SAMPLED_KITS, SAMPLERS } from '../packs/collection';
+import type { ChainSpec, Groove, Phrase } from '../packs/collection';
 import { createPedal } from './pedals';
 import type { Pedal } from './pedals';
 
@@ -414,13 +415,12 @@ export class StudioEngine {
    * Hear a Colección sound in context: its groove at its tempo. Waits for recorded kits to load (only the first
    * time). Resolves with how long it plays, in seconds; 0 when it was stopped or could not load.
    */
-  async previewGroove(instrumentKey: string, groove: Groove, tempo: number, chain?: FxChain, repeats = 1): Promise<number> {
+  async previewGroove(instrumentKey: string, groove: Groove, tempo: number, chain?: FxChain, repeats = 1, phrase?: Phrase): Promise<number> {
     this.ensure();
     if (!this.master) return 0;
     this.stopPreview();
     const token = ++this.grooveToken;
-    const spec = sampledSpec(findByKey(instrumentKey)?.manifest);
-    if (spec && (await loadKit(spec)) === 0) return 0;
+    if (!(await loadInstrument(findByKey(instrumentKey)?.manifest))) return 0;
     if (token !== this.grooveToken) return 0;
     const voice = buildVoice(findByKey(instrumentKey)?.manifest);
     this.groove = voice;
@@ -433,9 +433,19 @@ export class StudioEngine {
     let prev: Tone.ToneAudioNode = voice.output;
     for (const pedal of this.groovePedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
     prev.connect(this.master);
-    if (voice.kind !== 'drums') return 0;
     const step = 60 / tempo / 4;
     const t0 = Tone.now() + 0.08;
+    if (voice.kind === 'melodic') {
+      if (!phrase) return 0;
+      const span = phrase.bars * 16;
+      for (let r = 0; r < repeats; r++) {
+        for (const n of phrase.notes) {
+          // Strummed chords: each string a few milliseconds after the last, as a pick crosses them.
+          n.midi.forEach((m, i) => voice.play(m, n.len * step * 0.95, t0 + (r * span + n.at) * step + i * 0.006, n.vel ?? 0.85, this.song?.tuning_a4_hz ?? 440));
+        }
+      }
+      return repeats * span * step + 0.8;
+    }
     const span = groove.bars * 16;
     for (let r = 0; r < repeats; r++) {
       for (const [name, steps] of Object.entries(groove.steps)) {
@@ -460,9 +470,8 @@ export class StudioEngine {
     this.ensure();
     const voice = this.previewVoice(instrumentKey);
     if (voice?.kind !== 'drums') return;
-    const spec = sampledSpec(findByKey(instrumentKey)?.manifest);
     const asked = performance.now();
-    if (spec) await loadKit(spec);
+    await loadInstrument(findByKey(instrumentKey)?.manifest);
     if (performance.now() - asked < 1500) voice.hit(voiceName, Tone.now() + 0.01, 0.9);
   }
 
@@ -502,7 +511,7 @@ export class StudioEngine {
 const chainSig = (t: Track): string =>
   [...(t.sound?.chain.slots ?? []).map((x) => `s:${x.effect.key}`), ...t.fx_chain.slots.map((x) => x.effect.key)].join('|');
 
-type Manifest = { type?: string; kit?: string; voice?: string; set?: string } | undefined;
+type Manifest = { type?: string; kit?: string; voice?: string; set?: string; mono?: boolean; chain?: ChainSpec; trimDb?: number } | undefined;
 
 /** The recorded kit behind a Colección drum instrument, if it is one. */
 const sampledSpec = (m: Record<string, unknown> | undefined) => {
@@ -510,11 +519,42 @@ const sampledSpec = (m: Record<string, unknown> | undefined) => {
   return x?.type === 'drumkit' && x.kit === 'sampled' && x.set ? SAMPLED_KITS[x.set] : undefined;
 };
 
-/** The voice that plays an instrument: a recorded kit, a synthesized kit or a synthesized instrument. */
+/** Load the recordings an instrument needs (none for synthesized ones). False when they could not load. */
+async function loadInstrument(manifest: Record<string, unknown> | undefined): Promise<boolean> {
+  const m = (manifest ?? {}) as NonNullable<Manifest>;
+  const kit = sampledSpec(manifest);
+  if (kit) return (await loadKit(kit)) > 0;
+  if (m.type === 'sampler' && m.set && SAMPLERS[m.set]) return (await loadSampler(SAMPLERS[m.set])) > 0;
+  return true;
+}
+
+/**
+ * An instrument's own gear (a Colección guitar's amp and cabinet): pedals after the voice, part of the instrument.
+ * The track's saved sound and its pedals come after.
+ */
+function withGear(voice: Voice, chain: ChainSpec | undefined, trimDb: number): Voice {
+  const pedals = (chain ?? []).map(([key, on, params]) => {
+    const pedal = createPedal(key);
+    pedal?.set({ ...defaultFxParams(key), ...params }, !on);
+    return pedal;
+  });
+  if (!pedals.some(Boolean) && !trimDb) return voice;
+  let prev: Tone.ToneAudioNode = voice.output;
+  for (const p of pedals) if (p) { prev.connect(p.input); prev = p.output; }
+  const out = new Tone.Gain(Tone.dbToGain(trimDb));
+  prev.connect(out);
+  const inner = voice.dispose.bind(voice);
+  return { ...voice, output: out, dispose() { inner(); pedals.forEach((p) => p?.dispose()); out.dispose(); } } as Voice;
+}
+
+/** The voice that plays an instrument: a recorded kit, a recorded guitar or bass with its gear, or a synthesized one. */
 function buildVoice(manifest: Record<string, unknown> | undefined): Voice {
   const m = (manifest ?? {}) as NonNullable<Manifest>;
   const spec = sampledSpec(manifest);
   if (spec) return createSampledKit(spec);
+  if (m.type === 'sampler' && m.set && SAMPLERS[m.set]) {
+    return withGear(createSampler(SAMPLERS[m.set], { mono: m.mono, release: m.mono ? 0.06 : 0.14 }), m.chain, m.trimDb ?? 0);
+  }
   return m.type === 'drumkit' ? createDrumKit(m.kit ?? 'boomBap') : createMelodicVoice(m.voice ?? 'keysEp');
 }
 

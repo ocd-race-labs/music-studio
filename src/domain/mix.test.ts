@@ -60,6 +60,7 @@ describe('mixer', () => {
       const m = i.manifest as { type: string; kit?: string; voice?: string; set?: string };
       // Recorded Colección kits carry their own trim, measured when they are processed.
       if (m.kit === 'sampled') { expect(SAMPLED_KITS[m.set!]?.trimDb, i.key).toBeTypeOf('number'); continue; }
+      if (m.type === 'sampler') { expect((i.manifest as { trimDb?: number }).trimDb, i.key).toBeTypeOf('number'); continue; }
       const id = m.type === 'drumkit' ? `kit:${m.kit}` : m.voice!;
       expect(LOUDNESS_TRIMS[id], i.key).toBeTypeOf('number');
     }

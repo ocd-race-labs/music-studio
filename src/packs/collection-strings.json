@@ -1,0 +1,90 @@
+{
+ "guitar": {
+  "folder": "guitar",
+  "layers": {
+   "mf": {
+    "37": "mf/Cs2.mp3",
+    "40": "mf/E2.mp3",
+    "42": "mf/Fs2.mp3",
+    "45": "mf/A2.mp3",
+    "48": "mf/C3.mp3",
+    "51": "mf/Ds3.mp3",
+    "54": "mf/Fs3.mp3",
+    "57": "mf/A3.mp3",
+    "60": "mf/C4.mp3",
+    "63": "mf/Ds4.mp3",
+    "66": "mf/Fs4.mp3",
+    "69": "mf/A4.mp3",
+    "72": "mf/C5.mp3",
+    "75": "mf/Ds5.mp3",
+    "78": "mf/Fs5.mp3",
+    "81": "mf/A5.mp3",
+    "84": "mf/C6.mp3",
+    "86": "mf/D6.mp3"
+   },
+   "f": {
+    "37": "f/Cs2.mp3",
+    "40": "f/E2.mp3",
+    "42": "f/Fs2.mp3",
+    "45": "f/A2.mp3",
+    "48": "f/C3.mp3",
+    "51": "f/Ds3.mp3",
+    "54": "f/Fs3.mp3",
+    "57": "f/A3.mp3",
+    "60": "f/C4.mp3",
+    "63": "f/Ds4.mp3",
+    "66": "f/Fs4.mp3",
+    "69": "f/A4.mp3",
+    "72": "f/C5.mp3",
+    "75": "f/Ds5.mp3",
+    "78": "f/Fs5.mp3",
+    "81": "f/A5.mp3",
+    "84": "f/C6.mp3",
+    "86": "f/D6.mp3"
+   }
+  },
+  "license": "CC0 1.0",
+  "credit": "Emilyguitar by Karoryfer Samples (Karoryfer Lecolds), played and mapped by D",
+  "url": "https://github.com/sfzinstruments/karoryfer.emilyguitar"
+ },
+ "bass": {
+  "folder": "bass",
+  "layers": {
+   "mf": {
+    "25": "mf/Cs1.mp3",
+    "28": "mf/E1.mp3",
+    "30": "mf/Fs1.mp3",
+    "33": "mf/A1.mp3",
+    "36": "mf/C2.mp3",
+    "39": "mf/Ds2.mp3",
+    "42": "mf/Fs2.mp3",
+    "45": "mf/A2.mp3",
+    "48": "mf/C3.mp3",
+    "51": "mf/Ds3.mp3",
+    "54": "mf/Fs3.mp3",
+    "57": "mf/A3.mp3",
+    "60": "mf/C4.mp3",
+    "63": "mf/Ds4.mp3"
+   },
+   "f": {
+    "25": "f/Cs1.mp3",
+    "28": "f/E1.mp3",
+    "30": "f/Fs1.mp3",
+    "33": "f/A1.mp3",
+    "36": "f/C2.mp3",
+    "39": "f/Ds2.mp3",
+    "42": "f/Fs2.mp3",
+    "45": "f/A2.mp3",
+    "48": "f/C3.mp3",
+    "51": "f/Ds3.mp3",
+    "54": "f/Fs3.mp3",
+    "57": "f/A3.mp3",
+    "60": "f/C4.mp3",
+    "63": "f/Ds4.mp3"
+   }
+  },
+  "license": "CC0 1.0",
+  "credit": "Growlybass by Karoryfer Samples (Karoryfer Lecolds)",
+  "url": "https://github.com/sfzinstruments/karoryfer.growlybass"
+ }
+}

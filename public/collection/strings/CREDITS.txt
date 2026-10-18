@@ -1,0 +1,7 @@
+Music Studio Colección: electric guitar and bass
+
+Both are recorded direct (no amp), edited (onset, length, fade) and played through the app's modelled gear
+(preamp, amp, cabinet, compressor, tape, effects) to make each tone. The open low E of the bass was retuned 20 cents down.
+
+- Emilyguitar by Karoryfer Samples. CC0 1.0. https://github.com/sfzinstruments/karoryfer.emilyguitar
+- Growlybass by Karoryfer Samples. CC0 1.0. https://github.com/sfzinstruments/karoryfer.growlybass

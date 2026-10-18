@@ -8,7 +8,7 @@ import { newId, now } from '../domain/factory';
 import { t } from './i18n';
 import { ChoiceParam, formatParam, PEDAL_BLURB } from './panels';
 import { Icon, Modal } from './ui';
-import { familyOf, rackFor, targetTrack } from './rack';
+import { familyOf, rackBase, rackOf, targetTrack, templateFor } from './rack';
 
 /** The pieces of a full kit, in the order a drummer names them. */
 const PIECES: { voice: string; key: string }[] = [
@@ -38,7 +38,7 @@ export default function Collection({ song, selectedId, profileId, lang, sounds, 
   const [open, setOpen] = useState<string | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
-  const [rack, setRack] = useState<null | { base: string; sound?: CustomSound }>(null);
+  const [rack, setRack] = useState<null | { base: string; from?: string; sound?: CustomSound }>(null);
   const stopTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => () => { engine.stopPreview(); window.clearTimeout(stopTimer.current); }, []);
@@ -54,10 +54,10 @@ export default function Collection({ song, selectedId, profileId, lang, sounds, 
     if (playing === id) { engine.stopPreview(); setPlaying(null); return; }
     engine.stopPreview();
     setPlaying(null);
-    const e = entryOf(instrumentKey);
+    const e = templateFor(instrumentKey);
     if (!e) return;
     setLoading(id);
-    const secs = await engine.previewGroove(instrumentKey, e.groove, e.tempo, chain, chain ? 4 : 1);
+    const secs = await engine.previewGroove(instrumentKey, e.groove, e.tempo, chain, chain ? 4 : 1, e.phrase);
     setLoading((l) => (l === id ? null : l));
     if (secs <= 0) return;
     setPlaying(id);
@@ -153,7 +153,7 @@ export default function Collection({ song, selectedId, profileId, lang, sounds, 
                         {t('collectionPieces', lang)}
                       </button>
                     )}
-                    <button type="button" className="btn small-btn ghost" onClick={() => { engine.stopPreview(); setPlaying(null); setRack({ base: e.instrument }); }}
+                    <button type="button" className="btn small-btn ghost" onClick={() => { engine.stopPreview(); setPlaying(null); setRack({ base: rackBase(e.instrument), from: e.instrument }); }}
                       title={t('rackHint', lang)}>
                       <Icon name="sliders" size={16} /> {t('rackOpen', lang)}
                     </button>
@@ -190,7 +190,7 @@ export default function Collection({ song, selectedId, profileId, lang, sounds, 
       </details>
 
       {rack && (
-        <StudioRack base={rack.base} sound={rack.sound} profileId={profileId} lang={lang}
+        <StudioRack base={rack.base} from={rack.from ?? rack.base} sound={rack.sound} profileId={profileId} lang={lang}
           onSave={(x) => { onSaveSound(x); setRack(null); }}
           onDelete={rack.sound ? () => { onDeleteSound(rack.sound!.id); setRack(null); } : undefined}
           onClose={() => setRack(null)} />
@@ -201,8 +201,10 @@ export default function Collection({ song, selectedId, profileId, lang, sounds, 
 
 /* ---------------------------------------------------------------- the rack */
 
-function StudioRack({ base, sound, profileId, lang, onSave, onDelete, onClose }: {
+function StudioRack({ base, from, sound, profileId, lang, onSave, onDelete, onClose }: {
   base: string;
+  /** The Colección sound the chain starts from (its own gear for a guitar or bass). */
+  from: string;
   sound?: CustomSound;
   profileId: string;
   lang: Lang;
@@ -210,9 +212,9 @@ function StudioRack({ base, sound, profileId, lang, onSave, onDelete, onClose }:
   onDelete?: () => void;
   onClose: () => void;
 }) {
-  const entry = entryOf(base);
-  const baseName = entry?.title[lang] ?? catalogTitle({ key: base, version: '1.0.0' }, lang);
-  const [chain, setChain] = useState<FxChain>(() => (sound ? structuredClone(sound.chain) : rackFor(familyOf(base))));
+  const entry = templateFor(from);
+  const baseName = entryOf(from)?.title[lang] ?? catalogTitle({ key: from, version: '1.0.0' }, lang);
+  const [chain, setChain] = useState<FxChain>(() => (sound ? structuredClone(sound.chain) : rackOf(from)));
   const [name, setName] = useState(sound?.name ?? t('mySoundName', lang, { name: baseName }));
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -231,7 +233,7 @@ function StudioRack({ base, sound, profileId, lang, onSave, onDelete, onClose }:
     if (playing) { engine.stopPreview(); setPlaying(false); return; }
     if (!entry) return;
     setLoading(true);
-    const secs = await engine.previewGroove(base, entry.groove, entry.tempo, chain, 4);
+    const secs = await engine.previewGroove(base, entry.groove, entry.tempo, chain, 4, entry.phrase);
     setLoading(false);
     if (secs <= 0) return;
     setPlaying(true);

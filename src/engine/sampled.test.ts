@@ -12,3 +12,15 @@ describe('recorded kits', () => {
     expect(pickLayer(0.79, 3).gain).toBeLessThan(1);
   });
 });
+
+describe('recorded guitar and bass', () => {
+  it('plays each note from the nearest recording, the lower one on a tie', async () => {
+    const { nearest } = await import('./sampler');
+    const notes = [40, 43, 46, 49];
+    expect(nearest(notes, 40)).toBe(40);
+    expect(nearest(notes, 41)).toBe(40);
+    expect(nearest(notes, 42)).toBe(43);
+    expect(nearest(notes, 30)).toBe(40);
+    expect(nearest(notes, 60)).toBe(49);
+  });
+});

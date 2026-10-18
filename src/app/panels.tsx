@@ -97,7 +97,16 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
             const pick = swaps.find((i) => i.key === e.target.value);
             if (pick) onKit({ key: pick.key, version: pick.version });
           }}>
-            {swaps.map((i) => <option key={i.key} value={i.key}>{i.title[lang]}</option>)}
+            {swaps.some((i) => i.pack === 'collection') ? (
+              <>
+                <optgroup label={t('instrumentsCore', lang)}>
+                  {swaps.filter((i) => i.pack !== 'collection').map((i) => <option key={i.key} value={i.key}>{i.title[lang]}</option>)}
+                </optgroup>
+                <optgroup label={t('collection', lang)}>
+                  {swaps.filter((i) => i.pack === 'collection').map((i) => <option key={i.key} value={i.key}>{i.title[lang]}</option>)}
+                </optgroup>
+              </>
+            ) : swaps.map((i) => <option key={i.key} value={i.key}>{i.title[lang]}</option>)}
           </select>
         </label>
       )}

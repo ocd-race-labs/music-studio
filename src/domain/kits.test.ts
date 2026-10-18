@@ -6,6 +6,8 @@ import {
   CATALOG, CUSTOM_KIT, findByKey, INSTRUMENTS, isDrumKit, KITS, kitSlots, ref, resolveRow, rowsOf, rowVoice, swapsFor,
 } from '../packs/core';
 import { DRUM_KITS, MELODIC_VOICES } from '../engine/voices';
+import { PEDAL_KEYS } from '../engine/pedals';
+import { SAMPLERS } from '../packs/collection';
 
 const me = newProfile('Test', 'graphite', '#74747A');
 const pattern = (s: Song, i: number) => s.tracks[i].clips[0].content as PatternContent;
@@ -18,9 +20,13 @@ describe('catalog of kits', () => {
 
   it('every instrument has a voice the engine can build', () => {
     for (const i of INSTRUMENTS) {
-      const m = i.manifest as { type: string; kit?: string; voice?: string };
+      const m = i.manifest as { type: string; kit?: string; voice?: string; set?: string; chain?: [string, boolean][] };
       if (m.type === 'drumkit') expect([...DRUM_KITS, 'sampled'], i.key).toContain(m.kit);
-      else expect(MELODIC_VOICES, i.key).toContain(m.voice);
+      else if (m.type === 'sampler') {
+        // A recorded guitar or bass: its recordings exist, and every unit of its gear is one the engine can build.
+        expect(SAMPLERS[m.set!], i.key).toBeDefined();
+        for (const [key] of m.chain ?? []) expect(PEDAL_KEYS, `${i.key} ${key}`).toContain(key);
+      } else expect(MELODIC_VOICES, i.key).toContain(m.voice);
     }
   });
 

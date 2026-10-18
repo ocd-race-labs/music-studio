@@ -3,7 +3,7 @@
 // Keys and versions follow the catalog rules: kind.name@x.y.z, never edited once published.
 
 import type { CatalogRef, Role } from '../domain/types';
-import { ENTRIES, SAMPLED_KITS } from './collection';
+import { ENTRIES, SAMPLED_KITS, SAMPLERS, TRIMS } from './collection';
 
 export interface CatalogItem {
   key: string;
@@ -134,17 +134,34 @@ const CORE_INSTRUMENTS = [
   synth('instrument.guitar-nylon', 'Nylon guitar', 'Guitarra acústica', 'guitarNylon', 48),
 ];
 
-/** Colección drum kits: recorded kits processed into the sound of a style and era (see packs/collection). */
-export const COLLECTION_INSTRUMENTS: CatalogItem[] = ENTRIES.filter((e) => e.family === 'drums').map((e) => {
-  const set = e.instrument.replace('instrument.drums-', '');
-  const spec = SAMPLED_KITS[set] as { license?: string; source?: string } | undefined;
-  return {
-    kind: 'instrument', key: e.instrument, version: '1.0.0', pack: 'collection', status: 'active',
-    title: { en: `Drums: ${e.title.en}`, es: `Batería: ${e.title.es}` },
-    license: spec?.license ?? 'CC0 1.0', source: spec?.source ?? 'music-studio collection',
-    manifest: { type: 'drumkit', kit: 'sampled', set, rows: FULL_ROWS },
-  };
+/**
+ * Colección instruments. Drum kits: recorded kits processed into the sound of a style and era. Guitars and basses:
+ * a guitar or bass recorded direct, heard through the gear that makes each tone (amp, cabinet, compressor…).
+ */
+const collectionItem = (key: string, en: string, es: string, manifest: Record<string, unknown>, license: string, source: string): CatalogItem => ({
+  kind: 'instrument', key, version: '1.0.0', pack: 'collection', status: 'active', title: { en, es }, license, source, manifest,
 });
+const FAMILY_TITLE = { drums: { en: 'Drums', es: 'Batería' }, guitar: { en: 'Guitar', es: 'Guitarra' }, bass: { en: 'Bass', es: 'Bajo' } };
+
+export const COLLECTION_INSTRUMENTS: CatalogItem[] = [
+  // The recordings themselves, with no gear: what a saved guitar or bass sound starts from.
+  collectionItem('instrument.guitar-di', 'Electric guitar (direct)', 'Guitarra eléctrica (directa)', { type: 'sampler', set: 'guitar', low: 40, trimDb: TRIMS['instrument.guitar-di'] ?? 0 },
+    SAMPLERS.guitar?.license ?? 'CC0 1.0', 'Emilyguitar by Karoryfer Samples'),
+  collectionItem('instrument.bass-di', 'Electric bass (direct)', 'Bajo eléctrico (directo)', { type: 'sampler', set: 'bass', low: 28, mono: true, trimDb: TRIMS['instrument.bass-di'] ?? 0 },
+    SAMPLERS.bass?.license ?? 'CC0 1.0', 'Growlybass by Karoryfer Samples'),
+  ...ENTRIES.map((e) => {
+    const f = FAMILY_TITLE[e.family];
+    if (e.family === 'drums') {
+      const set = e.instrument.replace('instrument.drums-', '');
+      const spec = SAMPLED_KITS[set] as { license?: string; source?: string } | undefined;
+      return collectionItem(e.instrument, `${f.en}: ${e.title.en}`, `${f.es}: ${e.title.es}`, { type: 'drumkit', kit: 'sampled', set, rows: FULL_ROWS },
+        spec?.license ?? 'CC0 1.0', spec?.source ?? 'music-studio collection');
+    }
+    return collectionItem(e.instrument, `${f.en}: ${e.title.en}`, `${f.es}: ${e.title.es}`,
+      { type: 'sampler', set: e.set, low: e.family === 'bass' ? 28 : 40, mono: e.family === 'bass', chain: e.chain, trimDb: TRIMS[e.instrument] ?? 0 },
+      'CC0 1.0', e.family === 'bass' ? 'Growlybass by Karoryfer Samples' : 'Emilyguitar by Karoryfer Samples');
+  }),
+];
 export const INSTRUMENTS: CatalogItem[] = [...CORE_INSTRUMENTS, ...COLLECTION_INSTRUMENTS];
 
 /* ---------------------------------------------------------------- kits by genre */

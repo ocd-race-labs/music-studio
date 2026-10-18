@@ -1,6 +1,6 @@
 // The studio rack of the Colección: which gear a new chain starts with, and where a Colección sound goes in a song.
 
-import { entryOf } from '../packs/collection';
+import { ENTRIES, entryOf } from '../packs/collection';
 import type { Family } from '../packs/collection';
 import { findByKey, ref } from '../packs/core';
 import type { FxChain, Song, Track } from '../domain/types';
@@ -43,8 +43,35 @@ export function rackFor(family: Family): FxChain {
   };
 }
 
-export const familyOf = (instrumentKey: string): Family => entryOf(instrumentKey)?.family
-  ?? (findByKey(instrumentKey)?.manifest.type === 'drumkit' ? 'drums' : instrumentKey.includes('bass') ? 'bass' : 'guitar');
+export const familyOf = (instrumentKey: string): Family => {
+  const e = entryOf(instrumentKey);
+  if (e) return e.family;
+  const m = findByKey(instrumentKey)?.manifest as { type?: string; set?: string } | undefined;
+  if (m?.type === 'drumkit') return 'drums';
+  if (m?.set === 'bass' || instrumentKey.includes('bass')) return 'bass';
+  return 'guitar';
+};
+
+/** What a saved sound is built on: a drum kit as it is, or the guitar or bass recording before any gear. */
+export const rackBase = (instrumentKey: string): string => {
+  const e = entryOf(instrumentKey);
+  if (e?.family === 'guitar') return 'instrument.guitar-di';
+  if (e?.family === 'bass') return 'instrument.bass-di';
+  return instrumentKey;
+};
+
+/** A chain to start shaping from: the entry's own gear (a guitar's amp and cabinet), or the family's starting rack. */
+export function rackOf(instrumentKey: string): FxChain {
+  const chain = entryOf(instrumentKey)?.chain;
+  if (!chain) return rackFor(familyOf(instrumentKey));
+  return {
+    routing: 'series',
+    slots: chain.map(([key, on, params]) => ({ effect: ref(key), bypass: !on, params: { ...defaultFxParams(key), ...params } })),
+  };
+}
+
+/** The entry whose groove or phrase plays a sound: its own, or the first of its family. */
+export const templateFor = (instrumentKey: string) => entryOf(instrumentKey) ?? ENTRIES.find((e) => e.family === familyOf(instrumentKey));
 
 /** The track a Colección sound goes to: the selected one when it plays that family, else the first that does. */
 export function targetTrack(song: Song, selectedId: string | null, family: Family): Track | undefined {
