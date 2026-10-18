@@ -19,10 +19,8 @@ tuned, equalized, compressed and placed in rooms for its style. Kit names descri
 Electronic and hip hop kits
 - Gogodze Phu Vol II by Karoryfer Samples. CC0 1.0. https://github.com/sfzinstruments/karoryfer.gogodze-phu-vol-ii
   Kits: Break polvoriento trip hop, Sampler boom bap, Kit lo-fi.
-- TR-707 samples recorded by Francois Dion, public domain ("All samples are public domain"), packaged as
-  @fluid-music/tr-707 on npm. Kits: Kit glitch (IDM), Caja de ritmos west coast.
 - Analog-style drum machines (808-style and 909-style): original synthesis made for Music Studio
-  (tools/collection/machines.py). Kits: house, deep house, techno, EDM, dubstep, ambient, old school, trap, drill;
+  (tools/collection/machines.py). Kits: house, deep house, techno, EDM, dubstep, ambient, old school, trap, drill, glitch (IDM), west coast;
   layers in others.
 - Acoustic kits above also appear here: SM Drums (Break jungle; crashes in trip hop, boom bap, lo-fi),
   MuldjordKit (drum and bass, dubstep snare), DRSKit (drum and bass cross-stick).

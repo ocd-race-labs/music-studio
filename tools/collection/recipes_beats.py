@@ -10,7 +10,6 @@ CREDITS = {
     'machine808': {'license': 'Original (Music Studio)', 'credit': 'Analog-style drum machine, synthesized for Music Studio'},
     'machine909': {'license': 'Original (Music Studio)', 'credit': 'Analog-style drum machine, synthesized for Music Studio'},
     'sonicpi': {'license': 'CC0 1.0', 'credit': 'Sonic Pi sample pack (freesound contributors)'},
-    'tr707': {'license': 'Public domain', 'credit': 'TR-707 samples recorded by Francois Dion'},
     'gogodze': {'license': 'CC0 1.0', 'credit': 'Gogodze Phu Vol II by Karoryfer Samples'},
 }
 
@@ -213,16 +212,16 @@ KITS += [
     },
     {
         # IDM: small machine hits crushed to 8 bits at a low rate, tuned oddly: brittle, glitchy detail.
-        'id': 'el-idm', 'source': 'tr707', 'rows': 'standard', 'sampler': {'rate': 16000, 'bits': 8, 'drive_db': 3},
+        'id': 'el-idm', 'source': 'machine909', 'rows': 'standard', 'sampler': {'rate': 16000, 'bits': 8, 'drive_db': 3},
         'verb': {'seconds': 0.5, 'predelay': 0.005, 'bright': 0.8, 'early': 0.8, 'width': 1.0},
         'pieces': {
-            'kick': {'source': 'machine909', 'tune': -3, 'decay': 0.18, 'eq': [HP(35)]},
-            'snare': {'tune': 4, 'decay': 0.12, 'send': db(-10)},
+            'kick': {'tune': -3, 'decay': 0.18, 'eq': [HP(35)]},
+            'snare': {'source': 'machine808', 'tune': 4, 'decay': 0.12, 'send': db(-10)},
             'clap': {'tune': -5, 'send': db(-8)},
-            'hatClosed': {'tune': 7, 'decay': 0.04},
+            'hatClosed': {'source': 'machine808', 'tune': 7, 'decay': 0.04},
             'hatOpen': {'tune': 5, 'decay': 0.25},
-            'rim': {'tune': 3},
-            'tom': {'use': 'tomHigh', 'tune': 5, 'decay': 0.12},
+            'rim': {'source': 'machine808', 'tune': 3},
+            'tom': {'source': 'machine808', 'tune': 5, 'decay': 0.12},
             'crash': {'use': 'ride', 'tune': -4, 'send': db(-12)},
         },
         'bus': {'comp': (-12, 3, 5, 80, 2, 1), 'width': 1.0},
@@ -261,11 +260,11 @@ KITS += [
     },
     {
         # West coast: drum machines with a heavy snare in a plate and a deep kick, laid back.
-        'id': 'hh-westcoast', 'source': 'tr707', 'rows': 'standard',
+        'id': 'hh-westcoast', 'source': 'machine808', 'rows': 'standard',
         'verb': {'seconds': 1.4, 'predelay': 0.03, 'bright': 0.8, 'early': 0.0, 'width': 1.0},
         'pieces': {
-            'kick': {'source': 'machine808', 'decay': 0.6, 'eq': [HP(30), PK(60, 3)]},
-            'snare': {'layer': [('machine808', 'clap', -6)], 'eq': [HP(150), PK(200, 3)], 'comp': (-10, 4, 5, 100, 3, 1), 'send': db(-4)},
+            'kick': {'decay': 0.6, 'eq': [HP(30), PK(60, 3)]},
+            'snare': {'source': 'machine909', 'layer': [('machine808', 'clap', -6)], 'eq': [HP(150), PK(200, 3)], 'comp': (-10, 4, 5, 100, 3, 1), 'send': db(-4)},
             'clap': {'send': db(-6)},
             'hatClosed': {'eq': [HP(5000)], 'gain_db': -2},
             'hatOpen': {'eq': [HP(5000)], 'send': db(-14)},

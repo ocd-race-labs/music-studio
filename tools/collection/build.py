@@ -254,8 +254,8 @@ def build(kit):
     print(f'   trim {trim:+.1f} dB ({lufs_mono_equiv:.1f} LUFS before), {total / 1024:.0f} KB, sources {sources}', flush=True)
     return {
         'id': kid, 'trimDb': trim, 'pieces': pieces,
-        'license': ' + '.join(CREDITS[s]['license'] for s in sources),
-        'source': '; '.join(CREDITS[s]['credit'] for s in sources),
+        'license': ' + '.join(dict.fromkeys(CREDITS[s]['license'] for s in sources)),
+        'source': '; '.join(dict.fromkeys(CREDITS[s]['credit'] for s in sources)),
         'bytes': total,
     }
 

@@ -1467,8 +1467,8 @@
     ]
    }
   },
-  "license": "Original (Music Studio) + Original (Music Studio)",
-  "source": "Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio",
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
   "bytes": 147736
  },
  "el-dnb": {
@@ -1574,8 +1574,8 @@
     ]
    }
   },
-  "license": "CC-BY 4.0 + Original (Music Studio) + Original (Music Studio) + CC-BY 4.0",
-  "source": "DRSKit by DrumGizmo (Lars Muldjord, Bent Bisballe Nyeng) and Jes Eiler / DRSDrums; Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio; MuldjordKit by Lars Muldjord / DrumGizmo",
+  "license": "CC-BY 4.0 + Original (Music Studio)",
+  "source": "DRSKit by DrumGizmo (Lars Muldjord, Bent Bisballe Nyeng) and Jes Eiler / DRSDrums; Analog-style drum machine, synthesized for Music Studio; MuldjordKit by Lars Muldjord / DrumGizmo",
   "bytes": 273277
  },
  "el-jungle": {
@@ -1761,8 +1761,8 @@
     ]
    }
   },
-  "license": "Original (Music Studio) + Original (Music Studio) + CC-BY 4.0",
-  "source": "Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio; MuldjordKit by Lars Muldjord / DrumGizmo",
+  "license": "Original (Music Studio) + CC-BY 4.0",
+  "source": "Analog-style drum machine, synthesized for Music Studio; MuldjordKit by Lars Muldjord / DrumGizmo",
   "bytes": 245236
  },
  "el-ambient": {
@@ -1965,8 +1965,8 @@
     ]
    }
   },
-  "license": "Original (Music Studio) + Original (Music Studio)",
-  "source": "Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio",
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
   "bytes": 127255
  },
  "hh-drill": {
@@ -2033,8 +2033,8 @@
     ]
    }
   },
-  "license": "Original (Music Studio) + Original (Music Studio)",
-  "source": "Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio",
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
   "bytes": 114454
  },
  "el-triphop": {
@@ -2146,7 +2146,7 @@
  },
  "el-idm": {
   "id": "el-idm",
-  "trimDb": -1.9,
+  "trimDb": -1.8,
   "pieces": {
    "kick": {
     "layers": [
@@ -2208,9 +2208,9 @@
     ]
    }
   },
-  "license": "Original (Music Studio) + Public domain",
-  "source": "Analog-style drum machine, synthesized for Music Studio; TR-707 samples recorded by Francois Dion",
-  "bytes": 47164
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 77517
  },
  "hh-boombap": {
   "id": "hh-boombap",
@@ -2428,7 +2428,7 @@
  },
  "hh-westcoast": {
   "id": "hh-westcoast",
-  "trimDb": -0.3,
+  "trimDb": -0.9,
   "pieces": {
    "kick": {
     "layers": [
@@ -2490,8 +2490,8 @@
     ]
    }
   },
-  "license": "Original (Music Studio) + Public domain",
-  "source": "Analog-style drum machine, synthesized for Music Studio; TR-707 samples recorded by Francois Dion",
-  "bytes": 117015
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 139687
  }
 }

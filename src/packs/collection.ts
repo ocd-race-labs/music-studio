@@ -538,7 +538,6 @@ export const SOURCES: { name: string; by: string; license: string; url: string }
   { name: 'MuldjordKit', by: 'Lars Muldjord / DrumGizmo', license: 'CC BY 4.0', url: 'https://github.com/sfzinstruments/DrumGizmo.MuldjordKit' },
   { name: 'DRSKit', by: 'DrumGizmo (Lars Muldjord, Bent Bisballe Nyeng) and Jes Eiler / DRSDrums', license: 'CC BY 4.0', url: 'https://github.com/sfzinstruments/DrumGizmo.DRSKit' },
   { name: 'Gogodze Phu Vol II', by: 'Karoryfer Samples', license: 'CC0 1.0', url: 'https://github.com/sfzinstruments/karoryfer.gogodze-phu-vol-ii' },
-  { name: 'TR-707 samples', by: 'Francois Dion (packaged by fluid-music)', license: 'Public domain', url: 'https://www.npmjs.com/package/@fluid-music/tr-707' },
   { name: 'Analog-style drum machines', by: 'Music Studio (original synthesis)', license: 'Original', url: 'https://github.com/ocd-race-labs/music-studio/tree/main/tools/collection' },
   { name: 'Emilyguitar', by: 'Karoryfer Samples', license: 'CC0 1.0', url: 'https://github.com/sfzinstruments/karoryfer.emilyguitar' },
   { name: 'Growlybass', by: 'Karoryfer Samples', license: 'CC0 1.0', url: 'https://github.com/sfzinstruments/karoryfer.growlybass' },
