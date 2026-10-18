@@ -526,3 +526,4 @@ input.field.num { width: 64px; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .cl-reading { animation: none; } }
 .cl-player .btn[aria-pressed='true'] { background: var(--main); color: var(--main-ink); border-color: var(--main); }
 .clear-btn:not(:disabled) svg { color: var(--highlight); }
+.producer-note { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

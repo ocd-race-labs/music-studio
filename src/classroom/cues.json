@@ -370,7 +370,7 @@
   ]
  },
  "pedals": {
-  "duration": 56.1,
+  "duration": 55.8,
   "cues": [
    {
     "t": 0.21,
@@ -383,27 +383,27 @@
     "en": "They are in Producer view. Let's pick the Melody."
    },
    {
-    "t": 15.97,
+    "t": 15.92,
     "es": "Aquí están sus pedales, agrupados por familias: Control, Color, Movimiento y Espacio.",
     "en": "Here are its pedals, grouped in families: Control, Color, Movement and Space."
    },
    {
-    "t": 22.22,
+    "t": 22.17,
     "es": "La luz enciende o apaga cada pedal. Ejemplo 1: enciende el Eco y escucha cómo se repite la melodía.",
     "en": "The light turns each pedal on or off. Example 1: turn on Echo and hear the melody repeat."
    },
    {
-    "t": 31.05,
+    "t": 31.0,
     "es": "Toca el nombre del pedal para abrir sus perillas y leer qué hace.",
     "en": "Tap the pedal's name to open its knobs and read what it does."
    },
    {
-    "t": 39.4,
+    "t": 39.03,
     "es": "Ejemplo 2: agrega Lo-fi, para que suene como un cassette antiguo.",
     "en": "Example 2: add Lo-fi, so it sounds like an old cassette."
    },
    {
-    "t": 47.82,
+    "t": 47.43,
     "es": "Usa los efectos de a poco: tu canción tiene que seguir escuchándose clara.",
     "en": "Use effects gently: your song should still sound clear."
    }

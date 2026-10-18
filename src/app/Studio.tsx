@@ -102,8 +102,10 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
 
   // Listen to the selected track alone. Not saved in the song: mute and solo stay as they were.
   const [alone, setAlone] = useState(false);
-  // The producer's mixer takes the editor's place while it is open.
+  // The musician's mixer takes the editor's place while it is open.
   const [board, setBoard] = useState(false);
+  // Each hat has its own room: switching closes the musician's mixer and stops recording taps.
+  const switchHat = (h: Hat) => { setHat(h); setBoard(false); if (h === 'producer') setRec(false); };
 
   /* Song form: one part in view (and on repeat), mark mode, where play starts, what the grid shows. */
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -545,8 +547,8 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         <LangToggle lang={lang} onLang={onLang} />
         <ModeSwitch mode={mode} onToggle={onToggleMode} lang={lang} />
         <div className="seg" aria-label={t('hat', lang)}>
-          <button type="button" aria-pressed={hat === 'musician'} onClick={() => setHat('musician')}>{t('musician', lang)}</button>
-          <button type="button" aria-pressed={hat === 'producer'} onClick={() => setHat('producer')}>{t('producer', lang)}</button>
+          <button type="button" aria-pressed={hat === 'musician'} onClick={() => switchHat('musician')}>{t('musician', lang)}</button>
+          <button type="button" aria-pressed={hat === 'producer'} onClick={() => switchHat('producer')}>{t('producer', lang)}</button>
         </div>
         <label className="row small">
           <span className="muted">BPM</span>
@@ -554,9 +556,11 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
             onChange={(e) => apply((x) => C.setTempo(x, Number(e.target.value) || x.tempo_bpm, by))} />
         </label>
 <LengthStepper bars={bars} lang={lang} onBars={(n) => apply((x) => A.setSongBars(x, n, by))} />
-        <button type="button" className="btn rec" aria-pressed={rec} onClick={() => setRec((r) => !r)} title={t('recordHint', lang)} aria-label={t('record', lang)}>
-          <span className="dot" style={{ background: rec ? 'var(--highlight-ink)' : 'var(--highlight)' }} /> <span className="hide-sm">{t('record', lang)}</span>
-        </button>
+        {hat === 'musician' && (
+          <button type="button" className="btn rec" aria-pressed={rec} onClick={() => setRec((r) => !r)} title={t('recordHint', lang)} aria-label={t('record', lang)}>
+            <span className="dot" style={{ background: rec ? 'var(--highlight-ink)' : 'var(--highlight)' }} /> <span className="hide-sm">{t('record', lang)}</span>
+          </button>
+        )}
         <OutMeter label={t('soundOutput', lang)} />
         <button type="button" className={`play${playing ? ' on' : ''}`} onClick={togglePlay} aria-label={t(playing ? 'stop' : 'play', lang)}>
           <Icon name={playing ? 'stop' : 'play'} size={22} />
@@ -607,7 +611,37 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         </nav>
 
         <main className="editor" ref={editorRef}>
-          {board ? (
+          {hat === 'producer' ? (
+            /* The producer works from the control room: the console, the song's structure and the pedals at the side.
+               Writing and recording notes is the musician's job (the other hat). */
+            <>
+              <div className="row wrap">
+                <h2 className="display grow" style={{ fontSize: 22 }}>{t('console', lang)} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{t('consoleHint', lang)}</span></h2>
+                <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
+                  aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
+                  <Icon name="headphones" size={18} /> <span className="hide-sm">{t('onlyThis', lang)}</span>
+                </button>
+              </div>
+              <MixerBoard song={song} selected={track.id} lang={lang} onSelect={setSelected}
+                onGain={(id, g) => apply((x) => C.setGain(x, id, g, by))}
+                onPan={(id, v) => apply((x) => C.setPan(x, id, v, by))}
+                onMute={(id) => apply((x) => C.toggleMute(x, id, by))}
+                onSolo={(id) => apply((x) => C.toggleSolo(x, id, by))} />
+              <StructureBar song={song} lang={lang} focusId={focusId} marking={marking} sel={sel}
+                onFocus={focusOn} onMarking={toggleMarking} onPick={pickKind} onClearSel={() => setSel({ a: null, b: null })}
+                onRename={(id, name) => apply((x) => A.renameSection(x, id, name, lang, by))}
+                onKind={(id, kind) => apply((x) => A.setSectionKind(x, id, kind, lang, by))}
+                onCopy={copyPart} onRepeat={repeatPart}
+                onUnmark={(id) => { apply((x) => A.removeSection(x, id, lang, by)); setFocusId(null); }}
+                onDeleteBars={deletePartBars} />
+              <SongTimeline song={song} lang={lang} step={step} firstBar={focused ? Math.floor(view.start / 16) : 0}
+                barsOnScreen={focused ? Math.round(view.length / 16) : bars} focusId={focusId} cursorBar={cursorBar}
+                marking={marking} sel={sel} onBarTap={onBarTap} onScrub={scrub} />
+              <p className="small muted producer-note">
+                {t('producerNote', lang)} <button type="button" className="btn small-btn" onClick={() => switchHat('musician')}><Icon name="music" size={16} /> {t('wearMusician', lang)}</button>
+              </p>
+            </>
+          ) : board ? (
             <>
               <div className="row wrap">
                 <h2 className="display grow" style={{ fontSize: 22 }}>{t('mixerBoard', lang)} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{t('mixerBoardHint', lang)}</span></h2>
