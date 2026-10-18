@@ -173,9 +173,27 @@ export class StudioEngine {
       this.echoOut = new Tone.Gain(0.7);
       this.echoIn.chain(this.delay, new Tone.Filter({ type: 'lowpass', frequency: 4500 }), new Tone.Filter({ type: 'highpass', frequency: 150 }), this.echoOut, this.bus);
       this.started = true;
-      if (this.song) this.sync(this.song);
+      // The song's sounds are built once the audio runs, and a sound that fails to build never silences the rest.
+      if (Tone.getContext().state === 'running') { if (this.song) this.sync(this.song); }
+      else resumed.then(() => { if (this.song) this.sync(this.song); });
     }
     return resumed;
+  }
+
+  /** A track whose sound could not be built: the rest keep playing, and the app can say which one. */
+  private problemFns = new Set<(trackName: string, error: string) => void>();
+  onProblem(fn: (trackName: string, error: string) => void): () => void {
+    this.problemFns.add(fn);
+    return () => { this.problemFns.delete(fn); };
+  }
+  private reported = new Set<string>();
+  private problem(where: string, e: unknown): void {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`[music-studio] ${where}:`, e);
+    const sig = `${where}:${msg}`;
+    if (this.reported.has(sig)) return;
+    this.reported.add(sig);
+    this.problemFns.forEach((fn) => fn(where, msg));
   }
 
   /** True when the device is producing audio. */
@@ -256,26 +274,30 @@ export class StudioEngine {
   }
 
   private sync(song: Song): void {
-    const transport = Tone.getTransport();
-    transport.bpm.value = song.tempo_bpm;
-    transport.swing = song.swing;
-    transport.swingSubdivision = '16n';
-    this.applyMaster(song);
+    try {
+      const transport = Tone.getTransport();
+      transport.bpm.value = song.tempo_bpm;
+      transport.swing = song.swing;
+      transport.swingSubdivision = '16n';
+      this.applyMaster(song);
+    } catch (e) { this.problem('master', e); }
 
     const seen = new Set<string>();
     for (const t of song.tracks) {
       seen.add(t.id);
-      const key = voiceKey(t);
-      let ch = this.channels.get(t.id);
-      if (ch && ch.voiceKey !== key) {
-        this.disposeChannel(ch);
-        ch = undefined;
-      }
-      if (!ch) {
-        ch = this.createChannel(t);
-        this.channels.set(t.id, ch);
-      }
-      this.applyMix(ch, t);
+      try {
+        const key = voiceKey(t);
+        let ch = this.channels.get(t.id);
+        if (ch && ch.voiceKey !== key) {
+          this.disposeChannel(ch);
+          ch = undefined;
+        }
+        if (!ch) {
+          ch = this.createChannel(t);
+          this.channels.set(t.id, ch);
+        }
+        this.applyMix(ch, t);
+      } catch (e) { this.problem(t.name, e); }
     }
     for (const [id, ch] of this.channels) {
       if (!seen.has(id)) {
@@ -512,32 +534,34 @@ export class StudioEngine {
     }
     const key = { tonic: song.key_tonic, mode: song.key_mode };
     for (const t of song.tracks) {
-      const ch = this.channels.get(t.id);
-      const clip = t.clips[0];
-      if (!ch || !clip) continue;
-      if (clip.kind === 'pattern' && ch.voice.kind === 'drums') {
-        const p = clip.content as PatternContent;
-        for (const row of p.rows) {
-          const hit = row.hits.find((h) => h.step === step);
-          const name = hit && rowVoice(ch.instrumentKey, row.sound.key);
-          if (hit && name) ch.voice.hit(name, time, hit.vel);
-        }
-      } else if (clip.kind === 'notes' && ch.voice.kind === 'melodic') {
-        for (const n of (clip.content as NotesContent).notes) {
-          if (n.tick >= stepStart && n.tick < stepStart + STEP_TICKS) {
-            const offset = this.secondsFor(n.tick - stepStart, song);
-            ch.voice.play(n.midi, this.secondsFor(n.dur, song) * 0.95, time + offset, n.vel, song.tuning_a4_hz);
+      try {
+        const ch = this.channels.get(t.id);
+        const clip = t.clips[0];
+        if (!ch || !clip) continue;
+        if (clip.kind === 'pattern' && ch.voice.kind === 'drums') {
+          const p = clip.content as PatternContent;
+          for (const row of p.rows) {
+            const hit = row.hits.find((h) => h.step === step);
+            const name = hit && rowVoice(ch.instrumentKey, row.sound.key);
+            if (hit && name) ch.voice.hit(name, time, hit.vel);
+          }
+        } else if (clip.kind === 'notes' && ch.voice.kind === 'melodic') {
+          for (const n of (clip.content as NotesContent).notes) {
+            if (n.tick >= stepStart && n.tick < stepStart + STEP_TICKS) {
+              const offset = this.secondsFor(n.tick - stepStart, song);
+              ch.voice.play(n.midi, this.secondsFor(n.dur, song) * 0.95, time + offset, n.vel, song.tuning_a4_hz);
+            }
+          }
+        } else if (clip.kind === 'chords' && ch.voice.kind === 'melodic') {
+          const triads = diatonicTriads(key);
+          for (const c of (clip.content as ChordsContent).chords) {
+            if (c.tick >= stepStart && c.tick < stepStart + STEP_TICKS && triads[c.degree]) {
+              const dur = this.secondsFor(c.dur, song) * 0.98;
+              for (const m of chordMidi(triads[c.degree], 52)) ch.voice.play(m, dur, time, 0.6, song.tuning_a4_hz);
+            }
           }
         }
-      } else if (clip.kind === 'chords' && ch.voice.kind === 'melodic') {
-        const triads = diatonicTriads(key);
-        for (const c of (clip.content as ChordsContent).chords) {
-          if (c.tick >= stepStart && c.tick < stepStart + STEP_TICKS && triads[c.degree]) {
-            const dur = this.secondsFor(c.dur, song) * 0.98;
-            for (const m of chordMidi(triads[c.degree], 52)) ch.voice.play(m, dur, time, 0.6, song.tuning_a4_hz);
-          }
-        }
-      }
+      } catch (e) { this.problem(t.name, e); }
     }
   }
 

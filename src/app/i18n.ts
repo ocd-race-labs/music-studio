@@ -749,6 +749,7 @@ const STRINGS = {
   ideaWriteBlock: { en: 'Write only {name}', es: 'Escribir solo {name}' },
   ideaToDetail: { en: 'Go to the detail', es: 'Ir al detalle' },
   ideaSoundsWith: { en: 'Sounds with', es: 'Suena con' },
+  soundProblem: { en: 'The sound of {track} could not be built; the rest plays. ({error})', es: 'No se pudo preparar el sonido de {track}; el resto suena. ({error})' },
   ideaAcceptShort: { en: 'Accept the idea', es: 'Aceptar la idea' },
   pickCore: { en: 'Basics', es: 'Básicos' },
   pickKeys: { en: 'Keys', es: 'Teclados' },
