@@ -6,8 +6,9 @@ import type {
   CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Track,
 } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
-import { DEFAULT_SWING, defaultFxParams, loopBars, newId, now, retarget, roleOf, switchKit as switchKitOf } from './factory';
+import { DEFAULT_SWING, defaultFxParams, newId, now, retarget, roleOf, switchKit as switchKitOf } from './factory';
 import { ref, rowFor, SPACE_EFFECTS } from '../packs/core';
+import { setSongBars } from './arrange';
 import type { KitSlot } from '../packs/core';
 import type { Lang } from './types';
 
@@ -50,61 +51,8 @@ export function setKey(song: Song, tonic: string, mode: string, by: string | nul
   }, by);
 }
 
-/** Resize the loop. Growing repeats what is there; shrinking keeps notes but only the loop plays. */
-export function setLoopBars(song: Song, bars: number, by: string | null): Song {
-  const oldBars = loopBars(song);
-  if (bars === oldBars) return song;
-  const length = bars * BAR_TICKS;
-  const oldLength = oldBars * BAR_TICKS;
-  const repeat = <T extends { tick: number }>(items: T[], clone: (x: T, shift: number) => T): T[] => {
-    if (bars <= oldBars) return items;
-    const out = [...items];
-    for (let shift = oldLength; shift < length; shift += oldLength) {
-      for (const x of items) if (x.tick + shift < length) out.push(clone(x, shift));
-    }
-    return out;
-  };
-  return touch({
-    ...song,
-    sections: song.sections.map((s, i) => (i === 0 ? { ...s, length_ticks: length } : s)),
-    tracks: song.tracks.map((t) => ({
-      ...t,
-      clips: t.clips.map((c) => {
-        const base = { ...c, length_ticks: length, updated_at: now() };
-        if (c.kind === 'pattern') {
-          const p = c.content as PatternContent;
-          const oldSteps = p.steps;
-          const steps = bars * 16;
-          return {
-            ...base,
-            content: {
-              steps,
-              rows: p.rows.map((r) => {
-                const hits = r.hits.filter((h) => h.step < steps);
-                if (steps > oldSteps) {
-                  for (let shift = oldSteps; shift < steps; shift += oldSteps) {
-                    for (const h of r.hits) if (h.step + shift < steps) hits.push({ step: h.step + shift, vel: h.vel });
-                  }
-                }
-                return { ...r, hits };
-              }),
-            },
-          };
-        }
-        if (c.kind === 'notes') {
-          const notes = repeat((c.content as NotesContent).notes, (n, shift) => ({ ...n, id: newId(), tick: n.tick + shift }));
-          return { ...base, content: { notes } };
-        }
-        if (c.kind === 'chords') {
-          const chords = repeat((c.content as ChordsContent).chords, (ch, shift) => ({ ...ch, id: newId(), tick: ch.tick + shift }))
-            .filter((ch) => ch.tick < length);
-          return { ...base, content: { chords } };
-        }
-        return base;
-      }),
-    })),
-  }, by);
-}
+/** Resize the song (see arrange.setSongBars): new bars start empty. */
+export const setLoopBars = (song: Song, bars: number, by: string | null): Song => setSongBars(song, bars, by);
 
 export function toggleHit(song: Song, trackId: string, row: number, step: number, by: string | null): Song {
   return mapTrack(song, trackId, (t) => mapMainClip(t, (c) => {

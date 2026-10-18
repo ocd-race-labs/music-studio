@@ -1,4 +1,4 @@
-// Zoom never floats freely: it picks how much of the loop fills the screen's width.
+// Zoom never floats freely: it picks how much of the song fills the screen's width (all of it, 2 bars, 1 bar, half a bar).
 
 export const GAP = 3;
 export const DRUM_LABEL = 78;
@@ -6,11 +6,11 @@ export const NOTE_LABEL = 76; // room for solfège names like Sol♭4
 const MIN_CELL = 12;
 const MAX_CELL = 96;
 
-export type Zoom = 'fit' | 'bar' | 'half';
-export const ZOOMS: Zoom[] = ['fit', 'bar', 'half'];
+export type Zoom = 'fit' | 'two' | 'bar' | 'half';
+export const ZOOMS: Zoom[] = ['fit', 'two', 'bar', 'half'];
 
 export const visibleSteps = (zoom: Zoom, total: number): number =>
-  zoom === 'fit' ? total : Math.min(total, zoom === 'bar' ? 16 : 8);
+  zoom === 'fit' ? total : Math.min(total, zoom === 'two' ? 32 : zoom === 'bar' ? 16 : 8);
 
 /** Width of one step so the chosen span fills the editor. */
 export function cellWidth(zoom: Zoom, total: number, width: number, label = DRUM_LABEL): number {

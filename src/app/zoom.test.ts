@@ -8,6 +8,7 @@ describe('zoom', () => {
     expect(cellWidth('bar', 32, 820)).toBe(43);
     expect(visibleSteps('half', 32)).toBe(8);
     expect(visibleSteps('bar', 16)).toBe(16);
+    expect(visibleSteps('two', 768)).toBe(32);
   });
 
   it('never shrinks steps below a tappable floor or grows them without end', () => {
@@ -19,5 +20,6 @@ describe('zoom', () => {
     expect(autoZoom(32, 820, false)).toBe('fit');   // laptop
     expect(autoZoom(32, 620, true)).toBe('bar');    // iPad beside the panels
     expect(autoZoom(32, 358, true)).toBe('half');   // iPhone
+    expect(autoZoom(768, 820, false)).toBe('two');  // a long song on a laptop: two bars at a time
   });
 });

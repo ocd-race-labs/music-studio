@@ -1,13 +1,15 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { CSSProperties, PointerEvent as ReactPointerEvent, RefObject } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import { title as catalogTitle } from '../packs/core';
 import { chordMidi, chordSymbol, diatonicTriads, noteNameDisplay, parseSpelling, spellInKey, tierOf } from '../theory';
 import type { Chord, Key, Naming, Tier } from '../theory';
-import type { ChordsContent, Lang, NotesContent, PatternContent, Song, Track } from '../domain/types';
+import type { ChordsContent, Lang, NotesContent, PatternContent, Section, Song, Track } from '../domain/types';
 import { BAR_TICKS, STEP_TICKS } from '../domain/types';
-import { loopBars } from '../domain/factory';
+import { sectionAtBar, sectionColor } from '../domain/arrange';
 import { namingFor, t, tierWord } from './i18n';
-import { cellWidth, DRUM_LABEL, GAP, NOTE_LABEL, visibleSteps } from './zoom';
+import { cellWidth, DRUM_LABEL, GAP, NOTE_LABEL } from './zoom';
+import { RULER_H, Ruler, tailRoom, useScrollControl, useStepWindow } from './timegrid';
+import type { Jump, MarkSel, View } from './timegrid';
 import type { Zoom } from './zoom';
 
 const ROW_H = 30;
@@ -16,35 +18,6 @@ const ROW_H = 30;
 function spellTitle(midi: number, spell: string | undefined, naming: Naming): string {
   const m = /^([A-G](?:bb|b|##|#)?)/.exec(spell ?? '');
   try { return m ? noteNameDisplay(midi, parseSpelling(m[1]), naming) : spell ?? ''; } catch { return spell ?? ''; }
-}
-
-/** Room after the last step so the last page can line up with the left edge, like the others. */
-const pageTail = (width: number, label: number, visible: number, total: number, cell: number) =>
-  visible < total ? Math.max(0, width - label - visible * (cell + GAP)) : 0;
-
-/**
- * When zoomed in, turn the page as the playhead moves on, like a score.
- * A new zoom keeps the same part of the loop in view, snapped to a page edge.
- */
-function useFollow(el: RefObject<HTMLDivElement | null>, step: number, visible: number, total: number, pitch: number) {
-  const page = step >= 0 && visible < total ? Math.floor(step / visible) : -1;
-  const firstStep = useRef(0);
-  useEffect(() => {
-    const node = el.current;
-    if (!node) return;
-    const onScroll = () => { firstStep.current = Math.round(node.scrollLeft / pitch); };
-    node.addEventListener('scroll', onScroll, { passive: true });
-    return () => node.removeEventListener('scroll', onScroll);
-  }, [el, pitch]);
-  useLayoutEffect(() => {
-    const node = el.current;
-    if (!node) return;
-    const startPage = Math.floor(Math.min(firstStep.current, total - 1) / visible);
-    node.scrollLeft = startPage * visible * pitch;
-  }, [el, visible, pitch, total]);
-  useEffect(() => {
-    if (page >= 0 && el.current) el.current.scrollTo({ left: page * visible * pitch });
-  }, [el, page, visible, pitch]);
 }
 
 export const songKey = (song: Song): Key => ({ tonic: song.key_tonic, mode: song.key_mode });
@@ -56,69 +29,98 @@ export function chordAtBar(song: Song, bar: number): Chord | null {
   return ev ? diatonicTriads(songKey(song))[ev.degree] ?? null : null;
 }
 
-const Playhead = ({ step, offset, cell, height }: { step: number; offset: number; cell: number; height?: number }) =>
-  step < 0 ? null : (
+const Playhead = ({ local, offset, pitch, cell, top, height }: { local: number; offset: number; pitch: number; cell: number; top: number; height: number }) =>
+  local < 0 ? null : (
     <div aria-hidden="true" style={{
-      position: 'absolute', top: 0, height: height ?? '100%', left: offset + step * (cell + GAP), width: cell,
+      position: 'absolute', top, height, left: offset + local * pitch, width: cell,
       background: 'var(--playhead)', borderRadius: 6, pointerEvents: 'none', zIndex: 3,
       boxShadow: 'inset 0 0 0 2px var(--main)',
     }} />
   );
 
+/** What every step grid needs to know about the song's form and the editor around it. */
+export interface GridFrame {
+  view: View;
+  sections: Section[];
+  marking: boolean;
+  sel: MarkSel;
+  cursorBar: number | null;
+  jump?: Jump;
+  onBarTap: (bar: number) => void;
+  onFirstBar?: (bar: number, bars: number) => void;
+}
+
 /* ---------------------------------------------------------------- drums */
 
-const DrumCells = memo(function DrumCells({ pattern, cell, lang, onToggle, onPreview }: {
+const DRUM_H = 38;
+
+const DrumCells = memo(function DrumCells({ pattern, view, from, to, cell, lang, onToggle }: {
   pattern: PatternContent;
+  view: View;
+  from: number;
+  to: number;
   cell: number;
   lang: Lang;
   onToggle: (row: number, step: number) => void;
-  onPreview: (soundKey: string) => void;
 }) {
+  const n = Math.max(0, to - from);
   return (
-    <div className="grid" style={{ gridTemplateColumns: `${DRUM_LABEL - GAP}px repeat(${pattern.steps}, ${cell}px)`, padding: 0 }}>
-      {pattern.rows.map((row, r) => (
-        <div key={row.sound.key} style={{ display: 'contents' }}>
-          <button type="button" className="rowlabel" onPointerDown={() => onPreview(row.sound.key)}>
-            {catalogTitle(row.sound, lang)}
-          </button>
-          {Array.from({ length: pattern.steps }, (_, s) => {
-            const on = row.hits.some((h) => h.step === s);
-            return (
-              <button
-                key={s}
-                type="button"
-                className={`cell${on ? ' on' : ''}${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}`}
-                aria-label={t('stepN', lang, { row: catalogTitle(row.sound, lang), n: s + 1 }) + (on ? t('stepOn', lang) : '')}
-                aria-pressed={on}
-                onClick={() => onToggle(r, s)}
-              />
-            );
-          })}
-        </div>
-      ))}
+    <div className="grid" style={{ position: 'absolute', left: DRUM_LABEL + from * (cell + GAP), top: RULER_H + GAP, gridTemplateColumns: `repeat(${n}, ${cell}px)`, gridAutoRows: `${DRUM_H}px`, padding: 0 }}>
+      {pattern.rows.map((row, r) => {
+        const on = new Set(row.hits.map((h) => h.step));
+        return Array.from({ length: n }, (_, i) => {
+          const s = view.start + from + i;
+          const hit = on.has(s);
+          return (
+            <button
+              key={`${r}-${s}`}
+              type="button"
+              className={`cell${hit ? ' on' : ''}${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}`}
+              aria-label={t('stepN', lang, { row: catalogTitle(row.sound, lang), n: s + 1 }) + (hit ? t('stepOn', lang) : '')}
+              aria-pressed={hit}
+              onClick={() => onToggle(r, s)}
+            />
+          );
+        });
+      })}
     </div>
   );
 });
 
-export function DrumGrid({ track, step, zoom, width, lang, onToggle, onPreview }: {
+export function DrumGrid({ track, step, zoom, width, lang, frame, onToggle, onPreview }: {
   track: Track;
   step: number;
   zoom: Zoom;
   width: number;
   lang: Lang;
+  frame: GridFrame;
   onToggle: (row: number, step: number) => void;
   onPreview: (soundKey: string) => void;
 }) {
   const pattern = track.clips[0].content as PatternContent;
-  const cell = cellWidth(zoom, pattern.steps, width, DRUM_LABEL);
-  const visible = visibleSteps(zoom, pattern.steps);
+  const { view } = frame;
+  const cell = cellWidth(zoom, view.length, width, DRUM_LABEL);
+  const pitch = cell + GAP;
   const scroller = useRef<HTMLDivElement>(null);
-  useFollow(scroller, step, visible, pattern.steps, cell + GAP);
+  const { win } = useStepWindow(scroller, view, pitch, DRUM_LABEL, frame.onFirstBar);
+  useScrollControl(scroller, view, pitch, DRUM_LABEL, step, frame.jump);
+  const rowsH = pattern.rows.length * (DRUM_H + GAP);
   return (
     <div className="scroll-x" ref={scroller}>
-      <div style={{ position: 'relative', width: DRUM_LABEL + pattern.steps * (cell + GAP) + pageTail(width, DRUM_LABEL, visible, pattern.steps, cell) }}>
-        <DrumCells pattern={pattern} cell={cell} lang={lang} onToggle={onToggle} onPreview={onPreview} />
-        <Playhead step={step} offset={DRUM_LABEL} cell={cell} />
+      <div style={{ position: 'relative', width: DRUM_LABEL + view.length * pitch + tailRoom(width, DRUM_LABEL, pitch, view.length), height: RULER_H + GAP + rowsH }}
+        onMouseDown={(e) => { if ((e.target as HTMLElement).closest('.cell, .rbar')) e.preventDefault(); }}>
+        <div className="tg-labels" style={{ width: DRUM_LABEL - GAP }}>
+          <span className="rlabel">{t('bar', lang)}</span>
+          {pattern.rows.map((row) => (
+            <button key={row.sound.key} type="button" className="rowlabel" onPointerDown={() => onPreview(row.sound.key)}>
+              {catalogTitle(row.sound, lang)}
+            </button>
+          ))}
+        </div>
+        <Ruler view={view} win={win} pitch={pitch} label={DRUM_LABEL} sections={frame.sections} lang={lang}
+          marking={frame.marking} sel={frame.sel} cursorBar={frame.cursorBar} onBarTap={frame.onBarTap} />
+        <DrumCells pattern={pattern} view={view} from={win.from} to={win.to} cell={cell} lang={lang} onToggle={onToggle} />
+        <Playhead local={step >= view.start && step < view.start + view.length ? step - view.start : -1} offset={DRUM_LABEL} pitch={pitch} cell={cell} top={RULER_H + GAP} height={rowsH - GAP} />
       </div>
     </div>
   );
@@ -126,42 +128,38 @@ export function DrumGrid({ track, step, zoom, width, lang, onToggle, onPreview }
 
 /* ---------------------------------------------------------------- notes */
 
-const tierClass = (tier: Tier) => tier;
-
-const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focusChord, lang, onToggle, onPreview }: {
+const NoteCells = memo(function NoteCells({ pitches, view, from, to, cell, keyName, focusChord, lang, onToggle }: {
   pitches: number[];
-  steps: number;
+  view: View;
+  from: number;
+  to: number;
   cell: number;
   lang: Lang;
   keyName: Key;
   focusChord: Chord | null;
   onToggle: (midi: number, step: number) => void;
-  onPreview: (midi: number) => void;
 }) {
+  const n = Math.max(0, to - from);
   return (
-    <div className="grid" style={{ gridTemplateColumns: `${NOTE_LABEL - GAP}px repeat(${steps}, ${cell}px)`, padding: 0 }}>
+    <div className="grid" style={{ position: 'absolute', left: NOTE_LABEL + from * (cell + GAP), top: RULER_H + GAP, gridTemplateColumns: `repeat(${n}, ${cell}px)`, gridAutoRows: `${ROW_H}px`, padding: 0 }}>
       {pitches.map((m) => {
         const tier = tierOf(m, keyName, focusChord);
         const name = noteNameDisplay(m, spellInKey(m, keyName), namingFor(lang));
-        return (
-          <div key={m} style={{ display: 'contents' }}>
-            <button type="button" className="plabel" onPointerDown={() => onPreview(m)} aria-label={`${name}, ${tierWord(tier, lang)}`}>
-              <span className={`dot ${tierClass(tier)}`} aria-hidden="true" />{name}
-            </button>
-            {Array.from({ length: steps }, (_, s) => (
-              <button
-                key={s}
-                type="button"
-                className={`ncell${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}${tier === 'chord' ? ' chordrow' : tier === 'scale' ? ' inscale' : ''}`}
-                aria-label={t('stepN', lang, { row: name, n: s + 1 })}
-                data-m={m}
-                data-s={s}
-                // Taps and drags come through the pointer handlers of the grid; this click is the keyboard path.
-                onClick={(e) => { if (e.detail === 0) onToggle(m, s); }}
-              />
-            ))}
-          </div>
-        );
+        return Array.from({ length: n }, (_, i) => {
+          const s = view.start + from + i;
+          return (
+            <button
+              key={`${m}-${s}`}
+              type="button"
+              className={`ncell${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}${tier === 'chord' ? ' chordrow' : tier === 'scale' ? ' inscale' : ''}`}
+              aria-label={t('stepN', lang, { row: name, n: s + 1 })}
+              data-m={m}
+              data-s={s}
+              // Taps and drags come through the pointer handlers of the grid; this click is the keyboard path.
+              onClick={(e) => { if (e.detail === 0) onToggle(m, s); }}
+            />
+          );
+        });
       })}
     </div>
   );
@@ -183,7 +181,7 @@ interface NoteDrag {
   timer: number | null;
 }
 
-export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, onToggle, onSpan, onPreview, onShift }: {
+export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, frame, onToggle, onSpan, onPreview, onShift }: {
   lang: Lang;
   song: Song;
   track: Track;
@@ -192,24 +190,28 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
   zoom: Zoom;
   width: number;
   focusBar: number;
+  frame: GridFrame;
   onToggle: (midi: number, step: number) => void;
   onSpan: (midi: number, fromStep: number, lengthSteps: number) => void;
   onPreview: (midi: number) => void;
   onShift: (delta: number) => void;
 }) {
   const key = songKey(song);
-  const steps = track.clips[0].length_ticks / STEP_TICKS;
+  const { view } = frame;
   const pitches = Array.from({ length: 24 }, (_, i) => low + 23 - i);
   const notes = (track.clips[0].content as NotesContent).notes;
-  const visible = notes.filter((n) => n.midi >= low && n.midi <= low + 23);
   const above = notes.filter((n) => n.midi > low + 23).length;
   const below = notes.filter((n) => n.midi < low).length;
   const focusChord = chordAtBar(song, focusBar);
-  const cell = cellWidth(zoom, steps, width, NOTE_LABEL);
+  const cell = cellWidth(zoom, view.length, width, NOTE_LABEL);
   const pitch = cell + GAP;
-  const visibleCount = visibleSteps(zoom, steps);
   const scroller = useRef<HTMLDivElement>(null);
-  useFollow(scroller, step, visibleCount, steps, pitch);
+  const { win } = useStepWindow(scroller, view, pitch, NOTE_LABEL, frame.onFirstBar);
+  useScrollControl(scroller, view, pitch, NOTE_LABEL, step, frame.jump);
+  const winStart = (view.start + win.from) * STEP_TICKS;
+  const winEnd = (view.start + win.to) * STEP_TICKS;
+  const visible = notes.filter((n) => n.midi >= low && n.midi <= low + 23 && n.tick < winEnd && n.tick + n.dur > winStart);
+  const top = RULER_H + GAP;
 
   /* Tap a square: one note of the chosen length. Hold and drag across squares: one long note.
      With a mouse the drag starts right away; with a finger it starts after a short hold, so a quick swipe still scrolls.
@@ -219,8 +221,8 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
   const [ghost, setGhost] = useState<{ midi: number; from: number; to: number } | null>(null);
   const stepAt = (clientX: number) => {
     const r = area.current?.getBoundingClientRect();
-    if (!r) return 0;
-    return Math.min(steps - 1, Math.max(0, Math.floor((clientX - r.left - NOTE_LABEL) / pitch)));
+    if (!r) return view.start;
+    return view.start + Math.min(view.length - 1, Math.max(0, Math.floor((clientX - r.left - NOTE_LABEL) / pitch)));
   };
   const span = (d: NoteDrag) => ({ midi: d.midi, from: Math.min(d.anchor, d.cur), to: Math.max(d.anchor, d.cur) });
   const endDrag = () => {
@@ -239,23 +241,23 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
   }, []);
   useEffect(() => () => { if (drag.current?.timer) window.clearTimeout(drag.current.timer); }, []);
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const cell = (e.target as HTMLElement).closest<HTMLElement>('.ncell');
-    if (!cell || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    const m = Number(cell.dataset.m);
-    const s = Number(cell.dataset.s);
+    const target = (e.target as HTMLElement).closest<HTMLElement>('.ncell');
+    if (!target || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const m = Number(target.dataset.m);
+    const s = Number(target.dataset.s);
     const covering = notes.find((n) => n.midi === m && n.tick <= s * STEP_TICKS && s * STEP_TICKS < n.tick + n.dur);
     const touch = e.pointerType === 'touch';
     const d: NoteDrag = {
       id: e.pointerId, touch, midi: m, cell: s, anchor: covering ? Math.round(covering.tick / STEP_TICKS) : s, cur: s,
-      painting: !touch, x0: e.clientX, y0: e.clientY, timer: null,
+      painting: !touch && !frame.marking, x0: e.clientX, y0: e.clientY, timer: null,
     };
-    if (touch) {
+    if (touch && !frame.marking) {
       d.timer = window.setTimeout(() => {
         d.painting = true;
         d.timer = null;
         setGhost(span(d));
       }, HOLD_MS);
-    } else {
+    } else if (!touch) {
       e.preventDefault();
       area.current?.setPointerCapture?.(e.pointerId);
     }
@@ -285,13 +287,14 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
       onToggle(d.midi, d.cell);
     }
   };
-  const ghostStyle = (g: { midi: number; from: number; to: number }): CSSProperties => ({
+  const noteBox = (midi: number, fromStep: number, steps: number): CSSProperties => ({
     position: 'absolute',
-    top: (low + 23 - g.midi) * (ROW_H + GAP) + 3,
+    top: top + (low + 23 - midi) * (ROW_H + GAP) + 3,
     height: ROW_H - 6,
-    left: NOTE_LABEL + g.from * pitch + 1,
-    width: Math.max(4, (g.to - g.from + 1) * pitch - GAP - 2),
+    left: NOTE_LABEL + (fromStep - view.start) * pitch + 1,
+    width: Math.max(4, steps * pitch - GAP - 2),
   });
+  const rowsH = 24 * (ROW_H + GAP);
 
   return (
     <div className="stack" style={{ gap: 6 }}>
@@ -300,25 +303,32 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
         <button type="button" className="btn ghost" onClick={() => onShift(-12)} aria-label={t('octaveDown', lang)}>▼ {t('octave', lang)}{below ? ` (${t('nBelow', lang, { n: below })})` : ''}</button>
         <span className="hide-sm" style={{ marginLeft: 'auto' }}>{t('dragHint', lang)}</span>
       </div>
-      <div className="scroll-x" ref={scroller} style={{ maxHeight: 520, overflowY: 'auto' }}>
-        <div ref={area} className="note-area" style={{ position: 'relative', width: NOTE_LABEL + steps * pitch + pageTail(width, NOTE_LABEL, visibleCount, steps, cell) }}
+      <div className="scroll-x" ref={scroller} style={{ maxHeight: 560, overflowY: 'auto' }}>
+        <div ref={area} className="note-area" style={{ position: 'relative', width: NOTE_LABEL + view.length * pitch + tailRoom(width, NOTE_LABEL, pitch, view.length), height: top + rowsH }}
           onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={endDrag}
           onContextMenu={(e) => { if (drag.current) e.preventDefault(); }}>
-          <NoteCells pitches={pitches} steps={steps} cell={cell} keyName={key} lang={lang} focusChord={focusChord} onToggle={onToggle} onPreview={onPreview} />
+          <div className="tg-labels" style={{ width: NOTE_LABEL - GAP }}>
+            <span className="rlabel">{t('bar', lang)}</span>
+            {pitches.map((m) => {
+              const tier = tierOf(m, key, focusChord);
+              const name = noteNameDisplay(m, spellInKey(m, key), namingFor(lang));
+              return (
+                <button key={m} type="button" className="plabel" onPointerDown={() => onPreview(m)} aria-label={`${name}, ${tierWord(tier, lang)}`}>
+                  <span className={`dot ${tier}`} aria-hidden="true" />{name}
+                </button>
+              );
+            })}
+          </div>
+          <Ruler view={view} win={win} pitch={pitch} label={NOTE_LABEL} sections={frame.sections} lang={lang}
+            marking={frame.marking} sel={frame.sel} cursorBar={frame.cursorBar} onBarTap={frame.onBarTap} />
+          <NoteCells pitches={pitches} view={view} from={win.from} to={win.to} cell={cell} keyName={key} lang={lang} focusChord={focusChord} onToggle={onToggle} />
           {visible.map((n) => {
             const bar = Math.floor(n.tick / BAR_TICKS);
             const tier = tierOf(n.midi, key, chordAtBar(song, bar));
-            const style: CSSProperties = {
-              position: 'absolute',
-              top: (low + 23 - n.midi) * (ROW_H + GAP) + 3,
-              height: ROW_H - 6,
-              left: NOTE_LABEL + (n.tick / STEP_TICKS) * pitch + 1,
-              width: Math.max(4, (n.dur / STEP_TICKS) * pitch - GAP - 2),
-            };
-            return <div key={n.id} className={`note ${tier}`} style={style} title={spellTitle(n.midi, n.spell, namingFor(lang))} />;
+            return <div key={n.id} className={`note ${tier}`} style={noteBox(n.midi, n.tick / STEP_TICKS, n.dur / STEP_TICKS)} title={spellTitle(n.midi, n.spell, namingFor(lang))} />;
           })}
-          {ghost && <div className="note ghost" style={ghostStyle(ghost)} aria-hidden="true" />}
-          <Playhead step={step} offset={NOTE_LABEL} cell={cell} height={24 * (ROW_H + GAP)} />
+          {ghost && <div className="note ghost" style={noteBox(ghost.midi, ghost.from, ghost.to - ghost.from + 1)} aria-hidden="true" />}
+          <Playhead local={step >= view.start && step < view.start + view.length ? step - view.start : -1} offset={NOTE_LABEL} pitch={pitch} cell={cell} top={top} height={rowsH - GAP} />
         </div>
       </div>
     </div>
@@ -327,26 +337,30 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
 
 /* ---------------------------------------------------------------- chords */
 
-export function ChordLane({ song, track, step, lang, onSet, onPreview }: {
+export function ChordLane({ song, track, step, lang, view, onSet, onPreview }: {
   song: Song;
   track: Track;
   step: number;
   lang: Lang;
+  view: View;
   onSet: (bar: number, degree: number | null) => void;
   onPreview: (midis: number[]) => void;
 }) {
   const triads = diatonicTriads(songKey(song));
   const chords = (track.clips[0].content as ChordsContent).chords;
-  const bars = loopBars(song);
+  const firstBar = Math.floor(view.start / 16);
+  const bars = Math.max(1, Math.round(view.length / 16));
   const playingBar = step >= 0 ? Math.floor(step / 16) : -1;
   return (
     <div className="stack">
-      {Array.from({ length: bars }, (_, bar) => {
+      {Array.from({ length: bars }, (_, i) => {
+        const bar = firstBar + i;
         const current = chords.find((c) => c.tick === bar * BAR_TICKS);
+        const sec = sectionAtBar(song, bar);
         return (
           <section key={bar} className="card stack" style={{ padding: 12, gap: 8, borderColor: bar === playingBar ? 'var(--main)' : undefined }} aria-label={`${t('bar', lang)} ${bar + 1}`}>
             <div className="row">
-              <strong className="grow">{t('bar', lang)} {bar + 1}</strong>
+              <strong className="grow">{t('bar', lang)} {bar + 1}{sec && <span className="sec-chip" style={{ ['--sec' as string]: sectionColor(sec) }}>{sec.name}</span>}</strong>
               <button type="button" className="btn ghost" onClick={() => onSet(bar, null)} disabled={!current}>{t('clear', lang)}</button>
             </div>
             <div className="chordbar">

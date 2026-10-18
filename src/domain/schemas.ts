@@ -130,7 +130,7 @@ export const songFileSchema = {
         key_tonic: { type: 'string', pattern: '^[A-G](bb|b|##|#)?$' },
         key_mode: { type: 'string', pattern: '^[a-z][a-z0-9-]*$' },
         schema_version: { const: 1 },
-        sections: { type: 'array', minItems: 1 },
+        sections: { type: 'array' },
         tracks: {
           type: 'array',
           items: {

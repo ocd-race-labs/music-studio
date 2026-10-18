@@ -217,10 +217,11 @@ export function newSong(ownerProfileId: string, title = 'Untitled', bars = 2, la
     musician_style_key: null,
     producer_style_key: null,
     kit_key: kitKey === CUSTOM_KIT && !starred.length ? DEFAULT_KIT : kitKey,
+    length_ticks: length,
     status: 'active',
     origin: 'person',
     schema_version: 1,
-    sections: [{ id: newId(), position: 1, name: 'Loop', start_tick: 0, length_ticks: length, key_tonic: null, key_mode: null, lyrics_lang: null }],
+    sections: [],
     tracks,
     created_by: ownerProfileId,
     updated_by: ownerProfileId,
@@ -254,7 +255,7 @@ export function retarget(t: Track, instrumentKey: string, role: Role, name: stri
  * notes, so nothing written is lost.
  */
 export function switchKit(song: Song, kitKey: string, slots: KitSlot[], lang: Lang, by: string | null): Song {
-  const bars = Math.round(song.sections[0].length_ticks / BAR_TICKS);
+  const bars = songBars(song);
   const used = new Set<string>();
   const counts: Partial<Record<Role, number>> = {};
   const tracks: Track[] = [];
@@ -284,5 +285,26 @@ export function switchKit(song: Song, kitKey: string, slots: KitSlot[], lang: La
   };
 }
 
-export const loopBars = (song: Song): number => Math.round(song.sections[0].length_ticks / BAR_TICKS);
-export const loopSteps = (song: Song): number => song.sections[0].length_ticks / STEP_TICKS;
+/** How long the song is, in ticks. Songs from before song form kept it in their single "Loop" section. */
+export function songLength(song: Song): number {
+  if (song.length_ticks && song.length_ticks > 0) return song.length_ticks;
+  const clip = song.tracks.find((t) => t.clips[0])?.clips[0];
+  return song.sections[0]?.length_ticks ?? clip?.length_ticks ?? 2 * BAR_TICKS;
+}
+export const songBars = (song: Song): number => Math.max(1, Math.round(songLength(song) / BAR_TICKS));
+export const songSteps = (song: Song): number => songLength(song) / STEP_TICKS;
+/** Old names, kept so nothing else had to change. */
+export const loopBars = songBars;
+export const loopSteps = songSteps;
+
+/**
+ * Bring an older song to the current shape: its length moves out of the "Loop" section into the song, and
+ * that placeholder section goes away (sections are now the parts the person marks: intro, verse, chorus).
+ */
+export function normalizeSong(song: Song): Song {
+  if (song.length_ticks && song.length_ticks > 0) return song;
+  const length = songLength(song);
+  const placeholder = song.sections.length === 1 && song.sections[0].name === 'Loop' && !song.sections[0].kind
+    && song.sections[0].start_tick === 0 && song.sections[0].length_ticks === length;
+  return { ...song, length_ticks: length, sections: placeholder ? [] : song.sections };
+}

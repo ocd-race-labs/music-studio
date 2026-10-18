@@ -143,10 +143,14 @@ export interface Track {
   updated_at: string;
 }
 
+/** What a part of the song is; its color and its name ("Coro 2") come from it. */
+export type SectionKind = 'intro' | 'verse' | 'prechorus' | 'chorus' | 'bridge' | 'break' | 'solo' | 'outro' | 'other';
+
 export interface Section {
   id: string;
   position: number;
   name: string;
+  kind?: SectionKind;
   start_tick: number;
   length_ticks: number;
   key_tonic: string | null;
@@ -172,6 +176,8 @@ export interface Song {
   producer_style_key: string | null;
   /** The kit the song uses: a catalog kit key, or "custom". Older songs have none and count as hip hop. */
   kit_key?: string;
+  /** How long the song is. Older songs kept it in a single "Loop" section; see normalizeSong. */
+  length_ticks?: number;
   status: 'active' | 'archived';
   origin: Origin;
   schema_version: 1;

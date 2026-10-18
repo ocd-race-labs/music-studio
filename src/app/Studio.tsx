@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as C from '../domain/commands';
-import { loopBars, newSong, ROLE_NAMES, roleOf, slotsFor } from '../domain/factory';
+import { loopBars, newSong, normalizeSong, ROLE_NAMES, roleOf, slotsFor, songSteps } from '../domain/factory';
+import * as A from '../domain/arrange';
+import type { CopyMode } from '../domain/arrange';
+import { LengthStepper, SongTimeline, StructureBar } from './Arrange';
+import type { GridFrame } from './editors';
+import type { Jump, MarkSel, View } from './timegrid';
 import { exportSongFile, parseIdeasFile, parseSongFile, SONG_FILE_EXT, withFreshIds } from '../domain/files';
-import type { Hat, Idea, NotesContent, PatternContent, Profile, Role, Song, SongVersion, ChordsContent, StarredInstrument } from '../domain/types';
+import type { Hat, Idea, NotesContent, PatternContent, Profile, Role, SectionKind, Song, SongVersion, ChordsContent, StarredInstrument } from '../domain/types';
 import { PPQ, STEP_TICKS } from '../domain/types';
 import { engine } from '../engine/engine';
 import { CUSTOM_KIT, DEFAULT_KIT, findItem, KITS, kitSlots, kitTitle, lowOf, title as catalogTitle } from '../packs/core';
@@ -35,7 +40,7 @@ const readLen = (): number => {
   } catch { return 1; }
 };
 const isTouch = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-const ZOOM_LABEL = { fit: 'zoomFit', bar: 'zoomBar', half: 'zoomHalf' } as const;
+const ZOOM_LABEL = { fit: 'zoomFit', two: 'zoomTwo', bar: 'zoomBar', half: 'zoomHalf' } as const;
 
 const LENGTHS = [
   { steps: 1, label: '1/16' },
@@ -98,6 +103,18 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   // The producer's mixer takes the editor's place while it is open.
   const [board, setBoard] = useState(false);
 
+  /* Song form: one part in view (and on repeat), mark mode, where play starts, what the grid shows. */
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const [marking, setMarking] = useState(false);
+  const [sel, setSel] = useState<MarkSel>({ a: null, b: null });
+  const [cursorBar, setCursorBar] = useState(0);
+  const [onScreen, setOnScreen] = useState({ bar: 0, bars: 8 });
+  const [jump, setJump] = useState<Jump>({ step: 0, n: 0 });
+  const jumpTo = useCallback((step: number) => setJump((j) => ({ step, n: j.n + 1 })), []);
+  const playFrom = useRef(0);
+  const onScreenRef = useRef(onScreen);
+  const onFirstBar = useCallback((bar: number, bars: number) => { onScreenRef.current = { bar, bars }; setOnScreen({ bar, bars }); }, []);
+
   // Full screen: the grid takes the whole width; the browser goes full screen too where it allows it.
   const [wide, setWide] = useState(false);
   const enteredFs = useRef(false);
@@ -131,6 +148,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         s = newSong(profile.id, t(profile.id === 'guest' ? 'guestJam' : 'firstSong', langRef.current), 2, langRef.current);
         await store.saveSong(s);
       }
+      s = normalizeSong(s);
       if (!alive) return;
       songRef.current = s;
       setSong(s);
@@ -195,7 +213,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
       engine.stop();
       setPlaying(false);
     } else {
-      const ok = await engine.play();
+      const ok = await engine.play(playFrom.current);
       setAudioReady(true);
       setPlaying(true);
       if (!ok) showToast(t('soundBlocked', lang));
@@ -216,11 +234,17 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   /* ---------- stable handlers for the memoized grids */
   const selRef = useRef(selected);
   useLayoutEffect(() => { selRef.current = selected; }, [selected]);
-  const onToggleHit = useCallback((row: number, s: number) => apply((x) => C.toggleHit(x, selRef.current!, row, s, by)), [apply, by]);
+  const markRef = useRef(false);
+  const barTapRef = useRef<(bar: number) => void>(() => undefined);
+  const onToggleHit = useCallback((row: number, s: number) => {
+    if (markRef.current) { barTapRef.current(Math.floor(s / 16)); return; }
+    apply((x) => C.toggleHit(x, selRef.current!, row, s, by));
+  }, [apply, by]);
   const onPreviewDrum = useCallback((key: string) => { engine.previewDrum(selRef.current!, key); }, []);
   const lenRef = useRef(noteLen);
   useLayoutEffect(() => { lenRef.current = noteLen; }, [noteLen]);
   const onToggleNote = useCallback((midi: number, s: number) => {
+    if (markRef.current) { barTapRef.current(Math.floor(s / 16)); return; }
     apply((x) => C.toggleNote(x, selRef.current!, midi, s, lenRef.current, by));
     setFocusBar(Math.floor(s / 16));
   }, [apply, by]);
@@ -263,11 +287,16 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
     setSongList(await store.listSongs(profile.id));
     setModal('songs');
   };
-  const switchTo = async (s: Song) => {
+  const switchTo = async (raw: Song) => {
+    const s = normalizeSong(raw);
     engine.stop();
     setPlaying(false);
     past.current = [];
     future.current = [];
+    setFocusId(null);
+    setMarking(false);
+    setSel({ a: null, b: null });
+    setCursorBar(0);
     commit(s);
     setSelected(s.tracks[0]?.id ?? null);
     setFocusBar(0);
@@ -398,7 +427,89 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   };
 
   const bars = song ? loopBars(song) : 2;
-  const zoom: Zoom = zoomPref ?? autoZoom(bars * 16, editorWidth, touch);
+  const songTotal = song ? songSteps(song) : 32;
+  const focusSection = song?.sections.find((x) => x.id === focusId) ?? null;
+  const fStart = focusSection?.start_tick ?? -1;
+  const fLen = focusSection?.length_ticks ?? 0;
+  const view: View = useMemo(() => (fStart >= 0 && fLen > 0
+    ? { start: fStart / STEP_TICKS, length: fLen / STEP_TICKS }
+    : { start: 0, length: songTotal }), [fStart, fLen, songTotal]);
+  const focused = fStart >= 0;
+  useEffect(() => { engine.setRange(focused ? view : null); }, [focused, view]);
+  useEffect(() => () => engine.setRange(null), []);
+  useEffect(() => { if (focusId && song && !song.sections.some((x) => x.id === focusId)) setFocusId(null); }, [focusId, song]);
+  useEffect(() => { if (cursorBar > bars - 1) setCursorBar(Math.max(0, bars - 1)); }, [cursorBar, bars]);
+  useLayoutEffect(() => { playFrom.current = focused ? view.start : Math.min(cursorBar, bars - 1) * 16; }, [focused, view, cursorBar, bars]);
+  useLayoutEffect(() => { markRef.current = marking; }, [marking]);
+  // Changing track keeps the same bars in view.
+  useEffect(() => { jumpTo(onScreenRef.current.bar * 16); }, [selected, jumpTo]);
+
+  const onBarTap = useCallback((bar: number) => {
+    if (markRef.current) {
+      setSel((cur) => (cur.a === null || cur.b !== null ? { a: bar, b: null } : { a: cur.a, b: bar }));
+      return;
+    }
+    setCursorBar(bar);
+    if (engine.playing) engine.seek(bar * 16);
+  }, []);
+  useLayoutEffect(() => { barTapRef.current = onBarTap; }, [onBarTap]);
+
+  const pickKind = (kind: SectionKind) => {
+    if (sel.a === null || sel.b === null || !song) return;
+    const lo = Math.min(sel.a, sel.b), hi = Math.max(sel.a, sel.b);
+    apply((x) => A.markSection(x, lo, hi, kind, lang, by));
+    // The next part starts right after this one.
+    setSel({ a: hi + 1 < bars ? hi + 1 : null, b: null });
+  };
+  const toggleMarking = (on: boolean) => {
+    setMarking(on);
+    if (on && song) {
+      setFocusId(null);
+      setSel({ a: A.unmarkedRanges(song)[0]?.from ?? null, b: null });
+    } else {
+      setSel({ a: null, b: null });
+    }
+  };
+  const focusOn = (id: string | null) => {
+    setFocusId(id);
+    const sec = song?.sections.find((x) => x.id === id);
+    const step = sec ? sec.start_tick / STEP_TICKS : cursorBar * 16;
+    jumpTo(step);
+    if (engine.playing) engine.seek(step);
+  };
+  const tryApply = (fn: (x: Song) => Song, ok: () => void) => {
+    const cur = songRef.current;
+    if (!cur) return;
+    const next = fn(cur);
+    if (next === cur) { showToast(t('tooLong', lang, { max: A.MAX_BARS })); return; }
+    apply(() => next);
+    ok();
+  };
+  const copyPart = (id: string, atBar: number, mode: CopyMode) => {
+    const name = song?.sections.find((x) => x.id === id)?.name ?? '';
+    tryApply((x) => A.copySection(x, id, atBar, mode, lang, by), () => { showToast(t('copied', lang, { name, bar: atBar + 1 })); });
+  };
+  const repeatPart = (id: string, times: number) => {
+    const name = song?.sections.find((x) => x.id === id)?.name ?? '';
+    tryApply((x) => A.repeatSection(x, id, times, lang, by), () => { showToast(t('repeated', lang, { name, n: times })); });
+  };
+  const deletePartBars = (id: string) => {
+    const name = song?.sections.find((x) => x.id === id)?.name ?? '';
+    apply((x) => A.deleteSectionBars(x, id, lang, by));
+    setFocusId(null);
+    showToast(t('barsDeleted', lang, { name }));
+  };
+  const scrub = (bar: number) => {
+    if (focusSection && (bar < fStart / 3840 || bar >= (fStart + fLen) / 3840)) setFocusId(null);
+    setCursorBar(bar);
+    jumpTo(bar * 16);
+    if (engine.playing) engine.seek(bar * 16);
+  };
+
+  const zoom: Zoom = zoomPref ?? autoZoom(view.length, editorWidth, touch);
+  const frame: GridFrame = {
+    view, sections: song?.sections ?? [], marking, sel, cursorBar: focused ? null : cursorBar, jump, onBarTap, onFirstBar,
+  };
   const pickZoom = (z: Zoom) => {
     setZoomPref(z);
     try { localStorage.setItem(ZOOM_KEY, z); } catch { /* this browser keeps nothing; the choice lasts the visit */ }
@@ -436,12 +547,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
           <input className="field mono" type="number" min={40} max={200} value={song.tempo_bpm} style={{ width: 76 }}
             onChange={(e) => apply((x) => C.setTempo(x, Number(e.target.value) || x.tempo_bpm, by))} />
         </label>
-        <label className="row small">
-          <span className="muted">{t('bars', lang)}</span>
-          <select className="field" value={bars} onChange={(e) => apply((x) => C.setLoopBars(x, Number(e.target.value), by))}>
-            {[1, 2, 4, 8].map((b) => <option key={b} value={b}>{b}</option>)}
-          </select>
-        </label>
+<LengthStepper bars={bars} lang={lang} onBars={(n) => apply((x) => A.setSongBars(x, n, by))} />
         <button type="button" className="btn rec" aria-pressed={rec} onClick={() => setRec((r) => !r)} title={t('recordHint', lang)} aria-label={t('record', lang)}>
           <span className="dot" style={{ background: rec ? 'var(--highlight-ink)' : 'var(--highlight)' }} /> <span className="hide-sm">{t('record', lang)}</span>
         </button>
@@ -538,25 +644,34 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
             </button>
           </div>
 
+          <StructureBar song={song} lang={lang} focusId={focusId} marking={marking} sel={sel}
+            onFocus={focusOn} onMarking={toggleMarking} onPick={pickKind} onClearSel={() => setSel({ a: null, b: null })}
+            onRename={(id, name) => apply((x) => A.renameSection(x, id, name, lang, by))}
+            onKind={(id, kind) => apply((x) => A.setSectionKind(x, id, kind, lang, by))}
+            onCopy={copyPart} onRepeat={repeatPart}
+            onUnmark={(id) => { apply((x) => A.removeSection(x, id, lang, by)); setFocusId(null); }}
+            onDeleteBars={deletePartBars} />
+
           {clipKind === 'pattern' && (
-            <>
-              <DrumGrid track={track} step={step} zoom={zoom} width={editorWidth} lang={lang} onToggle={onToggleHit} onPreview={onPreviewDrum} />
-              <Pads track={track} lang={lang} onHit={padHit} />
-            </>
+            <DrumGrid track={track} step={step} zoom={zoom} width={editorWidth} lang={lang} frame={frame} onToggle={onToggleHit} onPreview={onPreviewDrum} />
           )}
           {clipKind === 'notes' && (
-            <>
-              <NoteGrid song={song} track={track} low={low} step={step} zoom={zoom} width={editorWidth} focusBar={focusBar} lang={lang}
-                onToggle={onToggleNote} onSpan={onSpanNote} onPreview={onPreviewNote}
-                onShift={(d) => setLows((m) => ({ ...m, [track.id]: Math.min(96, Math.max(24, low + d)) }))} />
-              <Keyboard song={song} low={low} focusBar={focusBar} lang={lang} onPlay={keyPlay} />
-            </>
+            <NoteGrid song={song} track={track} low={low} step={step} zoom={zoom} width={editorWidth} focusBar={focusBar} lang={lang} frame={frame}
+              onToggle={onToggleNote} onSpan={onSpanNote} onPreview={onPreviewNote}
+              onShift={(d) => setLows((m) => ({ ...m, [track.id]: Math.min(96, Math.max(24, low + d)) }))} />
           )}
           {clipKind === 'chords' && (
-            <ChordLane song={song} track={track} step={step} lang={lang}
+            <ChordLane song={song} track={track} step={step} lang={lang} view={view}
               onSet={(bar, degree) => { apply((x) => C.setChord(x, track.id, bar, degree, by)); setFocusBar(bar); }}
               onPreview={(midis) => engine.previewNotes(track.id, midis.map((m) => ({ midi: m, at: 0, dur: 0.9, vel: 0.6 })))} />
           )}
+
+          <SongTimeline song={song} lang={lang} step={step} firstBar={focused ? Math.floor(view.start / 16) : onScreen.bar}
+            barsOnScreen={focused ? Math.round(view.length / 16) : onScreen.bars} focusId={focusId} cursorBar={cursorBar}
+            marking={marking} sel={sel} onBarTap={onBarTap} onScrub={scrub} />
+
+          {clipKind === 'pattern' && <Pads track={track} lang={lang} onHit={padHit} />}
+          {clipKind === 'notes' && <Keyboard song={song} low={low} focusBar={focusBar} lang={lang} onPlay={keyPlay} />}
           </>)}
         </main>
 
@@ -618,7 +733,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
           {versions.map((v) => (
             <div key={v.id} className="row card" style={{ padding: 10 }}>
               <span className="grow">{t('versionN', lang, { n: v.version_no })} <span className="small muted">· {new Date(v.created_at).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')}</span></span>
-              <button type="button" className="btn" onClick={() => { apply(() => ({ ...v.snapshot, updated_at: new Date().toISOString() })); setModal(null); showToast(t('versionRestored', lang, { n: v.version_no })); }}>{t('restore', lang)}</button>
+              <button type="button" className="btn" onClick={() => { apply(() => ({ ...normalizeSong(v.snapshot), updated_at: new Date().toISOString() })); setModal(null); showToast(t('versionRestored', lang, { n: v.version_no })); }}>{t('restore', lang)}</button>
             </div>
           ))}
         </Modal>

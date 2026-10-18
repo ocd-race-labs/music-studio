@@ -38,6 +38,9 @@ export class StudioEngine {
   private focusId: string | null = null;
   private unlockBound = false;
   private repeatId: number | null = null;
+  /** What plays: the whole song, or one section on repeat. In steps; null means the whole song. */
+  private range: { start: number; length: number } | null = null;
+  private nextStep = 0;
   private stepListeners = new Set<(step: number) => void>();
   started = false;
 
@@ -234,17 +237,40 @@ export class StudioEngine {
     return Number.isFinite(db) ? Math.max(0, Math.min(1, (db + 54) / 54)) : 0;
   }
 
-  async play(): Promise<boolean> {
+  /** Play one part on repeat (start and length in steps), or the whole song with null. Takes effect at once. */
+  setRange(range: { start: number; length: number } | null): void {
+    this.range = range && range.length > 0 ? range : null;
+  }
+
+  private bounds(song: Song): { start: number; end: number } {
+    const total = loopSteps(song);
+    if (!this.range) return { start: 0, end: total };
+    const start = Math.min(Math.max(0, this.range.start), total - 1);
+    return { start, end: Math.min(total, start + this.range.length) };
+  }
+
+  /** Move the playhead while playing; the next step played is this one. */
+  seek(step: number): void {
+    this.nextStep = Math.max(0, step);
+  }
+
+  /** Start playing; `fromStep` picks where (inside the part on repeat, or anywhere in the song). */
+  async play(fromStep = 0): Promise<boolean> {
     const ok = await this.start();
     if (!this.song) return ok;
     const transport = Tone.getTransport();
     if (this.repeatId !== null) transport.clear(this.repeatId);
+    this.nextStep = fromStep;
     // Count sixteenths ourselves: swing moves the off-beats in time, so deriving the step from time is fragile.
     let counter = 0;
     this.repeatId = transport.scheduleRepeat((time) => {
       const song = this.song;
       if (!song) return;
-      const step = counter++ % loopSteps(song);
+      counter++;
+      const { start, end } = this.bounds(song);
+      let step = this.nextStep;
+      if (step < start || step >= end) step = start;
+      this.nextStep = step + 1;
       this.playStep(song, step, time);
       Tone.getDraw().schedule(() => this.stepListeners.forEach((fn) => fn(step)), time);
     }, '16n', 0);

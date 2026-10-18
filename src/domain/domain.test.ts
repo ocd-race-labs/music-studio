@@ -43,14 +43,16 @@ describe('commands', () => {
     expect((s.tracks[4].clips[0].content as NotesContent).notes[0].spell).toBe('Gb4');
   });
 
-  it('grows the loop by repeating the beat and the chords', () => {
+  it('grows the song with empty bars and shrinks it cutting what is past the end', () => {
     let s = newSong(me.id, 'x', 1);
     s = toggleHit(s, s.tracks[0].id, 5, 3, me.id);
     s = setLoopBars(s, 4, me.id);
-    const rim = (s.tracks[0].clips[0].content as PatternContent).rows[5].hits.map((h) => h.step);
-    expect(rim).toEqual([3, 19, 35, 51]);
-    expect((s.tracks[2].clips[0].content as ChordsContent).chords).toHaveLength(4);
+    expect((s.tracks[0].clips[0].content as PatternContent).rows[5].hits.map((h) => h.step)).toEqual([3]);
     expect(loopSteps(s)).toBe(64);
+    s = toggleHit(s, s.tracks[0].id, 5, 40, me.id);
+    s = setLoopBars(s, 2, me.id);
+    expect((s.tracks[0].clips[0].content as PatternContent).rows[5].hits.map((h) => h.step)).toEqual([3]);
+    expect((s.tracks[0].clips[0].content as PatternContent).steps).toBe(32);
   });
 
   it('sets and clears a chord in a bar', () => {

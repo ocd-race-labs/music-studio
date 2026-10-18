@@ -1,7 +1,7 @@
 // Song files (moving songs between devices, backups) and idea files (Claude's proposals during the MVP).
 
 import { findItem } from '../packs/core';
-import { newId, now } from './factory';
+import { newId, now, normalizeSong } from './factory';
 import { errorsOf, validateIdeasFile, validateSongFile } from './schemas';
 import type { CatalogRef, Idea, IdeaKind, Song } from './types';
 
@@ -32,7 +32,7 @@ export function parseSongFile(text: string): Parsed<Song> {
     .filter((r): r is CatalogRef => r !== null && !findItem(r))
     .map((r) => `This app doesn't have ${r.key}@${r.version} yet.`);
   if (missing.length) return { ok: false, errors: missing };
-  return { ok: true, value: song };
+  return { ok: true, value: normalizeSong(song) };
 }
 
 interface IdeaInFile {

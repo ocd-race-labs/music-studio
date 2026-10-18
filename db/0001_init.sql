@@ -162,6 +162,7 @@ create table studio.songs (
   musician_style_key  text,                                        -- catalog style key, unpinned
   producer_style_key  text,                                        -- catalog style key, unpinned
   kit_key             text,                                        -- genre kit: catalog kit key, unpinned, or 'custom'
+  length_ticks        bigint        not null default 7680,         -- song length; 3840 per bar of 4/4, up to 96 bars
   status              text          not null default 'active',
   origin              text          not null default 'person',
   schema_version      integer       not null default 1,
@@ -180,6 +181,7 @@ create table studio.songs (
   constraint songs_tuning        check (tuning_a4_hz between 400 and 480),
   constraint songs_lyrics_lang   check (lyrics_lang in ('en', 'es')),
   constraint songs_kit_key       check (kit_key is null or kit_key = 'custom' or kit_key ~ '^kit\.[a-z0-9-]+$'),
+  constraint songs_length        check (length_ticks > 0 and length_ticks <= 368640),
   constraint songs_status        check (status in ('active', 'archived')),
   constraint songs_origin        check (origin in ('person', 'claude', 'pack', 'system'))
 );
@@ -192,6 +194,7 @@ create table studio.sections (
   song_id       uuid        not null references studio.songs (id) on delete cascade,
   position      smallint    not null,
   name          text        not null,
+  kind          text,                    -- intro, verse, prechorus, chorus, bridge, break, solo, outro, other
   start_tick    bigint      not null,
   length_ticks  bigint      not null,
   key_tonic     text,                    -- null = song key
@@ -205,6 +208,7 @@ create table studio.sections (
   constraint sections_position_unique unique (song_id, position) deferrable initially deferred,
   constraint sections_start      check (start_tick >= 0),
   constraint sections_length     check (length_ticks > 0),
+  constraint sections_kind       check (kind is null or kind in ('intro', 'verse', 'prechorus', 'chorus', 'bridge', 'break', 'solo', 'outro', 'other')),
   constraint sections_key_tonic  check (key_tonic is null or key_tonic ~ '^[A-G](bb|b|##|#)?$'),
   constraint sections_key_mode   check (key_mode is null or key_mode ~ '^[a-z][a-z0-9-]*$'),
   constraint sections_lyrics_lang check (lyrics_lang is null or lyrics_lang in ('en', 'es')),
