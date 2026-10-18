@@ -37,6 +37,8 @@ export class StudioEngine {
   private channels = new Map<string, TrackChannel>();
   private master: Tone.Limiter | null = null;
   private meter: Tone.Meter | null = null;
+  /** When set, only this track sounds: a listening aid, never saved in the song. */
+  private focusId: string | null = null;
   private unlockBound = false;
   private repeatId: number | null = null;
   private stepListeners = new Set<(step: number) => void>();
@@ -125,6 +127,13 @@ export class StudioEngine {
     setTimeout(() => blip.dispose(), 600);
   }
 
+  /** Listen to one track alone (or everything again with null). Mute and solo in the song stay as they are. */
+  setFocus(trackId: string | null): void {
+    if (this.focusId === trackId) return;
+    this.focusId = trackId;
+    if (this.song && this.started) this.sync(this.song);
+  }
+
   /** Output level 0..1 for the meter next to Play. */
   outputLevel(): number {
     if (!this.meter) return 0;
@@ -197,8 +206,9 @@ export class StudioEngine {
   private applyMix(ch: TrackChannel, t: Track): void {
     ch.channel.volume.rampTo(gainToDb(t.gain), 0.05);
     ch.channel.pan.rampTo(t.pan, 0.05);
-    ch.channel.mute = t.muted;
-    ch.channel.solo = t.solo;
+    const focus = this.focusId !== null && this.song?.tracks.some((x) => x.id === this.focusId) ? this.focusId : null;
+    ch.channel.mute = focus ? t.id !== focus : t.muted;
+    ch.channel.solo = focus ? false : t.solo;
     for (const slot of t.fx_chain.slots) {
       const p = slot.params;
       if (slot.effect.key === 'effect.drive') {

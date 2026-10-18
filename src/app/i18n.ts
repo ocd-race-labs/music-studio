@@ -79,6 +79,8 @@ const STRINGS = {
   zoomBar: { en: '1 bar', es: '1 compás' },
   zoomHalf: { en: '½ bar', es: '½ compás' },
   fullScreen: { en: 'Full screen', es: 'Pantalla completa' },
+  onlyThis: { en: 'Only this track', es: 'Solo esta pista' },
+  onlyThisHint: { en: 'Play only the track you are editing; the others stay quiet until you turn this off', es: 'Suena solo la pista que estás editando; las demás quedan en silencio hasta que lo apagues' },
   exitFullScreen: { en: 'Exit full screen', es: 'Salir de pantalla completa' },
   tapToStart: { en: 'Tap to start the sound', es: 'Toca para activar el sonido' },
   soundBlocked: { en: 'No sound yet. Turn the volume up, turn off silent mode, then tap again.', es: 'Aún no hay sonido. Sube el volumen, quita el modo silencio y toca de nuevo.' },

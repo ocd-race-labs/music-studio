@@ -81,6 +81,9 @@ export default function Studio({ store, profile, lang, mode, onToggleMode, onHom
   const [editorRef, editorWidth] = useWidth<HTMLElement>();
   const touch = useMemo(() => isTouch(), []);
 
+  // Listen to the selected track alone. Not saved in the song: mute and solo stay as they were.
+  const [alone, setAlone] = useState(false);
+
   // Full screen: the grid takes the whole width; the browser goes full screen too where it allows it.
   const [wide, setWide] = useState(false);
   const enteredFs = useRef(false);
@@ -338,6 +341,8 @@ export default function Studio({ store, profile, lang, mode, onToggleMode, onHom
     setZoomPref(z);
     try { localStorage.setItem(ZOOM_KEY, z); } catch { /* this browser keeps nothing; the choice lasts the visit */ }
   };
+  useEffect(() => { engine.setFocus(alone && track ? track.id : null); }, [alone, track]);
+  useEffect(() => () => engine.setFocus(null), []);
   const trackTitle = useMemo(() => (track?.instrument ? catalogTitle(track.instrument, lang) : ''), [track, lang]);
 
   if (!song || !track) return <div className="home"><p className="muted">{t('loading', lang)}</p></div>;
@@ -386,7 +391,7 @@ export default function Studio({ store, profile, lang, mode, onToggleMode, onHom
       <div className="body">
         <nav className="tracks" aria-label={t('tracks', lang)}>
           {song.tracks.map((tr) => (
-            <div key={tr.id} className="row" style={{ gap: 4 }}>
+            <div key={tr.id} className={`row${alone && tr.id !== track.id ? ' quiet' : ''}`} style={{ gap: 4 }}>
               <button type="button" className="track-btn grow" aria-current={tr.id === track.id} onClick={() => setSelected(tr.id)}>
                 <span className="swatch" style={{ background: tr.color }} />
                 <span className="stack" style={{ gap: 0, minWidth: 0 }}>
@@ -402,6 +407,10 @@ export default function Studio({ store, profile, lang, mode, onToggleMode, onHom
         <main className="editor" ref={editorRef}>
           <div className="row wrap">
             <h2 className="display grow" style={{ fontSize: 22 }}>{track.name} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{trackTitle}</span></h2>
+            <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
+              aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
+              <Icon name="headphones" size={18} /> <span className="hide-sm">{t('onlyThis', lang)}</span>
+            </button>
             {clipKind === 'notes' && (
               <div className="seg" aria-label={t('noteLength', lang)}>
                 {LENGTHS.map((l) => <button key={l.steps} type="button" aria-pressed={noteLen === l.steps} onClick={() => setNoteLen(l.steps)}>{l.label}</button>)}

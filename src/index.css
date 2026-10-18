@@ -237,6 +237,9 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .grid .rowlabel, .grid .plabel { border-radius: 0; box-shadow: 0 3px 0 var(--ground), 3px 0 0 var(--ground), 3px 3px 0 var(--ground); }
 .cell.barline, .ncell.barline { box-shadow: -3px 0 0 -1px var(--ink-2); }
 .cell.barline.ph, .ncell.barline.ph { box-shadow: -3px 0 0 -1px var(--ink-2), inset 0 0 0 2px var(--main); }
+/* Only this track: the other tracks fade in the list while it is on. */
+.btn.alone[aria-pressed='true'] { background: var(--main); color: var(--main-ink); border-color: var(--main); }
+.tracks .quiet { opacity: 0.45; }
 .btn.reset { width: 36px; min-height: 36px; height: 36px; color: var(--ink-2); }
 .btn.reset:disabled { opacity: 0.35; }
 /* Full screen: tracks become a strip on top, the side panel steps away, the grid gets the width. */
