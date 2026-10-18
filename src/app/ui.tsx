@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { Profile } from '../domain/types';
+import type { Lang, Profile } from '../domain/types';
+import { t } from './i18n';
 
-type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink';
+type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon';
 
 const PATHS: Record<IconName, ReactNode> = {
   home: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /></>,
@@ -23,7 +24,29 @@ const PATHS: Record<IconName, ReactNode> = {
   reset: <><path d="M4.5 13a7.5 7.5 0 1 0 2.2-6.3" /><path d="M4 4v4.5h4.5" /></>,
   expand: <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />,
   shrink: <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />,
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" /></>,
+  moon: <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />,
 };
+
+/** Light and dark in one tap. Shows where it will take you: the moon in light mode, the sun in dark mode. */
+export function ModeSwitch({ mode, onToggle, lang }: { mode: 'light' | 'dark'; onToggle: () => void; lang: Lang }) {
+  const label = t(mode === 'dark' ? 'switchToLight' : 'switchToDark', lang);
+  return (
+    <button type="button" className="btn icon" onClick={onToggle} aria-label={label} title={label}>
+      <Icon name={mode === 'dark' ? 'sun' : 'moon'} />
+    </button>
+  );
+}
+
+/** English or Spanish for the whole app on this device. */
+export function LangSwitch({ lang, onLang }: { lang: Lang; onLang: (l: Lang) => void }) {
+  return (
+    <div className="seg" aria-label={t('interfaceLanguage', lang)}>
+      <button type="button" aria-pressed={lang === 'en'} onClick={() => onLang('en')} lang="en">English</button>
+      <button type="button" aria-pressed={lang === 'es'} onClick={() => onLang('es')} lang="es">Español</button>
+    </div>
+  );
+}
 
 /** Width of an element, kept current as the screen turns or panels open and close. */
 export function useWidth<T extends HTMLElement>(): [(el: T | null) => void, number] {
@@ -62,7 +85,7 @@ export function Avatar({ profile, size = 40, onClick, label }: { profile: Profil
     : <span className="avatar" style={style} aria-hidden="true">{initial}</span>;
 }
 
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Modal({ title, onClose, children, closeLabel = 'Close' }: { title: string; onClose: () => void; children: ReactNode; closeLabel?: string }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -73,7 +96,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       <div className="modal" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="row">
           <h2 className="display grow" style={{ fontSize: 22 }}>{title}</h2>
-          <button type="button" className="btn icon ghost" onClick={onClose} aria-label="Close"><Icon name="close" /></button>
+          <button type="button" className="btn icon ghost" onClick={onClose} aria-label={closeLabel}><Icon name="close" /></button>
         </div>
         {children}
       </div>

@@ -1,12 +1,11 @@
 import { effectParams, INSTRUMENTS, title as catalogTitle } from '../packs/core';
-import { diatonicTriads, SCALES, scaleSpellings, spellingToDisplay, TONICS } from '../theory';
+import { chordSymbol, diatonicTriads, SCALES, scaleSpellings, spellingToDisplay, tonicDisplay, TONICS } from '../theory';
 import type { CatalogRef, Idea, Lang, Song, Track } from '../domain/types';
 import { DEFAULT_SWING, defaultFxParams } from '../domain/factory';
-import { t } from './i18n';
+import { namingFor, t } from './i18n';
 import { Icon } from './ui';
 import { chordAtBar, songKey, TierLegend } from './editors';
 
-const tonicLabel = (tonic: string) => tonic.replace('b', '♭').replace('#', '♯');
 
 /* ---------------------------------------------------------------- producer: mix and pedals */
 
@@ -42,8 +41,8 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
       <div className="row">
         <span className="swatch" style={{ background: track.color }} />
         <h3 className="grow" style={{ fontSize: 16 }}>{track.name}: {t('mixer', lang).toLowerCase()}</h3>
-        <button type="button" className="mini" aria-pressed={track.muted} onClick={onMute} aria-label={`Mute ${track.name}`}>M</button>
-        <button type="button" className="mini" aria-pressed={track.solo} onClick={onSolo} aria-label={`Solo ${track.name}`}>S</button>
+        <button type="button" className="mini" aria-pressed={track.muted} onClick={onMute} aria-label={t('muteTrack', lang, { name: track.name })}>M</button>
+        <button type="button" className="mini" aria-pressed={track.solo} onClick={onSolo} aria-label={t('soloTrack', lang, { name: track.name })}>S</button>
       </div>
       <label className="stack" style={{ gap: 4 }}>
         <span className="lbl">{t('volume', lang)} <span className="mono">{track.gain <= 0.0001 ? '-∞' : (20 * Math.log10(track.gain)).toFixed(1)} dB</span></span>
@@ -79,7 +78,7 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
                 disabled={sameParams(slot.params, defaultFxParams(slot.effect.key))} onClick={() => onResetFx(i)} />
             )}
             <button type="button" className="chip" aria-pressed={!slot.bypass} onClick={() => onBypass(i, !slot.bypass)}>
-              {slot.bypass ? 'Off' : 'On'}
+              {t(slot.bypass ? 'pedalOff' : 'pedalOn', lang)}
             </button>
           </div>
           {!slot.bypass && effectParams(slot.effect).map((p) => (
@@ -104,19 +103,20 @@ export function TheoryPanel({ song, lang, focusBar, onKey }: {
 }) {
   const key = songKey(song);
   const chord = chordAtBar(song, focusBar);
+  const naming = namingFor(lang);
   return (
     <section className="card stack" aria-label={t('key', lang)}>
       <h3 style={{ fontSize: 16 }}>{t('key', lang)}</h3>
       <div className="row wrap">
-        <select className="field" aria-label="Tonic" value={song.key_tonic} onChange={(e) => onKey(e.target.value, song.key_mode)}>
-          {TONICS.map((tn) => <option key={tn} value={tn}>{tonicLabel(tn)}</option>)}
+        <select className="field" aria-label={t('tonic', lang)} value={song.key_tonic} onChange={(e) => onKey(e.target.value, song.key_mode)}>
+          {TONICS.map((tn) => <option key={tn} value={tn}>{tonicDisplay(tn, naming)}</option>)}
         </select>
-        <select className="field grow" aria-label="Scale" value={song.key_mode} onChange={(e) => onKey(song.key_tonic, e.target.value)}>
+        <select className="field grow" aria-label={t('scale', lang)} value={song.key_mode} onChange={(e) => onKey(song.key_tonic, e.target.value)}>
           {SCALES.map((s) => <option key={s.id} value={s.id}>{s.name[lang]}</option>)}
         </select>
       </div>
       <p className="small muted" style={{ margin: 0 }}>
-        {scaleSpellings(key).map(spellingToDisplay).join('  ')}
+        {scaleSpellings(key).map((s) => spellingToDisplay(s, naming)).join('  ')}
       </p>
       <TierLegend lang={lang} />
       <div className="stack" style={{ gap: 6 }}>
@@ -124,11 +124,11 @@ export function TheoryPanel({ song, lang, focusBar, onKey }: {
         <div className="row wrap" style={{ gap: 6 }}>
           {diatonicTriads(key).map((c) => (
             <span key={c.degree} className="chip" aria-pressed={chord?.degree === c.degree} style={{ flexDirection: 'column', gap: 0, minHeight: 48, justifyContent: 'center' }}>
-              <strong>{c.symbolDisplay}</strong><span className="small muted">{c.roman}</span>
+              <strong>{chordSymbol(c, naming)}</strong><span className="small muted">{c.roman}</span>
             </span>
           ))}
         </div>
-        {chord && <span className="small muted">Bar {focusBar + 1}: {chord.symbolDisplay}</span>}
+        {chord && <span className="small muted">{t('barChord', lang, { n: focusBar + 1, chord: chordSymbol(chord, naming) })}</span>}
       </div>
     </section>
   );
@@ -184,7 +184,7 @@ export function IdeasTray({ ideas, tracks, lang, onImport, onListen, onKeep, onD
         <button type="button" className="btn" onClick={onImport}><Icon name="upload" size={18} /> {t('importIdeas', lang)}</button>
       </div>
       <p className="small muted" style={{ margin: 0 }}>{t('ideasHint', lang)}</p>
-      <button type="button" className="btn ghost" onClick={onCopyHelp} style={{ justifyContent: 'flex-start' }}>Copy the format for Claude</button>
+      <button type="button" className="btn ghost" onClick={onCopyHelp} style={{ justifyContent: 'flex-start' }}>{t('copyFormat', lang)}</button>
       {open.map((idea) => {
         const options = tracks.filter((tr) => fits(idea, tr));
         const preferred = options.find((tr) => tr.instrument?.key === idea.target_instrument?.key) ?? options[0];
@@ -195,12 +195,12 @@ export function IdeasTray({ ideas, tracks, lang, onImport, onListen, onKeep, onD
             {idea.validation && <span className="small warn">{idea.validation.join(' ')}</span>}
             {options.length > 0 ? (
               <label className="row small">
-                <span className="muted">Into</span>
+                <span className="muted">{t('into', lang)}</span>
                 <select className="field grow" id={`target-${idea.id}`} defaultValue={preferred?.id}>
                   {options.map((tr) => <option key={tr.id} value={tr.id}>{tr.name}</option>)}
                 </select>
               </label>
-            ) : <span className="small warn">No track can take this idea.</span>}
+            ) : <span className="small warn">{t('noTrackFits', lang)}</span>}
             <div className="row">
               <button type="button" className="btn grow" onClick={() => onListen(idea)}>{t('listen', lang)}</button>
               <button type="button" className="btn primary grow" disabled={!options.length} onClick={() => {

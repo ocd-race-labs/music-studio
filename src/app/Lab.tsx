@@ -10,6 +10,8 @@ import { newId } from '../domain/factory';
 import { requestPersistence } from '../store/store';
 import type { SongStore } from '../store/store';
 import { CLAUDE_INSTRUCTIONS } from './panels';
+import { t } from './i18n';
+import type { Lang } from '../domain/types';
 import { downloadBlob, Icon, pickFile, useToast } from './ui';
 
 type Info = ReturnType<typeof engine.latencyInfo>;
@@ -18,7 +20,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return <section className="card stack" style={{ flex: '1 1 340px' }}><h2 style={{ fontSize: 18 }}>{title}</h2>{children}</section>;
 }
 
-export default function Lab({ store, onHome }: { store: SongStore; onHome: () => void }) {
+export default function Lab({ store, lang, onHome }: { store: SongStore; lang: Lang; onHome: () => void }) {
   const [info, setInfo] = useState<Info | null>(null);
   const [storage, setStorage] = useState<{ persisted: boolean; usage?: number; quota?: number } | null>(null);
   const [toast, showToast] = useToast();
@@ -33,47 +35,47 @@ export default function Lab({ store, onHome }: { store: SongStore; onHome: () =>
   };
 
   const testTone = async () => {
-    setCheck('Playing A4 for one second…');
+    setCheck(t('testTonePlaying', lang));
     const r = await engine.testTone();
     setInfo(engine.latencyInfo());
     setCheck(r.peak > 0.05
-      ? `The app made sound (level ${Math.round(r.peak * 100)}%). If you heard nothing, check the device volume, silent mode and output.`
-      : `The app made no sound (audio ${r.state}). Tap the button again; if it repeats, tell Claude this line.`);
+      ? t('testToneOk', lang, { n: Math.round(r.peak * 100) })
+      : t('testToneSilent', lang, { state: r.state }));
   };
 
   return (
     <main className="home" style={{ gap: 24 }}>
       <header className="row wrap" style={{ justifyContent: 'space-between' }}>
         <div className="row" style={{ gap: 12 }}>
-          <button type="button" className="btn" onClick={onHome}><Icon name="home" size={18} /> Home</button>
-          <h1 className="display" style={{ fontSize: 30 }}>Lab: device tests</h1>
+          <button type="button" className="btn" onClick={onHome}><Icon name="home" size={18} /> {t('home', lang)}</button>
+          <h1 className="display" style={{ fontSize: 30 }}>{t('labTitle', lang)}</h1>
         </div>
-        <span className="muted small">Phase 0 spikes. Run them on the laptop (Chrome) and the iPad (Safari).</span>
+        <span className="muted small">{t('labIntro', lang)}</span>
       </header>
       <div className="cards" style={{ alignItems: 'flex-start' }}>
-        <Section title="1. Device and audio timing">
-          {!info ? <button type="button" className="btn primary" onClick={startAudio}><Icon name="play" /> Start audio</button> : (
+        <Section title={t('labAudio', lang)}>
+          {!info ? <button type="button" className="btn primary" onClick={startAudio}><Icon name="play" /> {t('startAudio', lang)}</button> : (
             <table className="small" style={{ borderSpacing: '0 6px' }}><tbody>
-              <tr><td className="muted">Audio</td><td className="mono">{info.state}</td></tr>
-              <tr><td className="muted">Audio session</td><td className="mono">{info.session}</td></tr>
-              <tr><td className="muted">Sample rate</td><td className="mono">{info.sampleRate} Hz</td></tr>
-              <tr><td className="muted">Base latency</td><td className="mono">{info.baseLatencyMs?.toFixed(1) ?? 'not reported'} ms</td></tr>
-              <tr><td className="muted">Output latency</td><td className="mono">{info.outputLatencyMs?.toFixed(1) ?? 'not reported'} ms</td></tr>
-              <tr><td className="muted">Scheduling look-ahead</td><td className="mono">{info.lookAheadMs.toFixed(0)} ms</td></tr>
+              <tr><td className="muted">{t('audio', lang)}</td><td className="mono">{info.state}</td></tr>
+              <tr><td className="muted">{t('audioSession', lang)}</td><td className="mono">{info.session}</td></tr>
+              <tr><td className="muted">{t('sampleRate', lang)}</td><td className="mono">{info.sampleRate} Hz</td></tr>
+              <tr><td className="muted">{t('baseLatency', lang)}</td><td className="mono">{info.baseLatencyMs !== null ? `${info.baseLatencyMs.toFixed(1)} ms` : t('notReported', lang)}</td></tr>
+              <tr><td className="muted">{t('outputLatency', lang)}</td><td className="mono">{info.outputLatencyMs !== null ? `${info.outputLatencyMs.toFixed(1)} ms` : t('notReported', lang)}</td></tr>
+              <tr><td className="muted">{t('lookAhead', lang)}</td><td className="mono">{info.lookAheadMs.toFixed(0)} ms</td></tr>
             </tbody></table>
           )}
-          {info && <button type="button" className="btn" onClick={testTone}><Icon name="play" size={18} /> Play test tone</button>}
+          {info && <button type="button" className="btn" onClick={testTone}><Icon name="play" size={18} /> {t('playTestTone', lang)}</button>}
           {check && <p className="small" role="status" style={{ margin: 0 }}>{check}</p>}
           <p className="small" style={{ margin: 0 }}>
-            Storage: {storage?.persisted ? <span className="ok">kept by the browser</span> : <span className="warn">may be cleared; add to Home Screen on the iPad</span>}
+            {t('storageLabel', lang)} {storage?.persisted ? <span className="ok">{t('storageKeptShort', lang)}</span> : <span className="warn">{t('storageMayClearShort', lang)}</span>}
           </p>
           <p className="small muted mono" style={{ margin: 0, wordBreak: 'break-word' }}>{navigator.userAgent}</p>
         </Section>
-        <TapTest />
-        <MidiTest />
-        <RecordTest store={store} showToast={showToast} />
-        <VoiceTest />
-        <IdeaFileTest showToast={showToast} />
+        <TapTest lang={lang} />
+        <MidiTest lang={lang} />
+        <RecordTest store={store} lang={lang} showToast={showToast} />
+        <VoiceTest lang={lang} />
+        <IdeaFileTest lang={lang} showToast={showToast} />
       </div>
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
@@ -82,7 +84,7 @@ export default function Lab({ store, onHome }: { store: SongStore; onHome: () =>
 
 /* ---------------------------------------------------------------- tap test */
 
-function TapTest() {
+function TapTest({ lang }: { lang: Lang }) {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<{ mean: number; spread: number; n: number } | null>(null);
   const beats = useRef<number[]>([]);
@@ -120,21 +122,21 @@ function TapTest() {
   };
 
   return (
-    <Section title="2. Tap along (latency feel)">
-      <p className="small muted" style={{ margin: 0 }}>Press start, then tap the big pad on every click, twelve times. Positive means you hear the click late or tap late.</p>
+    <Section title={t('labTap', lang)}>
+      <p className="small muted" style={{ margin: 0 }}>{t('labTapHint', lang)}</p>
       <div className="row">
-        <button type="button" className="btn" onClick={run} disabled={running}>Start</button>
-        <button type="button" className="pad grow" style={{ minHeight: 90 }} onPointerDown={(e) => { e.preventDefault(); tap(); }}>{running ? 'Tap!' : 'Pad'}</button>
+        <button type="button" className="btn" onClick={run} disabled={running}>{t('start', lang)}</button>
+        <button type="button" className="pad grow" style={{ minHeight: 90 }} onPointerDown={(e) => { e.preventDefault(); tap(); }}>{running ? t('tapNow', lang) : t('pad', lang)}</button>
       </div>
-      {result && <p style={{ margin: 0 }}>Average offset <strong className="mono">{result.mean.toFixed(0)} ms</strong>, spread <span className="mono">{result.spread.toFixed(0)} ms</span> over {result.n} taps.
-        {' '}{Math.abs(result.mean) < 40 ? <span className="ok">Feels tight.</span> : <span className="warn">Noticeable; try headphones or the laptop.</span>}</p>}
+      {result && <p style={{ margin: 0 }}>{t('tapResult', lang, { mean: result.mean.toFixed(0), spread: result.spread.toFixed(0), n: result.n })}
+        {' '}{Math.abs(result.mean) < 40 ? <span className="ok">{t('feelsTight', lang)}</span> : <span className="warn">{t('noticeable', lang)}</span>}</p>}
     </Section>
   );
 }
 
 /* ---------------------------------------------------------------- MIDI */
 
-function MidiTest() {
+function MidiTest({ lang }: { lang: Lang }) {
   const supported = typeof navigator.requestMIDIAccess === 'function';
   const [inputs, setInputs] = useState<string[]>([]);
   const [last, setLast] = useState<string>('');
@@ -146,7 +148,7 @@ function MidiTest() {
       inp.onmidimessage = (e: MIDIMessageEvent) => {
         const d = e.data;
         if (d && (d[0] & 0xf0) === 0x90 && d[2] > 0) {
-          setLast(`Note ${d[1]} velocity ${d[2]} from ${inp.name ?? 'device'}`);
+          setLast(t('midiNote', lang, { note: d[1], vel: d[2], device: inp.name ?? 'MIDI' }));
           engine.start().then(() => {
             const s = new Tone.Synth().toDestination();
             s.triggerAttackRelease(Tone.Frequency(d[1], 'midi').toFrequency(), '8n');
@@ -158,21 +160,21 @@ function MidiTest() {
     setInputs(names);
   };
   return (
-    <Section title="3. MIDI keyboard or e-drums">
+    <Section title={t('labMidi', lang)}>
       {supported ? (
         <>
-          <button type="button" className="btn" onClick={connect}>Connect MIDI</button>
-          <p className="small" style={{ margin: 0 }}>{inputs.length ? `Inputs: ${inputs.join(', ')}` : 'Plug in the device, then connect.'}</p>
+          <button type="button" className="btn" onClick={connect}>{t('connectMidi', lang)}</button>
+          <p className="small" style={{ margin: 0 }}>{inputs.length ? t('midiInputs', lang, { list: inputs.join(', ') }) : t('midiPlugIn', lang)}</p>
           {last && <p className="ok small" style={{ margin: 0 }}>{last}</p>}
         </>
-      ) : <p className="warn small" style={{ margin: 0 }}>This browser has no MIDI support (expected on the iPad). Use the laptop in Chrome.</p>}
+      ) : <p className="warn small" style={{ margin: 0 }}>{t('midiNone', lang)}</p>}
     </Section>
   );
 }
 
 /* ---------------------------------------------------------------- recording */
 
-function RecordTest({ store, showToast }: { store: SongStore; showToast: (m: string) => void }) {
+function RecordTest({ store, lang, showToast }: { store: SongStore; lang: Lang; showToast: (m: string) => void }) {
   const [rec, setRec] = useState<ActiveRecording | null>(null);
   const [level, setLevel] = useState(0);
   const [take, setTake] = useState<Take | null>(null);
@@ -191,7 +193,7 @@ function RecordTest({ store, showToast }: { store: SongStore; showToast: (m: str
     try {
       setRec(await startRecording(monitor));
     } catch (e) {
-      setError(`Microphone not available: ${(e as Error).message}`);
+      setError(t('micUnavailable', lang, { error: (e as Error).message }));
     }
   };
   const stop = async () => {
@@ -210,25 +212,25 @@ function RecordTest({ store, showToast }: { store: SongStore; showToast: (m: str
       id, profile_id: 'lab', song_id: null, storage_path: `local/${id}.wav`, mime_type: 'audio/wav', sample_rate: take.sampleRate,
       channels: 1, duration_ms: take.durationMs, bytes: take.wav.size, source: 'mic', origin: 'person', created_at: new Date().toISOString(),
     }, take.wav);
-    showToast('Take saved in this browser');
+    showToast(t('takeSaved', lang));
   };
 
   return (
-    <Section title="4. Record (one format for Chrome and Safari)">
-      <label className="row small"><input type="checkbox" checked={monitor} onChange={(e) => setMonitor(e.target.checked)} /> Hear yourself while recording (use headphones)</label>
+    <Section title={t('labRecord', lang)}>
+      <label className="row small"><input type="checkbox" checked={monitor} onChange={(e) => setMonitor(e.target.checked)} /> {t('monitorHint', lang)}</label>
       <div className="row">
-        {!rec ? <button type="button" className="btn primary" onClick={start}><Icon name="mic" size={18} /> Record</button>
-          : <button type="button" className="btn primary" onClick={stop}><Icon name="stop" size={18} /> Stop</button>}
-        <div className="meter grow" aria-label="Input level"><div style={{ width: `${Math.min(100, level * 100)}%` }} /></div>
+        {!rec ? <button type="button" className="btn primary" onClick={start}><Icon name="mic" size={18} /> {t('recordMic', lang)}</button>
+          : <button type="button" className="btn primary" onClick={stop}><Icon name="stop" size={18} /> {t('stop', lang)}</button>}
+        <div className="meter grow" aria-label={t('inputLevel', lang)}><div style={{ width: `${Math.min(100, level * 100)}%` }} /></div>
       </div>
       {error && <p className="warn small" style={{ margin: 0 }}>{error}</p>}
       {take && url && (
         <div className="stack" style={{ gap: 8 }}>
           <audio controls src={url} style={{ width: '100%' }} />
-          <span className="small muted">{(take.durationMs / 1000).toFixed(1)} s · {(take.wav.size / 1024).toFixed(0)} KB WAV · {take.sampleRate} Hz · peak {(20 * Math.log10(Math.max(take.peak, 1e-6))).toFixed(1)} dB</span>
+          <span className="small muted">{(take.durationMs / 1000).toFixed(1)} s · {(take.wav.size / 1024).toFixed(0)} KB WAV · {take.sampleRate} Hz · {t('peak', lang)} {(20 * Math.log10(Math.max(take.peak, 1e-6))).toFixed(1)} dB</span>
           <div className="row">
-            <button type="button" className="btn" onClick={keep}>Keep take</button>
-            <button type="button" className="btn ghost" onClick={() => downloadBlob(`take-${Date.now()}.wav`, take.wav)}><Icon name="download" size={18} /> Download</button>
+            <button type="button" className="btn" onClick={keep}>{t('keepTake', lang)}</button>
+            <button type="button" className="btn ghost" onClick={() => downloadBlob(`take-${Date.now()}.wav`, take.wav)}><Icon name="download" size={18} /> {t('download', lang)}</button>
           </div>
         </div>
       )}
@@ -238,7 +240,7 @@ function RecordTest({ store, showToast }: { store: SongStore; showToast: (m: str
 
 /* ---------------------------------------------------------------- guide voice */
 
-function VoiceTest() {
+function VoiceTest({ lang: uiLang }: { lang: Lang }) {
   const [lang, setLang] = useState<'es' | 'en'>('es');
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voice, setVoice] = useState('');
@@ -271,24 +273,24 @@ function VoiceTest() {
   };
 
   return (
-    <Section title="5. Guide voice (free, in the browser)">
-      {!supported ? <p className="warn small">This browser has no speech voices.</p> : (
+    <Section title={t('labVoice', uiLang)}>
+      {!supported ? <p className="warn small">{t('noVoices', uiLang)}</p> : (
         <>
           <div className="row wrap">
             <div className="seg"><button type="button" aria-pressed={lang === 'es'} onClick={() => setLang('es')}>Español</button><button type="button" aria-pressed={lang === 'en'} onClick={() => { setLang('en'); setText('Dancing in the morning light'); }}>English</button></div>
-            <select className="field grow" value={voice} onChange={(e) => setVoice(e.target.value)} aria-label="Voice">
+            <select className="field grow" value={voice} onChange={(e) => setVoice(e.target.value)} aria-label={t('voice', uiLang)}>
               {list.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}
             </select>
           </div>
-          <span className="small muted">{list.length} {lang === 'es' ? 'Spanish' : 'English'} voices on this device</span>
-          <textarea className="field" value={text} onChange={(e) => setText(e.target.value)} aria-label="Lyric line" />
-          <label className="stack" style={{ gap: 2 }}><span className="lbl">Speed {rate.toFixed(1)}</span>
+          <span className="small muted">{t('voicesCount', uiLang, { n: list.length, language: t(lang === 'es' ? 'langSpanish' : 'langEnglish', uiLang) })}</span>
+          <textarea className="field" value={text} onChange={(e) => setText(e.target.value)} aria-label={t('lyricLine', uiLang)} />
+          <label className="stack" style={{ gap: 2 }}><span className="lbl">{t('speed', uiLang, { n: rate.toFixed(1) })}</span>
             <input type="range" min={0.6} max={1.6} step={0.1} value={rate} onChange={(e) => setRate(Number(e.target.value))} /></label>
           <div className="row">
-            <button type="button" className="btn primary" onClick={() => { window.speechSynthesis.cancel(); speak(text); }}>Speak</button>
-            <button type="button" className="btn" onClick={rap}>Rap on the beat (90 BPM)</button>
+            <button type="button" className="btn primary" onClick={() => { window.speechSynthesis.cancel(); speak(text); }}>{t('speak', uiLang)}</button>
+            <button type="button" className="btn" onClick={rap}>{t('rapOnBeat', uiLang)}</button>
           </div>
-          <p className="small muted" style={{ margin: 0 }}>Test result to note: timing on the beat, and that this voice plays beside the music but can't be recorded or mixed yet.</p>
+          <p className="small muted" style={{ margin: 0 }}>{t('voiceNote', uiLang)}</p>
         </>
       )}
     </Section>
@@ -297,21 +299,21 @@ function VoiceTest() {
 
 /* ---------------------------------------------------------------- idea files */
 
-function IdeaFileTest({ showToast }: { showToast: (m: string) => void }) {
+function IdeaFileTest({ lang, showToast }: { lang: Lang; showToast: (m: string) => void }) {
   const [result, setResult] = useState<string[] | null>(null);
   const check = async () => {
     const f = await pickFile('.json,application/json');
     if (!f) return;
     const parsed = parseIdeasFile(await f.text(), 'lab', null);
-    setResult(parsed.ok ? parsed.value.map((i) => `OK: ${i.kind} “${i.title}”`) : parsed.errors.map((e) => `Problem: ${e}`));
+    setResult(parsed.ok ? parsed.value.map((i) => t('fileOk', lang, { kind: i.kind, title: i.title })) : parsed.errors.map((e) => t('fileProblem', lang, { error: e })));
   };
   const copy = async () => {
-    try { await navigator.clipboard.writeText(CLAUDE_INSTRUCTIONS); showToast('Format copied for Claude'); } catch { showToast('Copy failed; select the text instead'); }
+    try { await navigator.clipboard.writeText(CLAUDE_INSTRUCTIONS); showToast(t('formatCopied', lang)); } catch { showToast(t('copyFailed', lang)); }
   };
   return (
-    <Section title="6. Idea files from Claude">
-      <p className="small muted" style={{ margin: 0 }}>Paste this format into your Claude project with a request, save Claude's answer as a .json file, then check it here or import it in the studio's ideas tray.</p>
-      <div className="row"><button type="button" className="btn" onClick={copy}>Copy the format</button><button type="button" className="btn ghost" onClick={check}><Icon name="upload" size={18} /> Check a file</button></div>
+    <Section title={t('labIdeas', lang)}>
+      <p className="small muted" style={{ margin: 0 }}>{t('labIdeasHint', lang)}</p>
+      <div className="row wrap"><button type="button" className="btn" onClick={copy}>{t('copyFormatShort', lang)}</button><button type="button" className="btn ghost" onClick={check}><Icon name="upload" size={18} /> {t('checkFile', lang)}</button></div>
       <pre className="small mono" style={{ whiteSpace: 'pre-wrap', maxHeight: 220, overflow: 'auto', background: 'var(--raised)', padding: 10, borderRadius: 10, margin: 0 }}>{CLAUDE_INSTRUCTIONS}</pre>
       {result && <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>{result.map((r, i) => <li key={i} className={r.startsWith('OK') ? 'ok' : 'warn'}>{r}</li>)}</ul>}
     </Section>

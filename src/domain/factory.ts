@@ -1,5 +1,5 @@
 import { effectParams, ref } from '../packs/core';
-import type { CatalogRef, Clip, ClipKind, FxChain, Profile, Song, ThemePreset, Track, TrackKind } from './types';
+import type { CatalogRef, Clip, ClipKind, FxChain, Lang, Profile, Song, ThemePreset, Track, TrackKind } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
 
 export const newId = (): string => crypto.randomUUID();
@@ -110,7 +110,14 @@ function starterPattern(bars: number) {
   return { steps, rows: DRUM_ROW_KEYS.map((key) => ({ sound: ref(key), hits: hitsFor(key) })) };
 }
 
-export function newSong(ownerProfileId: string, title = 'Untitled', bars = 2): Song {
+/** Starting track names; a song keeps the names it was born with, in the language of the day. */
+const TRACK_NAMES: Record<Lang, string[]> = {
+  en: ['Drums', '808', 'Chords', 'Keys', 'Lead', 'Strings'],
+  es: ['Batería', '808', 'Acordes', 'Teclado', 'Melodía', 'Cuerdas'],
+};
+
+export function newSong(ownerProfileId: string, title = 'Untitled', bars = 2, lang: Lang = 'en'): Song {
+  const names = TRACK_NAMES[lang];
   const t = now();
   const length = bars * BAR_TICKS;
   const chords = Array.from({ length: bars }, (_, i) => ({ id: newId(), tick: i * BAR_TICKS, dur: BAR_TICKS, degree: [0, 4, 5, 3][i % 4] }));
@@ -135,12 +142,12 @@ export function newSong(ownerProfileId: string, title = 'Untitled', bars = 2): S
     schema_version: 1,
     sections: [{ id: newId(), position: 1, name: 'Loop', start_tick: 0, length_ticks: length, key_tonic: null, key_mode: null, lyrics_lang: null }],
     tracks: [
-      track(1, 'Drums', 'drums', ref('instrument.drums-boom-bap'), clip('pattern', length, starterPattern(bars))),
-      track(2, '808', 'instrument', ref('instrument.bass-808'), clip('notes', length, { notes: [] })),
-      track(3, 'Chords', 'instrument', ref('instrument.pad-warm'), clip('chords', length, { chords })),
-      track(4, 'Keys', 'instrument', ref('instrument.keys-ep'), clip('notes', length, { notes: [] })),
-      track(5, 'Lead', 'instrument', ref('instrument.lead-bright'), clip('notes', length, { notes: [] })),
-      track(6, 'Strings', 'instrument', ref('instrument.strings-ensemble'), clip('notes', length, { notes: [] })),
+      track(1, names[0], 'drums', ref('instrument.drums-boom-bap'), clip('pattern', length, starterPattern(bars))),
+      track(2, names[1], 'instrument', ref('instrument.bass-808'), clip('notes', length, { notes: [] })),
+      track(3, names[2], 'instrument', ref('instrument.pad-warm'), clip('chords', length, { chords })),
+      track(4, names[3], 'instrument', ref('instrument.keys-ep'), clip('notes', length, { notes: [] })),
+      track(5, names[4], 'instrument', ref('instrument.lead-bright'), clip('notes', length, { notes: [] })),
+      track(6, names[5], 'instrument', ref('instrument.strings-ensemble'), clip('notes', length, { notes: [] })),
     ],
     created_by: ownerProfileId,
     updated_by: ownerProfileId,

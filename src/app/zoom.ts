@@ -2,7 +2,7 @@
 
 export const GAP = 3;
 export const DRUM_LABEL = 78;
-export const NOTE_LABEL = 64;
+export const NOTE_LABEL = 76; // room for solfège names like Sol♭4
 const MIN_CELL = 12;
 const MAX_CELL = 96;
 

@@ -1,6 +1,8 @@
-/* Themes: one set of tokens per profile. Colors carry meaning; level of detail never changes them. */
-:root,
-[data-studio='daylight'] {
+/* Themes: each profile picks a palette (Daylight, Graphite, Midnight jewel); each palette has a light and a
+   dark version. The app sets data-studio (palette) and data-mode (light or dark, following the device unless
+   the person picks one). Colors carry meaning; level of detail never changes them. */
+:root {
+  /* Daylight, light: the guest theme and the default */
   --ground: #f3f4f6;
   --panel: #ffffff;
   --raised: #e9ebef;
@@ -10,6 +12,7 @@
   --main: #c2410c;
   --main-ink: #ffffff;
   --highlight: #c2410c;
+  --highlight-ink: #ffffff;
   --accent: #aeb3bc;
   --tier-chord: #c2410c;
   --tier-scale: #475569;
@@ -23,7 +26,31 @@
   color-scheme: light;
 }
 
-[data-studio='graphite'] {
+[data-studio='daylight'][data-mode='dark'] {
+  --ground: #141518;
+  --panel: #1c1e22;
+  --raised: #25282d;
+  --line: #33363d;
+  --ink: #f3f4f6;
+  --ink-2: #a9aeb8;
+  --main: #f97316;
+  --main-ink: #1a0d04;
+  --highlight: #f97316;
+  --highlight-ink: #1a0d04;
+  --accent: #5b6170;
+  --tier-chord: #f97316;
+  --tier-scale: #a9aeb8;
+  --tier-outside: #2a2d33;
+  --tier-outside-line: #7d8390;
+  --key-white: #e5e7eb;
+  --key-black: #25282d;
+  --cell-on: #f3f4f6;
+  --playhead: rgba(249, 115, 22, 0.16);
+  --focus: #f97316;
+  color-scheme: dark;
+}
+
+[data-studio='graphite'][data-mode='dark'] {
   --ground: #0e0e0f;
   --panel: #161617;
   --raised: #1e1e20;
@@ -33,6 +60,7 @@
   --main: #f2f2f2;
   --main-ink: #0e0e0f;
   --highlight: #74747a;
+  --highlight-ink: #ffffff;
   --accent: #55555b;
   --tier-chord: #ffffff;
   --tier-scale: #8a8a90;
@@ -46,7 +74,31 @@
   color-scheme: dark;
 }
 
-[data-studio='midnight-jewel'] {
+[data-studio='graphite'][data-mode='light'] {
+  --ground: #f4f4f5;
+  --panel: #ffffff;
+  --raised: #e8e8ea;
+  --line: #d4d4d8;
+  --ink: #111113;
+  --ink-2: #55555b;
+  --main: #111113;
+  --main-ink: #ffffff;
+  --highlight: #55555b;
+  --highlight-ink: #ffffff;
+  --accent: #a1a1aa;
+  --tier-chord: #111113;
+  --tier-scale: #71717a;
+  --tier-outside: #e4e4e7;
+  --tier-outside-line: #71717a;
+  --key-white: #ffffff;
+  --key-black: #27272a;
+  --cell-on: #111113;
+  --playhead: rgba(17, 17, 19, 0.08);
+  --focus: #111113;
+  color-scheme: light;
+}
+
+[data-studio='midnight-jewel'][data-mode='dark'] {
   --ground: #120f1f;
   --panel: #1a1630;
   --raised: #241e3f;
@@ -56,6 +108,7 @@
   --main: #2dd4bf;
   --main-ink: #0c2a27;
   --highlight: #f0509e;
+  --highlight-ink: #2a0716;
   --accent: #a78bfa;
   --tier-chord: #2dd4bf;
   --tier-scale: #a78bfa;
@@ -67,6 +120,30 @@
   --playhead: rgba(45, 212, 191, 0.12);
   --focus: #2dd4bf;
   color-scheme: dark;
+}
+
+[data-studio='midnight-jewel'][data-mode='light'] {
+  --ground: #f6f4fd;
+  --panel: #ffffff;
+  --raised: #ece8fa;
+  --line: #d9d2f2;
+  --ink: #1a1630;
+  --ink-2: #4b4470;
+  --main: #0f766e;
+  --main-ink: #ffffff;
+  --highlight: #be185d;
+  --highlight-ink: #ffffff;
+  --accent: #7c5ce0;
+  --tier-chord: #0f8c7e;
+  --tier-scale: #7c5ce0;
+  --tier-outside: #fce7f1;
+  --tier-outside-line: #be185d;
+  --key-white: #ffffff;
+  --key-black: #2a2346;
+  --cell-on: #0f8c7e;
+  --playhead: rgba(15, 140, 126, 0.12);
+  --focus: #0f766e;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -123,13 +200,25 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 /* Studio layout */
 .studio { min-height: 100vh; display: flex; flex-direction: column; }
 .topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
-.title-input { background: transparent; border: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 700; min-width: 120px; max-width: 260px; padding: 4px 6px; border-radius: 8px; }
+.title-input { background: transparent; border: 0; font-family: 'Bricolage Grotesque', 'Instrument Sans', sans-serif; font-size: 19px; font-weight: 700; width: 140px; flex: 1 1 140px; min-width: 72px; max-width: 260px; padding: 4px 6px; border-radius: 8px; }
+/* The top bar is two groups: the song on the left, the transport on the right. When space runs out the
+   transport moves below as one block, so Play never ends up alone. */
+.tb-group { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; max-width: 100%; }
+.tb-left { flex: 1 0 auto; }
+.tb-right { flex: 0 1 auto; margin-left: auto; justify-content: flex-end; }
+@media (max-width: 720px) {
+  .hide-sm { display: none; }
+  .title-input { width: 80px; flex-basis: 80px; }
+  .tb-right { margin-left: 0; justify-content: flex-start; }
+  .tb-right .play { order: -1; }
+  .tb-right .outmeter { order: -1; }
+}
 .title-input:hover, .title-input:focus { background: var(--raised); }
 .play { width: 52px; height: 52px; border-radius: 999px; border: 0; background: var(--ink); color: var(--ground); display: inline-flex; align-items: center; justify-content: center; }
 .play.on { background: var(--main); color: var(--main-ink); }
 .outmeter { width: 40px; height: 6px; border-radius: 3px; background: var(--raised); border: 1px solid var(--line); overflow: hidden; display: inline-block; flex: none; }
 .outmeter > span { display: block; height: 100%; background: var(--main); transform-origin: left center; transform: scaleX(0); }
-.rec[aria-pressed='true'] { background: var(--highlight); color: #fff; border-color: var(--highlight); }
+.rec[aria-pressed='true'] { background: var(--highlight); color: var(--highlight-ink); border-color: var(--highlight); }
 .body { display: flex; flex-wrap: wrap; gap: 14px; padding: 14px 16px 18px; flex: 1 1 auto; align-items: flex-start; }
 .tracks { flex: 0 1 230px; min-width: 200px; display: flex; flex-direction: column; gap: 6px; }
 .track-btn {
@@ -184,8 +273,8 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .pad:active, .pad.hit { background: var(--main); color: var(--main-ink); }
 .keyboard { position: relative; height: 128px; display: flex; gap: 2px; user-select: none; -webkit-user-select: none; }
 .wkey { flex: 1 1 0; min-width: 0; border-radius: 0 0 8px 8px; border: 0; background: var(--key-white); color: #120f1f; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; padding: 0 0 8px; touch-action: manipulation; }
-.wkey.out { filter: brightness(0.72); }
-.bkey { position: absolute; top: 0; height: 76px; border-radius: 0 0 6px 6px; border: 1px solid var(--line); background: var(--key-black); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; padding: 0 0 6px; z-index: 2; touch-action: manipulation; }
+.wkey.out { filter: brightness(0.78); }
+.bkey { position: absolute; top: 0; height: 76px; border-radius: 0 0 6px 6px; border: 1px solid var(--line); background: var(--key-black); color: #f4f1ff; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; padding: 0 0 6px; z-index: 2; touch-action: manipulation; }
 .wkey:active, .bkey:active { filter: brightness(1.2); }
 .kmark { width: 60%; height: 5px; border-radius: 3px; }
 .kname { font-size: 11px; font-weight: 700; }

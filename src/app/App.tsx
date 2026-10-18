@@ -10,6 +10,8 @@ import Studio from './Studio';
 import Settings from './Settings';
 import Lab from './Lab';
 import { GUEST_ID, guestProfile } from './guest';
+import { t } from './i18n';
+import { GROUND, useAppearance } from './prefs';
 
 type Route =
   | { name: 'loading' }
@@ -26,6 +28,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>({ name: 'loading' });
   const [uiLang, setUiLang] = useState<Lang>('en');
   const [storageError, setStorageError] = useState<string | null>(null);
+  const { appearance, mode, setAppearance, toggle: toggleMode } = useAppearance();
 
   useEffect(() => {
     openBrowserStore()
@@ -33,7 +36,8 @@ export default function App() {
         setStore(s);
         const list = await s.listProfiles();
         setProfiles(list);
-        setUiLang((await s.getMeta<Lang>('ui_lang')) ?? 'en');
+        const browserLang: Lang = /^es\b/i.test(navigator.language) ? 'es' : 'en';
+        setUiLang((await s.getMeta<Lang>('ui_lang')) ?? browserLang);
         setRoute(list.length ? { name: 'home' } : { name: 'setup' });
         requestPersistence().catch(() => undefined);
       })
@@ -52,33 +56,41 @@ export default function App() {
     ? profileFor(route.profileId)?.theme.preset ?? 'daylight'
     : 'daylight';
   useEffect(() => {
-    document.documentElement.dataset.studio = themed;
-    const meta = document.querySelector('meta[name="theme-color"]');
-    meta?.setAttribute('content', themed === 'graphite' ? '#0E0E0F' : themed === 'midnight-jewel' ? '#120F1F' : '#F3F4F6');
-  }, [themed]);
+    const root = document.documentElement;
+    root.dataset.studio = themed;
+    root.dataset.mode = mode;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', GROUND[themed][mode]);
+  }, [themed, mode]);
 
+  // One language per device: the home switch and the setting in profile settings change the same thing.
+  useEffect(() => { document.documentElement.lang = uiLang; }, [uiLang]);
   const changeLang = async (lang: Lang) => {
     setUiLang(lang);
     await store?.setMeta('ui_lang', lang);
   };
+  const lang = uiLang;
+  const look = { mode, onToggleMode: toggleMode };
 
   if (storageError) {
     return (
       <div className="home"><div className="card stack">
-        <h1 className="display">This browser blocked storage</h1>
-        <p className="muted">Music Studio saves songs in the browser. Private browsing can block that; open it in a normal window.</p>
+        <h1 className="display">{t('storageBlockedTitle', lang)}</h1>
+        <p className="muted">{t('storageBlockedBody', lang)}</p>
         <p className="small mono">{storageError}</p>
       </div></div>
     );
   }
 
-  if (!store || route.name === 'loading') return <div className="home"><p className="muted">Loading…</p></div>;
+  if (!store || route.name === 'loading') return <div className="home"><p className="muted">{t('loading', lang)}</p></div>;
 
   if (route.name === 'setup') {
     return (
       <Setup
+        lang={lang}
+        onLang={changeLang}
+        {...look}
         onDone={async (people) => {
-          for (const p of people) await store.saveProfile(newProfile(p.name, p.preset, p.ring));
+          for (const p of people) await store.saveProfile({ ...newProfile(p.name, p.preset, p.ring), ui_lang: lang });
           await reloadProfiles();
           setRoute({ name: 'home' });
         }}
@@ -86,7 +98,7 @@ export default function App() {
     );
   }
 
-  if (route.name === 'lab') return <Lab store={store} onHome={() => setRoute({ name: 'home' })} />;
+  if (route.name === 'lab') return <Lab store={store} lang={lang} onHome={() => setRoute({ name: 'home' })} />;
 
   if (route.name === 'studio' || route.name === 'settings') {
     const profile = profileFor(route.profileId);
@@ -100,6 +112,11 @@ export default function App() {
           store={store}
           profile={profile}
           profiles={profiles}
+          lang={lang}
+          onLang={changeLang}
+          appearance={appearance}
+          mode={mode}
+          onAppearance={setAppearance}
           onSwitch={(id) => setRoute({ name: 'settings', profileId: id })}
           onSaved={reloadProfiles}
           onHome={() => setRoute({ name: 'home' })}
@@ -112,6 +129,8 @@ export default function App() {
         key={profile.id}
         store={profile.id === GUEST_ID ? guestStore : store}
         profile={profile}
+        lang={lang}
+        {...look}
         onHome={() => setRoute({ name: 'home' })}
         onSettings={() => profile.id !== GUEST_ID && setRoute({ name: 'settings', profileId: profile.id })}
       />
@@ -121,8 +140,9 @@ export default function App() {
   return (
     <Home
       profiles={profiles}
-      lang={uiLang}
+      lang={lang}
       onLang={changeLang}
+      {...look}
       onOpen={(id) => setRoute({ name: 'studio', profileId: id })}
       onSettings={() => profiles[0] && setRoute({ name: 'settings', profileId: profiles[0].id })}
       onLab={() => setRoute({ name: 'lab' })}

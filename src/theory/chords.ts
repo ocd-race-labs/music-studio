@@ -1,5 +1,5 @@
 import { mod12, spellingPc, spellingToAscii, spellingToDisplay } from './pitch';
-import type { Spelling } from './pitch';
+import type { Naming, Spelling } from './pitch';
 import { scaleById, scaleSpellings, spellInKey } from './scales';
 import type { Key } from './scales';
 
@@ -49,6 +49,11 @@ export function diatonicTriads(key: Key): Chord[] {
     };
   });
 }
+
+/** Chord symbol for the screen: D♭, E♭m, Cdim; in solfège Re♭, Mi♭m, Do°. */
+const SUFFIX_SOLFEGE: Record<Quality, string> = { major: '', minor: 'm', diminished: '°', augmented: '+' };
+export const chordSymbol = (chord: Chord, naming: Naming = 'letters'): string =>
+  naming === 'solfege' ? spellingToDisplay(chord.root, 'solfege') + SUFFIX_SOLFEGE[chord.quality] : chord.symbolDisplay;
 
 /** MIDI notes for a chord voiced upward from a base octave (root position). */
 export function chordMidi(chord: Chord, baseMidi = 48): number[] {

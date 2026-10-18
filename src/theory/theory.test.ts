@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  chordSymbol,
+  tonicDisplay,
   chordMidi,
   diatonicTriads,
   midiToHz,
@@ -72,5 +74,22 @@ describe('scale-color tiers', () => {
   });
   it('works without a chord', () => {
     expect(tierOf(65, key, null)).toBe('scale');
+  });
+});
+
+describe('solfège names for Spanish', () => {
+  it('names notes Do, Re, Mi with the same accidentals and octaves', () => {
+    const key = { tonic: 'Db', mode: 'major' };
+    expect(noteNameDisplay(60, spellInKey(60, key), 'solfege')).toBe('Do4');
+    expect(noteNameDisplay(66, spellInKey(66, key), 'solfege')).toBe('Sol♭4');
+    expect(noteNameDisplay(61, spellInKey(61, key), 'solfege')).toBe('Re♭4');
+    expect(noteNameDisplay(66, spellInKey(66, key))).toBe('G♭4');
+  });
+  it('shows keys and chords in solfège', () => {
+    expect(tonicDisplay('F#', 'solfege')).toBe('Fa♯');
+    expect(tonicDisplay('Bb')).toBe('B♭');
+    const c = diatonicTriads({ tonic: 'C', mode: 'major' });
+    expect(c.map((ch) => chordSymbol(ch, 'solfege')).join(' ')).toBe('Do Rem Mim Fa Sol Lam Si°');
+    expect(c.map((ch) => chordSymbol(ch)).join(' ')).toBe('C Dm Em F G Am Bdim');
   });
 });

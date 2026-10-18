@@ -1,16 +1,22 @@
 import { memo, useEffect, useLayoutEffect, useRef } from 'react';
 import type { CSSProperties, RefObject } from 'react';
 import { title as catalogTitle } from '../packs/core';
-import { chordMidi, diatonicTriads, noteNameDisplay, spellInKey, tierOf } from '../theory';
-import type { Chord, Key, Tier } from '../theory';
+import { chordMidi, chordSymbol, diatonicTriads, noteNameDisplay, parseSpelling, spellInKey, tierOf } from '../theory';
+import type { Chord, Key, Naming, Tier } from '../theory';
 import type { ChordsContent, Lang, NotesContent, PatternContent, Song, Track } from '../domain/types';
 import { BAR_TICKS, STEP_TICKS } from '../domain/types';
 import { loopBars } from '../domain/factory';
-import { t } from './i18n';
+import { namingFor, t, tierWord } from './i18n';
 import { cellWidth, DRUM_LABEL, GAP, NOTE_LABEL, visibleSteps } from './zoom';
 import type { Zoom } from './zoom';
 
 const ROW_H = 30;
+
+/** A stored spelling ("Db4") as shown on screen, falling back to the stored text. */
+function spellTitle(midi: number, spell: string | undefined, naming: Naming): string {
+  const m = /^([A-G](?:bb|b|##|#)?)/.exec(spell ?? '');
+  try { return m ? noteNameDisplay(midi, parseSpelling(m[1]), naming) : spell ?? ''; } catch { return spell ?? ''; }
+}
 
 /** Room after the last step so the last page can line up with the left edge, like the others. */
 const pageTail = (width: number, label: number, visible: number, total: number, cell: number) =>
@@ -82,7 +88,7 @@ const DrumCells = memo(function DrumCells({ pattern, cell, lang, onToggle, onPre
                 key={s}
                 type="button"
                 className={`cell${on ? ' on' : ''}${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}`}
-                aria-label={`${catalogTitle(row.sound, lang)}, step ${s + 1}${on ? ', on' : ''}`}
+                aria-label={t('stepN', lang, { row: catalogTitle(row.sound, lang), n: s + 1 }) + (on ? t('stepOn', lang) : '')}
                 aria-pressed={on}
                 onClick={() => onToggle(r, s)}
               />
@@ -122,10 +128,11 @@ export function DrumGrid({ track, step, zoom, width, lang, onToggle, onPreview }
 
 const tierClass = (tier: Tier) => tier;
 
-const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focusChord, onToggle, onPreview }: {
+const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focusChord, lang, onToggle, onPreview }: {
   pitches: number[];
   steps: number;
   cell: number;
+  lang: Lang;
   keyName: Key;
   focusChord: Chord | null;
   onToggle: (midi: number, step: number) => void;
@@ -135,10 +142,10 @@ const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focus
     <div className="grid" style={{ gridTemplateColumns: `${NOTE_LABEL - GAP}px repeat(${steps}, ${cell}px)`, padding: 0 }}>
       {pitches.map((m) => {
         const tier = tierOf(m, keyName, focusChord);
-        const name = noteNameDisplay(m, spellInKey(m, keyName));
+        const name = noteNameDisplay(m, spellInKey(m, keyName), namingFor(lang));
         return (
           <div key={m} style={{ display: 'contents' }}>
-            <button type="button" className="plabel" onPointerDown={() => onPreview(m)} aria-label={`${name}, ${tier}`}>
+            <button type="button" className="plabel" onPointerDown={() => onPreview(m)} aria-label={`${name}, ${tierWord(tier, lang)}`}>
               <span className={`dot ${tierClass(tier)}`} aria-hidden="true" />{name}
             </button>
             {Array.from({ length: steps }, (_, s) => (
@@ -146,7 +153,7 @@ const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focus
                 key={s}
                 type="button"
                 className={`ncell${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}${tier === 'chord' ? ' chordrow' : tier === 'scale' ? ' inscale' : ''}`}
-                aria-label={`${name}, step ${s + 1}`}
+                aria-label={t('stepN', lang, { row: name, n: s + 1 })}
                 onClick={() => onToggle(m, s)}
               />
             ))}
@@ -157,7 +164,8 @@ const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focus
   );
 });
 
-export function NoteGrid({ song, track, low, step, zoom, width, focusBar, onToggle, onPreview, onShift }: {
+export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, onToggle, onPreview, onShift }: {
+  lang: Lang;
   song: Song;
   track: Track;
   low: number;
@@ -185,12 +193,12 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, onTogg
   return (
     <div className="stack" style={{ gap: 6 }}>
       <div className="row small muted">
-        <button type="button" className="btn ghost" onClick={() => onShift(12)} aria-label="Octave up">▲ Octave{above ? ` (${above} above)` : ''}</button>
-        <button type="button" className="btn ghost" onClick={() => onShift(-12)} aria-label="Octave down">▼ Octave{below ? ` (${below} below)` : ''}</button>
+        <button type="button" className="btn ghost" onClick={() => onShift(12)} aria-label={t('octaveUp', lang)}>▲ {t('octave', lang)}{above ? ` (${t('nAbove', lang, { n: above })})` : ''}</button>
+        <button type="button" className="btn ghost" onClick={() => onShift(-12)} aria-label={t('octaveDown', lang)}>▼ {t('octave', lang)}{below ? ` (${t('nBelow', lang, { n: below })})` : ''}</button>
       </div>
       <div className="scroll-x" ref={scroller} style={{ maxHeight: 520, overflowY: 'auto' }}>
         <div style={{ position: 'relative', width: NOTE_LABEL + steps * pitch + pageTail(width, NOTE_LABEL, visibleCount, steps, cell) }}>
-          <NoteCells pitches={pitches} steps={steps} cell={cell} keyName={key} focusChord={focusChord} onToggle={onToggle} onPreview={onPreview} />
+          <NoteCells pitches={pitches} steps={steps} cell={cell} keyName={key} lang={lang} focusChord={focusChord} onToggle={onToggle} onPreview={onPreview} />
           {visible.map((n) => {
             const bar = Math.floor(n.tick / BAR_TICKS);
             const tier = tierOf(n.midi, key, chordAtBar(song, bar));
@@ -201,7 +209,7 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, onTogg
               left: NOTE_LABEL + (n.tick / STEP_TICKS) * pitch + 1,
               width: Math.max(4, (n.dur / STEP_TICKS) * pitch - GAP - 2),
             };
-            return <div key={n.id} className={`note ${tier}`} style={style} title={n.spell} />;
+            return <div key={n.id} className={`note ${tier}`} style={style} title={spellTitle(n.midi, n.spell, namingFor(lang))} />;
           })}
           <Playhead step={step} offset={NOTE_LABEL} cell={cell} height={24 * (ROW_H + GAP)} />
         </div>
@@ -243,7 +251,7 @@ export function ChordLane({ song, track, step, lang, onSet, onPreview }: {
                   aria-pressed={current?.degree === c.degree}
                   onClick={() => { onSet(bar, c.degree); onPreview(chordMidi(c, 52)); }}
                 >
-                  <span>{c.symbolDisplay}</span>
+                  <span>{chordSymbol(c, namingFor(lang))}</span>
                   <small>{c.roman}</small>
                 </button>
               ))}
@@ -278,20 +286,21 @@ export function Pads({ track, lang, onHit }: { track: Track; lang: Lang; onHit: 
 
 const WHITE_PCS = [0, 2, 4, 5, 7, 9, 11];
 
-export function Keyboard({ song, low, focusBar, onPlay }: { song: Song; low: number; focusBar: number; onPlay: (midi: number) => void }) {
+export function Keyboard({ song, low, focusBar, lang, onPlay }: { song: Song; low: number; focusBar: number; lang: Lang; onPlay: (midi: number) => void }) {
   const key = songKey(song);
+  const naming = namingFor(lang);
   const chord = chordAtBar(song, focusBar);
   const start = low - (((low % 12) + 12) % 12); // start at a C
   const midis = Array.from({ length: 24 }, (_, i) => start + i);
   const whites = midis.filter((m) => WHITE_PCS.includes(m % 12));
   const markColor = (tier: Tier) => (tier === 'chord' ? 'var(--tier-chord)' : tier === 'scale' ? 'var(--tier-scale)' : 'transparent');
   return (
-    <div className="keyboard" aria-label="Keyboard colored by key">
+    <div className="keyboard" aria-label={t('keyboardColored', lang)}>
       {whites.map((m) => {
         const tier = tierOf(m, key, chord);
-        const name = noteNameDisplay(m, spellInKey(m, key));
+        const name = noteNameDisplay(m, spellInKey(m, key), naming);
         return (
-          <button key={m} type="button" className={`wkey${tier === 'outside' ? ' out' : ''}`} aria-label={`${name}, ${tier}`}
+          <button key={m} type="button" className={`wkey${tier === 'outside' ? ' out' : ''}`} aria-label={`${name}, ${tierWord(tier, lang)}`}
             onPointerDown={(e) => { e.preventDefault(); onPlay(m); }}>
             <span className="kmark" style={{ background: markColor(tier) }} />
             <span className="kname">{name}</span>
@@ -302,9 +311,9 @@ export function Keyboard({ song, low, focusBar, onPlay }: { song: Song; low: num
         const whitesBefore = whites.filter((w) => w < m).length;
         const left = `calc(${(whitesBefore / whites.length) * 100}% - 22px)`;
         const tier = tierOf(m, key, chord);
-        const name = noteNameDisplay(m, spellInKey(m, key)).replace(/\d+$/, '');
+        const name = noteNameDisplay(m, spellInKey(m, key), naming).replace(/\d+$/, '');
         return (
-          <button key={m} type="button" className="bkey" style={{ left, width: 44 }} aria-label={`${name}, ${tier}`}
+          <button key={m} type="button" className="bkey" style={{ left, width: 44 }} aria-label={`${name}, ${tierWord(tier, lang)}`}
             onPointerDown={(e) => { e.preventDefault(); onPlay(m); }}>
             <span className="kname" style={{ fontSize: 10 }}>{name}</span>
             <span className="kmark" style={{ background: markColor(tier) }} />

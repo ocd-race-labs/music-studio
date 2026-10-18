@@ -6,14 +6,16 @@ import type { Hat, Idea, NotesContent, PatternContent, Profile, Song, SongVersio
 import { PPQ, STEP_TICKS } from '../domain/types';
 import { engine } from '../engine/engine';
 import { findItem, title as catalogTitle } from '../packs/core';
-import { chordMidi, diatonicTriads } from '../theory';
+import { chordMidi, diatonicTriads, scaleById, tonicDisplay } from '../theory';
 import type { SongStore } from '../store/store';
 import { ChordLane, DrumGrid, Keyboard, NoteGrid, Pads, songKey } from './editors';
 import { autoZoom, ZOOMS } from './zoom';
 import type { Zoom } from './zoom';
 import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panels';
-import { t } from './i18n';
-import { Avatar, downloadText, Icon, Modal, pickFile, slug, useToast, useWidth } from './ui';
+import { namingFor, t, tn } from './i18n';
+import type { Mode } from './prefs';
+import { Avatar, downloadText, Icon, Modal, ModeSwitch, pickFile, slug, useToast, useWidth } from './ui';
+import type { Lang } from '../domain/types';
 
 /* Zoom is remembered per device: the iPhone, the iPad and the laptop each keep their own. */
 const ZOOM_KEY = 'music-studio.zoom';
@@ -42,13 +44,18 @@ const LENGTHS = [
   { steps: 16, label: '1' },
 ];
 
-export default function Studio({ store, profile, onHome, onSettings }: {
+export default function Studio({ store, profile, lang, mode, onToggleMode, onHome, onSettings }: {
   store: SongStore;
   profile: Profile;
+  lang: Lang;
+  mode: Mode;
+  onToggleMode: () => void;
   onHome: () => void;
   onSettings: () => void;
 }) {
-  const lang = profile.ui_lang;
+  const naming = namingFor(lang);
+  const langRef = useRef(lang);
+  useLayoutEffect(() => { langRef.current = lang; }, [lang]);
   const by = profile.id;
   const [song, setSong] = useState<Song | null>(null);
   const past = useRef<Song[]>([]);
@@ -104,7 +111,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
       let s = lastId ? await store.getSong(lastId) : undefined;
       if (!s || s.status !== 'active') s = (await store.listSongs(profile.id))[0];
       if (!s) {
-        s = newSong(profile.id, profile.id === 'guest' ? 'Guest jam' : 'First song');
+        s = newSong(profile.id, t(profile.id === 'guest' ? 'guestJam' : 'firstSong', langRef.current), 2, langRef.current);
         await store.saveSong(s);
       }
       if (!alive) return;
@@ -245,7 +252,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
     setModal(null);
   };
   const createSong = async () => {
-    const s = newSong(profile.id, `Song ${songList.length + 1}`);
+    const s = newSong(profile.id, t('songN', lang, { n: songList.length + 1 }), 2, lang);
     await store.saveSong(s);
     await switchTo(s);
   };
@@ -262,12 +269,12 @@ export default function Studio({ store, profile, onHome, onSettings }: {
     const s = exists ? withFreshIds(parsed.value, profile.id) : { ...parsed.value, owner_profile_id: profile.id };
     await store.saveSong(s);
     await switchTo(s);
-    showToast(`Imported “${s.title}”`);
+    showToast(t('imported', lang, { title: s.title }));
   };
   const saveVersion = async () => {
     if (!song) return;
     const v = await store.saveVersion(song, null, by);
-    showToast(`Version ${v.version_no} saved`);
+    showToast(t('versionSaved', lang, { n: v.version_no }));
   };
   const openVersions = async () => {
     if (!song) return;
@@ -281,10 +288,10 @@ export default function Studio({ store, profile, onHome, onSettings }: {
     const file = await pickFile('.json,application/json');
     if (!file) return;
     const parsed = parseIdeasFile(await file.text(), song.id, by);
-    if (!parsed.ok) { showToast(`Idea file refused: ${parsed.errors[0]}`); return; }
+    if (!parsed.ok) { showToast(t('ideaRefused', lang, { error: parsed.errors[0] })); return; }
     for (const i of parsed.value) await store.saveIdea(i);
     setIdeas(await store.listIdeas(song.id));
-    showToast(`${parsed.value.length} idea${parsed.value.length === 1 ? '' : 's'} ready to try`);
+    showToast(tn('ideasReadyOne', 'ideasReadyMany', parsed.value.length, lang));
   };
   const listenIdea = (idea: Idea) => {
     if (!song) return;
@@ -313,13 +320,13 @@ export default function Studio({ store, profile, onHome, onSettings }: {
     apply((x) => C.keepIdea(x, idea, trackId, by));
     await decide(idea, 'accepted');
     setSelected(trackId);
-    showToast(`Kept “${idea.title}”`);
+    showToast(t('keptIdea', lang, { title: idea.title }));
   };
 
   const copyHelp = async () => {
     try {
       await navigator.clipboard.writeText(CLAUDE_INSTRUCTIONS);
-      showToast('Copied. Paste it in your Claude project with your request.');
+      showToast(t('copiedFormat', lang));
     } catch {
       downloadText('claude-idea-format.txt', CLAUDE_INSTRUCTIONS, 'text/plain');
     }
@@ -333,22 +340,25 @@ export default function Studio({ store, profile, onHome, onSettings }: {
   };
   const trackTitle = useMemo(() => (track?.instrument ? catalogTitle(track.instrument, lang) : ''), [track, lang]);
 
-  if (!song || !track) return <div className="home"><p className="muted">Loading…</p></div>;
+  if (!song || !track) return <div className="home"><p className="muted">{t('loading', lang)}</p></div>;
 
   return (
     <div className={`studio${wide ? ' wide' : ''}`}>
       <header className="topbar">
-        <button type="button" className="btn icon" onClick={onHome} aria-label="Home"><Icon name="home" /></button>
+        <div className="tb-group tb-left">
+        <button type="button" className="btn icon" onClick={onHome} aria-label={t('home', lang)}><Icon name="home" /></button>
         <Avatar profile={profile} onClick={onSettings} label={t('settings', lang)} />
-        <input className="title-input" aria-label="Song title" value={song.title}
+        <input className="title-input" aria-label={t('songTitle', lang)} value={song.title}
           onChange={(e) => { if (songRef.current) { songRef.current = { ...songRef.current, title: e.target.value }; setSong(songRef.current); } }}
           onBlur={(e) => apply((x) => C.setTitle(x, e.target.value, by))} />
-        <button type="button" className="btn" onClick={openSongs}><Icon name="menu" size={18} /> {t('songs', lang)}</button>
-        <button type="button" className="btn icon" onClick={undo} disabled={!hist.past} aria-label="Undo"><Icon name="undo" /></button>
-        <button type="button" className="btn icon" onClick={redo} disabled={!hist.future} aria-label="Redo"><Icon name="redo" /></button>
-        <span className="small muted" aria-live="polite" style={{ minWidth: 70 }}>{saveState === 'saving' ? t('saving', lang) : t('saved', lang)}</span>
-        <div className="grow" />
-        <div className="seg" aria-label="Hat">
+        <button type="button" className="btn" onClick={openSongs} aria-label={t('songs', lang)}><Icon name="menu" size={18} /> <span className="hide-sm">{t('songs', lang)}</span></button>
+        <button type="button" className="btn icon" onClick={undo} disabled={!hist.past} aria-label={t('undo', lang)}><Icon name="undo" /></button>
+        <button type="button" className="btn icon" onClick={redo} disabled={!hist.future} aria-label={t('redo', lang)}><Icon name="redo" /></button>
+        <span className="small muted hide-sm" aria-live="polite" style={{ minWidth: 70 }}>{saveState === 'saving' ? t('saving', lang) : t('saved', lang)}</span>
+        </div>
+        <div className="tb-group tb-right">
+        <ModeSwitch mode={mode} onToggle={onToggleMode} lang={lang} />
+        <div className="seg" aria-label={t('hat', lang)}>
           <button type="button" aria-pressed={hat === 'musician'} onClick={() => setHat('musician')}>{t('musician', lang)}</button>
           <button type="button" aria-pressed={hat === 'producer'} onClick={() => setHat('producer')}>{t('producer', lang)}</button>
         </div>
@@ -363,13 +373,14 @@ export default function Studio({ store, profile, onHome, onSettings }: {
             {[1, 2, 4, 8].map((b) => <option key={b} value={b}>{b}</option>)}
           </select>
         </label>
-        <button type="button" className="btn rec" aria-pressed={rec} onClick={() => setRec((r) => !r)} title="When on, pads and keys write into the loop while it plays">
-          <span className="dot" style={{ background: rec ? '#fff' : 'var(--highlight)' }} /> {t('record', lang)}
+        <button type="button" className="btn rec" aria-pressed={rec} onClick={() => setRec((r) => !r)} title={t('recordHint', lang)} aria-label={t('record', lang)}>
+          <span className="dot" style={{ background: rec ? 'var(--highlight-ink)' : 'var(--highlight)' }} /> <span className="hide-sm">{t('record', lang)}</span>
         </button>
-        <OutMeter />
-        <button type="button" className={`play${playing ? ' on' : ''}`} onClick={togglePlay} aria-label={playing ? 'Stop' : 'Play'}>
+        <OutMeter label={t('soundOutput', lang)} />
+        <button type="button" className={`play${playing ? ' on' : ''}`} onClick={togglePlay} aria-label={t(playing ? 'stop' : 'play', lang)}>
           <Icon name={playing ? 'stop' : 'play'} size={22} />
         </button>
+        </div>
       </header>
 
       <div className="body">
@@ -383,7 +394,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
                   <span className="small muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tr.instrument && findItem(tr.instrument) ? catalogTitle(tr.instrument, lang) : ''}</span>
                 </span>
               </button>
-              <button type="button" className="mini" aria-pressed={tr.muted} onClick={() => apply((x) => C.toggleMute(x, tr.id, by))} aria-label={`Mute ${tr.name}`}>M</button>
+              <button type="button" className="mini" aria-pressed={tr.muted} onClick={() => apply((x) => C.toggleMute(x, tr.id, by))} aria-label={t('muteTrack', lang, { name: tr.name })}>M</button>
             </div>
           ))}
         </nav>
@@ -415,10 +426,10 @@ export default function Studio({ store, profile, onHome, onSettings }: {
           )}
           {clipKind === 'notes' && (
             <>
-              <NoteGrid song={song} track={track} low={low} step={step} zoom={zoom} width={editorWidth} focusBar={focusBar}
+              <NoteGrid song={song} track={track} low={low} step={step} zoom={zoom} width={editorWidth} focusBar={focusBar} lang={lang}
                 onToggle={onToggleNote} onPreview={onPreviewNote}
                 onShift={(d) => setLows((m) => ({ ...m, [track.id]: Math.min(96, Math.max(24, low + d)) }))} />
-              <Keyboard song={song} low={low} focusBar={focusBar} onPlay={keyPlay} />
+              <Keyboard song={song} low={low} focusBar={focusBar} lang={lang} onPlay={keyPlay} />
             </>
           )}
           {clipKind === 'chords' && (
@@ -457,7 +468,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
       )}
 
       {modal === 'songs' && (
-        <Modal title={t('songs', lang)} onClose={() => setModal(null)}>
+        <Modal title={t('songs', lang)} closeLabel={t('close', lang)} onClose={() => setModal(null)}>
           <div className="row wrap">
             <button type="button" className="btn primary" onClick={createSong}><Icon name="plus" size={18} /> {t('newSong', lang)}</button>
             <button type="button" className="btn" onClick={importSong}><Icon name="upload" size={18} /> {t('importSong', lang)}</button>
@@ -470,7 +481,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
               <button key={s.id} type="button" className="track-btn" aria-current={s.id === song.id} onClick={() => switchTo(s)}>
                 <span className="stack grow" style={{ gap: 0 }}>
                   <strong>{s.title}</strong>
-                  <span className="small muted">{s.key_tonic} {s.key_mode} · {s.tempo_bpm} BPM · {new Date(s.updated_at).toLocaleString()}</span>
+                  <span className="small muted">{tonicDisplay(s.key_tonic, naming)} {scaleById(s.key_mode).name[lang].toLowerCase()} · {s.tempo_bpm} BPM · {new Date(s.updated_at).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')}</span>
                 </span>
               </button>
             ))}
@@ -479,12 +490,12 @@ export default function Studio({ store, profile, onHome, onSettings }: {
       )}
 
       {modal === 'versions' && (
-        <Modal title={t('versions', lang)} onClose={() => setModal(null)}>
-          {versions.length === 0 && <p className="muted">No saved versions yet.</p>}
+        <Modal title={t('versions', lang)} closeLabel={t('close', lang)} onClose={() => setModal(null)}>
+          {versions.length === 0 && <p className="muted">{t('noVersions', lang)}</p>}
           {versions.map((v) => (
             <div key={v.id} className="row card" style={{ padding: 10 }}>
-              <span className="grow">Version {v.version_no} <span className="small muted">· {new Date(v.created_at).toLocaleString()}</span></span>
-              <button type="button" className="btn" onClick={() => { apply(() => ({ ...v.snapshot, updated_at: new Date().toISOString() })); setModal(null); showToast(`Restored version ${v.version_no}`); }}>{t('restore', lang)}</button>
+              <span className="grow">{t('versionN', lang, { n: v.version_no })} <span className="small muted">· {new Date(v.created_at).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')}</span></span>
+              <button type="button" className="btn" onClick={() => { apply(() => ({ ...v.snapshot, updated_at: new Date().toISOString() })); setModal(null); showToast(t('versionRestored', lang, { n: v.version_no })); }}>{t('restore', lang)}</button>
             </div>
           ))}
         </Modal>
@@ -496,7 +507,7 @@ export default function Studio({ store, profile, onHome, onSettings }: {
 }
 
 /** A small level bar next to Play: if it moves and nothing is heard, the device volume or silent mode is the cause. */
-function OutMeter() {
+function OutMeter({ label }: { label: string }) {
   const bar = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     let id = 0;
@@ -514,5 +525,5 @@ function OutMeter() {
     id = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(id);
   }, []);
-  return <span className="outmeter" title="Sound output" aria-hidden="true"><span ref={bar} /></span>;
+  return <span className="outmeter" title={label} aria-hidden="true"><span ref={bar} /></span>;
 }

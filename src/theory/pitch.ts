@@ -26,8 +26,21 @@ const DISPLAY_ACC: Record<number, string> = { [-2]: '\u{1D12B}', [-1]: '♭', 0:
 /** ASCII spelling used in stored data: Db, F#, Bbb. */
 export const spellingToAscii = (s: Spelling): string => s.letter + ASCII_ACC[s.accidental];
 
-/** Display spelling with real accidentals: D♭, F♯. */
-export const spellingToDisplay = (s: Spelling): string => s.letter + DISPLAY_ACC[s.accidental];
+/** How note names are shown: letters (C, D, E) in English, fixed-do solfège (Do, Re, Mi) in Spanish. */
+export type Naming = 'letters' | 'solfege';
+
+const SOLFEGE: Record<Letter, string> = { C: 'Do', D: 'Re', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B: 'Si' };
+
+export const letterName = (letter: Letter, naming: Naming = 'letters'): string =>
+  naming === 'solfege' ? SOLFEGE[letter] : letter;
+
+/** Display spelling with real accidentals: D♭, F♯; in solfège Re♭, Fa♯. */
+export const spellingToDisplay = (s: Spelling, naming: Naming = 'letters'): string =>
+  letterName(s.letter, naming) + DISPLAY_ACC[s.accidental];
+
+/** A stored tonic (ASCII, "Db") as shown on screen: D♭ or Re♭. */
+export const tonicDisplay = (ascii: string, naming: Naming = 'letters'): string =>
+  spellingToDisplay(parseSpelling(ascii), naming);
 
 export function parseSpelling(text: string): Spelling {
   const m = /^([A-G])(bb|b|##|#)?$/.exec(text.trim());
@@ -47,8 +60,9 @@ export function noteNameAscii(midi: number, s: Spelling): string {
   return spellingToAscii(s) + spelledOctave(midi, s);
 }
 
-export function noteNameDisplay(midi: number, s: Spelling): string {
-  return spellingToDisplay(s) + spelledOctave(midi, s);
+/** Name with octave for the screen: D♭4, or Re♭4 in solfège. Octaves stay scientific: middle C is C4 and Do4. */
+export function noteNameDisplay(midi: number, s: Spelling, naming: Naming = 'letters'): string {
+  return spellingToDisplay(s, naming) + spelledOctave(midi, s);
 }
 
 /** Octave number for a spelled note: Cb5 sounds as B4, B#3 sounds as C4. */
