@@ -141,7 +141,7 @@ const CORE_INSTRUMENTS = [
 const collectionItem = (key: string, en: string, es: string, manifest: Record<string, unknown>, license: string, source: string): CatalogItem => ({
   kind: 'instrument', key, version: '1.0.0', pack: 'collection', status: 'active', title: { en, es }, license, source, manifest,
 });
-const FAMILY_TITLE = { drums: { en: 'Drums', es: 'Batería' }, guitar: { en: 'Guitar', es: 'Guitarra' }, bass: { en: 'Bass', es: 'Bajo' } };
+const FAMILY_TITLE = { drums: { en: 'Drums', es: 'Batería' }, guitar: { en: 'Guitar', es: 'Guitarra' }, bass: { en: 'Bass', es: 'Bajo' }, synth: { en: 'Synth', es: 'Sinte' } };
 
 export const COLLECTION_INSTRUMENTS: CatalogItem[] = [
   // The recordings themselves, with no gear: what a saved guitar or bass sound starts from.
@@ -154,8 +154,14 @@ export const COLLECTION_INSTRUMENTS: CatalogItem[] = [
     if (e.family === 'drums') {
       const set = e.instrument.replace('instrument.drums-', '');
       const spec = SAMPLED_KITS[set] as { license?: string; source?: string } | undefined;
-      return collectionItem(e.instrument, `${f.en}: ${e.title.en}`, `${f.es}: ${e.title.es}`, { type: 'drumkit', kit: 'sampled', set, rows: FULL_ROWS },
+      return collectionItem(e.instrument, `${f.en}: ${e.title.en}`, `${f.es}: ${e.title.es}`,
+        { type: 'drumkit', kit: 'sampled', set, rows: e.rows === 'standard' ? STANDARD_ROWS : FULL_ROWS },
         spec?.license ?? 'CC0 1.0', spec?.source ?? 'music-studio collection');
+    }
+    if (e.voice) {
+      // A synthesized voice heard through its gear.
+      return collectionItem(e.instrument, `${f.en}: ${e.title.en}`, `${f.es}: ${e.title.es}`,
+        { type: 'synth', voice: e.voice, low: e.low ?? 48, chain: e.chain, trimDb: TRIMS[e.instrument] ?? 0 }, 'Original, synthesized in the app', 'music-studio collection');
     }
     return collectionItem(e.instrument, `${f.en}: ${e.title.en}`, `${f.es}: ${e.title.es}`,
       { type: 'sampler', set: e.set, low: e.family === 'bass' ? 28 : 40, mono: e.family === 'bass', chain: e.chain, trimDb: TRIMS[e.instrument] ?? 0 },

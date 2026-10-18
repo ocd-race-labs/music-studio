@@ -19,6 +19,7 @@ import type { Zoom } from './zoom';
 import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panels';
 import MixerBoard from './MixerBoard';
 import Collection from './Collection';
+import BeatAssistant from './BeatAssistant';
 import { namingFor, t, tn } from './i18n';
 import type { Mode } from './prefs';
 import { Avatar, downloadText, Icon, LangToggle, Modal, ModeSwitch, pickFile, slug, useToast, useWidth } from './ui';
@@ -91,7 +92,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   const [lows, setLows] = useState<Record<string, number>>({});
   const [focusBar, setFocusBar] = useState(0);
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [modal, setModal] = useState<null | 'songs' | 'versions' | 'kit' | 'builder' | 'clear'>(null);
+  const [modal, setModal] = useState<null | 'songs' | 'versions' | 'kit' | 'builder' | 'clear' | 'beat'>(null);
   const [pendingKit, setPendingKit] = useState<string | null>(null);
   const [songList, setSongList] = useState<Song[]>([]);
   const [versions, setVersions] = useState<SongVersion[]>([]);
@@ -619,7 +620,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
 
         <main className="editor" ref={editorRef}>
           {hat === 'producer' && shelf ? (
-            <Collection song={song} selectedId={track.id} profileId={profile.id} lang={lang} sounds={sounds} onClose={() => setShelf(false)}
+            <Collection song={song} selectedId={track.id} profileId={profile.id} lang={lang} sounds={sounds} onClose={() => setShelf(false)} onBeat={() => setModal('beat')}
               onUse={(trackId, key) => {
                 const ref = { key, version: '1.0.0' };
                 apply((x) => C.setInstrument(x, trackId, ref, by));
@@ -783,6 +784,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         <Modal title={t('songs', lang)} closeLabel={t('close', lang)} onClose={() => setModal(null)}>
           <div className="row wrap">
             <button type="button" className="btn primary" onClick={createSong}><Icon name="plus" size={18} /> {t('newSong', lang)}</button>
+            <button type="button" className="btn beat-btn" onClick={() => setModal('beat')} title={t('beatOpenHint', lang)}><Icon name="music" size={18} /> {t('beatOpen', lang)}</button>
             <button type="button" className="btn" onClick={importSong}><Icon name="upload" size={18} /> {t('importSong', lang)}</button>
             <button type="button" className="btn" onClick={exportSong}><Icon name="download" size={18} /> {t('exportSong', lang)}</button>
             <button type="button" className="btn" onClick={saveVersion}>{t('saveVersion', lang)}</button>
@@ -887,6 +889,16 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
             </button>
           </div>
         </Modal>
+      )}
+
+      {modal === 'beat' && (
+        <BeatAssistant lang={lang} owner={profile.id} onClose={() => setModal(null)}
+          onCreate={async (s) => {
+            await store.saveSong(s);
+            await switchTo(s);
+            switchHat('musician');
+            showToast(t('beatCreated', lang, { style: s.title.replace(/^Beat |\s*beat$/i, '') }));
+          }} />
       )}
 
       {toast && <div className="toast" role="status">{toast}</div>}

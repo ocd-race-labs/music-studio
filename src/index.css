@@ -553,3 +553,9 @@ input.field.num { width: 64px; text-align: center; }
 .col-credits summary { cursor: pointer; }
 .col-credits ul { margin: 6px 0; padding-left: 18px; }
 .col-credits a { color: inherit; }
+.ba-text { min-height: 64px; resize: vertical; font-size: 16px; }
+.ba-plan { gap: 12px; padding-top: 6px; border-top: 1px solid var(--line); }
+.ba-understood { margin: 0; display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.ba-understood svg { color: var(--main-text, var(--main)); flex: none; margin-top: 2px; }
+.ba-role { display: flex; flex-direction: column; gap: 4px; }
+.beat-btn svg { color: var(--main-text, var(--main)); }

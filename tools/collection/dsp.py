@@ -269,3 +269,17 @@ def slapback(x, delay_s, repeats=1, level_db=-12.0, lp=4000):
         shifted = np.vstack([np.zeros((d * r, 2), dtype=np.float32), echo * (g ** r)])
         out = mix(out, shifted)
     return out
+
+
+def vintage_sampler(x, rate=26040, bits=12, filter_hz=None, drive_db=0.0):
+    """An old sampler: drive into the converter, hold each sample (no anti-alias, no reconstruction filter),
+    fewer bits. 26.04 kHz / 12-bit is the classic boom bap sampler; 28 kHz / 8-bit the early drum machines."""
+    if drive_db:
+        x = sat(x, drive_db)
+    if filter_hz:
+        x = lp24(x, filter_hz)
+    step = SR / rate
+    idx = (np.floor(np.arange(len(x)) / step) * step).astype(int)
+    held = x[np.clip(idx, 0, len(x) - 1)]
+    q = 2 ** (bits - 1)
+    return (np.round(held * q) / q).astype(np.float32)

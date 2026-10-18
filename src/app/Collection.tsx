@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { entriesIn, entryOf, familiesIn, FAMILIES, GENRES, groupsIn, SOURCES } from '../packs/collection';
 import type { Family, Genre } from '../packs/collection';
-import { effectParams, findByKey, title as catalogTitle } from '../packs/core';
+import { effectParams, findByKey, rowsOf, title as catalogTitle } from '../packs/core';
 import { engine } from '../engine/engine';
 import type { CustomSound, FxChain, FxSlot, Lang, Song } from '../domain/types';
 import { newId, now } from '../domain/factory';
@@ -10,17 +10,13 @@ import { ChoiceParam, formatParam, PEDAL_BLURB } from './panels';
 import { Icon, Modal } from './ui';
 import { familyOf, rackBase, rackOf, targetTrack, templateFor } from './rack';
 
-/** The pieces of a full kit, in the order a drummer names them. */
-const PIECES: { voice: string; key: string }[] = [
-  { voice: 'kick', key: 'sound.kick' }, { voice: 'snare', key: 'sound.snare' },
-  { voice: 'tom1', key: 'sound.tom-1' }, { voice: 'tom2', key: 'sound.tom-2' },
-  { voice: 'hatClosed', key: 'sound.hat-closed' }, { voice: 'hatOpen', key: 'sound.hat-open' },
-  { voice: 'ride', key: 'sound.ride' }, { voice: 'crash', key: 'sound.crash' }, { voice: 'china', key: 'sound.china' },
-];
+/** The pieces of a kit, in the order its rows are named (a drummer's order for full kits). */
+const piecesOf = (instrumentKey: string): { voice: string; key: string }[] =>
+  rowsOf(instrumentKey).map((key) => ({ key, voice: String(findByKey(key)?.manifest.voice ?? key) }));
 
 /* ---------------------------------------------------------------- the Colección */
 
-export default function Collection({ song, selectedId, profileId, lang, sounds, onUse, onUseSound, onSaveSound, onDeleteSound, onClose }: {
+export default function Collection({ song, selectedId, profileId, lang, sounds, onUse, onUseSound, onSaveSound, onDeleteSound, onClose, onBeat }: {
   song: Song;
   selectedId: string | null;
   profileId: string;
@@ -31,6 +27,8 @@ export default function Collection({ song, selectedId, profileId, lang, sounds, 
   onSaveSound: (sound: CustomSound) => void;
   onDeleteSound: (id: string) => void;
   onClose: () => void;
+  /** Opens the beat assistant. */
+  onBeat?: () => void;
 }) {
   const [genre, setGenre] = useState<Genre>(GENRES[0].id);
   const families = familiesIn(genre);
@@ -77,6 +75,7 @@ export default function Collection({ song, selectedId, profileId, lang, sounds, 
       <div className="row wrap">
         <button type="button" className="btn" onClick={onClose}><Icon name="back" size={18} /> {t('console', lang)}</button>
         <h2 className="display grow" style={{ fontSize: 24 }}>{t('collection', lang)}</h2>
+        {onBeat && <button type="button" className="btn beat-btn" onClick={onBeat} title={t('beatOpenHint', lang)}><Icon name="music" size={18} /> {t('beatOpen', lang)}</button>}
       </div>
       <p className="muted" style={{ margin: 0 }}>{t('collectionHint', lang)}</p>
 
@@ -165,7 +164,7 @@ export default function Collection({ song, selectedId, profileId, lang, sounds, 
                   </div>
                   {isOpen && (
                     <div className="col-pads" role="group" aria-label={t('collectionPieces', lang)}>
-                      {PIECES.map((p) => (
+                      {piecesOf(e.instrument).map((p) => (
                         <button key={p.voice} type="button" className="col-pad" onPointerDown={() => engine.previewPiece(e.instrument, p.voice)}
                           onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); engine.previewPiece(e.instrument, p.voice); } }}>
                           {findByKey(p.key)?.title[lang] ?? p.voice}

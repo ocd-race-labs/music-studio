@@ -15,13 +15,20 @@ import soundfile as sf
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import dsp  # noqa: E402
-from recipes import KITS, CREDITS, BALANCE  # noqa: E402
+from recipes import KITS as ROCK, CREDITS as ROCK_CREDITS, BALANCE  # noqa: E402
+from recipes_beats import KITS as BEATS, CREDITS as BEAT_CREDITS  # noqa: E402
+
+KITS = ROCK + BEATS
+CREDITS = {**ROCK_CREDITS, **BEAT_CREDITS}
 
 DRUMS, APP = sys.argv[1], sys.argv[2]
 ONLY = set(sys.argv[3:])
-PIECES = ['kick', 'snare', 'tom1', 'tom2', 'hatClosed', 'hatOpen', 'ride', 'crash', 'china']
+PIECES_FULL = ['kick', 'snare', 'tom1', 'tom2', 'hatClosed', 'hatOpen', 'ride', 'crash', 'china']
+# Electronic and hip hop kits use the standard rows: kick, snare, clap, hats, rim, one tom, crash.
+PIECES_STANDARD = ['kick', 'snare', 'clap', 'hatClosed', 'hatOpen', 'rim', 'tom', 'crash']
 LAYERS = ['soft', 'mid', 'hard']
-MAX_S = {'kick': 1.3, 'snare': 1.6, 'tom1': 1.9, 'tom2': 2.3, 'hatClosed': 0.7, 'hatOpen': 1.7, 'ride': 2.6, 'crash': 3.0, 'china': 2.6}
+MAX_S = {'kick': 1.3, 'snare': 1.6, 'tom1': 1.9, 'tom2': 2.3, 'hatClosed': 0.7, 'hatOpen': 1.7, 'ride': 2.6, 'crash': 3.0, 'china': 2.6,
+         'clap': 1.2, 'rim': 0.6, 'tom': 1.6}
 # Soft, middle and hard where the touch changes the sound most; middle and hard for toms and cymbals (keeps kits small).
 LAYERS_OF = {'kick': ['soft', 'mid', 'hard'], 'snare': ['soft', 'mid', 'hard'], 'hatClosed': ['soft', 'mid', 'hard']}
 TWO = ['mid', 'hard']
@@ -30,13 +37,35 @@ TARGET_LUFS = -21.0  # the level every instrument and kit in the app is trimmed 
 SPEC_PATH = os.path.join(APP, 'src/packs/collection-drums.json')
 
 
-def src_file(source, piece, layer, rr, room=False):
+def src_file(source, piece, layer, rr, room=False, mic=None):
+    """A prepared hit: dry, its room mics, or another mic mix the library offers (e.g. 'retro')."""
     base = os.path.join(DRUMS, 'src', source, piece)
+    suffix = '.room' if room else (f'.{mic}' if mic else '')
     for r in (rr, 1):
-        p = os.path.join(base, f'{layer}_{r}{".room" if room else ""}.wav')
+        p = os.path.join(base, f'{layer}_{r}{suffix}.wav')
         if os.path.exists(p):
             return p
-    return None
+    return src_file(source, piece, layer, rr) if mic else None
+
+
+def rr_for(kit, piece):
+    pc = dict(kit.get('all', {}))
+    pc.update(kit['pieces'].get(piece, {}))
+    source = pc.get('source', kit['source'])
+    name = pc.get('use', piece)
+    has2 = os.path.exists(os.path.join(DRUMS, 'src', source, name, 'hard_2.wav'))
+    return ROUND_ROBINS.get(piece, 1) if has2 else 1
+
+
+def layers_for(kit, piece):
+    """Soft, middle and hard when the recording has them; one layer for one-shot sources (drum machines)."""
+    pc = dict(kit.get('all', {}))
+    pc.update(kit['pieces'].get(piece, {}))
+    source = pc.get('source', kit['source'])
+    name = pc.get('use', piece)
+    if not os.path.exists(os.path.join(DRUMS, 'src', source, name, 'mid_1.wav')):
+        return ['hard']
+    return LAYERS_OF.get(piece, TWO)
 
 
 def process(kit, piece, layer, rr):
@@ -46,12 +75,19 @@ def process(kit, piece, layer, rr):
     source = pc.get('source', kit['source'])
     name = pc.get('use', piece)  # e.g. snareAlt or snareRim instead of snare
     use_layer = pc.get('layers', {}).get(layer, layer)  # e.g. a "triggered" kick plays the hard sample at every level
-    dry_p = src_file(source, name, use_layer, rr)
+    dry_p = src_file(source, name, use_layer, rr, mic=pc.get('mic', kit.get('mic')))
     if dry_p is None:
         raise FileNotFoundError(f'{kit["id"]}: {source}/{name}/{use_layer}_{rr}')
     # Libraries that normalize every piece get a mixing balance first (a hi-hat is not as loud as a snare).
     bal = BALANCE.get(source, {}).get(name, 0) + pc.get('dry_db', 0)
     x = dsp.load(dry_p) * 10 ** (bal / 20)
+    # Layers from other sources (a sub under a kick, a clap under a snare), mixed before any processing.
+    for lsrc, lname, ldb in pc.get('layer', []):
+        lp_ = src_file(lsrc, lname, use_layer, rr) or src_file(lsrc, lname, 'hard', 1)
+        lx = dsp.load(lp_) * 10 ** ((ldb + BALANCE.get(lsrc, {}).get(lname, 0)) / 20)
+        if use_layer != 'hard' and not os.path.exists(os.path.join(DRUMS, 'src', lsrc, lname, f'{use_layer}_1.wav')):
+            lx = lx * 10 ** ({'soft': -10, 'mid': -4}.get(use_layer, 0) / 20)  # one-shot layers follow the touch by level
+        x = dsp.mix(x, lx)
     room_p = src_file(source, name, use_layer, rr, room=True)
     room_db = pc.get('room_mic_db', kit.get('room_mic_db'))
     if room_p and room_db is not None:
@@ -79,6 +115,9 @@ def process(kit, piece, layer, rr):
         x = dsp.sat(x, *pc['sat'])
     if pc.get('gate'):
         x = dsp.gate(x, *pc['gate'])
+    smp = pc.get('sampler', kit.get('sampler'))
+    if smp:
+        x = dsp.vintage_sampler(x, **smp)
     x = dsp.pan(x, pc.get('pan', 0))
     x = x * 10 ** (pc.get('gain_db', 0) / 20)
     # The room: a send into the kit's reverb (natural room or gated room).
@@ -109,10 +148,16 @@ def groove_render(hits_by_piece, bpm=100):
     out = np.zeros((n, 2), dtype=np.float32)
 
     def put(piece, s, vel):
-        layer = 2 if vel >= 0.8 else (1 if vel >= 0.5 else 0)
-        top = [0.5, 0.8, 1][layer]
+        layers = hits_by_piece[piece]
+        if len(layers) == 3:
+            layer = 2 if vel >= 0.8 else (1 if vel >= 0.5 else 0)
+            top = [0.5, 0.8, 1][layer]
+        elif len(layers) == 2:
+            layer, top = (1, 1) if vel >= 0.5 else (0, 0.5)
+        else:
+            layer, top = 0, 1
         g = max(0.3, (vel / top) ** 0.9)
-        x = hits_by_piece[piece][layer] * g
+        x = layers[layer] * g
         at = int(dsp.SR * (0.05 + s * step))
         m = min(len(x), n - at)
         out[at:at + m] += x[:m]
@@ -146,11 +191,12 @@ def build(kit):
     snare_name = kit['pieces'].get('snare', {}).get('use', 'snare')
     kit['_ref'] = dsp.peak_db(dsp.load(src_file(snare_src, snare_name, 'hard', 1))) + BALANCE.get(snare_src, {}).get(snare_name, 0) \
         + kit.get('all', {}).get('dry_db', 0)
+    pieces_list = PIECES_STANDARD if kit.get('rows') == 'standard' else PIECES_FULL
     rendered = {}
-    for piece in PIECES:
+    for piece in pieces_list:
         rendered[piece] = {}
-        for li, layer in enumerate(LAYERS_OF.get(piece, TWO)):
-            for rr in range(1, ROUND_ROBINS.get(piece, 1) + 1):
+        for li, layer in enumerate(layers_for(kit, piece)):
+            for rr in range(1, rr_for(kit, piece) + 1):
                 rendered[piece][(li, rr)] = process(kit, piece, layer, rr)
     meter = pyln.Meter(dsp.SR)
 
@@ -162,7 +208,7 @@ def build(kit):
         for p in rendered.values():
             for k in p:
                 p[k] = p[k] * g
-        test = groove_render({p: [rendered[p][(li, 1)] for li in range(3)] for p in ('kick', 'snare', 'hatClosed')})
+        test = groove_render({p: [rendered[p][(li, 1)] for li in range(len(layers_for(kit, p)))] for p in ('kick', 'snare', 'hatClosed')})
         lm = meter.integrated_loudness(test) - 3.01  # the app measured its mono kits on one channel
         return round(TARGET_LUFS - lm, 1), lm
 
@@ -185,11 +231,11 @@ def build(kit):
     pieces = {}
     total = 0
     with tempfile.TemporaryDirectory() as tmp:
-        for piece in PIECES:
+        for piece in pieces_list:
             layers = []
-            for li, layer in enumerate(LAYERS_OF.get(piece, TWO)):
+            for li, layer in enumerate(layers_for(kit, piece)):
                 takes = []
-                for rr in range(1, ROUND_ROBINS.get(piece, 1) + 1):
+                for rr in range(1, rr_for(kit, piece) + 1):
                     name = f'{piece}-{layer[0]}{rr}.mp3'
                     wav = os.path.join(tmp, name + '.wav')
                     sf.write(wav, rendered[piece][(li, rr)], dsp.SR, subtype='FLOAT')
@@ -203,7 +249,8 @@ def build(kit):
             if piece == 'hatClosed':
                 spec['chokes'] = ['hatOpen']
             pieces[piece] = spec
-    sources = sorted({kit['source'], *[pc.get('source', kit['source']) for pc in kit['pieces'].values()]})
+    sources = sorted({kit['source'], *[pc.get('source', kit['source']) for pc in kit['pieces'].values()],
+                      *[l[0] for pc in kit['pieces'].values() for l in pc.get('layer', [])]})
     print(f'   trim {trim:+.1f} dB ({lufs_mono_equiv:.1f} LUFS before), {total / 1024:.0f} KB, sources {sources}', flush=True)
     return {
         'id': kid, 'trimDb': trim, 'pieces': pieces,

@@ -239,9 +239,9 @@ describe('full kits (Colección)', () => {
     expect(hitsOf(back, 'sound.hat-closed')).toContain(1);
   });
 
-  it('every Colección kit is a drum kit with the nine pieces', () => {
+  it('every Colección kit has the nine pieces of a full kit or the eight standard rows', () => {
     for (const i of INSTRUMENTS.filter((x) => x.pack === 'collection' && isDrumKit(x.key))) {
-      expect(rowsOf(i.key), i.key).toHaveLength(9);
+      expect([8, 9], i.key).toContain(rowsOf(i.key).length);
       for (const row of rowsOf(i.key)) expect(rowVoice(i.key, row), `${i.key} ${row}`).toBeTruthy();
     }
   });

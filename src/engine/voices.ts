@@ -35,12 +35,19 @@ function polyVoice(synth: Tone.PolySynth, output: Tone.ToneAudioNode, extra: Ton
   };
 }
 
-function monoVoice(synth: Tone.MonoSynth | Tone.MembraneSynth, output: Tone.ToneAudioNode): MelodicVoice {
+type MonoLike = Tone.MonoSynth | Tone.MembraneSynth | Tone.FMSynth;
+
+function monoVoice(synth: MonoLike, output: Tone.ToneAudioNode): MelodicVoice {
+  // One note at a time: a chord on a mono synth plays its notes a hair apart (the last one sounds),
+  // because the synth refuses two starts at the same instant.
+  let last = -1;
   return {
     kind: 'melodic',
     output,
     play(midi, dur, time, vel, a4) {
-      synth.triggerAttackRelease(hz(midi, a4), dur, time, vel);
+      const t = time <= last ? last + 0.001 : time;
+      last = t;
+      synth.triggerAttackRelease(hz(midi, a4), dur, t, vel);
     },
     dispose() {
       synth.dispose();
@@ -49,7 +56,7 @@ function monoVoice(synth: Tone.MonoSynth | Tone.MembraneSynth, output: Tone.Tone
 }
 
 /** Effects that live inside an instrument (an amp, a vibrato): chained in order after the synth. */
-function chain(synth: Tone.PolySynth | Tone.MonoSynth | Tone.MembraneSynth, nodes: Tone.ToneAudioNode[]): Tone.ToneAudioNode {
+function chain(synth: Tone.PolySynth | MonoLike, nodes: Tone.ToneAudioNode[]): Tone.ToneAudioNode {
   let prev: Tone.ToneAudioNode = synth;
   for (const n of nodes) { prev.connect(n); prev = n; }
   return prev;
@@ -59,7 +66,7 @@ function poly(synth: Tone.PolySynth, nodes: Tone.ToneAudioNode[] = []): MelodicV
   return polyVoice(synth, chain(synth, nodes), nodes);
 }
 
-function mono(synth: Tone.MonoSynth | Tone.MembraneSynth, nodes: Tone.ToneAudioNode[] = []): MelodicVoice {
+function mono(synth: MonoLike, nodes: Tone.ToneAudioNode[] = []): MelodicVoice {
   const out = chain(synth, nodes);
   const v = monoVoice(synth, out);
   return { ...v, dispose() { synth.dispose(); nodes.forEach((n) => n.dispose()); } };
@@ -186,6 +193,69 @@ const MELODIC: Record<string, () => MelodicVoice> = {
     envelope: { attack: 0.003, decay: 0.3, sustain: 0.7, release: 0.25 },
     filterEnvelope: { attack: 0.003, decay: 0.2, sustain: 0.6, release: 0.2, baseFrequency: 900, octaves: 2 }, volume: -22,
   }), [new Tone.Distortion(0.7), lowpass(3200)]),
+  /* Colección electronic and hip hop voices: classic synth patches, named by what they are, not by the machines. */
+  // Acid line: a saw through a squelchy resonant filter that snaps shut, gliding between notes.
+  acid: () => mono(new Tone.MonoSynth({
+    oscillator: { type: 'sawtooth' }, portamento: 0.035, filter: { Q: 9, type: 'lowpass', rolloff: -24 },
+    envelope: { attack: 0.002, decay: 0.25, sustain: 0.4, release: 0.06 },
+    filterEnvelope: { attack: 0.002, decay: 0.16, sustain: 0.05, release: 0.08, baseFrequency: 260, octaves: 4.2 }, volume: -14,
+  })),
+  // Reese: two detuned saws beating against each other, low-passed: the drum and bass growl.
+  reese: () => mono(new Tone.MonoSynth({
+    oscillator: { type: 'fatsawtooth', count: 3, spread: 24 } as Tone.OmniOscillatorOptions, filter: { Q: 1, type: 'lowpass', rolloff: -24 },
+    envelope: { attack: 0.01, decay: 0.3, sustain: 0.9, release: 0.15 },
+    filterEnvelope: { attack: 0.02, decay: 0.4, sustain: 0.6, release: 0.2, baseFrequency: 220, octaves: 2.2 }, volume: -8,
+  })),
+  // Sub: a pure low sine you feel more than hear.
+  sub: () => mono(new Tone.MonoSynth({
+    oscillator: { type: 'sine' }, filter: { type: 'lowpass', frequency: 300, rolloff: -12 },
+    envelope: { attack: 0.008, decay: 0.2, sustain: 0.9, release: 0.12 },
+    filterEnvelope: { attack: 0.001, decay: 0.1, sustain: 1, release: 0.1, baseFrequency: 300, octaves: 0 }, volume: -15,
+  })),
+  // Wobble: a square-saw bass whose filter is moved by the chain's filter sweep.
+  wobble: () => mono(new Tone.MonoSynth({
+    oscillator: { type: 'fatsquare', count: 2, spread: 12 } as Tone.OmniOscillatorOptions, filter: { Q: 4, type: 'lowpass', rolloff: -24 },
+    envelope: { attack: 0.005, decay: 0.2, sustain: 0.9, release: 0.1 },
+    filterEnvelope: { attack: 0.005, decay: 0.2, sustain: 0.8, release: 0.1, baseFrequency: 400, octaves: 2.5 }, volume: -12,
+  })),
+  // Long 808: a tuned, booming sine with a pitch drop; the trap and drill bass.
+  bass808long: () => mono(new Tone.MembraneSynth({
+    pitchDecay: 0.06, octaves: 2, oscillator: { type: 'sine' },
+    envelope: { attack: 0.003, decay: 2.4, sustain: 0.25, release: 0.4 }, volume: -10,
+  })),
+  // Sliding 808 for drill: the same boom gliding from note to note.
+  bass808slide: () => mono(new Tone.MonoSynth({
+    oscillator: { type: 'sine' }, portamento: 0.09, filter: { type: 'lowpass', frequency: 900, rolloff: -12 },
+    envelope: { attack: 0.004, decay: 1.6, sustain: 0.45, release: 0.3 },
+    filterEnvelope: { attack: 0.001, decay: 0.05, sustain: 1, release: 0.1, baseFrequency: 900, octaves: 0 }, volume: -11,
+  })),
+  // Organ bass: a round, short organ-like tone (deep house).
+  organBass: () => mono(new Tone.MonoSynth({
+    oscillator: { type: 'custom', partials: [1, 0.55, 0.25, 0.12] } as Tone.OmniOscillatorOptions, filter: { Q: 0.5, type: 'lowpass', rolloff: -12 },
+    envelope: { attack: 0.004, decay: 0.28, sustain: 0.25, release: 0.08 },
+    filterEnvelope: { attack: 0.002, decay: 0.2, sustain: 0.5, release: 0.1, baseFrequency: 500, octaves: 1.5 }, volume: -5,
+  })),
+  // FM bass: a metallic, rubbery tone (techno, IDM).
+  fmBass: () => mono(new Tone.FMSynth({
+    harmonicity: 1, modulationIndex: 6, oscillator: { type: 'sine' }, modulation: { type: 'square' },
+    envelope: { attack: 0.002, decay: 0.3, sustain: 0.4, release: 0.1 },
+    modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0.2, release: 0.1 }, volume: 2,
+  })),
+  // Chord stab: a short bright chord hit (house, techno dub chords).
+  stab: () => poly(new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'fatsawtooth', count: 3, spread: 14 }, envelope: { attack: 0.003, decay: 0.22, sustain: 0.05, release: 0.15 }, volume: 0,
+  }), [lowpass(3200)]),
+  // Whine lead: a high saw sliding between notes with a slow vibrato (west coast).
+  whine: () => mono(new Tone.MonoSynth({
+    oscillator: { type: 'sawtooth' }, portamento: 0.12, filter: { Q: 1, type: 'lowpass', rolloff: -12 },
+    envelope: { attack: 0.03, decay: 0.2, sustain: 0.85, release: 0.25 },
+    filterEnvelope: { attack: 0.02, decay: 0.3, sustain: 0.8, release: 0.3, baseFrequency: 1800, octaves: 1 }, volume: -10,
+  }), [vibrato(5.2, 0.12)]),
+  // Drone pad: a slow-blooming wide pad for ambient.
+  drone: () => poly(new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'fatsawtooth', count: 5, spread: 30 },
+    envelope: { attack: 1.8, decay: 1, sustain: 0.85, release: 3 }, volume: -12,
+  }), [lowpass(1100)]),
   guitarNylon: () => poly(new Tone.PolySynth(Tone.Synth, {
     oscillator: { type: 'triangle' }, envelope: { attack: 0.003, decay: 0.9, sustain: 0.05, release: 0.6 }, volume: -10,
   }), [lowpass(2200)]),

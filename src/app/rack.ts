@@ -27,6 +27,16 @@ const RACKS: Record<Family, Rack> = {
     ['effect.delay', false],
     ['effect.reverb', true, { mix: 0.15, size: 1.8 }],
   ],
+  synth: [
+    ['effect.preamp', false, { character: 1, drive: 0.3 }],
+    ['effect.comp-studio', false, { style: 2, amount: 0.4, mix: 1 }],
+    ['effect.eq', true],
+    ['effect.lofi', false, { mix: 0.6, bits: 12, tone: 4000 }],
+    ['effect.tape', false, { speed: 0, drive: 0.4, mix: 1 }],
+    ['effect.chorus', false],
+    ['effect.delay', false],
+    ['effect.reverb', true, { mix: 0.2, size: 2 }],
+  ],
   bass: [
     ['effect.amp', true, { model: 3, gain: 0.3 }],
     ['effect.cab', true, { model: 3, mic: 0.3 }],
@@ -52,13 +62,8 @@ export const familyOf = (instrumentKey: string): Family => {
   return 'guitar';
 };
 
-/** What a saved sound is built on: a drum kit as it is, or the guitar or bass recording before any gear. */
-export const rackBase = (instrumentKey: string): string => {
-  const e = entryOf(instrumentKey);
-  if (e?.family === 'guitar') return 'instrument.guitar-di';
-  if (e?.family === 'bass') return 'instrument.bass-di';
-  return instrumentKey;
-};
+/** What a saved sound is built on: the Colección sound itself; the saved chain then replaces its own gear. */
+export const rackBase = (instrumentKey: string): string => instrumentKey;
 
 /** A chain to start shaping from: the entry's own gear (a guitar's amp and cabinet), or the family's starting rack. */
 export function rackOf(instrumentKey: string): FxChain {

@@ -20,6 +20,8 @@ import type { Pedal } from './pedals';
 
 interface TrackChannel {
   instrumentKey: string;
+  /** The instrument plus whether a saved sound replaces its gear: a change rebuilds the voice. */
+  voiceKey: string;
   voice: Voice;
   /** The pedal chain, in the song's order; rebuilt when pedals are added, removed or moved. */
   pedals: { key: string; pedal: Pedal | null }[];
@@ -169,9 +171,9 @@ export class StudioEngine {
     const seen = new Set<string>();
     for (const t of song.tracks) {
       seen.add(t.id);
-      const key = t.instrument?.key ?? '';
+      const key = voiceKey(t);
       let ch = this.channels.get(t.id);
-      if (ch && ch.instrumentKey !== key) {
+      if (ch && ch.voiceKey !== key) {
         this.disposeChannel(ch);
         ch = undefined;
       }
@@ -191,12 +193,12 @@ export class StudioEngine {
 
   private createChannel(t: Track): TrackChannel {
     const item = t.instrument ? findItem(t.instrument) : undefined;
-    const voice = buildVoice(item?.manifest);
+    const voice = buildVoice(item?.manifest, !t.sound);
     const channel = new Tone.Channel({ volume: 0, pan: 0 });
     const meter = new Tone.Meter({ smoothing: 0.6 });
     channel.connect(this.master!);
     channel.connect(meter);
-    const ch: TrackChannel = { instrumentKey: t.instrument?.key ?? '', voice, pedals: [], chainSig: '', channel, meter };
+    const ch: TrackChannel = { instrumentKey: t.instrument?.key ?? '', voiceKey: voiceKey(t), voice, pedals: [], chainSig: '', channel, meter };
     this.buildChain(ch, t);
     return ch;
   }
@@ -422,7 +424,8 @@ export class StudioEngine {
     const token = ++this.grooveToken;
     if (!(await loadInstrument(findByKey(instrumentKey)?.manifest))) return 0;
     if (token !== this.grooveToken) return 0;
-    const voice = buildVoice(findByKey(instrumentKey)?.manifest);
+    // A chain being shaped (or a saved sound) replaces the instrument's own gear, as it does on a track.
+    const voice = buildVoice(findByKey(instrumentKey)?.manifest, !chain);
     this.groove = voice;
     // Through a studio chain when one is being shaped (Colección rack), straight to the speakers otherwise.
     this.groovePedals = (chain?.slots ?? []).map((slot) => {
@@ -447,11 +450,12 @@ export class StudioEngine {
       return repeats * span * step + 0.8;
     }
     const span = groove.bars * 16;
+    const swing = Math.max(0, (groove.swing ?? 0.5) - 0.5) * 2 * step;
     for (let r = 0; r < repeats; r++) {
       for (const [name, steps] of Object.entries(groove.steps)) {
         for (const s of steps ?? []) {
           const soft = groove.soft?.[name]?.includes(s);
-          voice.hit(name, t0 + (r * span + s) * step, soft ? 0.42 : s % 4 === 0 ? 0.95 : 0.8);
+          voice.hit(name, t0 + (r * span + s) * step + (s % 2 === 1 ? swing : 0), soft ? 0.42 : s % 4 === 0 ? 0.95 : 0.8);
         }
       }
     }
@@ -507,6 +511,9 @@ export class StudioEngine {
   }
 }
 
+/** What decides a track's voice: its instrument, and whether a saved sound replaces the instrument's own gear. */
+const voiceKey = (t: Track): string => `${t.instrument?.key ?? ''}${t.sound ? '+sound' : ''}`;
+
 /** What decides the wiring of a track: its saved sound's chain, then its pedals. */
 const chainSig = (t: Track): string =>
   [...(t.sound?.chain.slots ?? []).map((x) => `s:${x.effect.key}`), ...t.fx_chain.slots.map((x) => x.effect.key)].join('|');
@@ -547,15 +554,19 @@ function withGear(voice: Voice, chain: ChainSpec | undefined, trimDb: number): V
   return { ...voice, output: out, dispose() { inner(); pedals.forEach((p) => p?.dispose()); out.dispose(); } } as Voice;
 }
 
-/** The voice that plays an instrument: a recorded kit, a recorded guitar or bass with its gear, or a synthesized one. */
-function buildVoice(manifest: Record<string, unknown> | undefined): Voice {
+/**
+ * The voice that plays an instrument: a recorded kit, a recorded guitar or bass, or a synthesized voice, each
+ * through its own gear. A saved sound brings its own chain, which replaces that gear (ownGear false).
+ */
+function buildVoice(manifest: Record<string, unknown> | undefined, ownGear = true): Voice {
   const m = (manifest ?? {}) as NonNullable<Manifest>;
   const spec = sampledSpec(manifest);
   if (spec) return createSampledKit(spec);
-  if (m.type === 'sampler' && m.set && SAMPLERS[m.set]) {
-    return withGear(createSampler(SAMPLERS[m.set], { mono: m.mono, release: m.mono ? 0.06 : 0.14 }), m.chain, m.trimDb ?? 0);
-  }
-  return m.type === 'drumkit' ? createDrumKit(m.kit ?? 'boomBap') : createMelodicVoice(m.voice ?? 'keysEp');
+  if (m.type === 'drumkit') return createDrumKit(m.kit ?? 'boomBap');
+  const voice = m.type === 'sampler' && m.set && SAMPLERS[m.set]
+    ? createSampler(SAMPLERS[m.set], { mono: m.mono, release: m.mono ? 0.06 : 0.14 })
+    : createMelodicVoice(m.voice ?? 'keysEp');
+  return withGear(voice, ownGear ? m.chain : undefined, m.trimDb ?? 0);
 }
 
 export const engine = new StudioEngine();

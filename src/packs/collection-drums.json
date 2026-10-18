@@ -481,7 +481,7 @@
  },
  "rock-alt-2000": {
   "id": "rock-alt-2000",
-  "trimDb": 0.6,
+  "trimDb": 0.7,
   "pieces": {
    "kick": {
     "layers": [
@@ -597,7 +597,7 @@
   },
   "license": "CC-BY 4.0",
   "source": "MuldjordKit by Lars Muldjord / DrumGizmo",
-  "bytes": 544043
+  "bytes": 552454
  },
  "rock-garage": {
   "id": "rock-garage",
@@ -841,7 +841,7 @@
  },
  "metal-modern": {
   "id": "metal-modern",
-  "trimDb": -0.7,
+  "trimDb": -0.5,
   "pieces": {
    "kick": {
     "layers": [
@@ -957,7 +957,7 @@
   },
   "license": "CC-BY 4.0",
   "source": "MuldjordKit by Lars Muldjord / DrumGizmo",
-  "bytes": 377638
+  "bytes": 377272
  },
  "punk-77": {
   "id": "punk-77",
@@ -1197,6 +1197,1301 @@
   },
   "license": "Public domain (free use)",
   "source": "SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
-  "bytes": 492110
+  "bytes": 499421
+ },
+ "el-house": {
+  "id": "el-house",
+  "trimDb": -8.0,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 108603
+ },
+ "el-deephouse": {
+  "id": "el-deephouse",
+  "trimDb": -4.1,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 121404
+ },
+ "el-techno": {
+  "id": "el-techno",
+  "trimDb": -10.0,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 133107
+ },
+ "el-edm": {
+  "id": "el-edm",
+  "trimDb": -3.2,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio) + Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 147736
+ },
+ "el-dnb": {
+  "id": "el-dnb",
+  "trimDb": -1.0,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-m1.mp3"
+     ],
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-m1.mp3"
+     ],
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC-BY 4.0 + Original (Music Studio) + Original (Music Studio) + CC-BY 4.0",
+  "source": "DRSKit by DrumGizmo (Lars Muldjord, Bent Bisballe Nyeng) and Jes Eiler / DRSDrums; Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio; MuldjordKit by Lars Muldjord / DrumGizmo",
+  "bytes": 273277
+ },
+ "el-jungle": {
+  "id": "el-jungle",
+  "trimDb": -2.0,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-m1.mp3"
+     ],
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-m1.mp3"
+     ],
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-m1.mp3"
+     ],
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Public domain (free use)",
+  "source": "SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 271131
+ },
+ "el-dubstep": {
+  "id": "el-dubstep",
+  "trimDb": -3.0,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio) + Original (Music Studio) + CC-BY 4.0",
+  "source": "Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio; MuldjordKit by Lars Muldjord / DrumGizmo",
+  "bytes": 245236
+ },
+ "el-ambient": {
+  "id": "el-ambient",
+  "trimDb": -1.4,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 333155
+ },
+ "hh-oldschool": {
+  "id": "hh-oldschool",
+  "trimDb": -0.2,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 107140
+ },
+ "hh-trap": {
+  "id": "hh-trap",
+  "trimDb": -2.9,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio) + Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 127255
+ },
+ "hh-drill": {
+  "id": "hh-drill",
+  "trimDb": -2.3,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio) + Original (Music Studio)",
+  "source": "Analog-style drum machine, synthesized for Music Studio; Analog-style drum machine, synthesized for Music Studio",
+  "bytes": 114454
+ },
+ "el-triphop": {
+  "id": "el-triphop",
+  "trimDb": -2.8,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-m1.mp3"
+     ],
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-m1.mp3"
+     ],
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC0 1.0 + Original (Music Studio) + Public domain (free use)",
+  "source": "Gogodze Phu Vol II by Karoryfer Samples; Analog-style drum machine, synthesized for Music Studio; SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 433828
+ },
+ "el-idm": {
+  "id": "el-idm",
+  "trimDb": -1.9,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio) + Public domain",
+  "source": "Analog-style drum machine, synthesized for Music Studio; TR-707 samples recorded by Francois Dion",
+  "bytes": 47164
+ },
+ "hh-boombap": {
+  "id": "hh-boombap",
+  "trimDb": -2.4,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-m1.mp3"
+     ],
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-m1.mp3"
+     ],
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC0 1.0 + Original (Music Studio) + Public domain (free use)",
+  "source": "Gogodze Phu Vol II by Karoryfer Samples; Analog-style drum machine, synthesized for Music Studio; SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 380802
+ },
+ "hh-lofi": {
+  "id": "hh-lofi",
+  "trimDb": -3.8,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3"
+     ],
+     [
+      "hatClosed-m1.mp3",
+      "hatClosed-m2.mp3"
+     ],
+     [
+      "hatClosed-h1.mp3",
+      "hatClosed-h2.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-m1.mp3"
+     ],
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-m1.mp3"
+     ],
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-m1.mp3"
+     ],
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC0 1.0 + Original (Music Studio) + Public domain (free use)",
+  "source": "Gogodze Phu Vol II by Karoryfer Samples; Analog-style drum machine, synthesized for Music Studio; SM Drums by Scott McLean, Tod Stillwell and Suleiman Ali",
+  "bytes": 433097
+ },
+ "hh-westcoast": {
+  "id": "hh-westcoast",
+  "trimDb": -0.3,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-h1.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-h1.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-h1.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-h1.mp3"
+     ]
+    ],
+    "chokes": [
+     "hatOpen"
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-h1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-h1.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "Original (Music Studio) + Public domain",
+  "source": "Analog-style drum machine, synthesized for Music Studio; TR-707 samples recorded by Francois Dion",
+  "bytes": 117015
  }
 }
