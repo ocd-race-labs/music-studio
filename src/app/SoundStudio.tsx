@@ -412,6 +412,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   const kitName = (s: StarredInstrument) => s.sound?.name ?? nameOf(s.key, lang);
   const browser = (
     <section className="es-browser" aria-label={t('esCatalog', lang)}>
+      <div className="es-browser-top">
       <div className="es-browser-head">
         <div className="seg" role="group" aria-label={t('esSources', lang)}>
           <button type="button" aria-pressed={source === 'catalog'} onClick={() => setSource('catalog')}>{t('esCatalog', lang)}</button>
@@ -425,8 +426,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
         </label>
         <button type="button" className="btn small-btn beat-btn" onClick={onBeat} title={t('beatOpenHint', lang)}><Icon name="music" size={16} /> <span className="hide-sm">{t('beatOpen', lang)}</span></button>
       </div>
-
-      {source === 'catalog' && (<>
+      {source === 'catalog' && (
         <div className="es-filters">
           {!q && (
             <div className="seg small-seg" role="group" aria-label={t('genre', lang)}>
@@ -445,20 +445,26 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
             <span>{t('esFitOnly', lang, { track: track.name })}</span>
           </label>
         </div>
+      )}
+      </div>
+
+      <div className="es-browser-body">
+      {source === 'catalog' && (<>
         {suggestions.length > 0 && (
           <div className="es-group es-suggest" role="group" aria-label={t('esSuggested', lang)}>
             <h3 className="ss-group-title">{t('esSuggested', lang)} <span className="muted es-suggest-hint">{t('esSuggestedHint', lang)}</span></h3>
             <div className="es-cards">{suggestions.map((s) => entryCard(s.entry, s.reasons[0]))}</div>
           </div>
         )}
+        <div className="es-groups">
         {groups.map((g) => (
-          <div key={g.id} className="es-group" role="group" aria-label={g.title}>
+          <div key={g.id} className={`es-group${g.items.length > 6 ? ' wide' : ''}`} role="group" aria-label={g.title}>
             <h3 className="ss-group-title">{g.title}</h3>
             <div className="es-cards">{g.items.map((e) => entryCard(e))}</div>
           </div>
         ))}
         {cores.length > 0 && KITS.filter((k) => cores.some((x) => x.kit.key === k.key)).map((k) => (
-          <div key={k.key} className="es-group" role="group" aria-label={k.title[lang]}>
+          <div key={k.key} className={`es-group${cores.filter((x) => x.kit.key === k.key).length > 6 ? ' wide' : ''}`} role="group" aria-label={k.title[lang]}>
             <h3 className="ss-group-title">{t('esCoreGroup', lang, { kit: k.title[lang] })}</h3>
             <div className="es-cards">
               {cores.filter((x) => x.kit.key === k.key).map((x) => card(`c:${x.key}`, nameOf(x.key, lang), ROLE_NAMES[lang][x.role], (listen) => loadCatalog(x.key, listen),
@@ -466,6 +472,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
             </div>
           </div>
         ))}
+        </div>
         {!entries.length && !cores.length && <p className="muted">{fitOnly ? t('esNothingFits', lang, { track: track.name }) : t('ssNothing', lang)}</p>}
         <details className="small muted col-credits">
           <summary>{t('ssCredits', lang)}</summary>
@@ -495,8 +502,9 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
             <button type="button" className="btn small-btn primary" disabled={!starred.length} onClick={onNewWithKit}><Icon name="plus" size={16} /> {t('myKitNew', lang)}</button>
           </div>
           {!starred.length && <p className="muted">{t('esKitEmpty', lang)}</p>}
+          <div className="es-groups">
           {ROLES.filter((r) => starred.some((s) => s.role === r)).map((r) => (
-            <div key={r} className="es-group" role="group" aria-label={ROLE_NAMES[lang][r]}>
+            <div key={r} className={`es-group${starred.filter((s) => s.role === r).length > 6 ? ' wide' : ''}`} role="group" aria-label={ROLE_NAMES[lang][r]}>
               <h3 className="ss-group-title">{ROLE_NAMES[lang][r]}</h3>
               <div className="es-cards">
                 {starred.filter((s) => s.role === r).map((s) => (
@@ -510,8 +518,10 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
+      </div>
     </section>
   );
 

@@ -597,7 +597,15 @@ input.field.num { width: 64px; text-align: center; }
 .es-work { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .es-work.split { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); }
 .es-browser, .es-inspector, .es-panel, .es-unit { min-height: 0; overflow: auto; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); padding: 12px 14px; }
-.es-browser { display: flex; flex-direction: column; gap: 10px; }
+.es-browser { display: flex; flex-direction: column; padding: 0; }
+/* The browser's controls stay on top while its sounds scroll under them. */
+.es-browser-top { position: sticky; top: 0; z-index: 5; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px 10px; background: var(--panel); border-bottom: 1px solid var(--line); border-radius: 16px 16px 0 0; }
+.es-browser-body { display: flex; flex-direction: column; gap: 12px; padding: 10px 14px 14px; }
+/* Subgenres side by side, each a column of its sounds; a big one takes two columns. */
+.es-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; align-items: start; }
+.es-groups .es-group .es-cards { grid-template-columns: minmax(0, 1fr); }
+.es-groups .es-group.wide { grid-column: span 2; }
+.es-groups .es-group.wide .es-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .es-browser-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .es-browser-head .ss-search { min-width: 170px; flex: 1 1 200px; }
 .es-browser-head .seg button { display: inline-flex; align-items: center; gap: 6px; }
@@ -650,6 +658,9 @@ input.field.num { width: 64px; text-align: center; }
   .es-work, .es-work.split { overflow: visible; }
   .es-listen { margin-left: 0; }
   .es-cards { grid-template-columns: minmax(0, 1fr); }
+  .es-groups { grid-template-columns: minmax(0, 1fr); }
+  .es-groups .es-group.wide { grid-column: auto; }
+  .es-groups .es-group.wide .es-cards { grid-template-columns: minmax(0, 1fr); }
   .es-bar { position: sticky; bottom: 8px; z-index: 20; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25); }
   .es-fit { margin-left: 0; }
   .es-bar > .stack .small { display: none; }
