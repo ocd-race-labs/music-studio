@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import { title as catalogTitle } from '../packs/core';
-import { chordMidi, chordSymbol, diatonicTriads, noteNameDisplay, parseSpelling, spellInKey, tierOf } from '../theory';
+import { chordMidi, chordSymbol, diatonicTriads, noteNameDisplay, parseSpelling, spellingPc, spellInKey, tierOf } from '../theory';
 import type { Chord, Key, Naming, Tier } from '../theory';
 import type { ChordsContent, Lang, NotesContent, PatternContent, Section, Song, Track } from '../domain/types';
 import { BAR_TICKS, STEP_TICKS } from '../domain/types';
@@ -21,6 +21,11 @@ function spellTitle(midi: number, spell: string | undefined, naming: Naming): st
 }
 
 export const songKey = (song: Song): Key => ({ tonic: song.key_tonic, mode: song.key_mode });
+
+/** True for the tonic in any octave: home, the note the key is named after. */
+export const isHome = (midi: number, key: Key): boolean => {
+  try { return ((midi % 12) + 12) % 12 === spellingPc(parseSpelling(key.tonic)); } catch { return false; }
+};
 
 /** The chord playing in a bar, from the Chords track. */
 export function chordAtBar(song: Song, bar: number): Chord | null {
@@ -151,7 +156,7 @@ const NoteCells = memo(function NoteCells({ pitches, view, from, to, cell, keyNa
             <button
               key={`${m}-${s}`}
               type="button"
-              className={`ncell${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}${tier === 'chord' ? ' chordrow' : tier === 'scale' ? ' inscale' : ''}`}
+              className={`ncell${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}${isHome(m, keyName) ? ' homerow' : tier === 'chord' ? ' chordrow' : tier === 'scale' ? ' inscale' : ''}`}
               aria-label={t('stepN', lang, { row: name, n: s + 1 })}
               data-m={m}
               data-s={s}
@@ -314,7 +319,7 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
               const name = noteNameDisplay(m, spellInKey(m, key), namingFor(lang));
               return (
                 <button key={m} type="button" className="plabel" onPointerDown={() => onPreview(m)} aria-label={`${name}, ${tierWord(tier, lang)}`}>
-                  <span className={`dot ${tier}`} aria-hidden="true" />{name}
+                  <span className={`dot ${tier}${isHome(m, key) ? ' tonic' : ''}`} aria-hidden="true" />{name}
                 </button>
               );
             })}
@@ -325,7 +330,7 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
           {visible.map((n) => {
             const bar = Math.floor(n.tick / BAR_TICKS);
             const tier = tierOf(n.midi, key, chordAtBar(song, bar));
-            return <div key={n.id} className={`note ${tier}`} style={noteBox(n.midi, n.tick / STEP_TICKS, n.dur / STEP_TICKS)} title={spellTitle(n.midi, n.spell, namingFor(lang))} />;
+            return <div key={n.id} className={`note ${tier}${isHome(n.midi, key) ? ' tonic' : ''}`} style={noteBox(n.midi, n.tick / STEP_TICKS, n.dur / STEP_TICKS)} title={spellTitle(n.midi, n.spell, namingFor(lang))} />;
           })}
           {ghost && <div className="note ghost" style={noteBox(ghost.midi, ghost.from, ghost.to - ghost.from + 1)} aria-hidden="true" />}
           <Playhead local={step >= view.start && step < view.start + view.length ? step - view.start : -1} offset={NOTE_LABEL} pitch={pitch} cell={cell} top={top} height={rowsH - GAP} />
@@ -337,49 +342,96 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
 
 /* ---------------------------------------------------------------- chords */
 
-export function ChordLane({ song, track, step, lang, view, onSet, onPreview }: {
+/**
+ * Chords sideways, like the grid: one square per bar with its chord, under the same bar ruler and sections, so a
+ * 96-bar song scrolls left and right instead of growing down. One picker below writes the chord of the chosen bar
+ * and moves on to the next bar, so a progression goes in with a tap per bar.
+ */
+export function ChordLane({ song, track, step, lang, width, frame, onSet, onPreview }: {
   song: Song;
   track: Track;
   step: number;
   lang: Lang;
-  view: View;
+  width: number;
+  frame: GridFrame;
   onSet: (bar: number, degree: number | null) => void;
   onPreview: (midis: number[]) => void;
 }) {
+  const { view } = frame;
+  const naming = namingFor(lang);
   const triads = diatonicTriads(songKey(song));
   const chords = (track.clips[0].content as ChordsContent).chords;
   const firstBar = Math.floor(view.start / 16);
-  const bars = Math.max(1, Math.round(view.length / 16));
+  const viewBars = Math.max(1, Math.round(view.length / 16));
+  const lastBar = firstBar + viewBars - 1;
+  // A bar is as wide as fits 8 on screen, between a tap-friendly minimum and a comfortable maximum.
+  const barW = Math.max(84, Math.min(180, Math.floor((width - DRUM_LABEL) / Math.min(viewBars, 8))));
+  const pitch = barW / 16;
+  const scroller = useRef<HTMLDivElement>(null);
+  const { win } = useStepWindow(scroller, view, pitch, DRUM_LABEL, frame.onFirstBar);
+  useScrollControl(scroller, view, pitch, DRUM_LABEL, step, frame.jump);
+  const [picked, setPicked] = useState(firstBar);
+  const sel = Math.min(lastBar, Math.max(firstBar, picked));
   const playingBar = step >= 0 ? Math.floor(step / 16) : -1;
+  const chordAt = (bar: number) => chords.find((c) => c.tick === bar * BAR_TICKS);
+  const current = chordAt(sel);
+  const fromBar = Math.floor((view.start + win.from) / 16);
+  const toBar = Math.min(lastBar + 1, Math.ceil((view.start + win.to) / 16));
+  const top = RULER_H + GAP;
+  const choose = (degree: number) => {
+    onSet(sel, degree);
+    onPreview(chordMidi(triads[degree], 52));
+    if (sel < lastBar) setPicked(sel + 1);
+  };
+  const tapBar = (bar: number) => {
+    if (frame.marking) { frame.onBarTap(bar); return; }
+    setPicked(bar);
+    const c = chordAt(bar);
+    if (c && triads[c.degree]) onPreview(chordMidi(triads[c.degree], 52));
+  };
+  const cells = [];
+  for (let bar = fromBar; bar < toBar; bar++) {
+    const c = chordAt(bar);
+    const triad = c ? triads[c.degree] : null;
+    cells.push(
+      <button key={bar} type="button" className={`chordcell${bar === sel ? ' sel' : ''}${bar === playingBar ? ' playing' : ''}${triad ? '' : ' empty'}`}
+        style={{ left: DRUM_LABEL + (bar * 16 - view.start) * pitch, top, width: barW - GAP }}
+        onClick={() => tapBar(bar)} onMouseDown={(e) => e.preventDefault()}
+        aria-pressed={bar === sel} aria-label={`${t('bar', lang)} ${bar + 1}: ${triad ? chordSymbol(triad, naming) : t('noChord', lang)}`}>
+        {triad ? <><strong>{chordSymbol(triad, naming)}</strong><small>{triad.roman}</small></> : <small>·</small>}
+      </button>,
+    );
+  }
   return (
-    <div className="stack">
-      {Array.from({ length: bars }, (_, i) => {
-        const bar = firstBar + i;
-        const current = chords.find((c) => c.tick === bar * BAR_TICKS);
-        const sec = sectionAtBar(song, bar);
-        return (
-          <section key={bar} className="card stack" style={{ padding: 12, gap: 8, borderColor: bar === playingBar ? 'var(--main)' : undefined }} aria-label={`${t('bar', lang)} ${bar + 1}`}>
-            <div className="row">
-              <strong className="grow">{t('bar', lang)} {bar + 1}{sec && <span className="sec-chip" style={{ ['--sec' as string]: sectionColor(sec) }}>{sec.name}</span>}</strong>
-              <button type="button" className="btn ghost" onClick={() => onSet(bar, null)} disabled={!current}>{t('clear', lang)}</button>
-            </div>
-            <div className="chordbar">
-              {triads.map((c) => (
-                <button
-                  key={c.degree}
-                  type="button"
-                  className="chordbtn"
-                  aria-pressed={current?.degree === c.degree}
-                  onClick={() => { onSet(bar, c.degree); onPreview(chordMidi(c, 52)); }}
-                >
-                  <span>{chordSymbol(c, namingFor(lang))}</span>
-                  <small>{c.roman}</small>
-                </button>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+    <div className="stack" style={{ gap: 10 }}>
+      <div className="scroll-x" ref={scroller}>
+        <div style={{ position: 'relative', width: DRUM_LABEL + view.length * pitch + tailRoom(width, DRUM_LABEL, pitch, view.length), height: top + 64 }}>
+          <div className="tg-labels" style={{ width: DRUM_LABEL - GAP }}>
+            <span className="rlabel">{t('bar', lang)}</span>
+            <span className="rowlabel" style={{ height: 64, display: 'flex', alignItems: 'center' }}>{t('chordsRow', lang)}</span>
+          </div>
+          <Ruler view={view} win={win} pitch={pitch} label={DRUM_LABEL} sections={frame.sections} lang={lang}
+            marking={frame.marking} sel={frame.sel} cursorBar={frame.cursorBar} onBarTap={frame.onBarTap} />
+          {cells}
+        </div>
+      </div>
+      <section className="card stack chord-picker" style={{ padding: 12, gap: 8 }} aria-label={`${t('bar', lang)} ${sel + 1}`}>
+        <div className="row wrap" style={{ gap: 8 }}>
+          <strong className="grow">{t('bar', lang)} {sel + 1}{(() => { const sec = sectionAtBar(song, sel); return sec ? <span className="sec-chip" style={{ ['--sec' as string]: sectionColor(sec) }}>{sec.name}</span> : null; })()}</strong>
+          <button type="button" className="btn ghost small-btn" onClick={() => setPicked(Math.max(firstBar, sel - 1))} disabled={sel <= firstBar} aria-label={t('prevBar', lang)}>←</button>
+          <button type="button" className="btn ghost small-btn" onClick={() => setPicked(Math.min(lastBar, sel + 1))} disabled={sel >= lastBar} aria-label={t('nextBar', lang)}>→</button>
+          <button type="button" className="btn ghost small-btn" onClick={() => onSet(sel, null)} disabled={!current}>{t('clear', lang)}</button>
+        </div>
+        <div className="chordbar">
+          {triads.map((c) => (
+            <button key={c.degree} type="button" className="chordbtn" aria-pressed={current?.degree === c.degree} onClick={() => choose(c.degree)}>
+              <span>{chordSymbol(c, naming)}</span>
+              <small>{c.roman}</small>
+            </button>
+          ))}
+        </div>
+        <span className="small muted">{t('chordPickHint', lang)}</span>
+      </section>
     </div>
   );
 }
@@ -414,7 +466,7 @@ export function Keyboard({ song, low, focusBar, lang, onPlay }: { song: Song; lo
   const start = low - (((low % 12) + 12) % 12); // start at a C
   const midis = Array.from({ length: 24 }, (_, i) => start + i);
   const whites = midis.filter((m) => WHITE_PCS.includes(m % 12));
-  const markColor = (tier: Tier) => (tier === 'chord' ? 'var(--tier-chord)' : tier === 'scale' ? 'var(--tier-scale)' : 'transparent');
+  const markColor = (tier: Tier, m: number) => (isHome(m, key) ? 'var(--note-home)' : tier === 'outside' ? 'var(--note-bitter)' : 'var(--note-sweet)');
   return (
     <div className="keyboard" aria-label={t('keyboardColored', lang)}>
       {whites.map((m) => {
@@ -423,7 +475,7 @@ export function Keyboard({ song, low, focusBar, lang, onPlay }: { song: Song; lo
         return (
           <button key={m} type="button" className={`wkey${tier === 'outside' ? ' out' : ''}`} aria-label={`${name}, ${tierWord(tier, lang)}`}
             onPointerDown={(e) => { e.preventDefault(); onPlay(m); }}>
-            <span className="kmark" style={{ background: markColor(tier) }} />
+            <span className="kmark" style={{ background: markColor(tier, m) }} />
             <span className="kname">{name}</span>
           </button>
         );
@@ -437,7 +489,7 @@ export function Keyboard({ song, low, focusBar, lang, onPlay }: { song: Song; lo
           <button key={m} type="button" className="bkey" style={{ left, width: 44 }} aria-label={`${name}, ${tierWord(tier, lang)}`}
             onPointerDown={(e) => { e.preventDefault(); onPlay(m); }}>
             <span className="kname" style={{ fontSize: 10 }}>{name}</span>
-            <span className="kmark" style={{ background: markColor(tier) }} />
+            <span className="kmark" style={{ background: markColor(tier, m) }} />
           </button>
         );
       })}
@@ -445,12 +497,14 @@ export function Keyboard({ song, low, focusBar, lang, onPlay }: { song: Song; lo
   );
 }
 
-export function TierLegend({ lang }: { lang: Lang }) {
+/** What the note colors mean: home, sweet, bitter, and the ring of the bar's chord. */
+export function TierLegend({ lang, tonic }: { lang: Lang; tonic?: string }) {
   return (
     <div className="row wrap small" style={{ gap: 14 }}>
-      <span className="row" style={{ gap: 6 }}><span className="dot chord" />{t('chordTone', lang)}</span>
-      <span className="row" style={{ gap: 6 }}><span className="dot scale" />{t('inScale', lang)}</span>
-      <span className="row" style={{ gap: 6 }}><span className="dot outside" />{t('outside', lang)}</span>
+      <span className="row" style={{ gap: 6 }}><span className="dot tonic" />{t('homeNote', lang, { note: tonic ?? '' })}</span>
+      <span className="row" style={{ gap: 6 }}><span className="dot scale" />{t('sweetNote', lang)}</span>
+      <span className="row" style={{ gap: 6 }}><span className="dot outside" />{t('bitterNote', lang)}</span>
+      <span className="row" style={{ gap: 6 }}><span className="dot ring" />{t('chordTone', lang)}</span>
     </div>
   );
 }

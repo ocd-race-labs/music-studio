@@ -1,9 +1,11 @@
-import { EFFECTS, effectParams, INSTRUMENTS, KITS, swapsFor, title as catalogTitle } from '../packs/core';
+import { useState } from 'react';
+import { EFFECTS, effectParams, INSTRUMENTS, KITS, PEDAL_GROUPS, pedalGroup, swapsFor, title as catalogTitle } from '../packs/core';
 import type { ParamDef } from '../packs/core';
 import { chordSymbol, diatonicTriads, SCALES, scaleSpellings, spellingToDisplay, tonicDisplay, TONICS } from '../theory';
 import type { CatalogRef, Idea, Lang, Song, Track } from '../domain/types';
 import { DEFAULT_SWING, defaultFxParams } from '../domain/factory';
 import { namingFor, t } from './i18n';
+import type { StringKey } from './i18n';
 import { Icon } from './ui';
 import { dbLabel, dbOfGain, FADER_MAX_DB, FADER_MIN_DB, gainOfDb } from './levels';
 import { chordAtBar, songKey, TierLegend } from './editors';
@@ -70,7 +72,6 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
   onRemoveFx: (slot: number) => void;
 }) {
   const swaps = track.instrument ? swapsFor(track.instrument.key) : [];
-  const available = EFFECTS.filter((e) => !track.fx_chain.slots.some((x) => x.effect.key === e.key));
   return (
     <section className="card stack" aria-label={t('mixer', lang)}>
       <div className="row">
@@ -105,48 +106,115 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
           </div>
         </>
       )}
-      <h4 style={{ fontSize: 14, margin: '4px 0 0' }}>{t('pedals', lang)}</h4>
-      {track.fx_chain.slots.map((slot, i) => (
-        <div key={slot.effect.key} className="stack pedal" style={{ opacity: slot.bypass ? 0.75 : 1 }}>
-          <div className="row" style={{ gap: 6 }}>
-            <strong className="grow">{catalogTitle(slot.effect, lang)}</strong>
-            <button type="button" className="btn icon ghost reset" onClick={() => onRemoveFx(i)}
-              aria-label={t('removePedal', lang, { name: catalogTitle(slot.effect, lang) })} title={t('removePedal', lang, { name: catalogTitle(slot.effect, lang) })}>
-              <Icon name="close" size={16} />
-            </button>
-          </div>
-          {PEDAL_BLURB[slot.effect.key] && <span className="small muted">{PEDAL_BLURB[slot.effect.key][lang]}</span>}
-          <div className="row" style={{ gap: 6 }}>
-            <button type="button" className="chip" aria-pressed={!slot.bypass} onClick={() => onBypass(i, !slot.bypass)}>
-              {t(slot.bypass ? 'pedalOff' : 'pedalOn', lang)}
-            </button>
-            <span className="grow" />
-            {!slot.bypass && (
-              <ResetButton label={`${t('reset', lang)} ${catalogTitle(slot.effect, lang)}`}
-                disabled={sameParams(slot.params, defaultFxParams(slot.effect.key))} onClick={() => onResetFx(i)} />
+      <Pedalboard track={track} lang={lang} onBypass={onBypass} onParam={onParam} onResetFx={onResetFx} onAddFx={onAddFx} onRemoveFx={onRemoveFx} />
+    </section>
+  );
+}
+
+/**
+ * Pedals grouped by what they do, as a row of small stompboxes per group: the light turns a pedal on or off,
+ * its name opens its knobs. Only one pedal is open at a time, so the panel stays short however many there are.
+ */
+function Pedalboard({ track, lang, onBypass, onParam, onResetFx, onAddFx, onRemoveFx }: {
+  track: Track;
+  lang: Lang;
+  onBypass: (slot: number, bypass: boolean) => void;
+  onParam: (slot: number, name: string, value: number) => void;
+  onResetFx: (slot: number) => void;
+  onAddFx: (key: string) => void;
+  onRemoveFx: (slot: number) => void;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const slots = track.fx_chain.slots.map((slot, i) => ({ slot, i }));
+  const available = EFFECTS.filter((e) => !track.fx_chain.slots.some((x) => x.effect.key === e.key));
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <h4 style={{ fontSize: 14, margin: '4px 0 0' }}>{t('pedals', lang)} <span className="muted small">· {t('pedalsHint', lang)}</span></h4>
+      {PEDAL_GROUPS.map((g) => {
+        const items = slots.filter(({ slot }) => pedalGroup(slot.effect.key) === g);
+        if (!items.length) return null;
+        const opened = items.find(({ slot }) => slot.effect.key === open);
+        return (
+          <div key={g} className="pedal-group">
+            <span className="lbl">{t(`group_${g}` as StringKey, lang)}</span>
+            <div className="stomps">
+              {items.map(({ slot, i }) => {
+                const name = catalogTitle(slot.effect, lang);
+                return (
+                  <div key={slot.effect.key} className={`stomp${slot.bypass ? '' : ' on'}${open === slot.effect.key ? ' open' : ''}`}>
+                    <button type="button" className="led" aria-pressed={!slot.bypass} onClick={() => onBypass(i, !slot.bypass)}
+                      aria-label={`${name}: ${t(slot.bypass ? 'pedalOff' : 'pedalOn', lang)}`} title={t(slot.bypass ? 'turnOn' : 'turnOff', lang)} />
+                    <button type="button" className="stomp-name" aria-expanded={open === slot.effect.key}
+                      onClick={() => setOpen(open === slot.effect.key ? null : slot.effect.key)}>{name}</button>
+                  </div>
+                );
+              })}
+            </div>
+            {opened && (
+              <PedalEditor slot={opened.slot} lang={lang}
+                onBypass={(b) => onBypass(opened.i, b)} onParam={(n, v) => onParam(opened.i, n, v)}
+                onReset={() => onResetFx(opened.i)} onRemove={() => { onRemoveFx(opened.i); setOpen(null); }} onClose={() => setOpen(null)} />
             )}
           </div>
-          {!slot.bypass && effectParams(slot.effect).map((p) => {
-            const v = slot.params[p.name] ?? p.default;
-            return (
-              <label key={p.name} className="stack" style={{ gap: 2 }}>
-                <span className="lbl">{p.label[lang]} <span className="mono">{formatParam(p, v)}</span></span>
-                <input type="range" min={p.min} max={p.max} step={p.step ?? (p.max - p.min) / 100} value={v} onChange={(e) => onParam(i, p.name, Number(e.target.value))} />
-              </label>
-            );
-          })}
-        </div>
-      ))}
+        );
+      })}
       {available.length > 0 && (
         <label className="stack" style={{ gap: 4 }}>
           <span className="lbl">{t('addPedal', lang)}</span>
-          <select className="field" value="" onChange={(e) => { if (e.target.value) onAddFx(e.target.value); }}>
+          <select className="field" value="" onChange={(e) => { if (e.target.value) { onAddFx(e.target.value); setOpen(e.target.value); } }}>
             <option value="">{t('choosePedal', lang)}</option>
-            {available.map((e) => <option key={e.key} value={e.key}>{e.title[lang]}</option>)}
+            {PEDAL_GROUPS.map((g) => {
+              const list = available.filter((x) => pedalGroup(x.key) === g);
+              return list.length ? (
+                <optgroup key={g} label={t(`group_${g}` as StringKey, lang)}>
+                  {list.map((x) => <option key={x.key} value={x.key}>{x.title[lang]}</option>)}
+                </optgroup>
+              ) : null;
+            })}
           </select>
         </label>
       )}
-    </section>
+    </div>
+  );
+}
+
+function PedalEditor({ slot, lang, onBypass, onParam, onReset, onRemove, onClose }: {
+  slot: Track['fx_chain']['slots'][number];
+  lang: Lang;
+  onBypass: (bypass: boolean) => void;
+  onParam: (name: string, value: number) => void;
+  onReset: () => void;
+  onRemove: () => void;
+  onClose: () => void;
+}) {
+  const name = catalogTitle(slot.effect, lang);
+  return (
+    <div className="stack pedal" style={{ opacity: slot.bypass ? 0.8 : 1 }}>
+      <div className="row" style={{ gap: 6 }}>
+        <strong className="grow">{name}</strong>
+        <button type="button" className="chip" aria-pressed={!slot.bypass} onClick={() => onBypass(!slot.bypass)}>
+          {t(slot.bypass ? 'pedalOff' : 'pedalOn', lang)}
+        </button>
+        <ResetButton label={`${t('reset', lang)} ${name}`} disabled={sameParams(slot.params, defaultFxParams(slot.effect.key))} onClick={onReset} />
+        <button type="button" className="btn icon ghost reset" onClick={onClose} aria-label={t('close', lang)} title={t('close', lang)}>
+          <Icon name="close" size={16} />
+        </button>
+      </div>
+      {PEDAL_BLURB[slot.effect.key] && <span className="small muted">{PEDAL_BLURB[slot.effect.key][lang]}</span>}
+      {effectParams(slot.effect).map((p) => {
+        const v = slot.params[p.name] ?? p.default;
+        return (
+          <label key={p.name} className="stack" style={{ gap: 2 }}>
+            <span className="lbl">{p.label[lang]} <span className="mono">{formatParam(p, v)}</span></span>
+            <input type="range" min={p.min} max={p.max} step={p.step ?? (p.max - p.min) / 100} value={v} disabled={slot.bypass}
+              onChange={(e) => onParam(p.name, Number(e.target.value))} />
+          </label>
+        );
+      })}
+      <button type="button" className="btn ghost small-btn" style={{ alignSelf: 'flex-start' }} onClick={onRemove}>
+        <Icon name="trash" size={16} /> {t('removePedal', lang, { name })}
+      </button>
+    </div>
   );
 }
 
@@ -175,7 +243,7 @@ export function TheoryPanel({ song, lang, focusBar, onKey }: {
       <p className="small muted" style={{ margin: 0 }}>
         {scaleSpellings(key).map((s) => spellingToDisplay(s, naming)).join('  ')}
       </p>
-      <TierLegend lang={lang} />
+      <TierLegend lang={lang} tonic={tonicDisplay(song.key_tonic, naming)} />
       <div className="stack" style={{ gap: 6 }}>
         <span className="lbl">{t('chordsOfKey', lang)}</span>
         <div className="row wrap" style={{ gap: 6 }}>

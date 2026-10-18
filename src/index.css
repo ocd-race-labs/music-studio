@@ -18,6 +18,10 @@
   --tier-scale: #475569;
   --tier-outside: #dadde3;
   --tier-outside-line: #8a909b;
+  --note-sweet: #0d9488;
+  --note-bitter: #db2777;
+  --note-home: #d97706;
+  --note-edge: #0b6e66;
   --key-white: #ffffff;
   --key-black: #2b2f38;
   --cell-on: #15171c;
@@ -42,6 +46,10 @@
   --tier-scale: #a9aeb8;
   --tier-outside: #2a2d33;
   --tier-outside-line: #7d8390;
+  --note-sweet: #2dd4bf;
+  --note-bitter: #f472b6;
+  --note-home: #fbbf24;
+  --note-edge: #5eead4;
   --key-white: #e5e7eb;
   --key-black: #25282d;
   --cell-on: #f3f4f6;
@@ -66,6 +74,10 @@
   --tier-scale: #8a8a90;
   --tier-outside: #2a2a2d;
   --tier-outside-line: #74747a;
+  --note-sweet: #5eead4;
+  --note-bitter: #fb7185;
+  --note-home: #fcd34d;
+  --note-edge: #99f6e4;
   --key-white: #d4d4d8;
   --key-black: #1e1e20;
   --cell-on: #f2f2f2;
@@ -90,6 +102,10 @@
   --tier-scale: #71717a;
   --tier-outside: #e4e4e7;
   --tier-outside-line: #71717a;
+  --note-sweet: #0f9f8f;
+  --note-bitter: #e11d48;
+  --note-home: #d97706;
+  --note-edge: #0b6e66;
   --key-white: #ffffff;
   --key-black: #27272a;
   --cell-on: #111113;
@@ -114,6 +130,10 @@
   --tier-scale: #a78bfa;
   --tier-outside: #3a1530;
   --tier-outside-line: #f0509e;
+  --note-sweet: #2dd4bf;
+  --note-bitter: #f0509e;
+  --note-home: #fbbf24;
+  --note-edge: #5eead4;
   --key-white: #e9e5fa;
   --key-black: #241e3f;
   --cell-on: #2dd4bf;
@@ -142,6 +162,10 @@
   --tier-scale: #a78bfa;
   --tier-outside: #fde4f0;
   --tier-outside-line: #f0509e;
+  --note-sweet: #2dd4bf;
+  --note-bitter: #f0509e;
+  --note-home: #f59e0b;
+  --note-edge: #14a594;
   --key-white: #ffffff;
   --key-black: #241e3f;
   --cell-on: #2dd4bf;
@@ -150,8 +174,6 @@
   color-scheme: light;
 }
 [data-studio='midnight-jewel'][data-mode='light'] .cell.on { box-shadow: inset 0 0 0 1.5px var(--main-edge); }
-[data-studio='midnight-jewel'][data-mode='light'] .note.chord { box-shadow: 0 0 0 1.5px var(--main-edge); }
-[data-studio='midnight-jewel'][data-mode='light'] .note.scale { box-shadow: 0 0 0 1.5px #8b6ff0; }
 
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; min-height: 100%; }
@@ -284,6 +306,15 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .rbar.marking { cursor: pointer; border-style: dashed; }
 .rbar.picked { outline: 2px solid var(--main); outline-offset: -2px; background: color-mix(in srgb, var(--main) 30%, var(--panel)); }
 .rbar.cursor::before { content: ''; position: absolute; left: 0; top: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--highlight); transform: translateX(-4px); }
+.chordcell {
+  position: absolute; height: 64px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--ink); padding: 0;
+}
+.chordcell strong { font-size: 17px; font-family: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif; }
+.chordcell small { font-size: 11px; color: var(--ink-2); }
+.chordcell.empty { background: var(--raised); }
+.chordcell.sel { border-color: var(--main); box-shadow: inset 0 0 0 2px var(--main); }
+.chordcell.playing { background: var(--playhead); }
 .structure { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); }
 .chip.sec { border-color: var(--sec); background: color-mix(in srgb, var(--sec) 16%, transparent); }
 .chip.sec[aria-pressed='true'] { background: var(--sec); color: #120f1f; border-color: var(--sec); }
@@ -323,6 +354,16 @@ input.field.num { width: 64px; text-align: center; }
 .vmeter { width: 8px; border-radius: 4px; background: var(--raised); border: 1px solid var(--line); overflow: hidden; display: flex; align-items: flex-end; }
 .vmeter.wide { width: 16px; }
 .vmeter > span { display: block; width: 100%; height: 100%; background: linear-gradient(to top, var(--main) 70%, var(--highlight)); transform-origin: bottom center; transform: scaleY(0); }
+/* Pedalboard: a row of small stompboxes per group; the light is on/off, the name opens the knobs. */
+.pedal-group { display: flex; flex-direction: column; gap: 6px; }
+.stomps { display: flex; flex-wrap: wrap; gap: 6px; }
+.stomp { display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); overflow: hidden; }
+.stomp.open { border-color: var(--main); box-shadow: 0 0 0 1px var(--main); }
+.stomp .led { width: 34px; min-height: 40px; border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.stomp .led::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--line); box-shadow: inset 0 0 0 1px var(--ink-2); }
+.stomp.on .led::before { background: var(--highlight); box-shadow: 0 0 6px var(--highlight); }
+.stomp-name { border: 0; background: transparent; min-height: 40px; padding: 0 12px 0 0; font-size: 13px; font-weight: 600; color: var(--ink); }
+.stomp:not(.on) .stomp-name { color: var(--ink-2); }
 .pedal { gap: 6px; padding: 12px; border-radius: 12px; background: var(--raised); }
 .warn-box { gap: 12px; align-items: flex-start; padding: 14px; border-radius: 12px; border: 1.5px solid var(--highlight); background: color-mix(in srgb, var(--highlight) 12%, var(--panel)); }
 .warn-box svg { color: var(--highlight); flex: none; }
@@ -345,21 +386,27 @@ input.field.num { width: 64px; text-align: center; }
 .rowlabel { position: sticky; left: 0; z-index: 2; background: var(--ground); min-width: 74px; height: 38px; border: 0; border-radius: 6px; text-align: left; padding: 0 8px; font-size: 12px; font-weight: 600; }
 .ncell { min-width: 0; height: 30px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); padding: 0; position: relative; }
 .ncell.beat { background: var(--raised); }
-.ncell.inscale { border-color: color-mix(in srgb, var(--tier-scale) 35%, var(--line)); }
-.ncell.chordrow { border-color: color-mix(in srgb, var(--tier-chord) 50%, var(--line)); }
+.ncell.inscale { border-color: color-mix(in srgb, var(--note-sweet) 40%, var(--line)); }
+.ncell.chordrow { border-color: color-mix(in srgb, var(--note-sweet) 65%, var(--line)); }
+.ncell.homerow { border-color: color-mix(in srgb, var(--note-home) 70%, var(--line)); }
 .ncell.ph { box-shadow: inset 0 0 0 2px var(--main); }
 .note { position: absolute; border-radius: 4px; pointer-events: none; z-index: 1; }
 /* Drawing a long note: the outline shows where it will land before the finger or button lets go. */
 .note.ghost { z-index: 2; background: color-mix(in srgb, var(--main) 35%, transparent); outline: 2px solid var(--main); }
 .note-area { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-.note.chord { background: var(--tier-chord); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tier-chord) 40%, transparent); }
-.note.scale { background: var(--tier-scale); }
-.note.outside { background: var(--tier-outside-line); outline: 2px dashed var(--tier-outside-line); outline-offset: 1px; }
+/* Notes: sweet when they belong to the key, bitter when they step outside it, gold for home (the tonic).
+   A ring marks a tone of the bar's chord; a dashed outline repeats "outside" for anyone who can't tell the colors. */
+.note.chord, .note.scale { background: var(--note-sweet); }
+.note.chord { box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--note-edge); }
+.note.outside { background: var(--note-bitter); outline: 2px dashed var(--note-bitter); outline-offset: 1px; }
+.note.tonic { background: var(--note-home); }
 .plabel { position: sticky; left: 0; z-index: 2; background: var(--ground); min-width: 54px; height: 30px; border: 0; border-radius: 4px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; padding: 0 6px; }
 .dot { width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; }
-.dot.chord { background: var(--tier-chord); box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--tier-chord); }
-.dot.scale { background: var(--tier-scale); }
-.dot.outside { background: transparent; border: 1.5px dashed var(--tier-outside-line); }
+.dot.chord { background: var(--note-sweet); box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--note-edge); }
+.dot.scale { background: var(--note-sweet); }
+.dot.outside { background: var(--note-bitter); border: 1.5px dashed var(--note-bitter); }
+.dot.tonic { background: var(--note-home); }
+.dot.ring { background: transparent; box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--note-edge); }
 
 /* Pads and keyboard */
 .pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }

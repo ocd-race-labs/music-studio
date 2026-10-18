@@ -7,7 +7,7 @@ import type {
 } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
 import { DEFAULT_SWING, defaultFxParams, newId, now, retarget, roleOf, switchKit as switchKitOf } from './factory';
-import { ref, rowFor, SPACE_EFFECTS } from '../packs/core';
+import { pedalRank, ref, rowFor } from '../packs/core';
 import { setSongBars } from './arrange';
 import type { KitSlot } from '../packs/core';
 import type { Lang } from './types';
@@ -185,14 +185,14 @@ export const setFxParam = (song: Song, trackId: string, slot: number, name: stri
   }), by);
 
 /** Put a pedal's knobs back where a new track starts; on or off stays as it is. */
-/** Add a pedal to a track, on, with its starting settings. Echo and room pedals stay last, so it goes before them. */
+/** Add a pedal to a track, on, with its starting settings, at the end of its group (control, color, movement, space). */
 export function addFx(song: Song, trackId: string, key: string, by: string | null): Song {
   return mapTrack(song, trackId, (t) => {
     const slots = t.fx_chain.slots;
-    const at = slots.findIndex((x) => SPACE_EFFECTS.includes(x.effect.key));
+    const rank = pedalRank(key);
+    const after = slots.reduce((last, x, i) => (pedalRank(x.effect.key) <= rank ? i : last), -1);
     const slot = { effect: ref(key), bypass: false, params: defaultFxParams(key) };
-    const next = at < 0 || SPACE_EFFECTS.includes(key) ? [...slots, slot] : [...slots.slice(0, at), slot, ...slots.slice(at)];
-    return { ...t, fx_chain: { ...t.fx_chain, slots: next } };
+    return { ...t, fx_chain: { ...t.fx_chain, slots: [...slots.slice(0, after + 1), slot, ...slots.slice(after + 1)] } };
   }, by);
 }
 

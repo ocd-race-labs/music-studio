@@ -209,6 +209,19 @@ export const EFFECTS = [
 /** Pedals that make echoes and rooms go last in a chain; new pedals go before them. */
 export const SPACE_EFFECTS = ['effect.delay', 'effect.pingpong', 'effect.reverb'];
 
+/** Pedals by what they do, in the order sound flows through them: shape it, color it, move it, place it in a room. */
+export type PedalGroup = 'control' | 'color' | 'movement' | 'space';
+export const PEDAL_GROUPS: PedalGroup[] = ['control', 'color', 'movement', 'space'];
+const GROUP_OF: Record<string, PedalGroup> = {
+  'effect.eq': 'control', 'effect.compressor': 'control',
+  'effect.drive': 'color', 'effect.lofi': 'color', 'effect.radio': 'color',
+  'effect.chorus': 'movement', 'effect.phaser': 'movement', 'effect.filter-sweep': 'movement', 'effect.tremolo': 'movement',
+  'effect.pump': 'movement', 'effect.octave': 'movement',
+  'effect.delay': 'space', 'effect.pingpong': 'space', 'effect.reverb': 'space', 'effect.widener': 'space',
+};
+export const pedalGroup = (key: string): PedalGroup => GROUP_OF[key] ?? 'color';
+export const pedalRank = (key: string): number => PEDAL_GROUPS.indexOf(pedalGroup(key));
+
 export const CATALOG: CatalogItem[] = [...DRUM_VOICES, ...ORCH_VOICES, ...LATIN_VOICES, ...INSTRUMENTS, ...KITS, ...EFFECTS];
 
 export const ref = (key: string): CatalogRef => {

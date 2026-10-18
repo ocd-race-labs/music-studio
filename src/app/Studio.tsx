@@ -601,7 +601,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         </nav>
 
         <main className="editor" ref={editorRef}>
-          {hat === 'producer' && board ? (
+          {board ? (
             <>
               <div className="row wrap">
                 <h2 className="display grow" style={{ fontSize: 22 }}>{t('mixerBoard', lang)} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{t('mixerBoardHint', lang)}</span></h2>
@@ -616,11 +616,9 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
           ) : (<>
           <div className="row wrap">
             <h2 className="display grow" style={{ fontSize: 22 }}>{track.name} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{trackTitle}</span></h2>
-            {hat === 'producer' && (
-              <button type="button" className="btn" onClick={() => setBoard(true)} title={t('mixerBoardHint', lang)}>
-                <Icon name="sliders" size={18} /> <span className="hide-sm">{t('mixerBoard', lang)}</span>
-              </button>
-            )}
+            <button type="button" className="btn" onClick={() => setBoard(true)} title={t('mixerBoardHint', lang)}>
+              <Icon name="sliders" size={18} /> <span className="hide-sm">{t('mixerBoard', lang)}</span>
+            </button>
             <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
               aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
               <Icon name="headphones" size={18} /> <span className="hide-sm">{t('onlyThis', lang)}</span>
@@ -661,7 +659,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
               onShift={(d) => setLows((m) => ({ ...m, [track.id]: Math.min(96, Math.max(24, low + d)) }))} />
           )}
           {clipKind === 'chords' && (
-            <ChordLane song={song} track={track} step={step} lang={lang} view={view}
+            <ChordLane song={song} track={track} step={step} lang={lang} width={editorWidth} frame={frame}
               onSet={(bar, degree) => { apply((x) => C.setChord(x, track.id, bar, degree, by)); setFocusBar(bar); }}
               onPreview={(midis) => engine.previewNotes(track.id, midis.map((m) => ({ midi: m, at: 0, dur: 0.9, vel: 0.6 })))} />
           )}
