@@ -5,9 +5,14 @@ export type AudioMode = 'fast' | 'stable';
 
 const KEY = 'music-studio.audio-mode';
 
-export const AUDIO_MODES: Record<AudioMode, { latencyHint: AudioContextLatencyCategory; lookAhead: number }> = {
-  fast: { latencyHint: 'interactive', lookAhead: 0.05 },
-  stable: { latencyHint: 'playback', lookAhead: 0.2 },
+/**
+ * latencyHint sets the size of the audio batches (a number asks for that many seconds, where the browser allows it);
+ * lookAhead is how far ahead notes are planned; updateInterval is how often the planner runs. Notes land on time
+ * while the page is never busier than lookAhead minus updateInterval.
+ */
+export const AUDIO_MODES: Record<AudioMode, { latencyHint: AudioContextLatencyCategory | number; fallbackHint: AudioContextLatencyCategory; lookAhead: number; updateInterval: number }> = {
+  fast: { latencyHint: 'interactive', fallbackHint: 'interactive', lookAhead: 0.05, updateInterval: 0.025 },
+  stable: { latencyHint: 0.1, fallbackHint: 'playback', lookAhead: 0.2, updateInterval: 0.05 },
 };
 
 export function readAudioMode(): AudioMode {

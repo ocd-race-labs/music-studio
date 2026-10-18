@@ -137,14 +137,19 @@ export class StudioEngine {
       // iPhone and iPad: a context created inside the tap starts reliably; the one Tone made at page load may stay suspended.
       try {
         const m = AUDIO_MODES[readAudioMode()];
-        Tone.setContext(new Tone.Context({ latencyHint: m.latencyHint, lookAhead: m.lookAhead }), true);
+        let next: Tone.Context;
+        try { next = new Tone.Context({ latencyHint: m.latencyHint as AudioContextLatencyCategory, lookAhead: m.lookAhead, updateInterval: m.updateInterval }); }
+        catch { next = new Tone.Context({ latencyHint: m.fallbackHint, lookAhead: m.lookAhead, updateInterval: m.updateInterval }); }
+        Tone.setContext(next, true);
       } catch { /* keep the existing context */ }
     }
     const resumed = Tone.start().catch(() => undefined);
     kickWebKit();
     this.bindUnlock();
     if (!this.started) {
-      Tone.getContext().lookAhead = AUDIO_MODES[readAudioMode()].lookAhead;
+      const mode = AUDIO_MODES[readAudioMode()];
+      Tone.getContext().lookAhead = mode.lookAhead;
+      (Tone.getContext() as Tone.Context).updateInterval = mode.updateInterval; // setting lookAhead resets it
       this.meter = new Tone.Meter({ smoothing: 0.5 });
       this.master = new Tone.Limiter(-1);
       // The limiter's own makeup pushes peaks past its ceiling; this trim takes it back, a soft knee catches the rest.
@@ -218,25 +223,34 @@ export class StudioEngine {
     if (typeof window === 'undefined' || this.glitchSent) return;
     const raw = Tone.getContext().rawContext as unknown as BaseAudioContext;
     let wall = performance.now() + 2000; // the first two seconds load sounds; they do not count
-    let audio = raw.currentTime + 2;
-    this.watchId = window.setInterval(() => {
-      const w = performance.now();
-      const a = raw.currentTime;
-      if (w < wall) return;
-      const dw = (w - wall) / 1000;
-      const da = a - audio;
-      wall = w;
-      audio = a;
-      if (document.hidden || dw > 2 || raw.state !== 'running') return; // background tabs are slowed on purpose
-      const late = dw - 0.25 > Tone.getContext().lookAhead * 0.8;
-      const starved = dw > 0.2 && da < dw * 0.8;
-      if (!late && !starved) return;
+    let lost: { at: number; drift: number }[] = [];
+    let base: { wall: number; audio: number } | null = null;
+    const note = (w: number) => {
       this.glitchTimes = [...this.glitchTimes.filter((x) => w - x < 15000), w];
       if (this.glitchTimes.length >= 3 && !this.glitchSent) {
         this.glitchSent = true;
         this.glitchFns.forEach((fn) => fn());
         this.stopWatch();
       }
+    };
+    this.watchId = window.setInterval(() => {
+      const w = performance.now();
+      const a = raw.currentTime;
+      if (w < wall) return;
+      const dw = (w - wall) / 1000;
+      wall = w;
+      // A hidden tab is slowed on purpose and a long pause is a sleep: start counting again.
+      if (document.hidden || dw > 2 || raw.state !== 'running') { base = null; lost = []; return; }
+      const ctx = Tone.getContext() as Tone.Context;
+      // 1. The page came back later than the planner's margin: notes were planned late.
+      if (dw - 0.25 > (ctx.lookAhead - ctx.updateInterval) * 0.9) note(w);
+      // 2. The audio clock fell behind real time: the sound card ran dry. Its steps can be one batch long, so only
+      //    time lost on top of that, over the last ten seconds, counts.
+      if (!base) base = { wall: w, audio: a };
+      const drift = (w - base.wall) / 1000 - (a - base.audio);
+      lost = [...lost.filter((x) => w - x.at < 10000), { at: w, drift }];
+      const least = Math.min(...lost.map((x) => x.drift));
+      if (drift - least > 0.3) { note(w); base = null; lost = []; }
     }, 250);
   }
   private stopWatch(): void {
@@ -533,7 +547,7 @@ export class StudioEngine {
       if (this.repeatId !== null && counter === 0 && this.running && ctx instanceof Tone.Context && ctx.clockSource === 'worker') {
         ctx.clockSource = 'timeout';
         // Timers wander more than the worker clock: plan further ahead so notes still land on time.
-        ctx.lookAhead = Math.max(ctx.lookAhead, 0.15);
+        if (ctx.lookAhead < 0.15) { ctx.lookAhead = 0.15; ctx.updateInterval = 0.05; }
       }
     }, 600);
     this.startWatch();

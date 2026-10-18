@@ -227,8 +227,13 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     return () => window.clearTimeout(timer);
   }, [song, store]);
 
+  // Rooms with a playhead redraw on every sixteenth; the studio and the songs list have none, so the screen stays
+  // still while the song plays there and the computer keeps its time for the sound.
+  const roomRef = useRef(room);
+  roomRef.current = room;
   useEffect(() => engine.onStep((s) => {
     stepRef.current = s;
+    if (s >= 0 && (roomRef.current === 'sounds' || roomRef.current === 'songs' || roomRef.current === 'hub')) return;
     setStep(s);
     if (s >= 0 && s % 16 === 0) setFocusBar(Math.floor(s / 16));
   }), []);
