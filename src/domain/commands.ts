@@ -6,7 +6,10 @@ import type {
   CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Track,
 } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
-import { DEFAULT_SWING, defaultFxParams, loopBars, newId, now } from './factory';
+import { DEFAULT_SWING, defaultFxParams, loopBars, newId, now, retarget, roleOf, switchKit as switchKitOf } from './factory';
+import { ref, rowFor } from '../packs/core';
+import type { KitSlot } from '../packs/core';
+import type { Lang } from './types';
 
 const touch = (song: Song, by: string | null): Song => ({ ...song, updated_at: now(), updated_by: by ?? song.updated_by });
 
@@ -169,8 +172,13 @@ export const toggleMute = (song: Song, trackId: string, by: string | null): Song
 export const toggleSolo = (song: Song, trackId: string, by: string | null): Song =>
   mapTrack(song, trackId, (t) => ({ ...t, solo: !t.solo }), by);
 
+/** Another instrument for one track; drum rows follow by place, the role stays. */
 export const setInstrument = (song: Song, trackId: string, instrument: CatalogRef, by: string | null): Song =>
-  mapTrack(song, trackId, (t) => ({ ...t, instrument }), by);
+  mapTrack(song, trackId, (t) => retarget(t, instrument.key, roleOf(t), t.name), by);
+
+/** Move the whole song to another kit, keeping what was written (see factory.switchKit). */
+export const switchKit = (song: Song, kitKey: string, slots: KitSlot[], lang: Lang, by: string | null): Song =>
+  switchKitOf(song, kitKey, slots, lang, by);
 
 export const setFxBypass = (song: Song, trackId: string, slot: number, bypass: boolean, by: string | null): Song =>
   mapTrack(song, trackId, (t) => ({
@@ -204,8 +212,15 @@ export function keepIdea(song: Song, idea: Idea, trackId: string, by: string | n
     }
     if (c.kind === 'pattern' && Array.isArray((idea.payload as { rows?: unknown }).rows)) {
       const p = (idea.payload as unknown) as PatternContent;
-      const steps = (c.content as PatternContent).steps;
-      return { ...c, content: { steps, rows: p.rows.map((r) => ({ ...r, hits: r.hits.filter((h) => h.step < steps) })) }, idea_id: idea.id, origin: 'claude' };
+      const own = c.content as PatternContent;
+      const steps = own.steps;
+      // The idea's rows land on this kit's rows by place, so an idea written for any kit fits.
+      const kit = t.instrument?.key ?? '';
+      const rows = own.rows.map((row) => {
+        const from = p.rows.find((r) => rowFor(kit, r.sound.key) === row.sound.key);
+        return { sound: ref(row.sound.key), hits: (from?.hits ?? []).filter((h) => h.step < steps).map((h) => ({ step: h.step, vel: h.vel ?? 1 })) };
+      });
+      return { ...c, content: { steps, rows }, idea_id: idea.id, origin: 'claude' };
     }
     if (c.kind === 'chords' && Array.isArray((idea.payload as { chords?: unknown }).chords)) {
       const chords = ((idea.payload as unknown) as ChordsContent).chords

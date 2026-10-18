@@ -6,6 +6,14 @@ export type Hat = 'musician' | 'producer';
 export type Lang = 'en' | 'es';
 export type Level = 'starter' | 'intermediate' | 'advanced';
 export type ThemePreset = 'graphite' | 'midnight-jewel' | 'daylight';
+/** The job a track does in a kit. Switching kits keeps the notes by role: the bass part goes to the new bass. */
+export type Role = 'drums' | 'perc' | 'bass' | 'chords' | 'keys' | 'lead' | 'color';
+
+/** An instrument marked with a star for the custom kit: which instrument, and the job it does there. */
+export interface StarredInstrument {
+  key: string;
+  role: Role;
+}
 
 /** A pinned reference to a catalog item: always a key plus a version. */
 export interface CatalogRef {
@@ -34,6 +42,10 @@ export interface Profile {
   instruments: string[];
   /** Place on the home screen, left to right. */
   order?: number;
+  /** Instruments starred from any kit; together they make the custom kit. */
+  starred?: StarredInstrument[];
+  /** The kit new songs start with. */
+  last_kit?: string;
   status: 'active' | 'archived';
   settings_schema_version: 1;
   created_at: string;
@@ -116,6 +128,8 @@ export interface Track {
   name: string;
   kind: TrackKind;
   instrument: CatalogRef | null;
+  /** The job this track does in its kit. Older songs have none; it is inferred from the instrument. */
+  role?: Role;
   color: string;
   muted: boolean;
   solo: boolean;
@@ -156,6 +170,8 @@ export interface Song {
   lyrics_lang: Lang;
   musician_style_key: string | null;
   producer_style_key: string | null;
+  /** The kit the song uses: a catalog kit key, or "custom". Older songs have none and count as hip hop. */
+  kit_key?: string;
   status: 'active' | 'archived';
   origin: Origin;
   schema_version: 1;

@@ -1,4 +1,4 @@
-import { effectParams, INSTRUMENTS, title as catalogTitle } from '../packs/core';
+import { effectParams, INSTRUMENTS, KITS, swapsFor, title as catalogTitle } from '../packs/core';
 import { chordSymbol, diatonicTriads, SCALES, scaleSpellings, spellingToDisplay, tonicDisplay, TONICS } from '../theory';
 import type { CatalogRef, Idea, Lang, Song, Track } from '../domain/types';
 import { DEFAULT_SWING, defaultFxParams } from '../domain/factory';
@@ -35,7 +35,7 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
   onResetSwing: () => void;
   onResetFx: (slot: number) => void;
 }) {
-  const kits = INSTRUMENTS.filter((i) => (i.manifest as { type?: string }).type === 'drumkit');
+  const swaps = track.instrument ? swapsFor(track.instrument.key) : [];
   return (
     <section className="card stack" aria-label={t('mixer', lang)}>
       <div className="row">
@@ -48,18 +48,19 @@ export function MixerPanel({ song, track, lang, onGain, onMute, onSolo, onKit, o
         <span className="lbl">{t('volume', lang)} <span className="mono">{track.gain <= 0.0001 ? '-∞' : (20 * Math.log10(track.gain)).toFixed(1)} dB</span></span>
         <input type="range" min={0} max={1} step={0.01} value={track.gain} onChange={(e) => onGain(Number(e.target.value))} />
       </label>
+      {swaps.length > 1 && (
+        <label className="stack" style={{ gap: 4 }}>
+          <span className="lbl">{t(track.kind === 'drums' ? 'kit' : 'instrument', lang)}</span>
+          <select className="field" value={track.instrument?.key} onChange={(e) => {
+            const pick = swaps.find((i) => i.key === e.target.value);
+            if (pick) onKit({ key: pick.key, version: pick.version });
+          }}>
+            {swaps.map((i) => <option key={i.key} value={i.key}>{i.title[lang]}</option>)}
+          </select>
+        </label>
+      )}
       {track.kind === 'drums' && (
         <>
-          <div className="stack" style={{ gap: 6 }}>
-            <span className="lbl">{t('kit', lang)}</span>
-            <div className="seg">
-              {kits.map((k) => (
-                <button key={k.key} type="button" aria-pressed={track.instrument?.key === k.key} onClick={() => onKit({ key: k.key, version: k.version })}>
-                  {k.title[lang].replace(/^.*: /, '')}
-                </button>
-              ))}
-            </div>
-          </div>
           <div className="stack" style={{ gap: 4 }}>
             <div className="row">
               <label className="lbl grow" htmlFor="swing">{t('swing', lang)} <span className="mono">{Math.round(song.swing * 100)}%</span></label>
@@ -156,8 +157,9 @@ export const CLAUDE_INSTRUCTIONS = `Write ideas for my Music Studio app as a JSO
 Rules:
 - Time is in ticks: 960 per quarter note, 240 per sixteenth, 3840 per bar of 4/4. Keep notes inside the loop length I give you.
 - "midi" is the MIDI note number (60 = middle C). "vel" goes from 0 to 1.
-- Instruments: instrument.bass-808, instrument.keys-ep, instrument.pad-warm, instrument.lead-bright, instrument.strings-ensemble, instrument.drums-boom-bap, instrument.drums-trap (all version 1.0.0).
-- A "pattern" payload is { "steps": 32, "rows": [ { "sound": { "key": "sound.kick", "version": "1.0.0" }, "hits": [ { "step": 0, "vel": 1 } ] } ] } with sounds sound.kick, sound.snare, sound.clap, sound.hat-closed, sound.hat-open, sound.rim, sound.tom, sound.crash; steps are sixteenths.
+- Instruments (all version 1.0.0): ${INSTRUMENTS.map((i) => i.key).join(', ')}.
+- Kits by genre (role: instrument): ${KITS.map((k) => `${k.title.en}: ${(k.manifest.slots as { role: string; instrument: string }[]).map((x) => `${x.role} ${x.instrument.replace('instrument.', '')}`).join(', ')}`).join('; ')}. Write each idea for the instrument of the song's kit that plays that role.
+- A "pattern" payload is { "steps": 32, "rows": [ { "sound": { "key": "sound.kick", "version": "1.0.0" }, "hits": [ { "step": 0, "vel": 1 } ] } ] } with sounds sound.kick, sound.snare, sound.clap, sound.hat-closed, sound.hat-open, sound.rim, sound.tom, sound.crash (orchestral and latin percussion use the same eight places: a kick idea plays the bass drum or the low conga); steps are sixteenths.
 - A "chords" payload is { "chords": [ { "tick": 0, "dur": 3840, "degree": 0 } ] }, where degree 0 to 6 is the chord built on that note of the key (0 = I).
 - Give 2 or 3 options when it makes sense. Reply with the JSON file only.`;
 

@@ -13,7 +13,7 @@ const me = newProfile('Test', 'midnight-jewel', '#F0509E');
 describe('new song', () => {
   it('starts with a beat, a chord progression and six tracks', () => {
     const s = newSong(me.id);
-    expect(s.tracks.map((t) => t.name)).toEqual(['Drums', '808', 'Chords', 'Keys', 'Lead', 'Strings']);
+    expect(s.tracks.map((t) => t.name)).toEqual(['Drums', 'Bass', 'Chords', 'Comping', 'Melody', 'Countermelody']);
     expect(loopSteps(s)).toBe(32);
     const kick = (s.tracks[0].clips[0].content as PatternContent).rows[0];
     expect(kick.sound.key).toBe('sound.kick');
@@ -172,6 +172,6 @@ describe('browser song store', () => {
   });
 
   it('names the tracks of a new song in Spanish when asked', () => {
-    expect(newSong(me.id, 'Canción', 2, 'es').tracks.map((t) => t.name)).toEqual(['Batería', '808', 'Acordes', 'Teclado', 'Melodía', 'Cuerdas']);
+    expect(newSong(me.id, 'Canción', 2, 'es').tracks.map((t) => t.name)).toEqual(['Batería', 'Bajo', 'Acordes', 'Acompañamiento', 'Melodía', 'Contramelodía']);
   });
 });

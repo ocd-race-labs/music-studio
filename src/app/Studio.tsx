@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as C from '../domain/commands';
-import { loopBars, newSong } from '../domain/factory';
+import { loopBars, newSong, ROLE_NAMES, roleOf, slotsFor } from '../domain/factory';
 import { exportSongFile, parseIdeasFile, parseSongFile, SONG_FILE_EXT, withFreshIds } from '../domain/files';
-import type { Hat, Idea, NotesContent, PatternContent, Profile, Song, SongVersion, ChordsContent } from '../domain/types';
+import type { Hat, Idea, NotesContent, PatternContent, Profile, Role, Song, SongVersion, ChordsContent, StarredInstrument } from '../domain/types';
 import { PPQ, STEP_TICKS } from '../domain/types';
 import { engine } from '../engine/engine';
-import { findItem, title as catalogTitle } from '../packs/core';
+import { CUSTOM_KIT, DEFAULT_KIT, findItem, KITS, kitSlots, kitTitle, lowOf, title as catalogTitle } from '../packs/core';
 import { chordMidi, diatonicTriads, scaleById, tonicDisplay } from '../theory';
 import type { SongStore } from '../store/store';
 import { ChordLane, DrumGrid, Keyboard, NoteGrid, Pads, songKey } from './editors';
@@ -36,14 +36,6 @@ const readLen = (): number => {
 const isTouch = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 const ZOOM_LABEL = { fit: 'zoomFit', bar: 'zoomBar', half: 'zoomHalf' } as const;
 
-const DEFAULT_LOW: Record<string, number> = {
-  'instrument.bass-808': 36,
-  'instrument.keys-ep': 60,
-  'instrument.lead-bright': 60,
-  'instrument.strings-ensemble': 55,
-  'instrument.pad-warm': 55,
-};
-
 const LENGTHS = [
   { steps: 1, label: '1/16' },
   { steps: 2, label: '1/8' },
@@ -52,9 +44,14 @@ const LENGTHS = [
   { steps: 16, label: '1' },
 ];
 
-export default function Studio({ store, profile, lang, onLang, mode, onToggleMode, onHome, onSettings }: {
+const kitName = (key: string, lang: Lang) => (key === CUSTOM_KIT ? t('kitCustom', lang) : kitTitle(key, lang));
+const sameSlots = (a: { role: Role; instrument: string }[], b: { role: Role; instrument: string }[]) =>
+  a.length === b.length && a.every((x, i) => x.role === b[i].role && x.instrument === b[i].instrument);
+
+export default function Studio({ store, profile, lang, onLang, mode, onToggleMode, onHome, onSettings, onProfile }: {
   store: SongStore;
   profile: Profile;
+  onProfile: (p: Profile) => void;
   lang: Lang;
   onLang: (l: Lang) => void;
   mode: Mode;
@@ -85,7 +82,8 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   const [lows, setLows] = useState<Record<string, number>>({});
   const [focusBar, setFocusBar] = useState(0);
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [modal, setModal] = useState<null | 'songs' | 'versions'>(null);
+  const [modal, setModal] = useState<null | 'songs' | 'versions' | 'kit' | 'builder'>(null);
+  const [pendingKit, setPendingKit] = useState<string | null>(null);
   const [songList, setSongList] = useState<Song[]>([]);
   const [versions, setVersions] = useState<SongVersion[]>([]);
   const [audioReady, setAudioReady] = useState(engine.started);
@@ -227,7 +225,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
 
   const track = song?.tracks.find((tr) => tr.id === selected) ?? song?.tracks[0];
   const clipKind = track?.clips[0]?.kind;
-  const low = track ? lows[track.id] ?? DEFAULT_LOW[track.instrument?.key ?? ''] ?? 60 : 60;
+  const low = track ? lows[track.id] ?? lowOf(track.instrument?.key ?? '') : 60;
 
   const startAudio = async () => {
     const ok = await engine.start();
@@ -268,10 +266,51 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
     setModal(null);
   };
   const createSong = async () => {
-    const s = newSong(profile.id, t('songN', lang, { n: songList.length + 1 }), 2, lang);
+    const s = newSong(profile.id, t('songN', lang, { n: songList.length + 1 }), 2, lang, song?.kit_key ?? profile.last_kit ?? DEFAULT_KIT, profile.starred ?? []);
     await store.saveSong(s);
     await switchTo(s);
   };
+
+  /* ---------- kits by genre and the custom kit */
+  const starred = profile.starred ?? [];
+  const currentKit = song?.kit_key ?? DEFAULT_KIT;
+  const isStarred = (key: string | undefined, role: Role) => !!key && starred.some((x) => x.key === key && x.role === role);
+  const toggleStar = (key: string, role: Role) => {
+    const next: StarredInstrument[] = isStarred(key, role) ? starred.filter((x) => !(x.key === key && x.role === role)) : [...starred, { key, role }];
+    onProfile({ ...profile, starred: next, updated_at: new Date().toISOString() });
+  };
+  const pickKit = (key: string) => {
+    if (key === CUSTOM_KIT) { setModal('builder'); return; }
+    if (key === currentKit) return;
+    setPendingKit(key);
+    setModal('kit');
+  };
+  const closeBuilder = () => { engine.disposePreviews(); setModal(null); };
+  const rememberKit = (key: string) => {
+    if (profile.last_kit !== key) onProfile({ ...profile, last_kit: key, updated_at: new Date().toISOString() });
+  };
+  const keepNotesIn = (key: string) => {
+    const selectedRole = track ? roleOf(track) : null;
+    apply((x) => C.switchKit(x, key, slotsFor(key, starred), lang, by));
+    const next = songRef.current;
+    if (next && !next.tracks.some((tr) => tr.id === selected)) setSelected(next.tracks.find((tr) => roleOf(tr) === selectedRole)?.id ?? next.tracks[0]?.id ?? null);
+    rememberKit(key);
+    setModal(null);
+    setPendingKit(null);
+    showToast(t('kitSwitched', lang, { kit: kitName(key, lang) }));
+  };
+  const startBlankIn = async (key: string) => {
+    const count = (await store.listSongs(profile.id)).length;
+    const s = newSong(profile.id, t('songN', lang, { n: count + 1 }), song ? loopBars(song) : 2, lang, key, starred);
+    await store.saveSong(s);
+    rememberKit(key);
+    setPendingKit(null);
+    await switchTo(s);
+    showToast(t('kitSwitched', lang, { kit: kitName(key, lang) }));
+  };
+  // In the custom kit, stars changed since the song was built: offer to rebuild it.
+  const customStale = currentKit === CUSTOM_KIT && !!song && starred.length > 0 &&
+    !sameSlots(slotsFor(CUSTOM_KIT, starred), song.tracks.filter((tr) => tr.instrument).map((tr) => ({ role: roleOf(tr), instrument: tr.instrument!.key })));
   const exportSong = () => {
     if (!song) return;
     downloadText(`${slug(song.title)}${SONG_FILE_EXT}`, exportSongFile(song));
@@ -404,6 +443,23 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
 
       <div className="body">
         <nav className="tracks" aria-label={t('tracks', lang)}>
+          <div className="kit-picker">
+            <label className="lbl" htmlFor="kit-select">{t('genre', lang)}</label>
+            <div className="row" style={{ gap: 6 }}>
+              <select id="kit-select" className="field grow" value={currentKit} onChange={(e) => pickKit(e.target.value)}>
+                {KITS.map((k) => <option key={k.key} value={k.key}>{k.title[lang]}</option>)}
+                <option value={CUSTOM_KIT}>{t('kitCustom', lang)}{starred.length ? ` (★ ${starred.length})` : ''}</option>
+              </select>
+              <button type="button" className="btn icon" onClick={() => setModal('builder')} aria-label={t('buildKit', lang)} title={t('buildKit', lang)}>
+                <Icon name={starred.length ? 'starFill' : 'star'} size={18} />
+              </button>
+            </div>
+            {customStale && (
+              <button type="button" className="btn small-btn" onClick={() => { setPendingKit(CUSTOM_KIT); setModal('kit'); }} title={t('updateKitHint', lang)}>
+                <Icon name="starFill" size={16} /> {t('updateKit', lang)}
+              </button>
+            )}
+          </div>
           {song.tracks.map((tr) => (
             <div key={tr.id} className={`row${alone && tr.id !== track.id ? ' quiet' : ''}`} style={{ gap: 4 }}>
               <button type="button" className="track-btn grow" aria-current={tr.id === track.id} onClick={() => setSelected(tr.id)}>
@@ -413,6 +469,15 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
                   <span className="small muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tr.instrument && findItem(tr.instrument) ? catalogTitle(tr.instrument, lang) : ''}</span>
                 </span>
               </button>
+              {tr.instrument && (
+                <button type="button" className={`mini star${isStarred(tr.instrument.key, roleOf(tr)) ? ' on' : ''}`}
+                  aria-pressed={isStarred(tr.instrument.key, roleOf(tr))}
+                  onClick={() => toggleStar(tr.instrument!.key, roleOf(tr))}
+                  aria-label={t(isStarred(tr.instrument.key, roleOf(tr)) ? 'unstar' : 'star', lang, { name: catalogTitle(tr.instrument, lang) })}
+                  title={t(isStarred(tr.instrument.key, roleOf(tr)) ? 'unstar' : 'star', lang, { name: catalogTitle(tr.instrument, lang) })}>
+                  <Icon name={isStarred(tr.instrument.key, roleOf(tr)) ? 'starFill' : 'star'} size={16} />
+                </button>
+              )}
               <button type="button" className="mini" aria-pressed={tr.muted} onClick={() => apply((x) => C.toggleMute(x, tr.id, by))} aria-label={t('muteTrack', lang, { name: tr.name })}>M</button>
             </div>
           ))}
@@ -524,6 +589,61 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
               <button type="button" className="btn" onClick={() => { apply(() => ({ ...v.snapshot, updated_at: new Date().toISOString() })); setModal(null); showToast(t('versionRestored', lang, { n: v.version_no })); }}>{t('restore', lang)}</button>
             </div>
           ))}
+        </Modal>
+      )}
+
+      {modal === 'kit' && pendingKit && (
+        <Modal title={t('switchKitTitle', lang, { kit: kitName(pendingKit, lang) })} closeLabel={t('close', lang)} onClose={() => { setModal(null); setPendingKit(null); }}>
+          <p className="muted" style={{ margin: 0 }}>{t('switchKitQ', lang)}</p>
+          <button type="button" className="choice" onClick={() => keepNotesIn(pendingKit)}>
+            <strong>{t('keepNotes', lang)}</strong>
+            <span className="small muted">{t('keepNotesHint', lang, { kit: kitName(pendingKit, lang) })}</span>
+          </button>
+          <button type="button" className="choice" onClick={() => startBlankIn(pendingKit)}>
+            <strong>{t('startBlank', lang)}</strong>
+            <span className="small muted">{t('startBlankHint', lang, { kit: kitName(pendingKit, lang) })}</span>
+          </button>
+          <div className="row" style={{ justifyContent: 'flex-end' }}>
+            <button type="button" className="btn ghost" onClick={() => { setModal(null); setPendingKit(null); }}>{t('cancel', lang)}</button>
+          </div>
+        </Modal>
+      )}
+
+      {modal === 'builder' && (
+        <Modal title={t('buildKit', lang)} closeLabel={t('close', lang)} onClose={closeBuilder}>
+          <p className="muted small" style={{ margin: 0 }}>{t('buildKitHint', lang)}</p>
+          {KITS.map((k) => (
+            <section key={k.key} className="stack" style={{ gap: 4 }} aria-label={k.title[lang]}>
+              <h3 style={{ fontSize: 15 }}>{k.title[lang]}</h3>
+              {kitSlots(k.key).map((slot) => {
+                const item = findItem({ key: slot.instrument, version: '1.0.0' });
+                const name = item?.title[lang] ?? slot.instrument;
+                const on = isStarred(slot.instrument, slot.role);
+                return (
+                  <div key={`${slot.role}-${slot.instrument}`} className="row kit-row">
+                    <button type="button" className="mini" onClick={() => engine.previewInstrument(slot.instrument)} aria-label={t('listenTo', lang, { name })} title={t('listenTo', lang, { name })}>
+                      <Icon name="play" size={14} />
+                    </button>
+                    <span className="grow stack" style={{ gap: 0, minWidth: 0 }}>
+                      <span>{name}</span>
+                      <span className="small muted">{ROLE_NAMES[lang][slot.role]}</span>
+                    </span>
+                    <button type="button" className={`mini star${on ? ' on' : ''}`} aria-pressed={on} onClick={() => toggleStar(slot.instrument, slot.role)}
+                      aria-label={t(on ? 'unstar' : 'star', lang, { name })} title={t(on ? 'unstar' : 'star', lang, { name })}>
+                      <Icon name={on ? 'starFill' : 'star'} size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </section>
+          ))}
+          <div className="row builder-foot">
+            <span className="grow small muted">{t('starredCount', lang, { n: starred.length })}</span>
+            <button type="button" className="btn primary" disabled={!starred.length}
+              onClick={() => { engine.disposePreviews(); setPendingKit(CUSTOM_KIT); setModal('kit'); }}>
+              {t('useCustomKit', lang)}
+            </button>
+          </div>
         </Modal>
       )}
 

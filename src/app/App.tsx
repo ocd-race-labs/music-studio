@@ -26,6 +26,8 @@ export default function App() {
   const [store, setStore] = useState<SongStore | null>(null);
   const guestStore = useMemo(() => memoryStore(), []);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  // The guest's stars and last kit live in memory only, like the guest's songs.
+  const [guest, setGuest] = useState<Profile>(guestProfile);
   const [route, setRoute] = useState<Route>({ name: 'loading' });
   const [uiLang, setUiLang] = useState<Lang>('en');
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function App() {
   }, [store]);
 
   const profileFor = (id: string): Profile | undefined =>
-    id === GUEST_ID ? guestProfile : profiles.find((p) => p.id === id);
+    id === GUEST_ID ? guest : profiles.find((p) => p.id === id);
 
   // Each screen wears its profile's theme; home and setup wear the guest theme.
   const themed: ThemePreset = (route.name === 'studio' || route.name === 'settings')
@@ -151,6 +153,11 @@ export default function App() {
           {...look}
           onHome={() => setRoute({ name: 'home' })}
           onSettings={() => profile.id !== GUEST_ID && setRoute({ name: 'settings', profileId: profile.id })}
+          onProfile={(p) => {
+            if (p.id === GUEST_ID) { setGuest(p); return; }
+            setProfiles((list) => list.map((x) => (x.id === p.id ? p : x)));
+            store.saveProfile(p).catch(() => undefined);
+          }}
         />
       );
     }

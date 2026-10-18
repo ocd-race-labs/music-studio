@@ -124,6 +124,8 @@ create table studio.profiles (
   producer_styles          text[]      not null default '{}',   -- catalog style keys
   instruments              text[]      not null default '{}',   -- what the person plays: violin, drums, beats...
   position                 smallint    not null default 0,      -- place on the home screen (app field: order)
+  starred                  jsonb       not null default '[]',   -- custom kit: [{"key": "instrument.violin", "role": "lead"}]
+  last_kit                 text,                                -- kit new songs start with: a catalog kit key or 'custom'
   status                   text        not null default 'active',
   settings_schema_version  integer     not null default 1,
   created_at               timestamptz not null default now(),
@@ -137,7 +139,9 @@ create table studio.profiles (
   constraint profiles_producer_lvl  check (producer_level in ('starter', 'intermediate', 'advanced')),
   constraint profiles_status        check (status in ('active', 'archived')),
   constraint profiles_avatar_object check (jsonb_typeof(avatar) = 'object'),
-  constraint profiles_theme_object  check (jsonb_typeof(theme) = 'object')
+  constraint profiles_theme_object  check (jsonb_typeof(theme) = 'object'),
+  constraint profiles_starred_array check (jsonb_typeof(starred) = 'array'),
+  constraint profiles_last_kit      check (last_kit is null or last_kit = 'custom' or last_kit ~ '^kit\.[a-z0-9-]+$')
 );
 
 create table studio.songs (
@@ -157,6 +161,7 @@ create table studio.songs (
   lyrics_lang         text          not null default 'es',
   musician_style_key  text,                                        -- catalog style key, unpinned
   producer_style_key  text,                                        -- catalog style key, unpinned
+  kit_key             text,                                        -- genre kit: catalog kit key, unpinned, or 'custom'
   status              text          not null default 'active',
   origin              text          not null default 'person',
   schema_version      integer       not null default 1,
@@ -174,6 +179,7 @@ create table studio.songs (
   constraint songs_key_mode      check (key_mode ~ '^[a-z][a-z0-9-]*$'),
   constraint songs_tuning        check (tuning_a4_hz between 400 and 480),
   constraint songs_lyrics_lang   check (lyrics_lang in ('en', 'es')),
+  constraint songs_kit_key       check (kit_key is null or kit_key = 'custom' or kit_key ~ '^kit\.[a-z0-9-]+$'),
   constraint songs_status        check (status in ('active', 'archived')),
   constraint songs_origin        check (origin in ('person', 'claude', 'pack', 'system'))
 );
@@ -214,6 +220,7 @@ create table studio.tracks (
   kind                text          not null,
   instrument_key      text,
   instrument_version  text,
+  role                text,                                -- the job in its kit; switching kit keeps notes by role
   color               text,
   muted               boolean       not null default false,
   solo                boolean       not null default false,
@@ -230,6 +237,7 @@ create table studio.tracks (
   constraint tracks_instrument_fk foreign key (instrument_key, instrument_version)
     references catalog.items (key, version) on delete restrict,
   constraint tracks_kind        check (kind in ('instrument', 'drums', 'audio')),
+  constraint tracks_role        check (role is null or role in ('drums', 'perc', 'bass', 'chords', 'keys', 'lead', 'color')),
   constraint tracks_instrument_by_kind check (
     (kind = 'audio' and instrument_key is null and instrument_version is null)
     or (kind <> 'audio' and instrument_key is not null and instrument_version is not null)

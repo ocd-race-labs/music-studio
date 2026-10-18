@@ -1,13 +1,13 @@
-// The v1 catalog ("core" pack). Every sound is synthesized in the browser:
-// nothing to download, nothing to license, instant loading on the iPad.
+// The core pack. Every sound is synthesized in the browser: nothing to download, nothing to license,
+// instant loading on the iPad. Real recordings replace the main instruments in a later pack.
 // Keys and versions follow the catalog rules: kind.name@x.y.z, never edited once published.
 
-import type { CatalogRef } from '../domain/types';
+import type { CatalogRef, Role } from '../domain/types';
 
 export interface CatalogItem {
   key: string;
   version: string;
-  kind: 'instrument' | 'sound' | 'effect';
+  kind: 'instrument' | 'sound' | 'effect' | 'kit';
   pack: 'core';
   status: 'active' | 'deprecated';
   title: { en: string; es: string };
@@ -27,7 +27,9 @@ const item = (
   manifest: Record<string, unknown>,
 ): CatalogItem => ({ kind, key, version: '1.0.0', pack: 'core', status: 'active', title: { en, es }, license: LICENSE, source: SOURCE, manifest });
 
-/** The eight drum voices every kit plays. Patterns reference these, so changing kit keeps the beat. */
+/* ---------------------------------------------------------------- drum rows */
+
+/** The eight rows of a standard kit. Patterns reference these, so changing kit keeps the beat. */
 export const DRUM_VOICES = [
   item('sound', 'sound.kick', 'Kick', 'Bombo', { voice: 'kick' }),
   item('sound', 'sound.snare', 'Snare', 'Caja', { voice: 'snare' }),
@@ -39,15 +41,111 @@ export const DRUM_VOICES = [
   item('sound', 'sound.crash', 'Crash', 'Platillo', { voice: 'crash' }),
 ];
 
-export const INSTRUMENTS = [
-  item('instrument', 'instrument.drums-boom-bap', 'Drums: boom bap', 'Batería: boom bap', { type: 'drumkit', kit: 'boomBap' }),
-  item('instrument', 'instrument.drums-trap', 'Drums: trap', 'Batería: trap', { type: 'drumkit', kit: 'trap' }),
-  item('instrument', 'instrument.bass-808', '808 bass', 'Bajo 808', { type: 'synth', voice: 'bass808', range: [28, 55] }),
-  item('instrument', 'instrument.keys-ep', 'Electric piano', 'Piano eléctrico', { type: 'synth', voice: 'keysEp', range: [48, 84] }),
-  item('instrument', 'instrument.pad-warm', 'Warm pad', 'Pad cálido', { type: 'synth', voice: 'padWarm', range: [48, 84] }),
-  item('instrument', 'instrument.lead-bright', 'Bright lead', 'Lead brillante', { type: 'synth', voice: 'leadBright', range: [60, 96] }),
-  item('instrument', 'instrument.strings-ensemble', 'String ensemble', 'Cuerdas', { type: 'synth', voice: 'strings', range: [43, 88] }),
+/** Orchestral percussion, row by row in the same places as a standard kit (kick → bass drum, and so on). */
+export const ORCH_VOICES = [
+  item('sound', 'sound.bass-drum', 'Bass drum', 'Gran casa', { voice: 'bassDrum' }),
+  item('sound', 'sound.snare-orch', 'Concert snare', 'Caja sinfónica', { voice: 'snareOrch' }),
+  item('sound', 'sound.tambourine', 'Tambourine', 'Pandereta', { voice: 'tambourine' }),
+  item('sound', 'sound.triangle', 'Triangle', 'Triángulo', { voice: 'triangle' }),
+  item('sound', 'sound.suspended-cymbal', 'Suspended cymbal', 'Platillo suspendido', { voice: 'suspendedCymbal' }),
+  item('sound', 'sound.woodblock', 'Woodblock', 'Bloque de madera', { voice: 'woodblock' }),
+  item('sound', 'sound.timpani', 'Timpani', 'Timbal sinfónico', { voice: 'timpani' }),
+  item('sound', 'sound.cymbals', 'Cymbals', 'Platillos', { voice: 'cymbals' }),
 ];
+
+/** Latin hand percussion, row by row in the same places as a standard kit. */
+export const LATIN_VOICES = [
+  item('sound', 'sound.conga-low', 'Low conga', 'Tumba', { voice: 'congaLow' }),
+  item('sound', 'sound.conga-high', 'High conga', 'Conga', { voice: 'congaHigh' }),
+  item('sound', 'sound.bongo', 'Bongo', 'Bongó', { voice: 'bongo' }),
+  item('sound', 'sound.guiro', 'Güiro', 'Güiro', { voice: 'guiro' }),
+  item('sound', 'sound.maracas', 'Maracas', 'Maracas', { voice: 'maracas' }),
+  item('sound', 'sound.clave', 'Clave', 'Clave', { voice: 'clave' }),
+  item('sound', 'sound.timbale', 'Timbale', 'Timbal', { voice: 'timbale' }),
+  item('sound', 'sound.cowbell', 'Cowbell', 'Cencerro', { voice: 'cowbell' }),
+];
+
+const keysOf = (list: CatalogItem[]) => list.map((i) => i.key);
+export const STANDARD_ROWS = keysOf(DRUM_VOICES);
+export const ORCH_ROWS = keysOf(ORCH_VOICES);
+export const LATIN_ROWS = keysOf(LATIN_VOICES);
+
+/* ---------------------------------------------------------------- instruments */
+
+const kit = (key: string, en: string, es: string, kitId: string, rows: string[] = STANDARD_ROWS) =>
+  item('instrument', key, en, es, { type: 'drumkit', kit: kitId, rows });
+/** low: the lowest note shown when the 2-octave grid opens. */
+const synth = (key: string, en: string, es: string, voice: string, low: number) =>
+  item('instrument', key, en, es, { type: 'synth', voice, low });
+
+export const INSTRUMENTS = [
+  kit('instrument.drums-boom-bap', 'Drums: boom bap', 'Batería: boom bap', 'boomBap'),
+  kit('instrument.drums-trap', 'Drums: trap', 'Batería: trap', 'trap'),
+  kit('instrument.drums-pop', 'Drums: pop', 'Batería: pop', 'pop'),
+  kit('instrument.drums-rock', 'Drums: rock', 'Batería: rock', 'rock'),
+  kit('instrument.drums-909', 'Drum machine', 'Caja de ritmos', 'electro'),
+  kit('instrument.drums-jazz', 'Drums: brushes', 'Batería: escobillas', 'jazz'),
+  kit('instrument.drums-latin', 'Drums: latin', 'Batería: latina', 'latin'),
+  kit('instrument.drums-orch', 'Orchestral percussion', 'Percusión orquestal', 'orch', ORCH_ROWS),
+  kit('instrument.perc-latin', 'Latin percussion', 'Percusión latina', 'latinPerc', LATIN_ROWS),
+
+  synth('instrument.bass-808', '808 bass', 'Bajo 808', 'bass808', 36),
+  synth('instrument.bass-synth', 'Synth bass', 'Bajo sintetizado', 'bassSynth', 36),
+  synth('instrument.bass-electric', 'Electric bass', 'Bajo eléctrico', 'bassElectric', 36),
+  synth('instrument.bass-upright', 'Upright bass', 'Contrabajo', 'bassUpright', 36),
+  synth('instrument.cello', 'Cello', 'Chelo', 'cello', 36),
+
+  synth('instrument.keys-ep', 'Electric piano', 'Piano eléctrico', 'keysEp', 60),
+  synth('instrument.keys-piano', 'Piano', 'Piano', 'keysPiano', 48),
+  synth('instrument.organ', 'Organ', 'Órgano', 'organ', 48),
+  synth('instrument.pluck', 'Pluck', 'Pluck', 'pluck', 60),
+  synth('instrument.vibes', 'Vibraphone', 'Vibráfono', 'vibes', 60),
+  synth('instrument.bells-fm', 'Bells', 'Campanas', 'bellsFm', 60),
+
+  synth('instrument.pad-warm', 'Warm pad', 'Pad cálido', 'padWarm', 55),
+  synth('instrument.pad-supersaw', 'Supersaw pad', 'Pad supersaw', 'padSupersaw', 55),
+  synth('instrument.strings-ensemble', 'String ensemble', 'Cuerdas', 'strings', 55),
+  synth('instrument.brass-section', 'Brass section', 'Metales', 'brassSection', 48),
+
+  synth('instrument.lead-bright', 'Bright lead', 'Lead brillante', 'leadBright', 60),
+  synth('instrument.lead-saw', 'Saw lead', 'Lead sierra', 'leadSaw', 60),
+  synth('instrument.violin', 'Violin', 'Violín', 'violin', 55),
+  synth('instrument.flute', 'Flute', 'Flauta', 'flute', 60),
+  synth('instrument.sax', 'Saxophone', 'Saxofón', 'sax', 55),
+  synth('instrument.trumpet', 'Trumpet', 'Trompeta', 'trumpet', 55),
+  synth('instrument.trumpet-mute', 'Muted trumpet', 'Trompeta con sordina', 'trumpetMute', 55),
+
+  synth('instrument.guitar-clean', 'Clean guitar', 'Guitarra limpia', 'guitarClean', 48),
+  synth('instrument.guitar-dist', 'Distorted guitar', 'Guitarra distorsionada', 'guitarDist', 40),
+  synth('instrument.guitar-lead', 'Lead guitar', 'Guitarra solista', 'guitarLead', 52),
+  synth('instrument.guitar-nylon', 'Nylon guitar', 'Guitarra acústica', 'guitarNylon', 48),
+];
+
+/* ---------------------------------------------------------------- kits by genre */
+
+export interface KitSlot { role: Role; instrument: string }
+
+const genre = (id: string, en: string, es: string, slots: [Role, string][]) =>
+  item('kit', `kit.${id}`, en, es, { slots: slots.map(([role, instrument]) => ({ role, instrument: `instrument.${instrument}` })) });
+
+/** Each genre fills the same roles, so a song can move between genres and keep its notes. */
+export const KITS = [
+  genre('hiphop', 'Hip hop', 'Hip hop', [['drums', 'drums-boom-bap'], ['bass', 'bass-808'], ['chords', 'pad-warm'], ['keys', 'keys-ep'], ['lead', 'lead-bright'], ['color', 'strings-ensemble']]),
+  genre('pop', 'Pop', 'Pop', [['drums', 'drums-pop'], ['bass', 'bass-synth'], ['chords', 'keys-piano'], ['keys', 'pluck'], ['lead', 'lead-bright'], ['color', 'strings-ensemble']]),
+  genre('rock', 'Rock', 'Rock', [['drums', 'drums-rock'], ['bass', 'bass-electric'], ['chords', 'guitar-dist'], ['keys', 'organ'], ['lead', 'guitar-lead'], ['color', 'guitar-clean']]),
+  genre('electronic', 'Electronic', 'Electrónica', [['drums', 'drums-909'], ['bass', 'bass-synth'], ['chords', 'pad-supersaw'], ['keys', 'pluck'], ['lead', 'lead-saw'], ['color', 'bells-fm']]),
+  genre('jazz', 'Jazz', 'Jazz', [['drums', 'drums-jazz'], ['bass', 'bass-upright'], ['chords', 'keys-piano'], ['keys', 'vibes'], ['lead', 'sax'], ['color', 'trumpet-mute']]),
+  genre('classical', 'Classical', 'Clásica', [['drums', 'drums-orch'], ['bass', 'cello'], ['chords', 'strings-ensemble'], ['keys', 'keys-piano'], ['lead', 'violin'], ['color', 'flute']]),
+  genre('latin', 'Latin', 'Latina', [['drums', 'drums-latin'], ['perc', 'perc-latin'], ['bass', 'bass-electric'], ['chords', 'keys-piano'], ['keys', 'guitar-nylon'], ['lead', 'trumpet'], ['color', 'brass-section']]),
+];
+
+export const DEFAULT_KIT = 'kit.hiphop';
+export const CUSTOM_KIT = 'custom';
+
+export const kitSlots = (kitKey: string): KitSlot[] =>
+  ((KITS.find((k) => k.key === kitKey)?.manifest.slots as KitSlot[] | undefined) ?? []);
+
+/* ---------------------------------------------------------------- effects */
 
 export interface ParamDef {
   name: string;
@@ -76,7 +174,7 @@ export const EFFECTS = [
   }),
 ];
 
-export const CATALOG: CatalogItem[] = [...DRUM_VOICES, ...INSTRUMENTS, ...EFFECTS];
+export const CATALOG: CatalogItem[] = [...DRUM_VOICES, ...ORCH_VOICES, ...LATIN_VOICES, ...INSTRUMENTS, ...KITS, ...EFFECTS];
 
 export const ref = (key: string): CatalogRef => {
   const found = CATALOG.find((c) => c.key === key);
@@ -87,8 +185,63 @@ export const ref = (key: string): CatalogRef => {
 export const findItem = (r: CatalogRef): CatalogItem | undefined =>
   CATALOG.find((c) => c.key === r.key && c.version === r.version);
 
+export const findByKey = (key: string): CatalogItem | undefined => CATALOG.find((c) => c.key === key);
+
 export const effectParams = (r: CatalogRef): ParamDef[] =>
   ((findItem(r)?.manifest.params as ParamDef[] | undefined) ?? []);
 
 export const title = (r: CatalogRef | null, lang: 'en' | 'es' = 'en'): string =>
   (r && findItem(r)?.title[lang]) || '';
+
+export const kitTitle = (kitKey: string, lang: 'en' | 'es'): string => findByKey(kitKey)?.title[lang] ?? kitKey;
+
+/** Drum rows of a kit instrument, standard unless the kit says otherwise. */
+export const rowsOf = (instrumentKey: string): string[] =>
+  ((findByKey(instrumentKey)?.manifest.rows as string[] | undefined) ?? STANDARD_ROWS);
+
+export const isDrumKit = (instrumentKey: string): boolean => findByKey(instrumentKey)?.manifest.type === 'drumkit';
+
+/** Lowest note shown when an instrument's grid opens. */
+export const lowOf = (instrumentKey: string): number => (findByKey(instrumentKey)?.manifest.low as number | undefined) ?? 60;
+
+const ROW_FAMILIES = [STANDARD_ROWS, ORCH_ROWS, LATIN_ROWS];
+
+/** Place of a drum row in its kit (kick and bass drum and tumba are all row 0). */
+export const rowIndex = (soundKey: string): number => {
+  for (const rows of ROW_FAMILIES) {
+    const i = rows.indexOf(soundKey);
+    if (i >= 0) return i;
+  }
+  return -1;
+};
+
+/** The row of this kit in the same place as a row of any other kit. */
+export const rowFor = (instrumentKey: string, soundKey: string): string => {
+  const rows = rowsOf(instrumentKey);
+  if (rows.includes(soundKey)) return soundKey;
+  return rows[rowIndex(soundKey)] ?? soundKey;
+};
+
+/** The synth voice that plays a drum row on a given kit; any kit's pattern plays on any other kit. */
+export const rowVoice = (instrumentKey: string, soundKey: string): string | undefined =>
+  findByKey(rowFor(instrumentKey, soundKey))?.manifest.voice as string | undefined;
+
+export const ROLES: Role[] = ['drums', 'perc', 'bass', 'chords', 'keys', 'lead', 'color'];
+
+/** The job an instrument does in the first kit that has it; drum kits are drums, the rest default to lead. */
+export const roleOfInstrument = (instrumentKey: string): Role => {
+  for (const k of KITS) {
+    const slot = (k.manifest.slots as KitSlot[]).find((s) => s.instrument === instrumentKey);
+    if (slot) return slot.role;
+  }
+  return isDrumKit(instrumentKey) ? 'drums' : 'lead';
+};
+
+/** Instruments a track can switch to without losing its notes: drum kits with the same rows, or any melodic instrument. */
+export const swapsFor = (instrumentKey: string): CatalogItem[] => {
+  if (isDrumKit(instrumentKey)) {
+    const rows = rowsOf(instrumentKey).join();
+    return INSTRUMENTS.filter((i) => i.manifest.type === 'drumkit' && (i.manifest.rows as string[]).join() === rows);
+  }
+  return INSTRUMENTS.filter((i) => i.manifest.type !== 'drumkit');
+};

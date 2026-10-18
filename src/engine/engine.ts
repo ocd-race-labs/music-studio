@@ -4,7 +4,7 @@
 // and they cost the most CPU on a tablet.
 
 import * as Tone from 'tone';
-import { findItem } from '../packs/core';
+import { findByKey, findItem, lowOf, rowsOf, rowVoice } from '../packs/core';
 import { chordMidi, diatonicTriads } from '../theory';
 import type { ChordsContent, NotesContent, PatternContent, Song, Track } from '../domain/types';
 import { PPQ, STEP_TICKS } from '../domain/types';
@@ -25,10 +25,6 @@ interface TrackChannel {
 
 type AudioSessionNav = Navigator & { audioSession?: { type: string } };
 
-const DRUM_VOICE_BY_KEY: Record<string, string> = {
-  'sound.kick': 'kick', 'sound.snare': 'snare', 'sound.clap': 'clap', 'sound.hat-closed': 'hatClosed',
-  'sound.hat-open': 'hatOpen', 'sound.rim': 'rim', 'sound.tom': 'tom', 'sound.crash': 'crash',
-};
 
 const gainToDb = (g: number) => (g <= 0.0001 ? -Infinity : 20 * Math.log10(g));
 
@@ -286,7 +282,7 @@ export class StudioEngine {
         const p = clip.content as PatternContent;
         for (const row of p.rows) {
           const hit = row.hits.find((h) => h.step === step);
-          const name = DRUM_VOICE_BY_KEY[row.sound.key];
+          const name = hit && rowVoice(ch.instrumentKey, row.sound.key);
           if (hit && name) ch.voice.hit(name, time, hit.vel);
         }
       } else if (clip.kind === 'notes' && ch.voice.kind === 'melodic') {
@@ -318,7 +314,7 @@ export class StudioEngine {
   async previewDrum(trackId: string, soundKey: string): Promise<void> {
     this.ensure();
     const ch = this.channels.get(trackId);
-    const name = DRUM_VOICE_BY_KEY[soundKey];
+    const name = ch && rowVoice(ch.instrumentKey, soundKey);
     if (ch?.voice.kind === 'drums' && name) ch.voice.hit(name, Tone.now(), 1);
   }
 
@@ -338,9 +334,40 @@ export class StudioEngine {
     if (ch?.voice.kind !== 'drums') return;
     const t0 = Tone.now() + 0.05;
     for (const h of items) {
-      const name = DRUM_VOICE_BY_KEY[h.soundKey];
+      const name = rowVoice(ch.instrumentKey, h.soundKey);
       if (name) ch.voice.hit(name, t0 + h.at, h.vel);
     }
+  }
+
+  private previews = new Map<string, Voice>();
+
+  /** Hear any instrument from the catalog, even one no track uses yet: a short phrase or a short beat. */
+  previewInstrument(instrumentKey: string): void {
+    this.ensure();
+    if (!this.master) return;
+    const manifest = (findByKey(instrumentKey)?.manifest ?? {}) as { type?: string; kit?: string; voice?: string };
+    let voice = this.previews.get(instrumentKey);
+    if (!voice) {
+      voice = manifest.type === 'drumkit' ? createDrumKit(manifest.kit ?? 'boomBap') : createMelodicVoice(manifest.voice ?? 'keysEp');
+      voice.output.connect(this.master);
+      this.previews.set(instrumentKey, voice);
+    }
+    const t0 = Tone.now() + 0.05;
+    const beat = 0.18;
+    if (voice.kind === 'drums') {
+      const rows = rowsOf(instrumentKey);
+      const voiceOf = (i: number) => findByKey(rows[i])?.manifest.voice as string;
+      [[0, 0], [3, 1], [1, 2], [3, 3], [0, 4], [5, 5], [1, 6], [7, 7]].forEach(([row, at]) => voice!.kind === 'drums' && voice!.hit(voiceOf(row), t0 + at * beat, 0.9));
+    } else {
+      const root = Math.ceil(lowOf(instrumentKey) / 12) * 12;
+      [0, 4, 7, 12].forEach((iv, i) => voice!.kind === 'melodic' && voice!.play(root + iv, beat * 1.6, t0 + i * beat * 1.5, 0.8, this.song?.tuning_a4_hz ?? 440));
+    }
+  }
+
+  /** Free the instruments built only to be previewed. */
+  disposePreviews(): void {
+    for (const v of this.previews.values()) v.dispose();
+    this.previews.clear();
   }
 
   /** What the device reports about its audio timing, for the Phase 0 latency spike. */

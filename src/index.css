@@ -220,7 +220,7 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .outmeter > span { display: block; height: 100%; background: var(--main); transform-origin: left center; transform: scaleX(0); }
 .rec[aria-pressed='true'] { background: var(--highlight); color: var(--highlight-ink); border-color: var(--highlight); }
 .body { display: flex; flex-wrap: wrap; gap: 14px; padding: 14px 16px 18px; flex: 1 1 auto; align-items: flex-start; }
-.tracks { flex: 0 1 230px; min-width: 200px; display: flex; flex-direction: column; gap: 6px; }
+.tracks { flex: 0 1 266px; min-width: 230px; display: flex; flex-direction: column; gap: 6px; }
 .track-btn {
   display: flex; align-items: center; gap: 10px; text-align: left; border: 1px solid var(--line); background: var(--panel);
   border-radius: 12px; padding: 8px 10px; min-height: 52px; width: 100%;
@@ -240,6 +240,22 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 /* Only this track: the other tracks fade in the list while it is on. */
 .btn.alone[aria-pressed='true'] { background: var(--main); color: var(--main-ink); border-color: var(--main); }
 .tracks .quiet { opacity: 0.45; }
+/* Genre kits: the picker sits on top of the track list; stars mark instruments for the custom kit. */
+.kit-picker { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; margin-bottom: 2px; border-bottom: 1px solid var(--line); flex: none; }
+.kit-picker select.field { min-width: 0; }
+.track-btn strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tracks .mini { min-height: 44px; min-width: 36px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.mini.star[aria-pressed='true'] { background: transparent; color: var(--highlight); border-color: var(--highlight); }
+.btn.small-btn { min-height: 36px; font-size: 13px; gap: 6px; }
+.choice {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; width: 100%;
+  padding: 14px 16px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--raised); color: var(--ink); min-height: 64px;
+}
+.choice:hover, .choice:focus-visible { border-color: var(--main); }
+.choice strong { font-size: 16px; }
+.kit-row { gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.kit-row .mini { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.builder-foot { position: sticky; bottom: -20px; background: var(--panel); padding: 12px 0 4px; margin-top: 4px; border-top: 1px solid var(--line); }
 .lang-toggle { font-family: 'DM Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; }
 .update-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 60;
@@ -254,6 +270,7 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .studio.wide .side { display: none; }
 .studio.wide .tracks { flex: 1 1 100%; flex-direction: row; overflow-x: auto; }
 .studio.wide .track-btn { min-width: 150px; }
+.studio.wide .kit-picker { min-width: 200px; border-bottom: 0; border-right: 1px solid var(--line); padding: 0 10px 0 0; margin: 0; }
 .studio.wide .editor { flex-basis: 100%; }
 
 /* Grids */
@@ -317,5 +334,6 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 @media (max-width: 720px) {
   .tracks { flex: 1 1 100%; flex-direction: row; overflow-x: auto; }
   .track-btn { min-width: 160px; }
+  .kit-picker { min-width: 200px; border-bottom: 0; border-right: 1px solid var(--line); padding: 0 10px 0 0; margin: 0; }
   .side { max-width: none; }
 }
