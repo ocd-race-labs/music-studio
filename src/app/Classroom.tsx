@@ -5,7 +5,7 @@ import { ask, SUGGESTIONS } from '../classroom/assistant';
 import type { ReplyKind } from '../classroom/assistant';
 import { clock, cueAt, cuesFor, durationOf, hasVideo, LESSONS, lessonById } from '../classroom/lessons';
 import type { Lesson, LessonId } from '../classroom/lessons';
-import { canSpeak, hush, speak } from '../classroom/speech';
+import { canSpeak, hush, prepareSpeech, speak } from '../classroom/speech';
 import { t } from './i18n';
 import type { Mode } from './prefs';
 import { Icon, LangToggle, ModeSwitch } from './ui';
@@ -115,19 +115,29 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
   const next = LESSONS[index + 1];
 
   const reading = useRef(0); // which spoken caption is current; an older one finishing must not restart the video
+  const [voice, setVoice] = useState<'idle' | 'reading'>('idle');
+  const [trouble, setTrouble] = useState(false); // the device did not speak: silent mode or no voice
   const readCue = useCallback((i: number) => {
     const v = video.current;
     if (!v || i < 0) return;
     const token = ++reading.current;
-    v.pause();
+    // Paused by us; on iPhone the voice starting would pause it anyway, and that must not count as her pause.
     waiting.current = true;
-    speak(cues[i][lang], lang, () => {
-      if (token !== reading.current || !waiting.current) return;
-      waiting.current = false;
-      v.play().catch(() => undefined);
+    v.pause();
+    setVoice('reading');
+    speak(cues[i][lang], lang, {
+      onStart: () => setTrouble(false),
+      onEnd: (how) => {
+        if (token !== reading.current) return;
+        setVoice('idle');
+        if (how === 'failed') setTrouble(true);
+        if (!waiting.current) return;
+        waiting.current = false;
+        v.play().catch(() => undefined);
+      },
     });
   }, [cues, lang]);
-  const quiet = () => { reading.current++; hush(); };
+  const quiet = () => { reading.current++; hush(); setVoice('idle'); };
 
   const onTime = () => {
     const v = video.current;
@@ -161,8 +171,17 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
   const toggleRead = () => {
     const on = !readAloud;
     onReadAloud(on);
-    // Read the caption on screen right away: on iPad the first spoken line must come from a tap.
-    if (on) speak(at >= 0 ? cues[at][lang] : lesson.title[lang], lang);
+    if (!on) { quiet(); waiting.current = false; setTrouble(false); return; }
+    // On iPhone and iPad the first spoken line must start inside this tap.
+    prepareSpeech();
+    const v = video.current;
+    if (v && !v.paused && at >= 0) { readCue(at); return; }
+    const token = ++reading.current;
+    setVoice('reading');
+    speak(at >= 0 ? cues[at][lang] : lesson.title[lang], lang, {
+      onStart: () => setTrouble(false),
+      onEnd: (how) => { if (token !== reading.current) return; setVoice('idle'); if (how === 'failed') setTrouble(true); },
+    });
   };
 
   return (
@@ -179,7 +198,7 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
           <div className="cl-video">
             <video ref={video} src={`classroom/${lesson.id}.mp4`} poster={`classroom/${lesson.id}.jpg`} controls playsInline preload="metadata"
               onTimeUpdate={onTime} onSeeked={onTime}
-              onPlay={() => { setEnded(false); if (waiting.current) { waiting.current = false; quiet(); } }}
+              onPlay={() => { setEnded(false); if (waiting.current) { waiting.current = false; quiet(); } else if (voice === 'reading') quiet(); }}
               onPause={() => { if (!waiting.current) quiet(); }}
               onEnded={() => { quiet(); setEnded(true); }} />
             {ended && (
@@ -193,7 +212,11 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
               </div>
             )}
           </div>
-          <p className="cl-caption" aria-live="polite">{at >= 0 ? cues[at][lang] : t('clPressPlay', lang)}</p>
+          <p className={`cl-caption${voice === 'reading' ? ' reading' : ''}`} aria-live="polite">
+            {voice === 'reading' && <span className="cl-reading" aria-label={t('clReadingNow', lang)}><Icon name="speaker" size={18} /></span>}
+            {at >= 0 ? cues[at][lang] : t('clPressPlay', lang)}
+          </p>
+          {readAloud && trouble && <p className="cl-trouble small" role="status"><Icon name="warning" size={16} /> {t('clVoiceTrouble', lang)}</p>}
         </div>
         <aside className="card stack cl-side">
           <span className="lbl">{t('clExamples', lang)}</span>
@@ -220,6 +243,11 @@ function AskClave({ lang, onLesson }: { lang: Lang; onLesson: (id: LessonId) => 
   const [msgs, setMsgs] = useState<Msg[]>(() => [{ from: 'clave', text: ask('', lang).text, kind: 'hello' }]);
   const [draft, setDraft] = useState('');
   const [thinking, setThinking] = useState(false);
+  const [voiceTrouble, setVoiceTrouble] = useState(false);
+  const listen = (text: string) => {
+    prepareSpeech();
+    speak(text, lang, { onStart: () => setVoiceTrouble(false), onEnd: (how) => { if (how === 'failed') setVoiceTrouble(true); } });
+  };
   const end = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [msgs, thinking]);
@@ -255,7 +283,7 @@ function AskClave({ lang, onLesson }: { lang: Lang; onLesson: (id: LessonId) => 
                     {lesson && hasVideo(lesson.id) && (
                       <button type="button" className="chip" onClick={() => onLesson(lesson.id)}><Icon name="play" size={12} /> {t('clSeeLesson', lang)}: {lesson.title[lang]}</button>
                     )}
-                    {canSpeak() && <button type="button" className="chip" onClick={() => speak(m.text, lang)} aria-label={t('clListen', lang)}><Icon name="speaker" size={14} /> {t('clListen', lang)}</button>}
+                    {canSpeak() && <button type="button" className="chip" onClick={() => listen(m.text)} aria-label={t('clListen', lang)}><Icon name="speaker" size={14} /> {t('clListen', lang)}</button>}
                   </div>
                 )}
               </div>
@@ -268,6 +296,7 @@ function AskClave({ lang, onLesson }: { lang: Lang; onLesson: (id: LessonId) => 
       <div className="row wrap cl-suggest">
         {SUGGESTIONS[lang].map((s) => <button key={s} type="button" className="chip" onClick={() => send(s)} disabled={thinking}>{s}</button>)}
       </div>
+      {voiceTrouble && <p className="cl-trouble small" role="status"><Icon name="warning" size={16} /> {t('clVoiceTrouble', lang)}</p>}
       <form className="cl-ask" onSubmit={onSubmit}>
         <input ref={input} className="field" value={draft} maxLength={200} onChange={(e) => setDraft(e.target.value)}
           placeholder={t('clAskPlaceholder', lang)} aria-label={t('clAskPlaceholder', lang)} enterKeyHint="send" autoComplete="off" />

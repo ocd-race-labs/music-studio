@@ -377,6 +377,8 @@ const STRINGS = {
   clAskPlaceholder: { en: 'Ask about music, instruments or the studio', es: 'Pregunta sobre música, instrumentos o el estudio' },
   clSend: { en: 'Ask', es: 'Preguntar' },
   clAskNote: { en: 'Clave only knows about music, instruments and Music Studio. Nothing you write leaves this device.', es: 'Clave solo sabe de música, instrumentos y Music Studio. Lo que escribes no sale de este dispositivo.' },
+  clReadingNow: { en: 'Reading aloud', es: 'Leyendo en voz alta' },
+  clVoiceTrouble: { en: "The voice didn't play. Check that the iPhone or iPad isn't on silent and the volume is up, then tap Read aloud again.", es: 'No se escuchó la voz. Revisa que el iPhone o iPad no esté en silencio y que el volumen esté arriba, y vuelve a tocar Leer en voz alta.' },
   clSettingHint: { en: 'Short video lessons and Clave, a helper that only answers about music. Adds a Classroom button to this profile.', es: 'Lecciones en video cortas y Clave, un asistente que solo responde sobre música. Agrega el botón Classroom a este perfil.' },
   clShow: { en: 'Show Classroom', es: 'Mostrar Classroom' },
   yes: { en: 'Yes', es: 'Sí' },

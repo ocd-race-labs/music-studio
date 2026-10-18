@@ -493,7 +493,7 @@ input.field.num { width: 64px; text-align: center; }
 .cl-cues { list-style: none; margin: 0; padding: 0; overflow: auto; max-height: 44vh; display: flex; flex-direction: column; gap: 2px; position: relative; }
 .cl-cues button { width: 100%; display: flex; gap: 10px; text-align: left; align-items: flex-start; padding: 8px 10px; border-radius: 10px; border: 0; background: transparent; color: var(--ink-2); font-size: 14px; line-height: 1.35; min-height: 44px; }
 .cl-cues button .mono { flex: none; padding-top: 1px; }
-.cl-cues button:hover { background: var(--raised); }
+@media (hover: hover) { .cl-cues button:hover { background: var(--raised); } }
 .cl-cues button[aria-current] { background: var(--raised); color: var(--ink); box-shadow: inset 3px 0 0 var(--main); }
 
 .cl-chat { display: flex; flex-direction: column; gap: 12px; max-width: 860px; width: 100%; }
@@ -518,3 +518,10 @@ input.field.num { width: 64px; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .cl-dots i { animation: none; } }
 @media (max-width: 900px) { .cl-stage { grid-template-columns: 1fr; } .cl-cues { max-height: none; } }
 @media (max-width: 560px) { .classroom { padding: 14px 16px 40px; } .cl-head > .btn { order: 0; } .cl-msg { max-width: 100%; } }
+.cl-caption.reading { border-left-color: var(--highlight); }
+.cl-reading { display: inline-flex; vertical-align: -3px; margin-right: 8px; color: var(--highlight); animation: cl-pulse 1.2s ease-in-out infinite; }
+@keyframes cl-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+.cl-trouble { margin: 0; display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--highlight) 14%, var(--panel)); border: 1px solid var(--highlight); color: var(--ink); }
+.cl-trouble svg { flex: none; color: var(--highlight); margin-top: 1px; }
+@media (prefers-reduced-motion: reduce) { .cl-reading { animation: none; } }
+.cl-player .btn[aria-pressed='true'] { background: var(--main); color: var(--main-ink); border-color: var(--main); }
