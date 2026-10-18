@@ -54,7 +54,7 @@ const kitName = (key: string, lang: Lang) => (key === CUSTOM_KIT ? t('kitCustom'
 const sameSlots = (a: { role: Role; instrument: string }[], b: { role: Role; instrument: string }[]) =>
   a.length === b.length && a.every((x, i) => x.role === b[i].role && x.instrument === b[i].instrument);
 
-export default function Studio({ store, profile, lang, onLang, mode, onToggleMode, onHome, onSettings, onProfile }: {
+export default function Studio({ store, profile, lang, onLang, mode, onToggleMode, onHome, onSettings, onClassroom, onProfile }: {
   store: SongStore;
   profile: Profile;
   onProfile: (p: Profile) => void;
@@ -64,6 +64,8 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   onToggleMode: () => void;
   onHome: () => void;
   onSettings: () => void;
+  /** Opens Music Studio Classroom; absent where Classroom is off. */
+  onClassroom?: () => void;
 }) {
   const naming = namingFor(lang);
   const langRef = useRef(lang);
@@ -491,7 +493,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   };
   const repeatPart = (id: string, times: number, extend: boolean) => {
     const name = song?.sections.find((x) => x.id === id)?.name ?? '';
-    tryApply((x) => A.repeatSection(x, id, times, lang, by, extend), () => { showToast(t('repeated', lang, { name, n: times })); });
+    tryApply((x) => A.repeatSection(x, id, times, lang, by, extend), () => { showToast(t(times === 1 ? 'repeatedOnce' : 'repeated', lang, { name, n: times })); });
   };
   const deletePartBars = (id: string) => {
     const name = song?.sections.find((x) => x.id === id)?.name ?? '';
@@ -526,6 +528,11 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         <div className="tb-group tb-left">
         <button type="button" className="btn icon" onClick={onHome} aria-label={t('home', lang)}><Icon name="home" /></button>
         <Avatar profile={profile} onClick={onSettings} label={t('settings', lang)} />
+        {onClassroom && (
+          <button type="button" className="btn classroom-btn" onClick={onClassroom} aria-label={t('clOpen', lang)} title={t('clOpen', lang)}>
+            <Icon name="classroom" size={20} /> <span className="hide-sm">{t('classroom', lang)}</span>
+          </button>
+        )}
         <input className="title-input" aria-label={t('songTitle', lang)} value={song.title}
           onChange={(e) => { if (songRef.current) { songRef.current = { ...songRef.current, title: e.target.value }; setSong(songRef.current); } }}
           onBlur={(e) => apply((x) => C.setTitle(x, e.target.value, by))} />

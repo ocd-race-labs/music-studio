@@ -223,7 +223,7 @@ export function SongTimeline({ song, lang, step, firstBar, barsOnScreen, focusId
     <section className="timeline" aria-label={t('timeline', lang)}>
       <div className="row small" style={{ gap: 10 }}>
         <strong>{t('timeline', lang)}</strong>
-        <span className="muted">{t('timelineLength', lang, { bars, time: songDuration(song) })}</span>
+        <span className="muted">{t(bars === 1 ? 'timelineLengthOne' : 'timelineLength', lang, { bars, time: songDuration(song) })}</span>
         <span className="grow" />
         <span className="mono">{t(playing ? 'positionNow' : 'positionStart', lang, { pos })}</span>
       </div>

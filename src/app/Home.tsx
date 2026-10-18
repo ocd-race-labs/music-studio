@@ -1,3 +1,4 @@
+import { classroomOn } from '../domain/factory';
 import type { Lang, Profile } from '../domain/types';
 import { GUEST_ID, guestProfile } from './guest';
 import { instrumentsLine, t, themeName } from './i18n';
@@ -32,13 +33,14 @@ function ProfileCard({ profile, lang, mode, guest, onOpen }: { profile: Profile;
   );
 }
 
-export default function Home({ profiles, lang, onLang, mode, onToggleMode, onOpen, onSettings, onLab, onAddPerson }: {
+export default function Home({ profiles, lang, onLang, mode, onToggleMode, onOpen, onClassroom, onSettings, onLab, onAddPerson }: {
   profiles: Profile[];
   lang: Lang;
   onLang: (l: Lang) => void;
   mode: Mode;
   onToggleMode: () => void;
   onOpen: (id: string) => void;
+  onClassroom: (id: string) => void;
   onSettings: () => void;
   onLab: () => void;
   onAddPerson: () => void;
@@ -62,7 +64,17 @@ export default function Home({ profiles, lang, onLang, mode, onToggleMode, onOpe
         <p className="muted" style={{ fontSize: 18, margin: 0 }}>{t('pickProfile', lang)}</p>
       </section>
       <div className="cards">
-        {profiles.map((p) => <ProfileCard key={p.id} profile={p} lang={lang} mode={mode} onOpen={() => onOpen(p.id)} />)}
+        {profiles.map((p) => (
+          <div key={p.id} className="pcard-wrap">
+            <ProfileCard profile={p} lang={lang} mode={mode} onOpen={() => onOpen(p.id)} />
+            {classroomOn(p) && (
+              <button type="button" className="pcard-classroom" onClick={() => onClassroom(p.id)} aria-label={`${t('clOpen', lang)}: ${p.name}`}
+                style={{ background: PREVIEW[p.theme.preset][mode].main, color: PREVIEW[p.theme.preset][mode].mainInk }}>
+                <Icon name="classroom" size={18} /> {t('classroom', lang)}
+              </button>
+            )}
+          </div>
+        ))}
         <ProfileCard profile={guest} lang={lang} mode={mode} guest onOpen={() => onOpen(GUEST_ID)} />
       </div>
       <footer className="row wrap" style={{ gap: 10 }}>

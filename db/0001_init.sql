@@ -126,6 +126,7 @@ create table studio.profiles (
   position                 smallint    not null default 0,      -- place on the home screen (app field: order)
   starred                  jsonb       not null default '[]',   -- custom kit: [{"key": "instrument.violin", "role": "lead"}]
   last_kit                 text,                                -- kit new songs start with: a catalog kit key or 'custom'
+  classroom                boolean     not null default false,  -- shows Music Studio Classroom (video lessons, music-only helper)
   status                   text        not null default 'active',
   settings_schema_version  integer     not null default 1,
   created_at               timestamptz not null default now(),

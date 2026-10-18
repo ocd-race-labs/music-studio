@@ -46,6 +46,8 @@ export interface Profile {
   starred?: StarredInstrument[];
   /** The kit new songs start with. */
   last_kit?: string;
+  /** Shows Music Studio Classroom (video lessons and Clave, the music-only helper) in this profile. */
+  classroom?: boolean;
   status: 'active' | 'archived';
   settings_schema_version: 1;
   created_at: string;

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { Lang, Profile } from '../domain/types';
 import { t } from './i18n';
 
-type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders';
+type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music';
 
 const PATHS: Record<IconName, ReactNode> = {
   home: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /></>,
@@ -31,6 +31,12 @@ const PATHS: Record<IconName, ReactNode> = {
   trash: <><path d="M4 7h16M10 11v6M14 11v6" /><path d="M6 7l1 13h10l1-13M9 7V4h6v3" /></>,
   warning: <><path d="M12 3l10 18H2z" /><path d="M12 10v5M12 18v.5" /></>,
   sliders: <><path d="M6 4v16M12 4v16M18 4v16" /><rect x="3.5" y="13" width="5" height="3" rx="1" fill="currentColor" /><rect x="9.5" y="7" width="5" height="3" rx="1" fill="currentColor" /><rect x="15.5" y="15" width="5" height="3" rx="1" fill="currentColor" /></>,
+  back: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  // A student reading: head, shoulders and an open book.
+  classroom: <><circle cx="12" cy="5.6" r="2.9" /><path d="M6.6 13.2a5.4 5.4 0 0 1 10.8 0" /><path d="M2.8 14.6c3.1-.9 6.2-.5 9.2 1.3 3-1.8 6.1-2.2 9.2-1.3v6.2c-3.1-.9-6.2-.5-9.2 1.3-3-1.8-6.1-2.2-9.2-1.3z" /><path d="M12 15.9v6.2" /></>,
+  chat: <path d="M4 5h16v11H9l-5 4z" />,
+  speaker: <><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /></>,
+  music: <><path d="M9 18V5.5l11-2V16" /><circle cx="6.5" cy="18" r="2.6" fill="currentColor" /><circle cx="17.5" cy="16" r="2.6" fill="currentColor" /></>,
   starFill: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill="currentColor" />,
 };
 

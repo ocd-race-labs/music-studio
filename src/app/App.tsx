@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { newProfile } from '../domain/factory';
+import { classroomOn, newProfile } from '../domain/factory';
 import type { Lang, Profile, ThemePreset } from '../domain/types';
 import { openBrowserStore, requestPersistence } from '../store/store';
 import type { SongStore } from '../store/store';
@@ -9,6 +9,7 @@ import Setup from './Setup';
 import Studio from './Studio';
 import Settings from './Settings';
 import Lab from './Lab';
+import Classroom from './Classroom';
 import { GUEST_ID, guestProfile } from './guest';
 import Family, { applyFamily, familyFromHash } from './Family';
 import { t } from './i18n';
@@ -21,6 +22,7 @@ type Route =
   | { name: 'home' }
   | { name: 'studio'; profileId: string }
   | { name: 'settings'; profileId: string }
+  | { name: 'classroom'; profileId: string }
   | { name: 'lab' }
   | { name: 'family'; names: string[] };
 
@@ -40,7 +42,13 @@ export default function App() {
     openBrowserStore()
       .then(async (s) => {
         setStore(s);
-        const list = await s.listProfiles();
+        let list = await s.listProfiles();
+        // Profiles made before Classroom existed: write down whether it shows, so a later theme change keeps it.
+        const unset = list.filter((p) => p.classroom === undefined);
+        if (unset.length) {
+          for (const p of unset) await s.saveProfile({ ...p, classroom: classroomOn(p) });
+          list = await s.listProfiles();
+        }
         setProfiles(list);
         const browserLang: Lang = /^es\b/i.test(navigator.language) ? 'es' : 'en';
         setUiLang((await s.getMeta<Lang>('ui_lang')) ?? browserLang);
@@ -77,7 +85,7 @@ export default function App() {
     id === GUEST_ID ? guest : profiles.find((p) => p.id === id);
 
   // Each screen wears its profile's theme; home and setup wear the guest theme.
-  const themed: ThemePreset = (route.name === 'studio' || route.name === 'settings')
+  const themed: ThemePreset = (route.name === 'studio' || route.name === 'settings' || route.name === 'classroom')
     ? profileFor(route.profileId)?.theme.preset ?? 'daylight'
     : 'daylight';
   useEffect(() => {
@@ -152,11 +160,21 @@ export default function App() {
 
     if (route.name === 'lab') return <Lab store={store} lang={lang} onHome={() => setRoute({ name: 'home' })} />;
 
-    if (route.name === 'studio' || route.name === 'settings') {
+    if (route.name === 'studio' || route.name === 'settings' || route.name === 'classroom') {
       const profile = profileFor(route.profileId);
       if (!profile) {
         setRoute({ name: 'home' });
         return null;
+      }
+      if (route.name === 'classroom') {
+        if (!classroomOn(profile)) {
+          setRoute({ name: 'studio', profileId: profile.id });
+          return null;
+        }
+        return (
+          <Classroom profile={profile} lang={lang} onLang={changeLang} {...look}
+            onStudio={() => setRoute({ name: 'studio', profileId: profile.id })} />
+        );
       }
       if (route.name === 'settings') {
         return (
@@ -191,6 +209,7 @@ export default function App() {
           {...look}
           onHome={() => setRoute({ name: 'home' })}
           onSettings={() => profile.id !== GUEST_ID && setRoute({ name: 'settings', profileId: profile.id })}
+          onClassroom={profile.id !== GUEST_ID && classroomOn(profile) ? () => setRoute({ name: 'classroom', profileId: profile.id }) : undefined}
           onProfile={(p) => {
             if (p.id === GUEST_ID) { setGuest(p); return; }
             setProfiles((list) => list.map((x) => (x.id === p.id ? p : x)));
@@ -207,6 +226,7 @@ export default function App() {
         onLang={changeLang}
         {...look}
         onOpen={(id) => setRoute({ name: 'studio', profileId: id })}
+        onClassroom={(id) => setRoute({ name: 'classroom', profileId: id })}
         onSettings={() => profiles[0] && setRoute({ name: 'settings', profileId: profiles[0].id })}
         onLab={() => setRoute({ name: 'lab' })}
         onAddPerson={() => setRoute({ name: 'setup' })}

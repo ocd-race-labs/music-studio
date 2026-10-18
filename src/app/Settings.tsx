@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { exportSongFile, parseSongFile } from '../domain/files';
+import { classroomOn } from '../domain/factory';
 import type { Hat, Lang, Level, Profile, Song, ThemePreset } from '../domain/types';
 import { requestPersistence } from '../store/store';
 import type { SongStore } from '../store/store';
@@ -184,6 +185,14 @@ export default function Settings({ store, profile, profiles, lang, onLang, appea
                 <Seg<Lang> label={t('appLanguage', lang)} value={lang} options={[{ v: 'en', l: 'English' }, { v: 'es', l: 'Español' }]} onChange={changeLang} />
                 <span className="small muted">{t('appLanguageHint', lang)}</span></div>
             </div>
+          </section>
+
+          <section className="card stack" aria-label="Music Studio Classroom">
+            <h2 style={{ fontSize: 18 }} className="row"><Icon name="classroom" /> Music Studio Classroom</h2>
+            <p className="small muted" style={{ margin: 0 }}>{t('clSettingHint', lang)}</p>
+            <div className="stack" style={{ gap: 6 }}><span className="lbl">{t('clShow', lang)}</span>
+              <Seg<'on' | 'off'> label={t('clShow', lang)} value={classroomOn(p) ? 'on' : 'off'} options={[{ v: 'on', l: t('yes', lang) }, { v: 'off', l: t('no', lang) }]}
+                onChange={(v) => save({ ...p, classroom: v === 'on' })} /></div>
           </section>
 
           <section className="card stack" aria-label={t('storageBackup', lang)}>
