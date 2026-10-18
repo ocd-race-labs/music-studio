@@ -286,6 +286,9 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 .ncell.chordrow { border-color: color-mix(in srgb, var(--tier-chord) 50%, var(--line)); }
 .ncell.ph { box-shadow: inset 0 0 0 2px var(--main); }
 .note { position: absolute; border-radius: 4px; pointer-events: none; z-index: 1; }
+/* Drawing a long note: the outline shows where it will land before the finger or button lets go. */
+.note.ghost { z-index: 2; background: color-mix(in srgb, var(--main) 35%, transparent); outline: 2px solid var(--main); }
+.note-area { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .note.chord { background: var(--tier-chord); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tier-chord) 40%, transparent); }
 .note.scale { background: var(--tier-scale); }
 .note.outside { background: var(--tier-outside-line); outline: 2px dashed var(--tier-outside-line); outline-offset: 1px; }

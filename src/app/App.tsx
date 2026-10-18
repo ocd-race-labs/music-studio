@@ -10,6 +10,7 @@ import Studio from './Studio';
 import Settings from './Settings';
 import Lab from './Lab';
 import { GUEST_ID, guestProfile } from './guest';
+import Family, { applyFamily, familyFromHash } from './Family';
 import { t } from './i18n';
 import { GROUND, useAppearance } from './prefs';
 import { useUpdateAvailable } from './update';
@@ -20,7 +21,8 @@ type Route =
   | { name: 'home' }
   | { name: 'studio'; profileId: string }
   | { name: 'settings'; profileId: string }
-  | { name: 'lab' };
+  | { name: 'lab' }
+  | { name: 'family'; names: string[] };
 
 export default function App() {
   const [store, setStore] = useState<SongStore | null>(null);
@@ -42,10 +44,29 @@ export default function App() {
         setProfiles(list);
         const browserLang: Lang = /^es\b/i.test(navigator.language) ? 'es' : 'en';
         setUiLang((await s.getMeta<Lang>('ui_lang')) ?? browserLang);
-        setRoute(list.length ? { name: 'home' } : { name: 'setup' });
+        const family = familyFromHash(window.location.hash);
+        if (family) {
+          // The names leave the address bar right away; the link itself stays wherever it was shared.
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          setRoute({ name: 'family', names: family });
+        } else {
+          setRoute(list.length ? { name: 'home' } : { name: 'setup' });
+        }
         requestPersistence().catch(() => undefined);
       })
       .catch((e: unknown) => setStorageError(String(e)));
+  }, []);
+
+  // A family link opened in a tab that already has the app: it changes only the part after #.
+  useEffect(() => {
+    const onHash = () => {
+      const family = familyFromHash(window.location.hash);
+      if (!family) return;
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      setRoute({ name: 'family', names: family });
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
   const reloadProfiles = useCallback(async () => {
@@ -108,6 +129,23 @@ export default function App() {
             await reloadProfiles();
             setRoute({ name: 'home' });
           }}
+        />
+      );
+    }
+
+    if (route.name === 'family') {
+      return (
+        <Family
+          names={route.names}
+          profiles={profiles}
+          lang={lang}
+          mode={mode}
+          onApply={async (hideOthers) => {
+            await applyFamily(store, route.names, lang, hideOthers);
+            await reloadProfiles();
+            setRoute({ name: 'home' });
+          }}
+          onCancel={() => setRoute(profiles.length ? { name: 'home' } : { name: 'setup' })}
         />
       );
     }

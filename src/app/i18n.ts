@@ -44,6 +44,13 @@ const STRINGS = {
   name: { en: 'Name', es: 'Nombre' },
   theme: { en: 'Theme', es: 'Tema' },
   createProfiles: { en: 'Create profiles', es: 'Crear perfiles' },
+  familyTitle: { en: 'Set up this device', es: 'Prepara este dispositivo' },
+  familyBody: { en: 'This private family link brings the profiles from the design. The names stay on this device; the part of the link that carries them is never sent to the web.', es: 'Este enlace familiar privado trae los perfiles del diseño. Los nombres quedan en este dispositivo; la parte del enlace que los lleva nunca se envía a la web.' },
+  familyHere: { en: 'Already on this device; keeps its songs', es: 'Ya está en este dispositivo; conserva sus canciones' },
+  familyNew: { en: 'New on this device', es: 'Nuevo en este dispositivo' },
+  familyOthers: { en: '{names} will leave the home screen; their songs stay saved on this device.', es: '{names} sale del inicio; sus canciones quedan guardadas en este dispositivo.' },
+  familyGo: { en: 'Set up', es: 'Preparar' },
+  familyKeep: { en: 'Set up and keep {names}', es: 'Preparar y mantener {names}' },
   setupLater: { en: 'You can change names, themes and avatars later in profile settings.', es: 'Después puedes cambiar nombres, temas y avatares en los ajustes de perfil.' },
 
   /* studio */
@@ -91,6 +98,7 @@ const STRINGS = {
   zoomHalf: { en: '½ bar', es: '½ compás' },
   fullScreen: { en: 'Full screen', es: 'Pantalla completa' },
   onlyThis: { en: 'Only this track', es: 'Solo esta pista' },
+  dragHint: { en: 'Tap for a note; hold and drag for one long note', es: 'Toca para una nota; mantén y arrastra para una nota larga' },
   onlyThisHint: { en: 'Play only the track you are editing; the others stay quiet until you turn this off', es: 'Suena solo la pista que estás editando; las demás quedan en silencio hasta que lo apagues' },
   exitFullScreen: { en: 'Exit full screen', es: 'Salir de pantalla completa' },
   tapToStart: { en: 'Tap to start the sound', es: 'Toca para activar el sonido' },

@@ -164,3 +164,21 @@ describe('instrument swap and ideas', () => {
     expect(rows).toHaveLength(8);
   });
 });
+
+describe('long notes', () => {
+  it('hold and drag writes one sustained note and replaces what that pitch had there', async () => {
+    const { setNoteSpan } = await import('./commands');
+    let s = newSong(me.id, 'x');
+    const lead = s.tracks[4].id;
+    s = toggleNote(s, lead, 60, 2, 1, me.id);
+    s = toggleNote(s, lead, 60, 3, 1, me.id);
+    s = toggleNote(s, lead, 64, 2, 1, me.id);
+    s = setNoteSpan(s, lead, 60, 1, 4, me.id);
+    const ns = notes(s, 4);
+    expect(ns.filter((n) => n.midi === 60)).toEqual([expect.objectContaining({ tick: 240, dur: 960 })]);
+    expect(ns.filter((n) => n.midi === 64)).toHaveLength(1);
+    // Never past the end of the loop.
+    s = setNoteSpan(s, lead, 67, 30, 8, me.id);
+    expect(notes(s, 4).find((n) => n.midi === 67)?.dur).toBe(2 * 240);
+  });
+});

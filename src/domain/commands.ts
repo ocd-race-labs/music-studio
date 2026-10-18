@@ -154,6 +154,18 @@ export function toggleNote(song: Song, trackId: string, midi: number, step: numb
   }), by);
 }
 
+/** Hold and drag: one sustained note across the cells, replacing what that pitch had there. */
+export function setNoteSpan(song: Song, trackId: string, midi: number, fromStep: number, lengthSteps: number, by: string | null): Song {
+  const tick = fromStep * STEP_TICKS;
+  return mapTrack(song, trackId, (t) => mapMainClip(t, (c) => {
+    if (c.kind !== 'notes' || tick >= c.length_ticks) return c;
+    const dur = Math.min(Math.max(1, lengthSteps) * STEP_TICKS, c.length_ticks - tick);
+    const kept = (c.content as NotesContent).notes.filter((n) => n.midi !== midi || n.tick + n.dur <= tick || n.tick >= tick + dur);
+    const note: Note = { id: newId(), tick, dur, midi, spell: spellNote(song, midi), vel: 0.8 };
+    return { ...c, content: { notes: [...kept, note].sort((a, b) => a.tick - b.tick || a.midi - b.midi) } };
+  }), by);
+}
+
 export function setChord(song: Song, trackId: string, bar: number, degree: number | null, by: string | null): Song {
   const tick = bar * BAR_TICKS;
   return mapTrack(song, trackId, (t) => mapMainClip(t, (c) => {

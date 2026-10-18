@@ -14,7 +14,7 @@ export function memoryStore(): SongStore {
   const audio = new Map<string, Blob>();
   const meta = new Map<string, unknown>();
   return {
-    async listProfiles() { return byOrder([...profiles.values()]); },
+    async listProfiles() { return byOrder([...profiles.values()].filter((p) => p.status === 'active')); },
     async clearAll() { for (const m of [profiles, songs, versions, ideas, recordings, audio, meta]) m.clear(); },
     async saveProfile(p) { profiles.set(p.id, p); },
     async listSongs(profileId) {

@@ -222,6 +222,13 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
     setFocusBar(Math.floor(s / 16));
   }, [apply, by]);
   const onPreviewNote = useCallback((midi: number) => { engine.previewNote(selRef.current!, midi); }, []);
+  // A long note drawn by holding and dragging: written, then heard once at its full length.
+  const onSpanNote = useCallback((midi: number, from: number, len: number) => {
+    apply((x) => C.setNoteSpan(x, selRef.current!, midi, from, len, by));
+    setFocusBar(Math.floor(from / 16));
+    const bpm = songRef.current?.tempo_bpm ?? 90;
+    engine.previewNotes(selRef.current!, [{ midi, at: 0, dur: len * (60 / bpm / 4), vel: 0.8 }]);
+  }, [apply, by]);
 
   const track = song?.tracks.find((tr) => tr.id === selected) ?? song?.tracks[0];
   const clipKind = track?.clips[0]?.kind;
@@ -518,7 +525,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
           {clipKind === 'notes' && (
             <>
               <NoteGrid song={song} track={track} low={low} step={step} zoom={zoom} width={editorWidth} focusBar={focusBar} lang={lang}
-                onToggle={onToggleNote} onPreview={onPreviewNote}
+                onToggle={onToggleNote} onSpan={onSpanNote} onPreview={onPreviewNote}
                 onShift={(d) => setLows((m) => ({ ...m, [track.id]: Math.min(96, Math.max(24, low + d)) }))} />
               <Keyboard song={song} low={low} focusBar={focusBar} lang={lang} onPlay={keyPlay} />
             </>

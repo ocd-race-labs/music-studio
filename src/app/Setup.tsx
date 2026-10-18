@@ -22,7 +22,7 @@ const RING: Record<ThemePreset, string> = { graphite: '#74747A', 'midnight-jewel
 
 /* The two people from the mockups, in home order: the young musician first, then the producer.
    Only the look and instruments are preset; names are typed here and stay on this device. */
-const PRESETS: Person[] = [
+export const PRESETS: Person[] = [
   { name: '', preset: 'midnight-jewel', ring: RING['midnight-jewel'], instruments: ['violin', 'beats', 'lyrics'] },
   { name: '', preset: 'graphite', ring: RING.graphite, instruments: ['drums', 'guitar'] },
 ];

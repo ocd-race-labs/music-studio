@@ -1,5 +1,5 @@
-import { memo, useEffect, useLayoutEffect, useRef } from 'react';
-import type { CSSProperties, RefObject } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { CSSProperties, PointerEvent as ReactPointerEvent, RefObject } from 'react';
 import { title as catalogTitle } from '../packs/core';
 import { chordMidi, chordSymbol, diatonicTriads, noteNameDisplay, parseSpelling, spellInKey, tierOf } from '../theory';
 import type { Chord, Key, Naming, Tier } from '../theory';
@@ -154,7 +154,10 @@ const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focus
                 type="button"
                 className={`ncell${Math.floor(s / 4) % 2 === 0 ? ' beat' : ''}${s % 16 === 0 && s > 0 ? ' barline' : ''}${tier === 'chord' ? ' chordrow' : tier === 'scale' ? ' inscale' : ''}`}
                 aria-label={t('stepN', lang, { row: name, n: s + 1 })}
-                onClick={() => onToggle(m, s)}
+                data-m={m}
+                data-s={s}
+                // Taps and drags come through the pointer handlers of the grid; this click is the keyboard path.
+                onClick={(e) => { if (e.detail === 0) onToggle(m, s); }}
               />
             ))}
           </div>
@@ -164,7 +167,23 @@ const NoteCells = memo(function NoteCells({ pitches, steps, cell, keyName, focus
   );
 });
 
-export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, onToggle, onPreview, onShift }: {
+/** How long a finger rests on a square before sliding draws a long note instead of scrolling. */
+const HOLD_MS = 280;
+
+interface NoteDrag {
+  id: number;
+  touch: boolean;
+  midi: number;
+  cell: number;
+  anchor: number;
+  cur: number;
+  painting: boolean;
+  x0: number;
+  y0: number;
+  timer: number | null;
+}
+
+export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, onToggle, onSpan, onPreview, onShift }: {
   lang: Lang;
   song: Song;
   track: Track;
@@ -174,6 +193,7 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
   width: number;
   focusBar: number;
   onToggle: (midi: number, step: number) => void;
+  onSpan: (midi: number, fromStep: number, lengthSteps: number) => void;
   onPreview: (midi: number) => void;
   onShift: (delta: number) => void;
 }) {
@@ -190,14 +210,100 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
   const visibleCount = visibleSteps(zoom, steps);
   const scroller = useRef<HTMLDivElement>(null);
   useFollow(scroller, step, visibleCount, steps, pitch);
+
+  /* Tap a square: one note of the chosen length. Hold and drag across squares: one long note.
+     With a mouse the drag starts right away; with a finger it starts after a short hold, so a quick swipe still scrolls.
+     Starting on a note that is already there stretches or shortens it. */
+  const area = useRef<HTMLDivElement>(null);
+  const drag = useRef<NoteDrag | null>(null);
+  const [ghost, setGhost] = useState<{ midi: number; from: number; to: number } | null>(null);
+  const stepAt = (clientX: number) => {
+    const r = area.current?.getBoundingClientRect();
+    if (!r) return 0;
+    return Math.min(steps - 1, Math.max(0, Math.floor((clientX - r.left - NOTE_LABEL) / pitch)));
+  };
+  const span = (d: NoteDrag) => ({ midi: d.midi, from: Math.min(d.anchor, d.cur), to: Math.max(d.anchor, d.cur) });
+  const endDrag = () => {
+    const d = drag.current;
+    if (d?.timer) window.clearTimeout(d.timer);
+    drag.current = null;
+    setGhost(null);
+  };
+  // A finger that is drawing must not scroll the grid; only a non-passive listener can stop it.
+  useEffect(() => {
+    const el = area.current;
+    if (!el) return;
+    const stop = (e: TouchEvent) => { if (drag.current?.painting) e.preventDefault(); };
+    el.addEventListener('touchmove', stop, { passive: false });
+    return () => el.removeEventListener('touchmove', stop);
+  }, []);
+  useEffect(() => () => { if (drag.current?.timer) window.clearTimeout(drag.current.timer); }, []);
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.ncell');
+    if (!cell || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const m = Number(cell.dataset.m);
+    const s = Number(cell.dataset.s);
+    const covering = notes.find((n) => n.midi === m && n.tick <= s * STEP_TICKS && s * STEP_TICKS < n.tick + n.dur);
+    const touch = e.pointerType === 'touch';
+    const d: NoteDrag = {
+      id: e.pointerId, touch, midi: m, cell: s, anchor: covering ? Math.round(covering.tick / STEP_TICKS) : s, cur: s,
+      painting: !touch, x0: e.clientX, y0: e.clientY, timer: null,
+    };
+    if (touch) {
+      d.timer = window.setTimeout(() => {
+        d.painting = true;
+        d.timer = null;
+        setGhost(span(d));
+      }, HOLD_MS);
+    } else {
+      e.preventDefault();
+      area.current?.setPointerCapture?.(e.pointerId);
+    }
+    drag.current = d;
+  };
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    if (!d.painting) {
+      // A finger that moves before the hold is a swipe: let the grid scroll.
+      if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 8) endDrag();
+      return;
+    }
+    const cur = stepAt(e.clientX);
+    if (cur === d.cur) return;
+    d.cur = cur;
+    setGhost(span(d));
+  };
+  const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    endDrag();
+    if (d.painting && d.cur !== d.cell) {
+      const { midi, from, to } = span(d);
+      onSpan(midi, from, to - from + 1);
+    } else {
+      onToggle(d.midi, d.cell);
+    }
+  };
+  const ghostStyle = (g: { midi: number; from: number; to: number }): CSSProperties => ({
+    position: 'absolute',
+    top: (low + 23 - g.midi) * (ROW_H + GAP) + 3,
+    height: ROW_H - 6,
+    left: NOTE_LABEL + g.from * pitch + 1,
+    width: Math.max(4, (g.to - g.from + 1) * pitch - GAP - 2),
+  });
+
   return (
     <div className="stack" style={{ gap: 6 }}>
       <div className="row small muted">
         <button type="button" className="btn ghost" onClick={() => onShift(12)} aria-label={t('octaveUp', lang)}>▲ {t('octave', lang)}{above ? ` (${t('nAbove', lang, { n: above })})` : ''}</button>
         <button type="button" className="btn ghost" onClick={() => onShift(-12)} aria-label={t('octaveDown', lang)}>▼ {t('octave', lang)}{below ? ` (${t('nBelow', lang, { n: below })})` : ''}</button>
+        <span className="hide-sm" style={{ marginLeft: 'auto' }}>{t('dragHint', lang)}</span>
       </div>
       <div className="scroll-x" ref={scroller} style={{ maxHeight: 520, overflowY: 'auto' }}>
-        <div style={{ position: 'relative', width: NOTE_LABEL + steps * pitch + pageTail(width, NOTE_LABEL, visibleCount, steps, cell) }}>
+        <div ref={area} className="note-area" style={{ position: 'relative', width: NOTE_LABEL + steps * pitch + pageTail(width, NOTE_LABEL, visibleCount, steps, cell) }}
+          onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={endDrag}
+          onContextMenu={(e) => { if (drag.current) e.preventDefault(); }}>
           <NoteCells pitches={pitches} steps={steps} cell={cell} keyName={key} lang={lang} focusChord={focusChord} onToggle={onToggle} onPreview={onPreview} />
           {visible.map((n) => {
             const bar = Math.floor(n.tick / BAR_TICKS);
@@ -211,6 +317,7 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
             };
             return <div key={n.id} className={`note ${tier}`} style={style} title={spellTitle(n.midi, n.spell, namingFor(lang))} />;
           })}
+          {ghost && <div className="note ghost" style={ghostStyle(ghost)} aria-hidden="true" />}
           <Playhead step={step} offset={NOTE_LABEL} cell={cell} height={24 * (ROW_H + GAP)} />
         </div>
       </div>
