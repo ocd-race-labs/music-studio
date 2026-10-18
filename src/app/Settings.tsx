@@ -8,8 +8,6 @@ import { INSTRUMENT_IDS, instrumentName, levelName, styleName, t, themeName, tn 
 import { PREVIEW } from './prefs';
 import type { Appearance, Mode } from './prefs';
 import { Avatar, downloadText, Icon, pickFile, useToast } from './ui';
-import { readAudioMode, rememberResume, writeAudioMode } from '../engine/audiomode';
-import type { AudioMode } from '../engine/audiomode';
 
 const THEMES: ThemePreset[] = ['midnight-jewel', 'graphite', 'daylight'];
 
@@ -195,19 +193,6 @@ export default function Settings({ store, profile, profiles, lang, onLang, appea
             <div className="stack" style={{ gap: 6 }}><span className="lbl">{t('clShow', lang)}</span>
               <Seg<'on' | 'off'> label={t('clShow', lang)} value={classroomOn(p) ? 'on' : 'off'} options={[{ v: 'on', l: t('yes', lang) }, { v: 'off', l: t('no', lang) }]}
                 onChange={(v) => save({ ...p, classroom: v === 'on' })} /></div>
-          </section>
-
-          <section className="card stack" aria-label={t('audioModeTitle', lang)}>
-            <h2 style={{ fontSize: 18 }}>{t('audioModeTitle', lang)}</h2>
-            <p className="small muted" style={{ margin: 0 }}>{t('audioModeHint', lang)}</p>
-            <Seg<AudioMode> label={t('audioModeTitle', lang)} value={readAudioMode()} options={[{ v: 'fast', l: t('audioFast', lang) }, { v: 'stable', l: t('audioStable', lang) }]}
-              onChange={(v) => {
-                if (v === readAudioMode()) return;
-                writeAudioMode(v);
-                rememberResume({ name: 'settings', profileId: p.id });
-                window.location.reload();
-              }} />
-            <span className="small muted">{t(readAudioMode() === 'stable' ? 'audioStableHint' : 'audioFastHint', lang)}</span>
           </section>
 
           <section className="card stack" aria-label={t('storageBackup', lang)}>

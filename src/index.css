@@ -387,7 +387,6 @@ h3.sub { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; col
 .kit-row .mini { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .builder-foot { position: sticky; bottom: -20px; background: var(--panel); padding: 12px 0 4px; margin-top: 4px; border-top: 1px solid var(--line); }
 .lang-toggle { font-family: 'DM Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; }
-.update-bar.glitch-bar { max-width: min(720px, calc(100vw - 32px)); flex-wrap: wrap; border-color: var(--highlight); }
 .update-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 60;
   display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; border-radius: 14px;

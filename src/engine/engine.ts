@@ -17,8 +17,6 @@ import { SAMPLED_KITS, SAMPLERS } from '../packs/collection';
 import type { ChainSpec, Groove, Phrase } from '../packs/collection';
 import { createPedal } from './pedals';
 import type { Pedal } from './pedals';
-import { AUDIO_MODES, readAudioMode } from './audiomode';
-import type { AudioMode } from './audiomode';
 import { compSettings, consoleOf, driveCurve, echoSeconds, glueSettings, mixOf, qFor, ROOM_SECONDS, stripOf } from '../domain/mix';
 
 /** The desk channel after a track's sound: gain, low cut, compressor, EQ, warmth, and the sends. */
@@ -136,20 +134,14 @@ export class StudioEngine {
     if (!this.started) {
       // iPhone and iPad: a context created inside the tap starts reliably; the one Tone made at page load may stay suspended.
       try {
-        const m = AUDIO_MODES[readAudioMode()];
-        let next: Tone.Context;
-        try { next = new Tone.Context({ latencyHint: m.latencyHint as AudioContextLatencyCategory, lookAhead: m.lookAhead, updateInterval: m.updateInterval }); }
-        catch { next = new Tone.Context({ latencyHint: m.fallbackHint, lookAhead: m.lookAhead, updateInterval: m.updateInterval }); }
-        Tone.setContext(next, true);
+        Tone.setContext(new Tone.Context({ latencyHint: 'interactive', lookAhead: 0.05 }), true);
       } catch { /* keep the existing context */ }
     }
     const resumed = Tone.start().catch(() => undefined);
     kickWebKit();
     this.bindUnlock();
     if (!this.started) {
-      const mode = AUDIO_MODES[readAudioMode()];
-      Tone.getContext().lookAhead = mode.lookAhead;
-      (Tone.getContext() as Tone.Context).updateInterval = mode.updateInterval; // setting lookAhead resets it
+      Tone.getContext().lookAhead = 0.05;
       this.meter = new Tone.Meter({ smoothing: 0.5 });
       this.master = new Tone.Limiter(-1);
       // The limiter's own makeup pushes peaks past its ceiling; this trim takes it back, a soft knee catches the rest.
@@ -203,59 +195,6 @@ export class StudioEngine {
       }
     };
     for (const ev of ['pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, unlock, { capture: true, passive: true });
-  }
-
-  /**
-   * Notice when this device cannot keep up: the page's timer comes back later than the look-ahead (notes get
-   * planned late), or the audio clock moves slower than real time (the sound card ran dry). Three in 15 seconds is
-   * reported once a visit, so the app can offer the stable mode.
-   */
-  private watchId: number | undefined;
-  private glitchTimes: number[] = [];
-  private glitchSent = false;
-  private glitchFns = new Set<() => void>();
-  onGlitch(fn: () => void): () => void {
-    this.glitchFns.add(fn);
-    return () => { this.glitchFns.delete(fn); };
-  }
-  private startWatch(): void {
-    this.stopWatch();
-    if (typeof window === 'undefined' || this.glitchSent) return;
-    const raw = Tone.getContext().rawContext as unknown as BaseAudioContext;
-    let wall = performance.now() + 2000; // the first two seconds load sounds; they do not count
-    let lost: { at: number; drift: number }[] = [];
-    let base: { wall: number; audio: number } | null = null;
-    const note = (w: number) => {
-      this.glitchTimes = [...this.glitchTimes.filter((x) => w - x < 15000), w];
-      if (this.glitchTimes.length >= 3 && !this.glitchSent) {
-        this.glitchSent = true;
-        this.glitchFns.forEach((fn) => fn());
-        this.stopWatch();
-      }
-    };
-    this.watchId = window.setInterval(() => {
-      const w = performance.now();
-      const a = raw.currentTime;
-      if (w < wall) return;
-      const dw = (w - wall) / 1000;
-      wall = w;
-      // A hidden tab is slowed on purpose and a long pause is a sleep: start counting again.
-      if (document.hidden || dw > 2 || raw.state !== 'running') { base = null; lost = []; return; }
-      const ctx = Tone.getContext() as Tone.Context;
-      // 1. The page came back later than the planner's margin: notes were planned late.
-      if (dw - 0.25 > (ctx.lookAhead - ctx.updateInterval) * 0.9) note(w);
-      // 2. The audio clock fell behind real time: the sound card ran dry. Its steps can be one batch long, so only
-      //    time lost on top of that, over the last ten seconds, counts.
-      if (!base) base = { wall: w, audio: a };
-      const drift = (w - base.wall) / 1000 - (a - base.audio);
-      lost = [...lost.filter((x) => w - x.at < 10000), { at: w, drift }];
-      const least = Math.min(...lost.map((x) => x.drift));
-      if (drift - least > 0.3) { note(w); base = null; lost = []; }
-    }, 250);
-  }
-  private stopWatch(): void {
-    if (this.watchId !== undefined) window.clearInterval(this.watchId);
-    this.watchId = undefined;
   }
 
   /** One second of A4, for the Lab sound check. Resolves with the loudest output level seen. */
@@ -546,16 +485,12 @@ export class StudioEngine {
       const ctx = Tone.getContext();
       if (this.repeatId !== null && counter === 0 && this.running && ctx instanceof Tone.Context && ctx.clockSource === 'worker') {
         ctx.clockSource = 'timeout';
-        // Timers wander more than the worker clock: plan further ahead so notes still land on time.
-        if (ctx.lookAhead < 0.15) { ctx.lookAhead = 0.15; ctx.updateInterval = 0.05; }
       }
     }, 600);
-    this.startWatch();
     return ok;
   }
 
   stop(): void {
-    this.stopWatch();
     const transport = Tone.getTransport();
     transport.stop();
     if (this.repeatId !== null) transport.clear(this.repeatId);
@@ -610,15 +545,14 @@ export class StudioEngine {
   async previewNote(trackId: string, midi: number): Promise<void> {
     this.ensure();
     const ch = this.channels.get(trackId);
-    // Live playing sounds right away, never after the scheduling look-ahead.
-    if (ch?.voice.kind === 'melodic') ch.voice.play(midi, 0.4, Tone.immediate(), 0.8, this.song?.tuning_a4_hz ?? 440);
+    if (ch?.voice.kind === 'melodic') ch.voice.play(midi, 0.4, Tone.now(), 0.8, this.song?.tuning_a4_hz ?? 440);
   }
 
   async previewDrum(trackId: string, soundKey: string): Promise<void> {
     this.ensure();
     const ch = this.channels.get(trackId);
     const name = ch && rowVoice(ch.instrumentKey, soundKey);
-    if (ch?.voice.kind === 'drums' && name) ch.voice.hit(name, Tone.immediate(), 1);
+    if (ch?.voice.kind === 'drums' && name) ch.voice.hit(name, Tone.now(), 1);
   }
 
   /** Hear an idea before keeping it: notes (seconds from now) on a melodic track. */
@@ -799,7 +733,7 @@ export class StudioEngine {
   }
 
   /** What the device reports about its audio timing, for the Phase 0 latency spike. */
-  latencyInfo(): { state: string; session: string; sampleRate: number; baseLatencyMs: number | null; outputLatencyMs: number | null; lookAheadMs: number; clock: string; mode: AudioMode } {
+  latencyInfo(): { state: string; session: string; sampleRate: number; baseLatencyMs: number | null; outputLatencyMs: number | null; lookAheadMs: number } {
     const raw = Tone.getContext().rawContext as AudioContext;
     return {
       state: Tone.getContext().state,
@@ -808,8 +742,6 @@ export class StudioEngine {
       baseLatencyMs: typeof raw.baseLatency === 'number' ? raw.baseLatency * 1000 : null,
       outputLatencyMs: typeof raw.outputLatency === 'number' ? raw.outputLatency * 1000 : null,
       lookAheadMs: Tone.getContext().lookAhead * 1000,
-      clock: (Tone.getContext() as Tone.Context).clockSource ?? 'worker',
-      mode: readAudioMode(),
     };
   }
 }
