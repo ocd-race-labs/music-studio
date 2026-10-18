@@ -681,9 +681,49 @@ input.field.num { width: 64px; text-align: center; }
 .es-knobs { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
 /* The bar that appears when something is being tried: use it, or name it and save it. */
-.es-bar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 14px; border-radius: 16px; border: 1px solid var(--main); background: color-mix(in srgb, var(--main) 9%, var(--panel)); }
-.es-name { flex: 1 1 220px; min-width: 180px; max-width: 340px; }
-.es-bar-actions { gap: 8px; margin-left: auto; }
+/* What is heard, and using or saving it, in one row under the title. */
+.es-nowrow { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-height: 32px; }
+.es-nowrow .es-now { flex: 1 1 280px; flex-basis: auto; }
+.es-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-left: auto; position: relative; }
+.es-savepop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: min(360px, calc(100vw - 32px)); display: grid; gap: 10px; padding: 12px;
+  border-radius: 14px; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 22px 48px -16px rgba(0, 0, 0, 0.45); }
+.es-undo { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+/* A unit's own X, and the box that adds one. */
+.cd-box { position: relative; }
+.cd-x { position: absolute; top: 8px; right: 6px; width: 26px; height: 26px; border-radius: 999px; border: 1px solid transparent; background: transparent; color: var(--ink-2);
+  display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }
+.cd-x::after { content: ''; position: absolute; inset: -8px; }
+.cd-x:hover, .cd-x:focus-visible { color: var(--ink); border-color: var(--line); background: var(--panel); }
+.cd-box:not(.io) .cd-box-main { padding-right: 30px; }
+.cd-box.es-addbox { flex: 0 1 132px; min-width: 112px; border-style: dashed; background: transparent; box-shadow: none; }
+.cd-box.es-addbox .cd-box-main { align-items: center; justify-content: center; text-align: center; gap: 8px; padding-right: 10px; }
+.cd-box.es-addbox:hover, .cd-box.es-addbox.sel { border-color: var(--main); }
+.es-addbox-plus { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; background: color-mix(in srgb, var(--main) 16%, transparent); color: color-mix(in srgb, var(--main) 70%, var(--ink)); }
+/* The effect picker: kinds as icons, then the options of one kind, each heard alone. */
+.es-fxpick { display: flex; flex-direction: column; gap: 10px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); padding: 12px 14px; }
+.es-fxpick.open { box-shadow: inset 0 4px 0 var(--stage); }
+.es-fxpick-head { gap: 8px; align-items: center; }
+.es-fxpick-plus { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; background: color-mix(in srgb, var(--main) 16%, transparent); color: color-mix(in srgb, var(--main) 70%, var(--ink)); }
+.es-fxkinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.es-fxkind { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--raised); color: var(--ink); text-align: left; cursor: pointer; min-height: 64px; }
+.es-fxkind:hover, .es-fxkind:focus-visible { border-color: var(--stage); background: color-mix(in srgb, var(--stage) 8%, var(--raised)); }
+.es-fxkind-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex: none;
+  background: color-mix(in srgb, var(--stage) 20%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--stage) 45%, transparent);
+  color: color-mix(in srgb, var(--stage) 60%, var(--ink)); }
+.es-fxkind-icon.small { width: 32px; height: 32px; border-radius: 9px; }
+.es-fxkind-n { min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px; display: inline-grid; place-items: center; font-family: 'DM Mono', ui-monospace, monospace; font-size: 12px; background: var(--panel); color: var(--ink-2); border: 1px solid var(--line); }
+.es-fxopts { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.es-fxopt { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--raised); min-width: 0; }
+.es-fxopt.on { border-color: var(--stage); background: color-mix(in srgb, var(--stage) 9%, var(--raised)); }
+.es-fxopt .btn { flex: none; }
+.es-work.col { grid-auto-rows: max-content; overflow: auto; align-content: start; }
+.es-work.col > .es-unit { overflow: visible; }
+/* Wide screens: the unit being shaped on the left, the units to add on the right, both in view. */
+@media (min-width: 1100px) {
+  .es-work.col.two { grid-template-columns: minmax(0, 1.1fr) minmax(380px, 1fr); grid-auto-rows: auto; overflow: hidden; align-content: stretch; }
+  .es-work.col.two > .es-unit, .es-work.col.two > .es-fxpick { overflow: auto; min-height: 0; }
+}
 @media (max-width: 1100px) {
   .es-work, .es-work.split { grid-template-columns: minmax(0, 1fr); grid-auto-rows: max-content; overflow: auto; align-content: start; }
   .es-browser, .es-inspector, .es-panel, .es-unit { overflow: visible; }
@@ -697,9 +737,7 @@ input.field.num { width: 64px; text-align: center; }
   .es-groups { grid-template-columns: minmax(0, 1fr); }
   .es-groups .es-group.wide { grid-column: auto; }
   .es-groups .es-group.wide .es-cards { grid-template-columns: minmax(0, 1fr); }
-  .es-bar { position: sticky; bottom: 8px; z-index: 20; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25); }
   .es-fit { margin-left: 0; }
-  .es-bar > .stack .small { display: none; }
 }
 .track-sound .seg { align-self: flex-start; }
 .col-credits summary { cursor: pointer; }
