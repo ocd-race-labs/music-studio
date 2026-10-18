@@ -5,7 +5,7 @@ import { ask, SUGGESTIONS } from '../classroom/assistant';
 import type { ReplyKind } from '../classroom/assistant';
 import { clock, cueAt, cuesFor, durationOf, hasVideo, LESSONS, lessonById } from '../classroom/lessons';
 import type { Lesson, LessonId } from '../classroom/lessons';
-import { canSpeak, hush, prepareSpeech, speak } from '../classroom/speech';
+import { canReadAloud, hush, speak, unlockVoice } from '../classroom/speech';
 import { t } from './i18n';
 import type { Mode } from './prefs';
 import { Icon, LangToggle, ModeSwitch } from './ui';
@@ -36,7 +36,7 @@ export default function Classroom({ profile, lang, onLang, mode, onToggleMode, o
   const openLesson = (id: LessonId) => { hush(); setTab('lessons'); setOpen(id); window.scrollTo({ top: 0 }); };
 
   return (
-    <main className="classroom">
+    <main className="classroom" onClickCapture={unlockVoice}>
       <header className="cl-head">
         <button type="button" className="btn" onClick={() => { hush(); onStudio(); }}><Icon name="back" size={18} /> {t('clBackStudio', lang)}</button>
         <div className="cl-brand">
@@ -173,7 +173,7 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
     onReadAloud(on);
     if (!on) { quiet(); waiting.current = false; setTrouble(false); return; }
     // On iPhone and iPad the first spoken line must start inside this tap.
-    prepareSpeech();
+    unlockVoice();
     const v = video.current;
     if (v && !v.paused && at >= 0) { readCue(at); return; }
     const token = ++reading.current;
@@ -189,7 +189,7 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
       <div className="row wrap" style={{ gap: 10 }}>
         <button type="button" className="btn ghost" onClick={onBack}><Icon name="back" size={18} /> {t('clAllLessons', lang)}</button>
         <h2 className="display grow" style={{ fontSize: 24 }}><span className="muted mono" style={{ fontSize: 16 }}>{index + 1}.</span> {lesson.title[lang]}</h2>
-        {canSpeak() && (
+        {canReadAloud() && (
           <button type="button" className="btn" aria-pressed={readAloud} onClick={toggleRead}><Icon name="speaker" size={18} /> {t('clReadAloud', lang)}</button>
         )}
       </div>
@@ -245,7 +245,7 @@ function AskClave({ lang, onLesson }: { lang: Lang; onLesson: (id: LessonId) => 
   const [thinking, setThinking] = useState(false);
   const [voiceTrouble, setVoiceTrouble] = useState(false);
   const listen = (text: string) => {
-    prepareSpeech();
+    unlockVoice();
     speak(text, lang, { onStart: () => setVoiceTrouble(false), onEnd: (how) => { if (how === 'failed') setVoiceTrouble(true); } });
   };
   const end = useRef<HTMLDivElement>(null);
@@ -283,7 +283,7 @@ function AskClave({ lang, onLesson }: { lang: Lang; onLesson: (id: LessonId) => 
                     {lesson && hasVideo(lesson.id) && (
                       <button type="button" className="chip" onClick={() => onLesson(lesson.id)}><Icon name="play" size={12} /> {t('clSeeLesson', lang)}: {lesson.title[lang]}</button>
                     )}
-                    {canSpeak() && <button type="button" className="chip" onClick={() => listen(m.text)} aria-label={t('clListen', lang)}><Icon name="speaker" size={14} /> {t('clListen', lang)}</button>}
+                    {canReadAloud() && <button type="button" className="chip" onClick={() => listen(m.text)} aria-label={t('clListen', lang)}><Icon name="speaker" size={14} /> {t('clListen', lang)}</button>}
                   </div>
                 )}
               </div>

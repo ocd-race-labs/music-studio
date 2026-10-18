@@ -1,0 +1,10 @@
+Music Studio Classroom: recorded voice
+
+Every caption and every answer of Clave was read offline with Piper voices (https://github.com/rhasspy/piper),
+run with sherpa-onnx (https://github.com/k2-fsa/sherpa-onnx). Nothing is synthesized or sent anywhere while the
+app runs: the page plays these files.
+
+Spanish: es_MX "claude" (high), Apache License 2.0.
+English: en_US "amy" (medium), from the Mimic 3 voices by Mycroft AI (https://github.com/MycroftAI/mimic3-voices).
+
+File names are the FNV-1a hash of the text they read (see src/classroom/speech.ts).

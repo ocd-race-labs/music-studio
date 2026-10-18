@@ -194,6 +194,9 @@ export function ask(question: string, lang: Lang): Reply {
   return { kind: 'outside', text: OUTSIDE[lang] };
 }
 
+/** Every fixed reply, for the recorded voice and its checks. */
+export const FIXED_REPLIES: Record<Lang, string>[] = [OUTSIDE, CARE, ENCOURAGE, HELLO, THANKS, UNKNOWN];
+
 export const SUGGESTIONS: Record<Lang, string[]> = {
   es: ['¿Qué es un acorde?', '¿Cómo hago un beat?', '¿Qué es la escala mayor?', '¿Cómo marco el coro?', '¿Qué notas son dulces?', '¿Cuántas cuerdas tiene el violín?'],
   en: ['What is a chord?', 'How do I make a beat?', 'What is the major scale?', 'How do I mark the chorus?', 'Which notes are sweet?', 'How many strings does a violin have?'],
