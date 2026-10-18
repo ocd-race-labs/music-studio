@@ -750,6 +750,7 @@ const STRINGS = {
   ideaToDetail: { en: 'Go to the detail', es: 'Ir al detalle' },
   ideaSoundsWith: { en: 'Sounds with', es: 'Suena con' },
   audioRebuilt: { en: 'The connection to the speakers got stuck; the audio was built again. Press Play.', es: 'La conexión con los parlantes se trabó y el audio se volvió a armar. Dale Play de nuevo.' },
+  reconnectHint: { en: 'Nothing heard while the meter moves? Reconnect the audio', es: '¿El medidor se mueve y no se escucha nada? Reconectar el audio' },
   labClock: { en: 'Audio clock', es: 'Reloj del audio' },
   labClockMoving: { en: 'moving ({rate}×)', es: 'avanza ({rate}×)' },
   labClockStuck: { en: 'stuck', es: 'detenido' },

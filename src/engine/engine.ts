@@ -177,8 +177,33 @@ export class StudioEngine {
       if (Tone.getContext().state === 'running') { if (this.song) this.sync(this.song); }
       else resumed.then(() => { if (this.song) this.sync(this.song); });
       this.watchClock();
+      this.watchDevice();
     }
     return resumed;
+  }
+
+  /**
+   * When the speakers fail while sound is rendered (a device change, an overload), the browser keeps rendering into
+   * nowhere: the meter moves and nothing is heard. Browsers that report it fire 'error' on the context; the audio is
+   * then built again on a new connection.
+   */
+  private watched = new WeakSet<object>();
+  private watchDevice(): void {
+    const raw = Tone.getContext().rawContext as unknown as EventTarget;
+    if (this.watched.has(raw) || typeof raw.addEventListener !== 'function') return;
+    this.watched.add(raw);
+    raw.addEventListener('error', (ev) => {
+      console.warn('[music-studio] the audio device failed; building the audio again', ev);
+      this.problem('audio', 'device');
+      void this.restart();
+    });
+  }
+
+  /** Someone rebuilt the audio (by hand or after a failure): screens drop their playing state. */
+  private restartFns = new Set<() => void>();
+  onRestart(fn: () => void): () => void {
+    this.restartFns.add(fn);
+    return () => { this.restartFns.delete(fn); };
   }
 
   /**
@@ -244,7 +269,9 @@ export class StudioEngine {
     this.reported.clear();
     this.started = false;
     this.stepListeners.forEach((fn) => fn(-1));
-    return this.start();
+    const ok = await this.start();
+    this.restartFns.forEach((fn) => fn());
+    return ok;
   }
 
   /** A track whose sound could not be built: the rest keep playing, and the app can say which one. */
@@ -869,7 +896,7 @@ const sampledSpec = (m: Record<string, unknown> | undefined) => {
 };
 
 /** Load the recordings an instrument needs (none for synthesized ones). False when they could not load. */
-async function loadInstrument(manifest: Record<string, unknown> | undefined): Promise<boolean> {
+export async function loadInstrument(manifest: Record<string, unknown> | undefined): Promise<boolean> {
   const m = (manifest ?? {}) as NonNullable<Manifest>;
   const kit = sampledSpec(manifest);
   if (kit) return (await loadKit(kit)) > 0;
@@ -900,7 +927,7 @@ function withGear(voice: Voice, chain: ChainSpec | undefined, trimDb: number): V
  * The voice that plays an instrument: a recorded kit, a recorded guitar or bass, or a synthesized voice, each
  * through its own gear. A saved sound brings its own chain, which replaces that gear (ownGear false).
  */
-function buildVoice(manifest: Record<string, unknown> | undefined, ownGear = true): Voice {
+export function buildVoice(manifest: Record<string, unknown> | undefined, ownGear = true): Voice {
   const m = (manifest ?? {}) as NonNullable<Manifest>;
   const spec = sampledSpec(manifest);
   if (spec) return createSampledKit(spec);
