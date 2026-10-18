@@ -158,8 +158,8 @@ export class StudioEngine {
 
   /** Give the engine the latest song after every change; it adjusts sounds and mix live. */
   setSong(song: Song): void {
-    this.song = song;
-    if (this.started) this.sync(song);
+    this.song = playedSong(song);
+    if (this.started) this.sync(this.song);
   }
 
   private sync(song: Song): void {
@@ -509,6 +509,17 @@ export class StudioEngine {
       lookAheadMs: Tone.getContext().lookAhead * 1000,
     };
   }
+}
+
+/** The song as it sounds: each track with the sound chosen for it, the musician's or the producer's. */
+function playedSong(song: Song): Song {
+  if (!song.tracks.some((t) => t.producer && t.voice_from === 'producer')) return song;
+  return {
+    ...song,
+    tracks: song.tracks.map((t) => (t.producer && t.voice_from === 'producer'
+      ? { ...t, instrument: t.producer.instrument, sound: t.producer.sound }
+      : t)),
+  };
 }
 
 /** What decides a track's voice: its instrument, and whether a saved sound replaces the instrument's own gear. */

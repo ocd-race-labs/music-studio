@@ -2,7 +2,7 @@
 // mockups in that order. Names travel only in the part of the link after #, which browsers never send to the
 // server, so they stay out of the public code and off the web.
 
-import type { Lang, Profile } from '../domain/types';
+import type { Hat, Lang, Profile } from '../domain/types';
 import { newProfile } from '../domain/factory';
 import type { SongStore } from '../store/store';
 import { instrumentsLine, t, themeName } from './i18n';
@@ -26,7 +26,7 @@ export function familyFromHash(hash: string): string[] | null {
 /** The profile each name gets: the mockup look by position, Daylight after the second person. */
 function planned(name: string, i: number, lang: Lang): Profile {
   const preset = PRESETS[i] ?? { preset: 'daylight' as const, ring: '#C2410C', instruments: [] };
-  return { ...newProfile(name, preset.preset, preset.ring), ui_lang: lang, instruments: preset.instruments, order: i };
+  return { ...newProfile(name, preset.preset, preset.ring, (preset as { hat?: Hat }).hat), ui_lang: lang, instruments: preset.instruments, order: i };
 }
 
 const same = (a: string, b: string) => a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();

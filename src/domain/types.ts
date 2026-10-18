@@ -13,6 +13,8 @@ export type Role = 'drums' | 'perc' | 'bass' | 'chords' | 'keys' | 'lead' | 'col
 export interface StarredInstrument {
   key: string;
   role: Role;
+  /** A saved sound starred into the kit: a copy of its chain, so the kit sounds the same on any device. */
+  sound?: TrackSound;
 }
 
 /** A pinned reference to a catalog item: always a key plus a version. */
@@ -149,14 +151,30 @@ export interface TrackSound {
   chain: FxChain;
 }
 
+/**
+ * The producer's version of a track's sound: another instrument or the same one through another chain. The track
+ * keeps both; `voice_from` says which one plays.
+ */
+export interface TrackVariant {
+  instrument: CatalogRef | null;
+  sound?: TrackSound;
+  by: string | null;
+  updated_at: string;
+}
+
 export interface Track {
   id: string;
   position: number;
   name: string;
   kind: TrackKind;
+  /** The musician's instrument. */
   instrument: CatalogRef | null;
   /** A saved sound from the Colección on top of the instrument; changing the instrument removes it. */
   sound?: TrackSound;
+  /** The producer's proposal for this track's sound, kept beside the musician's. */
+  producer?: TrackVariant;
+  /** Which sound plays: the musician's (the default) or the producer's. */
+  voice_from?: 'musician' | 'producer';
   /** The job this track does in its kit. Older songs have none; it is inferred from the instrument. */
   role?: Role;
   color: string;
@@ -187,6 +205,49 @@ export interface Section {
   lyrics_lang: Lang | null;
 }
 
+/** How a block of the idea is played: a rhythm style (a Colección group) and how hard. */
+export interface SketchGroove {
+  group: string;
+  feel: 'soft' | 'normal' | 'strong' | 'half';
+}
+
+/** One part of the song's form in the idea ("Coro 1"): bars, chords bar by bar, and its rhythm. */
+export interface SketchBlock {
+  id: string;
+  kind: SectionKind;
+  /** Tells blocks of the same kind apart ("Verso 2"); a block repeated in the form keeps its number. */
+  n: number;
+  /** A name the person typed; otherwise it comes from the kind and number. */
+  name?: string;
+  bars: number;
+  /** Chords as scale degrees (0 = I) or null for none: one per bar, or two per bar when `split`. */
+  chords: (number | null)[];
+  split?: boolean;
+  /** Null: no drums in this block. */
+  groove: SketchGroove | null;
+}
+
+/**
+ * The musician's idea of the song before the detail: the form (blocks in order, repeats allowed), chords and rhythm
+ * per block, and the instruments that play it. Accepting it writes the detail; the detail never writes back, so
+ * the idea stays as the reference to come back to.
+ */
+export interface Sketch {
+  blocks: SketchBlock[];
+  /** Block ids in the order they play; the same id twice is the same part played again. */
+  order: string[];
+  chords_instrument: CatalogRef;
+  drums_instrument: CatalogRef | null;
+  /** Null: the idea has no bass line. */
+  bass_instrument: CatalogRef | null;
+  /** The rhythm style new blocks start with. */
+  style_group: string;
+  /** When the idea was last written into the detail; null while it is a draft. */
+  accepted_at: string | null;
+  schema_version: 1;
+  updated_at: string;
+}
+
 export interface Song {
   id: string;
   owner_profile_id: string;
@@ -207,6 +268,8 @@ export interface Song {
   kit_key?: string;
   /** How long the song is. Older songs kept it in a single "Loop" section; see normalizeSong. */
   length_ticks?: number;
+  /** The musician's idea (form, chords, rhythm), kept apart from the detail. */
+  sketch?: Sketch;
   status: 'active' | 'archived';
   origin: Origin;
   schema_version: 1;

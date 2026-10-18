@@ -1,6 +1,6 @@
 import { CUSTOM_KIT, DEFAULT_KIT, effectParams, isDrumKit, kitSlots, ref, resolveRow, roleOfInstrument, ROLES, rowsOf } from '../packs/core';
 import type { KitSlot } from '../packs/core';
-import type { CatalogRef, Clip, ClipKind, FxChain, Lang, Profile, Role, Song, StarredInstrument, ThemePreset, Track, TrackKind } from './types';
+import type { CatalogRef, Clip, ClipKind, FxChain, Hat, Lang, Profile, Role, Song, StarredInstrument, ThemePreset, Track, TrackKind } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
 
 export const newId = (): string => crypto.randomUUID();
@@ -8,14 +8,14 @@ export const now = (): string => new Date().toISOString();
 
 export const TRACK_COLORS = ['#2DD4BF', '#38BDF8', '#A78BFA', '#F0509E', '#FB7185', '#FBBF24'];
 
-export function newProfile(name: string, preset: ThemePreset, ring: string): Profile {
+export function newProfile(name: string, preset: ThemePreset, ring: string, hat?: Hat): Profile {
   const t = now();
   return {
     id: newId(),
     name,
     avatar: { kind: 'initial', ring },
     theme: { preset, base: preset === 'daylight' ? 'light' : 'dark' },
-    default_hat: preset === 'graphite' ? 'producer' : 'musician',
+    default_hat: hat ?? (preset === 'graphite' ? 'producer' : 'musician'),
     ui_lang: 'en',
     lyrics_lang: 'es',
     musician_level: 'starter',

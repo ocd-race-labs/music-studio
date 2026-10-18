@@ -41,8 +41,10 @@ export function LengthStepper({ bars, lang, onBars }: { bars: number; lang: Lang
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, '0')}`;
 export const songDuration = (song: Song): string => clock((songBars(song) * 4 * 60) / song.tempo_bpm);
 
-export function StructureBar({ song, lang, focusId, marking, sel, onFocus, onMarking, onPick, onClearSel, onRename, onKind, onCopy, onRepeat, onUnmark, onDeleteBars }: {
+export function StructureBar({ song, lang, focusId, marking, sel, compact, onFocus, onMarking, onPick, onClearSel, onRename, onKind, onCopy, onRepeat, onUnmark, onDeleteBars }: {
   song: Song;
+  /** One line: the hint about marking parts moves into the button's tooltip. */
+  compact?: boolean;
   lang: Lang;
   focusId: string | null;
   marking: boolean;
@@ -74,7 +76,7 @@ export function StructureBar({ song, lang, focusId, marking, sel, onFocus, onMar
             {s.name} <span className="count mono" aria-label={`${sectionBars(s)} ${t('barsShort', lang)}`}>{sectionBars(s)}</span>
           </button>
         ))}
-        <button type="button" className="btn small-btn" aria-pressed={marking} onClick={() => onMarking(!marking)}>
+        <button type="button" className="btn small-btn" aria-pressed={marking} onClick={() => onMarking(!marking)} title={t('noSectionsHint', lang)}>
           <Icon name={marking ? 'check' : 'plus'} size={16} /> {t(marking ? 'markDone' : 'markSections', lang)}
         </button>
       </div>
@@ -83,7 +85,7 @@ export function StructureBar({ song, lang, focusId, marking, sel, onFocus, onMar
         <SectionActions key={focus.id} song={song} section={focus} lang={lang}
           onRename={onRename} onKind={onKind} onCopy={onCopy} onRepeat={onRepeat} onUnmark={onUnmark} onDeleteBars={onDeleteBars} />
       )}
-      {!marking && !song.sections.length && <p className="small muted" style={{ margin: 0 }}>{t('noSectionsHint', lang)}</p>}
+      {!compact && !marking && !song.sections.length && <p className="small muted" style={{ margin: 0 }}>{t('noSectionsHint', lang)}</p>}
     </section>
   );
 }

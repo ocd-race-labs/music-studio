@@ -3,15 +3,15 @@ import * as C from '../domain/commands';
 import { loopBars, newSong, normalizeSong, ROLE_NAMES, roleOf, slotsFor, songSteps } from '../domain/factory';
 import * as A from '../domain/arrange';
 import type { CopyMode } from '../domain/arrange';
-import { LengthStepper, SongTimeline, StructureBar } from './Arrange';
+import { SongTimeline, StructureBar } from './Arrange';
 import type { GridFrame } from './editors';
 import type { Jump, MarkSel, View } from './timegrid';
 import { exportSongFile, parseIdeasFile, parseSongFile, SONG_FILE_EXT, withFreshIds } from '../domain/files';
-import type { CustomSound, Hat, Idea, NotesContent, PatternContent, Profile, Role, SectionKind, Song, SongVersion, ChordsContent, StarredInstrument } from '../domain/types';
-import { PPQ, STEP_TICKS } from '../domain/types';
+import type { CustomSound, Idea, NotesContent, PatternContent, Profile, Role, SectionKind, Song, SongVersion, ChordsContent, StarredInstrument } from '../domain/types';
+import { BAR_TICKS, PPQ, STEP_TICKS } from '../domain/types';
 import { engine } from '../engine/engine';
 import { CUSTOM_KIT, DEFAULT_KIT, findItem, KITS, kitSlots, kitTitle, lowOf, title as catalogTitle } from '../packs/core';
-import { chordMidi, diatonicTriads, scaleById, tonicDisplay } from '../theory';
+import { chordMidi, diatonicTriads } from '../theory';
 import type { SongStore } from '../store/store';
 import { ChordLane, DrumGrid, Keyboard, NoteGrid, Pads, songKey } from './editors';
 import { autoZoom, ZOOMS } from './zoom';
@@ -20,10 +20,16 @@ import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panel
 import MixerBoard from './MixerBoard';
 import Collection from './Collection';
 import BeatAssistant from './BeatAssistant';
-import { namingFor, t, tn } from './i18n';
+import Hub from './Hub';
+import SongsRoom, { soundName } from './SongsRoom';
+import { OutMeter, Transport } from './Transport';
+import { t, tn } from './i18n';
+import type { StringKey } from './i18n';
 import type { Mode } from './prefs';
 import { Avatar, downloadText, Icon, LangToggle, Modal, ModeSwitch, pickFile, slug, useToast, useWidth } from './ui';
 import type { Lang } from '../domain/types';
+import { ROOMS } from './rooms';
+import type { Room } from './rooms';
 
 /* Zoom is remembered per device: the iPhone, the iPad and the laptop each keep their own. */
 const ZOOM_KEY = 'music-studio.zoom';
@@ -43,6 +49,8 @@ const readLen = (): number => {
 };
 const isTouch = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 const ZOOM_LABEL = { fit: 'zoomFit', two: 'zoomTwo', bar: 'zoomBar', half: 'zoomHalf' } as const;
+const ROOM_ICON = { sounds: 'amp', musician: 'music', producer: 'sliders', songs: 'disc' } as const;
+const ROOM_LABEL: Record<Exclude<Room, 'hub'>, StringKey> = { sounds: 'roomSounds', musician: 'roomMusician', producer: 'roomProducer', songs: 'roomSongs' };
 
 const LENGTHS = [
   { steps: 1, label: '1/16' },
@@ -56,20 +64,23 @@ const kitName = (key: string, lang: Lang) => (key === CUSTOM_KIT ? t('kitCustom'
 const sameSlots = (a: { role: Role; instrument: string }[], b: { role: Role; instrument: string }[]) =>
   a.length === b.length && a.every((x, i) => x.role === b[i].role && x.instrument === b[i].instrument);
 
-export default function Studio({ store, profile, lang, onLang, mode, onToggleMode, onHome, onSettings, onClassroom, onProfile }: {
+export default function Studio({ store, profile, room, onRoom, lang, onLang, mode, onToggleMode, onProfiles, onSettings, onClassroom, onProfile }: {
   store: SongStore;
   profile: Profile;
+  /** Which room is open; the song, its undo history and the sound stay the same from room to room. */
+  room: Room;
+  onRoom: (room: Room) => void;
   onProfile: (p: Profile) => void;
   lang: Lang;
   onLang: (l: Lang) => void;
   mode: Mode;
   onToggleMode: () => void;
-  onHome: () => void;
-  onSettings: () => void;
+  /** Back to the profile picker. */
+  onProfiles: () => void;
+  onSettings?: () => void;
   /** Opens Music Studio Classroom; absent where Classroom is off. */
   onClassroom?: () => void;
 }) {
-  const naming = namingFor(lang);
   const langRef = useRef(lang);
   useLayoutEffect(() => { langRef.current = lang; }, [lang]);
   const by = profile.id;
@@ -79,7 +90,6 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   const songRef = useRef<Song | null>(null);
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
   const [selected, setSelected] = useState<string | null>(null);
-  const [hat, setHat] = useState<Hat>(profile.default_hat);
   const [step, setStep] = useState(-1);
   const stepRef = useRef(-1);
   const [playing, setPlaying] = useState(false);
@@ -92,7 +102,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   const [lows, setLows] = useState<Record<string, number>>({});
   const [focusBar, setFocusBar] = useState(0);
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [modal, setModal] = useState<null | 'songs' | 'versions' | 'kit' | 'builder' | 'clear' | 'beat'>(null);
+  const [modal, setModal] = useState<null | 'kit' | 'builder' | 'clear' | 'beat'>(null);
   const [pendingKit, setPendingKit] = useState<string | null>(null);
   const [songList, setSongList] = useState<Song[]>([]);
   const [versions, setVersions] = useState<SongVersion[]>([]);
@@ -101,19 +111,18 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   const [zoomPref, setZoomPref] = useState<Zoom | null>(readZoom);
   const [editorRef, editorWidth] = useWidth<HTMLElement>();
   const touch = useMemo(() => isTouch(), []);
+  // The side panel (key and ideas, or the channel) slides in on narrow screens and sits beside the work on wide ones.
+  const [sideOpen, setSideOpen] = useState(false);
 
   // Listen to the selected track alone. Not saved in the song: mute and solo stay as they were.
   const [alone, setAlone] = useState(false);
   // The musician's mixer takes the editor's place while it is open.
   const [board, setBoard] = useState(false);
-  // Each hat has its own room: switching closes the musician's mixer and stops recording taps.
-  // The Colección opens in the producer's room, in place of the console.
-  const [shelf, setShelf] = useState(false);
   const [sounds, setSounds] = useState<CustomSound[]>([]);
-  useEffect(() => {
-    if (shelf) store.listSounds(profile.id).then(setSounds).catch(() => setSounds([]));
-  }, [shelf, store, profile.id]);
-  const switchHat = (h: Hat) => { setHat(h); setBoard(false); setShelf(false); if (h === 'producer') setRec(false); };
+  useEffect(() => { store.listSounds(profile.id).then(setSounds).catch(() => setSounds([])); }, [store, profile.id]);
+  useEffect(() => { store.listSongs(profile.id).then(setSongList).catch(() => undefined); }, [store, profile.id, room]);
+  // Each room keeps its own tools: leaving the musician closes its mixer and stops recording taps.
+  useEffect(() => { setBoard(false); setSideOpen(false); if (room !== 'musician') setRec(false); }, [room]);
 
   /* Song form: one part in view (and on repeat), mark mode, where play starts, what the grid shows. */
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -167,6 +176,8 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
       setSelected(s.tracks[0]?.id ?? null);
       await store.setMeta(`last_song:${profile.id}`, s.id);
       setIdeas(await store.listIdeas(s.id));
+      setVersions(await store.listVersions(s.id));
+      setSongList(await store.listSongs(profile.id));
     })();
     return () => { alive = false; };
   }, [store, profile.id]);
@@ -231,17 +242,19 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
       if (!ok) showToast(t('soundBlocked', lang));
     }
   }, [lang, showToast]);
+  // A room that does not play the song (the sound studio, the hub) stops it on the way in.
+  useEffect(() => { if ((room === 'sounds' || room === 'hub') && engine.playing) { engine.stop(); setPlaying(false); } }, [room]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-      if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+      if (e.code === 'Space' && (room === 'musician' || room === 'producer')) { e.preventDefault(); togglePlay(); }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [togglePlay, undo, redo]);
+  }, [togglePlay, undo, redo, room]);
 
   /* ---------- stable handlers for the memoized grids */
   const selRef = useRef(selected);
@@ -295,10 +308,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   };
 
   /* ---------- songs */
-  const openSongs = async () => {
-    setSongList(await store.listSongs(profile.id));
-    setModal('songs');
-  };
+  const refreshSongs = async () => setSongList(await store.listSongs(profile.id));
   const switchTo = async (raw: Song) => {
     const s = normalizeSong(raw);
     engine.stop();
@@ -314,10 +324,12 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
     setFocusBar(0);
     await store.setMeta(`last_song:${profile.id}`, s.id);
     setIdeas(await store.listIdeas(s.id));
-    setModal(null);
+    setVersions(await store.listVersions(s.id));
+    await refreshSongs();
   };
   const createSong = async () => {
-    const s = newSong(profile.id, t('songN', lang, { n: songList.length + 1 }), 2, lang, song?.kit_key ?? profile.last_kit ?? DEFAULT_KIT, profile.starred ?? [], false);
+    const count = (await store.listSongs(profile.id)).length;
+    const s = newSong(profile.id, t('songN', lang, { n: count + 1 }), 2, lang, song?.kit_key ?? profile.last_kit ?? DEFAULT_KIT, profile.starred ?? [], false);
     await store.saveSong(s);
     await switchTo(s);
   };
@@ -325,9 +337,9 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   /* ---------- kits by genre and the custom kit */
   const starred = profile.starred ?? [];
   const currentKit = song?.kit_key ?? DEFAULT_KIT;
-  const isStarred = (key: string | undefined, role: Role) => !!key && starred.some((x) => x.key === key && x.role === role);
+  const isStarred = (key: string | undefined, role: Role) => !!key && starred.some((x) => x.key === key && x.role === role && !x.sound);
   const toggleStar = (key: string, role: Role) => {
-    const next: StarredInstrument[] = isStarred(key, role) ? starred.filter((x) => !(x.key === key && x.role === role)) : [...starred, { key, role }];
+    const next: StarredInstrument[] = isStarred(key, role) ? starred.filter((x) => !(x.key === key && x.role === role && !x.sound)) : [...starred, { key, role }];
     onProfile({ ...profile, starred: next, updated_at: new Date().toISOString() });
   };
   const pickKit = (key: string) => {
@@ -380,12 +392,8 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   const saveVersion = async () => {
     if (!song) return;
     const v = await store.saveVersion(song, null, by);
-    showToast(t('versionSaved', lang, { n: v.version_no }));
-  };
-  const openVersions = async () => {
-    if (!song) return;
     setVersions(await store.listVersions(song.id));
-    setModal('versions');
+    showToast(t('versionSaved', lang, { n: v.version_no }));
   };
 
   /* ---------- ideas */
@@ -512,7 +520,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
     showToast(t('barsDeleted', lang, { name }));
   };
   const scrub = (bar: number) => {
-    if (focusSection && (bar < fStart / 3840 || bar >= (fStart + fLen) / 3840)) setFocusId(null);
+    if (focusSection && (bar < fStart / BAR_TICKS || bar >= (fStart + fLen) / BAR_TICKS)) setFocusId(null);
     setCursorBar(bar);
     jumpTo(bar * 16);
     if (engine.playing) engine.seek(bar * 16);
@@ -528,211 +536,166 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
   };
   useEffect(() => { engine.setFocus(alone && track ? track.id : null); }, [alone, track]);
   useEffect(() => () => engine.setFocus(null), []);
-  const trackTitle = useMemo(() => (track?.sound ? track.sound.name : track?.instrument ? catalogTitle(track.instrument, lang) : ''), [track, lang]);
+  const trackTitle = useMemo(() => (track ? soundName(track.instrument, track.sound, lang) : ''), [track, lang]);
 
   if (!song || !track) return <div className="home"><p className="muted">{t('loading', lang)}</p></div>;
 
-  return (
-    <div className={`studio${wide ? ' wide' : ''}`}>
-      <header className="topbar">
-        <div className="tb-group tb-left">
-        <button type="button" className="btn icon" onClick={onHome} aria-label={t('home', lang)}><Icon name="home" /></button>
-        <Avatar profile={profile} onClick={onSettings} label={t('settings', lang)} />
-        {onClassroom && (
-          <button type="button" className="btn classroom-btn" onClick={onClassroom} aria-label={t('clOpen', lang)} title={t('clOpen', lang)}>
-            <Icon name="classroom" size={20} /> <span className="hide-sm">{t('classroom', lang)}</span>
+  /* ---------- the trash: what it clears depends on where you stand */
+  const clearScope = focusSection
+    ? { from: focusSection.start_tick, to: focusSection.start_tick + focusSection.length_ticks, label: t('clearInPart', lang, { name: focusSection.name, from: A.sectionStartBar(focusSection) + 1, to: A.sectionStartBar(focusSection) + A.sectionBars(focusSection) }) }
+    : { from: 0, to: bars * BAR_TICKS, label: t('clearInSong', lang, { n: bars }) };
+  const clearCount = C.countWritten(song, track.id, clearScope.from, clearScope.to);
+  const clearCountSong = C.countWritten(song, track.id, 0, bars * BAR_TICKS);
+  const unit = (n: number) => t(clipKind === 'pattern' ? (n === 1 ? 'nHitsOne' : 'nHits') : clipKind === 'chords' ? (n === 1 ? 'nChordsOne' : 'nChords') : (n === 1 ? 'nNotesOne' : 'nNotes'), lang, { n });
+
+  /* ---------- the parts of the screen */
+  const transport = (extra?: React.ReactNode) => (
+    <Transport song={song} lang={lang} playing={playing} step={step} cursorBar={cursorBar}
+      rec={room === 'musician' ? rec : undefined} onRec={room === 'musician' ? () => setRec((r) => !r) : undefined}
+      onPlay={togglePlay} onTempo={(bpm) => apply((x) => C.setTempo(x, bpm, by))} onBars={(n) => apply((x) => A.setSongBars(x, n, by))}>
+      {extra}
+      <button type="button" className="btn icon side-toggle" aria-pressed={sideOpen} onClick={() => setSideOpen((o) => !o)}
+        aria-label={t(room === 'producer' ? 'sideChannel' : 'sideKey', lang)} title={t(room === 'producer' ? 'sideChannel' : 'sideKey', lang)}>
+        <Icon name="panel" />
+      </button>
+    </Transport>
+  );
+
+  const structure = (
+    <StructureBar song={song} lang={lang} focusId={focusId} marking={marking} sel={sel} compact
+      onFocus={focusOn} onMarking={toggleMarking} onPick={pickKind} onClearSel={() => setSel({ a: null, b: null })}
+      onRename={(id, name) => apply((x) => A.renameSection(x, id, name, lang, by))}
+      onKind={(id, kind) => apply((x) => A.setSectionKind(x, id, kind, lang, by))}
+      onCopy={copyPart} onRepeat={repeatPart}
+      onUnmark={(id) => { apply((x) => A.removeSection(x, id, lang, by)); setFocusId(null); }}
+      onDeleteBars={deletePartBars} />
+  );
+  const timeline = (firstBar: number, onScreenBars: number) => (
+    <SongTimeline song={song} lang={lang} step={step} firstBar={focused ? Math.floor(view.start / 16) : firstBar}
+      barsOnScreen={focused ? Math.round(view.length / 16) : onScreenBars} focusId={focusId} cursorBar={cursorBar}
+      marking={marking} sel={sel} onBarTap={onBarTap} onScrub={scrub} />
+  );
+  const mixer = (
+    <MixerBoard song={song} selected={track.id} lang={lang} onSelect={setSelected}
+      onGain={(id, g) => apply((x) => C.setGain(x, id, g, by))}
+      onPan={(id, v) => apply((x) => C.setPan(x, id, v, by))}
+      onMute={(id) => apply((x) => C.toggleMute(x, id, by))}
+      onSolo={(id) => apply((x) => C.toggleSolo(x, id, by))} />
+  );
+  const aloneBtn = (
+    <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
+      aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
+      <Icon name="headphones" size={18} /> <span className="hide-md">{t('onlyThis', lang)}</span>
+    </button>
+  );
+
+  const trackList = (
+    <nav className="tracks" aria-label={t('tracks', lang)}>
+      <div className="kit-picker">
+        <label className="lbl" htmlFor="kit-select">{t('genre', lang)}</label>
+        <div className="row" style={{ gap: 6 }}>
+          <select id="kit-select" className="field grow" value={currentKit} onChange={(e) => pickKit(e.target.value)}>
+            {KITS.map((k) => <option key={k.key} value={k.key}>{k.title[lang]}</option>)}
+            <option value={CUSTOM_KIT}>{t('kitCustom', lang)}{starred.length ? ` (★ ${starred.length})` : ''}</option>
+          </select>
+          <button type="button" className="btn icon" onClick={() => setModal('builder')} aria-label={t('buildKit', lang)} title={t('buildKit', lang)}>
+            <Icon name={starred.length ? 'starFill' : 'star'} size={18} />
+          </button>
+        </div>
+        {customStale && (
+          <button type="button" className="btn small-btn" onClick={() => { setPendingKit(CUSTOM_KIT); setModal('kit'); }} title={t('updateKitHint', lang)}>
+            <Icon name="starFill" size={16} /> {t('updateKit', lang)}
           </button>
         )}
-        <input className="title-input" aria-label={t('songTitle', lang)} value={song.title}
-          onChange={(e) => { if (songRef.current) { songRef.current = { ...songRef.current, title: e.target.value }; setSong(songRef.current); } }}
-          onBlur={(e) => apply((x) => C.setTitle(x, e.target.value, by))} />
-        <button type="button" className="btn" onClick={openSongs} aria-label={t('songs', lang)}><Icon name="menu" size={18} /> <span className="hide-sm">{t('songs', lang)}</span></button>
-        <button type="button" className="btn icon" onClick={undo} disabled={!hist.past} aria-label={t('undo', lang)}><Icon name="undo" /></button>
-        <button type="button" className="btn icon" onClick={redo} disabled={!hist.future} aria-label={t('redo', lang)}><Icon name="redo" /></button>
-        <span className="small muted hide-sm" aria-live="polite" style={{ minWidth: 70 }}>{saveState === 'saving' ? t('saving', lang) : t('saved', lang)}</span>
-        </div>
-        <div className="tb-group tb-right">
-        <LangToggle lang={lang} onLang={onLang} />
-        <ModeSwitch mode={mode} onToggle={onToggleMode} lang={lang} />
-        <div className="seg" aria-label={t('hat', lang)}>
-          <button type="button" aria-pressed={hat === 'musician'} onClick={() => switchHat('musician')}>{t('musician', lang)}</button>
-          <button type="button" aria-pressed={hat === 'producer'} onClick={() => switchHat('producer')}>{t('producer', lang)}</button>
-        </div>
-        <label className="row small">
-          <span className="muted">BPM</span>
-          <input className="field mono" type="number" min={40} max={200} value={song.tempo_bpm} style={{ width: 76 }}
-            onChange={(e) => apply((x) => C.setTempo(x, Number(e.target.value) || x.tempo_bpm, by))} />
-        </label>
-<LengthStepper bars={bars} lang={lang} onBars={(n) => apply((x) => A.setSongBars(x, n, by))} />
-        {hat === 'musician' && (
-          <button type="button" className="btn rec" aria-pressed={rec} onClick={() => setRec((r) => !r)} title={t('recordHint', lang)} aria-label={t('record', lang)}>
-            <span className="dot" style={{ background: rec ? 'var(--highlight-ink)' : 'var(--highlight)' }} /> <span className="hide-sm">{t('record', lang)}</span>
+      </div>
+      {song.tracks.map((tr) => (
+        <div key={tr.id} className={`row track-line${alone && tr.id !== track.id ? ' quiet' : ''}`} style={{ gap: 4 }}>
+          <button type="button" className="track-btn grow" aria-current={tr.id === track.id} onClick={() => setSelected(tr.id)}>
+            <span className="swatch" style={{ background: tr.color }} />
+            <span className="stack" style={{ gap: 0, minWidth: 0 }}>
+              <strong>{tr.name}</strong>
+              <span className="small muted ellipsis">{tr.producer && tr.voice_from === 'producer' ? soundName(tr.producer.instrument, tr.producer.sound, lang) : soundName(tr.instrument, tr.sound, lang)}</span>
+            </span>
           </button>
-        )}
-        <OutMeter label={t('soundOutput', lang)} />
-        <button type="button" className={`play${playing ? ' on' : ''}`} onClick={togglePlay} aria-label={t(playing ? 'stop' : 'play', lang)}>
-          <Icon name={playing ? 'stop' : 'play'} size={22} />
-        </button>
+          {tr.instrument && (
+            <button type="button" className={`mini star${isStarred(tr.instrument.key, roleOf(tr)) ? ' on' : ''}`}
+              aria-pressed={isStarred(tr.instrument.key, roleOf(tr))}
+              onClick={() => toggleStar(tr.instrument!.key, roleOf(tr))}
+              aria-label={t(isStarred(tr.instrument.key, roleOf(tr)) ? 'unstar' : 'star', lang, { name: catalogTitle(tr.instrument, lang) })}
+              title={t(isStarred(tr.instrument.key, roleOf(tr)) ? 'unstar' : 'star', lang, { name: catalogTitle(tr.instrument, lang) })}>
+              <Icon name={isStarred(tr.instrument.key, roleOf(tr)) ? 'starFill' : 'star'} size={16} />
+            </button>
+          )}
+          <button type="button" className="mini" aria-pressed={tr.muted} onClick={() => apply((x) => C.toggleMute(x, tr.id, by))} aria-label={t('muteTrack', lang, { name: tr.name })} title={t('muteHint', lang)}>M</button>
         </div>
-      </header>
+      ))}
+    </nav>
+  );
 
-      <div className="body">
-        <nav className="tracks" aria-label={t('tracks', lang)}>
-          <div className="kit-picker">
-            <label className="lbl" htmlFor="kit-select">{t('genre', lang)}</label>
-            <div className="row" style={{ gap: 6 }}>
-              <select id="kit-select" className="field grow" value={currentKit} onChange={(e) => pickKit(e.target.value)}>
-                {KITS.map((k) => <option key={k.key} value={k.key}>{k.title[lang]}</option>)}
-                <option value={CUSTOM_KIT}>{t('kitCustom', lang)}{starred.length ? ` (★ ${starred.length})` : ''}</option>
-              </select>
-              <button type="button" className="btn icon" onClick={() => setModal('builder')} aria-label={t('buildKit', lang)} title={t('buildKit', lang)}>
-                <Icon name={starred.length ? 'starFill' : 'star'} size={18} />
-              </button>
-            </div>
-            {customStale && (
-              <button type="button" className="btn small-btn" onClick={() => { setPendingKit(CUSTOM_KIT); setModal('kit'); }} title={t('updateKitHint', lang)}>
-                <Icon name="starFill" size={16} /> {t('updateKit', lang)}
-              </button>
-            )}
-          </div>
-          {song.tracks.map((tr) => (
-            <div key={tr.id} className={`row${alone && tr.id !== track.id ? ' quiet' : ''}`} style={{ gap: 4 }}>
-              <button type="button" className="track-btn grow" aria-current={tr.id === track.id} onClick={() => setSelected(tr.id)}>
-                <span className="swatch" style={{ background: tr.color }} />
-                <span className="stack" style={{ gap: 0, minWidth: 0 }}>
-                  <strong>{tr.name}</strong>
-                  <span className="small muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tr.sound ? tr.sound.name : tr.instrument && findItem(tr.instrument) ? catalogTitle(tr.instrument, lang) : ''}</span>
-                </span>
-              </button>
-              {tr.instrument && (
-                <button type="button" className={`mini star${isStarred(tr.instrument.key, roleOf(tr)) ? ' on' : ''}`}
-                  aria-pressed={isStarred(tr.instrument.key, roleOf(tr))}
-                  onClick={() => toggleStar(tr.instrument!.key, roleOf(tr))}
-                  aria-label={t(isStarred(tr.instrument.key, roleOf(tr)) ? 'unstar' : 'star', lang, { name: catalogTitle(tr.instrument, lang) })}
-                  title={t(isStarred(tr.instrument.key, roleOf(tr)) ? 'unstar' : 'star', lang, { name: catalogTitle(tr.instrument, lang) })}>
-                  <Icon name={isStarred(tr.instrument.key, roleOf(tr)) ? 'starFill' : 'star'} size={16} />
-                </button>
-              )}
-              <button type="button" className="mini" aria-pressed={tr.muted} onClick={() => apply((x) => C.toggleMute(x, tr.id, by))} aria-label={t('muteTrack', lang, { name: tr.name })} title={t('muteHint', lang)}>M</button>
-            </div>
-          ))}
-        </nav>
+  const zoomTools = (clipKind === 'pattern' || clipKind === 'notes') && (
+    <div className="row grid-view" style={{ gap: 6 }}>
+      <div className="seg" aria-label={t('zoom', lang)}>
+        {ZOOMS.map((z) => <button key={z} type="button" aria-pressed={zoom === z} onClick={() => pickZoom(z)}>{t(ZOOM_LABEL[z], lang)}</button>)}
+      </div>
+      <button type="button" className="btn icon" aria-pressed={wide} onClick={toggleWide}
+        aria-label={t(wide ? 'exitFullScreen' : 'fullScreen', lang)} title={t(wide ? 'exitFullScreen' : 'fullScreen', lang)}>
+        <Icon name={wide ? 'shrink' : 'expand'} />
+      </button>
+    </div>
+  );
 
-        <main className="editor" ref={editorRef}>
-          {hat === 'producer' && shelf ? (
-            <Collection song={song} selectedId={track.id} profileId={profile.id} lang={lang} sounds={sounds} onClose={() => setShelf(false)} onBeat={() => setModal('beat')}
-              onUse={(trackId, key) => {
-                const ref = { key, version: '1.0.0' };
-                apply((x) => C.setInstrument(x, trackId, ref, by));
-                setSelected(trackId);
-                const tr = song.tracks.find((x) => x.id === trackId);
-                showToast(t('collectionUsed', lang, { name: catalogTitle(ref, lang), track: tr?.name ?? '' }));
-              }}
-              onUseSound={(trackId, sound) => {
-                apply((x) => C.applySound(x, trackId, sound, by));
-                setSelected(trackId);
-                const tr = song.tracks.find((x) => x.id === trackId);
-                showToast(t('collectionUsed', lang, { name: sound.name, track: tr?.name ?? '' }));
-              }}
-              onSaveSound={async (sound) => {
-                await store.saveSound(sound);
-                setSounds(await store.listSounds(profile.id));
-                showToast(t('mySoundSaved', lang, { name: sound.name }));
-              }}
-              onDeleteSound={async (id) => {
-                await store.deleteSound(id);
-                setSounds(await store.listSounds(profile.id));
-              }} />
-          ) : hat === 'producer' ? (
-            /* The producer works from the control room: the console, the song's structure and the pedals at the side.
-               Writing and recording notes is the musician's job (the other hat). */
-            <>
-              <div className="row wrap">
-                <h2 className="display grow" style={{ fontSize: 22 }}>{t('console', lang)} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{t('consoleHint', lang)}</span></h2>
-                <button type="button" className="btn collection-btn" onClick={() => setShelf(true)} title={t('collectionOpen', lang)}>
-                  <Icon name="crate" size={18} /> {t('collection', lang)}
-                </button>
-                <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
-                  aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
-                  <Icon name="headphones" size={18} /> <span className="hide-sm">{t('onlyThis', lang)}</span>
-                </button>
-              </div>
-              <MixerBoard song={song} selected={track.id} lang={lang} onSelect={setSelected}
-                onGain={(id, g) => apply((x) => C.setGain(x, id, g, by))}
-                onPan={(id, v) => apply((x) => C.setPan(x, id, v, by))}
-                onMute={(id) => apply((x) => C.toggleMute(x, id, by))}
-                onSolo={(id) => apply((x) => C.toggleSolo(x, id, by))} />
-              <StructureBar song={song} lang={lang} focusId={focusId} marking={marking} sel={sel}
-                onFocus={focusOn} onMarking={toggleMarking} onPick={pickKind} onClearSel={() => setSel({ a: null, b: null })}
-                onRename={(id, name) => apply((x) => A.renameSection(x, id, name, lang, by))}
-                onKind={(id, kind) => apply((x) => A.setSectionKind(x, id, kind, lang, by))}
-                onCopy={copyPart} onRepeat={repeatPart}
-                onUnmark={(id) => { apply((x) => A.removeSection(x, id, lang, by)); setFocusId(null); }}
-                onDeleteBars={deletePartBars} />
-              <SongTimeline song={song} lang={lang} step={step} firstBar={focused ? Math.floor(view.start / 16) : 0}
-                barsOnScreen={focused ? Math.round(view.length / 16) : bars} focusId={focusId} cursorBar={cursorBar}
-                marking={marking} sel={sel} onBarTap={onBarTap} onScrub={scrub} />
-              <p className="small muted producer-note">
-                {t('producerNote', lang)} <button type="button" className="btn small-btn" onClick={() => switchHat('musician')}><Icon name="music" size={16} /> {t('wearMusician', lang)}</button>
-              </p>
-            </>
-          ) : board ? (
-            <>
-              <div className="row wrap">
-                <h2 className="display grow" style={{ fontSize: 22 }}>{t('mixerBoard', lang)} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{t('mixerBoardHint', lang)}</span></h2>
-                <button type="button" className="btn" aria-pressed={board} onClick={() => setBoard(false)}><Icon name="sliders" size={18} /> {t('backToEditor', lang)}</button>
-              </div>
-              <MixerBoard song={song} selected={track.id} lang={lang} onSelect={setSelected}
-                onGain={(id, g) => apply((x) => C.setGain(x, id, g, by))}
-                onPan={(id, v) => apply((x) => C.setPan(x, id, v, by))}
-                onMute={(id) => apply((x) => C.toggleMute(x, id, by))}
-                onSolo={(id) => apply((x) => C.toggleSolo(x, id, by))} />
-            </>
-          ) : (<>
+  const musicianWork = (
+    <main className="work" ref={editorRef}>
+      {transport()}
+      {board ? (
+        <section className="stack board-wrap" aria-label={t('mixerBoard', lang)}>
           <div className="row wrap">
-            <h2 className="display grow" style={{ fontSize: 22 }}>{track.name} <span className="muted small" style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif" }}>{trackTitle}</span></h2>
-            <button type="button" className="btn" onClick={() => setBoard(true)} title={t('mixerBoardHint', lang)}>
-              <Icon name="sliders" size={18} /> <span className="hide-sm">{t('mixerBoard', lang)}</span>
-            </button>
-            <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
-              aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
-              <Icon name="headphones" size={18} /> <span className="hide-sm">{t('onlyThis', lang)}</span>
-            </button>
-            {clipKind === 'notes' && (
-              <div className="row" style={{ gap: 8 }}>
-              <span className="small muted hide-sm">{t('noteLength', lang)}</span>
+            <h2 className="display grow" style={{ fontSize: 20 }}>{t('mixerBoard', lang)} <span className="muted small ui-font">{t('mixerBoardHint', lang)}</span></h2>
+            <button type="button" className="btn" onClick={() => setBoard(false)}><Icon name="back" size={18} /> {t('backToEditor', lang)}</button>
+          </div>
+          {mixer}
+        </section>
+      ) : (<>
+        <div className="inst-head">
+          <span className="swatch big" style={{ background: track.color }} />
+          <h2 className="display inst-name">{track.name} <span className="muted small ui-font">{trackTitle}</span></h2>
+          {/* The trash belongs to this instrument: it clears what is written here, in the part in view. */}
+          <button type="button" className="btn icon clear-btn" onClick={() => setModal('clear')} disabled={!C.hasWritten(song, track.id)}
+            aria-label={t('clearInstrument', lang, { name: track.name })} title={t('clearInstrument', lang, { name: track.name })}><Icon name="trash" /></button>
+          <span className="grow" />
+          {clipKind === 'notes' && (
+            <div className="row" style={{ gap: 6 }}>
+              <span className="small muted hide-lg">{t('noteLength', lang)}</span>
               <div className="seg" aria-label={t('noteLength', lang)}>
                 {LENGTHS.map((l) => <button key={l.steps} type="button" aria-pressed={noteLen === l.steps} onClick={() => setNoteLen(l.steps)}>{l.label}</button>)}
               </div>
-              </div>
-            )}
-            {(clipKind === 'pattern' || clipKind === 'notes') && (
-              <div className="seg" aria-label={t('zoom', lang)}>
-                {ZOOMS.map((z) => <button key={z} type="button" aria-pressed={zoom === z} onClick={() => pickZoom(z)}>{t(ZOOM_LABEL[z], lang)}</button>)}
-              </div>
-            )}
-            <button type="button" className="btn icon" aria-pressed={wide} onClick={toggleWide}
-              aria-label={t(wide ? 'exitFullScreen' : 'fullScreen', lang)} title={t(wide ? 'exitFullScreen' : 'fullScreen', lang)}>
-              <Icon name={wide ? 'shrink' : 'expand'} />
-            </button>
-            {/* Beside the grid it clears, far from the profile button. */}
-            <button type="button" className="btn icon clear-btn" onClick={() => setModal('clear')} disabled={!C.hasWritten(song)} aria-label={t('clearOpen', lang)} title={t('clearOpen', lang)}><Icon name="trash" /></button>
-          </div>
+            </div>
+          )}
+          {aloneBtn}
+          <button type="button" className="btn" onClick={() => setBoard(true)} title={t('mixerBoardHint', lang)} aria-label={t('mixerBoard', lang)}>
+            <Icon name="sliders" size={18} /> <span className="hide-lg">{t('mixerBoard', lang)}</span>
+          </button>
+        </div>
 
-          <StructureBar song={song} lang={lang} focusId={focusId} marking={marking} sel={sel}
-            onFocus={focusOn} onMarking={toggleMarking} onPick={pickKind} onClearSel={() => setSel({ a: null, b: null })}
-            onRename={(id, name) => apply((x) => A.renameSection(x, id, name, lang, by))}
-            onKind={(id, kind) => apply((x) => A.setSectionKind(x, id, kind, lang, by))}
-            onCopy={copyPart} onRepeat={repeatPart}
-            onUnmark={(id) => { apply((x) => A.removeSection(x, id, lang, by)); setFocusId(null); }}
-            onDeleteBars={deletePartBars} />
+        <div className="songmap">
+          {structure}
+          {timeline(onScreen.bar, onScreen.bars)}
+        </div>
 
+        <div className={`grid-area kind-${clipKind}`}>
           {clipKind === 'pattern' && (
-            <DrumGrid track={track} step={step} zoom={zoom} width={editorWidth} lang={lang} frame={frame} onToggle={onToggleHit} onPreview={onPreviewDrum} />
+            <>
+              <div className="row small muted grid-tools">
+                <span className="hide-md">{t('drumTapHint', lang)}</span>
+                <span className="grow" />
+                {zoomTools}
+              </div>
+              <DrumGrid track={track} step={step} zoom={zoom} width={editorWidth} lang={lang} frame={frame} onToggle={onToggleHit} onPreview={onPreviewDrum} />
+            </>
           )}
           {clipKind === 'notes' && (
             <NoteGrid song={song} track={track} low={low} step={step} zoom={zoom} width={editorWidth} focusBar={focusBar} lang={lang} frame={frame}
-              onToggle={onToggleNote} onSpan={onSpanNote} onPreview={onPreviewNote}
+              onToggle={onToggleNote} onSpan={onSpanNote} onPreview={onPreviewNote} tools={zoomTools}
               onShift={(d) => setLows((m) => ({ ...m, [track.id]: Math.min(96, Math.max(24, low + d)) }))} />
           )}
           {clipKind === 'chords' && (
@@ -740,39 +703,148 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
               onSet={(bar, degree) => { apply((x) => C.setChord(x, track.id, bar, degree, by)); setFocusBar(bar); }}
               onPreview={(midis) => engine.previewNotes(track.id, midis.map((m) => ({ midi: m, at: 0, dur: 0.9, vel: 0.6 })))} />
           )}
+        </div>
 
-          <SongTimeline song={song} lang={lang} step={step} firstBar={focused ? Math.floor(view.start / 16) : onScreen.bar}
-            barsOnScreen={focused ? Math.round(view.length / 16) : onScreen.bars} focusId={focusId} cursorBar={cursorBar}
-            marking={marking} sel={sel} onBarTap={onBarTap} onScrub={scrub} />
+        {(clipKind === 'pattern' || clipKind === 'notes') && (
+          <div className="dock">
+            {clipKind === 'pattern' && <Pads track={track} lang={lang} onHit={padHit} />}
+            {clipKind === 'notes' && <Keyboard song={song} low={low} focusBar={focusBar} lang={lang} onPlay={keyPlay} />}
+          </div>
+        )}
+      </>)}
+    </main>
+  );
 
-          {clipKind === 'pattern' && <Pads track={track} lang={lang} onHit={padHit} />}
-          {clipKind === 'notes' && <Keyboard song={song} low={low} focusBar={focusBar} lang={lang} onPlay={keyPlay} />}
-          </>)}
-        </main>
-
-        <aside className="side">
-          {hat === 'producer' ? (
-            <MixerPanel song={song} track={track} lang={lang}
-              onGain={(g) => apply((x) => C.setGain(x, track.id, g, by))}
-              onMute={() => apply((x) => C.toggleMute(x, track.id, by))}
-              onSolo={() => apply((x) => C.toggleSolo(x, track.id, by))}
-              onKit={(r) => apply((x) => C.setInstrument(x, track.id, r, by))}
-              onBypass={(slot, b) => apply((x) => C.setFxBypass(x, track.id, slot, b, by))}
-              onParam={(slot, name, v) => apply((x) => C.setFxParam(x, track.id, slot, name, v, by))}
-              onSwing={(v) => apply((x) => C.setSwing(x, v, by))}
-              onResetSwing={() => apply((x) => C.resetSwing(x, by))}
-              onResetFx={(slot) => apply((x) => C.resetFx(x, track.id, slot, by))}
-              onAddFx={(key) => apply((x) => C.addFx(x, track.id, key, by))}
-              onRemoveFx={(slot) => apply((x) => C.removeFx(x, track.id, slot, by))} />
-          ) : (
-            <TheoryPanel song={song} lang={lang} focusBar={focusBar} onKey={(tonic, mode) => apply((x) => C.setKey(x, tonic, mode, by))} />
-          )}
-          <IdeasTray ideas={ideas} tracks={song.tracks} lang={lang} onImport={importIdeas} onListen={listenIdea}
-            onKeep={keepIdea} onDismiss={(i) => decide(i, 'dismissed')} onCopyHelp={copyHelp} />
-        </aside>
+  const producerWork = (
+    <main className="work" ref={editorRef}>
+      {transport(aloneBtn)}
+      <section className="stack board-wrap" aria-label={t('console', lang)}>
+        <div className="row wrap">
+          <h2 className="display grow" style={{ fontSize: 20 }}>{t('console', lang)} <span className="muted small ui-font">{t('consoleHint', lang)}</span></h2>
+          <button type="button" className="btn small-btn collection-btn" onClick={() => onRoom('sounds')} title={t('collectionOpen', lang)}>
+            <Icon name="amp" size={16} /> {t('roomSounds', lang)}
+          </button>
+        </div>
+        {mixer}
+      </section>
+      <div className="songmap">
+        {structure}
+        {timeline(0, bars)}
       </div>
+    </main>
+  );
 
-      {!audioReady && (
+  const side = (
+    <aside className={`side${sideOpen ? ' open' : ''}`} aria-label={t(room === 'producer' ? 'sideChannel' : 'sideKey', lang)}>
+      <div className="side-close"><button type="button" className="btn icon ghost" onClick={() => setSideOpen(false)} aria-label={t('close', lang)}><Icon name="close" /></button></div>
+      {room === 'producer' ? (
+        <MixerPanel song={song} track={track} lang={lang}
+          onGain={(g) => apply((x) => C.setGain(x, track.id, g, by))}
+          onMute={() => apply((x) => C.toggleMute(x, track.id, by))}
+          onSolo={() => apply((x) => C.toggleSolo(x, track.id, by))}
+          onKit={(r) => apply((x) => C.setInstrument(x, track.id, r, by))}
+          onBypass={(slot, b) => apply((x) => C.setFxBypass(x, track.id, slot, b, by))}
+          onParam={(slot, name, v) => apply((x) => C.setFxParam(x, track.id, slot, name, v, by))}
+          onSwing={(v) => apply((x) => C.setSwing(x, v, by))}
+          onResetSwing={() => apply((x) => C.resetSwing(x, by))}
+          onResetFx={(slot) => apply((x) => C.resetFx(x, track.id, slot, by))}
+          onAddFx={(key) => apply((x) => C.addFx(x, track.id, key, by))}
+          onRemoveFx={(slot) => apply((x) => C.removeFx(x, track.id, slot, by))} />
+      ) : (
+        <TheoryPanel song={song} lang={lang} focusBar={focusBar} onKey={(tonic, mode) => apply((x) => C.setKey(x, tonic, mode, by))} />
+      )}
+      <IdeasTray ideas={ideas} tracks={song.tracks} lang={lang} onImport={importIdeas} onListen={listenIdea}
+        onKeep={keepIdea} onDismiss={(i) => decide(i, 'dismissed')} onCopyHelp={copyHelp} />
+    </aside>
+  );
+
+  const roomBody = (() => {
+    if (room === 'sounds') {
+      return (
+        <div className="body room-sounds">
+          <Collection song={song} selectedId={track.id} profileId={profile.id} lang={lang} sounds={sounds} onClose={() => onRoom('musician')} onBeat={() => setModal('beat')}
+            onUse={(trackId, key) => {
+              const ref = { key, version: '1.0.0' };
+              apply((x) => C.setInstrument(x, trackId, ref, by));
+              setSelected(trackId);
+              const tr = song.tracks.find((x) => x.id === trackId);
+              showToast(t('collectionUsed', lang, { name: catalogTitle(ref, lang), track: tr?.name ?? '' }));
+            }}
+            onUseSound={(trackId, sound) => {
+              apply((x) => C.applySound(x, trackId, sound, by));
+              setSelected(trackId);
+              const tr = song.tracks.find((x) => x.id === trackId);
+              showToast(t('collectionUsed', lang, { name: sound.name, track: tr?.name ?? '' }));
+            }}
+            onSaveSound={async (sound) => {
+              await store.saveSound(sound);
+              setSounds(await store.listSounds(profile.id));
+              showToast(t('mySoundSaved', lang, { name: sound.name }));
+            }}
+            onDeleteSound={async (id) => {
+              await store.deleteSound(id);
+              setSounds(await store.listSounds(profile.id));
+            }} />
+        </div>
+      );
+    }
+    if (room === 'songs') {
+      return (
+        <div className="body room-songs">
+          <SongsRoom song={song} songs={songList} versions={versions} lang={lang}
+            onOpen={(s) => { if (s.id !== song.id) switchTo(s); }} onRoom={onRoom} onNew={createSong} onBeat={() => setModal('beat')}
+            onImport={importSong} onExport={exportSong} onSaveVersion={saveVersion}
+            onRestore={(v) => { apply(() => ({ ...normalizeSong(v.snapshot), updated_at: new Date().toISOString() })); showToast(t('versionRestored', lang, { n: v.version_no })); }}
+            onVoice={(id, from) => apply((x) => C.setVoiceFrom(x, id, from, by))} />
+        </div>
+      );
+    }
+    if (room === 'producer') return <div className="body room-producer">{producerWork}{side}</div>;
+    return <div className="body room-musician">{trackList}{musicianWork}{side}</div>;
+  })();
+
+  return (
+    <div className={`studio room-${room}${wide ? ' wide' : ''}`}>
+      {room === 'hub' ? (
+        <Hub profile={profile} song={song} lang={lang} mode={mode} onLang={onLang} onToggleMode={onToggleMode} onRoom={onRoom}
+          onProfiles={onProfiles} onSettings={onSettings} onClassroom={onClassroom}
+          stats={{ kit: starred.length, sounds: sounds.length, songs: songList.length }} />
+      ) : (<>
+        <header className="topbar">
+          <div className="tb-group tb-left">
+            <button type="button" className="btn icon" onClick={() => onRoom('hub')} aria-label={t('hubOpen', lang)} title={t('hubOpen', lang)}><Icon name="home" /></button>
+            <Avatar profile={profile} onClick={onSettings} label={t('settings', lang)} />
+            <nav className="rooms" aria-label={t('rooms', lang)}>
+              {ROOMS.map((r) => (
+                <button key={r} type="button" aria-current={room === r ? 'page' : undefined} onClick={() => onRoom(r)} aria-label={t(ROOM_LABEL[r], lang)} title={t(ROOM_LABEL[r], lang)}>
+                  <Icon name={ROOM_ICON[r]} size={18} /> <span className="room-label">{t(ROOM_LABEL[r], lang)}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+          <div className="tb-group tb-song">
+            <input className="title-input" aria-label={t('songTitle', lang)} value={song.title}
+              onChange={(e) => { if (songRef.current) { songRef.current = { ...songRef.current, title: e.target.value }; setSong(songRef.current); } }}
+              onBlur={(e) => apply((x) => C.setTitle(x, e.target.value, by))} />
+            <span className="small muted hide-sm save-state" aria-live="polite">{saveState === 'saving' ? t('saving', lang) : t('saved', lang)}</span>
+          </div>
+          <div className="tb-group tb-right">
+            {room === 'sounds' && <OutMeter label={t('soundOutput', lang)} />}
+            <button type="button" className="btn icon" onClick={undo} disabled={!hist.past} aria-label={t('undo', lang)} title={t('undo', lang)}><Icon name="undo" /></button>
+            <button type="button" className="btn icon" onClick={redo} disabled={!hist.future} aria-label={t('redo', lang)} title={t('redo', lang)}><Icon name="redo" /></button>
+            {onClassroom && (
+              <button type="button" className="btn icon classroom-btn" onClick={onClassroom} aria-label={t('clOpen', lang)} title={t('clOpen', lang)}>
+                <Icon name="classroom" size={20} />
+              </button>
+            )}
+            <LangToggle lang={lang} onLang={onLang} />
+            <ModeSwitch mode={mode} onToggle={onToggleMode} lang={lang} />
+          </div>
+        </header>
+        {roomBody}
+      </>)}
+
+      {!audioReady && room !== 'hub' && room !== 'songs' && (
         <div className="start-overlay">
           <button type="button" className="btn primary" style={{ minHeight: 64, fontSize: 18, padding: '0 28px' }} onClick={startAudio}>
             <Icon name="play" /> {t('tapToStart', lang)}
@@ -780,57 +852,27 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
         </div>
       )}
 
-      {modal === 'songs' && (
-        <Modal title={t('songs', lang)} closeLabel={t('close', lang)} onClose={() => setModal(null)}>
-          <div className="row wrap">
-            <button type="button" className="btn primary" onClick={createSong}><Icon name="plus" size={18} /> {t('newSong', lang)}</button>
-            <button type="button" className="btn beat-btn" onClick={() => setModal('beat')} title={t('beatOpenHint', lang)}><Icon name="music" size={18} /> {t('beatOpen', lang)}</button>
-            <button type="button" className="btn" onClick={importSong}><Icon name="upload" size={18} /> {t('importSong', lang)}</button>
-            <button type="button" className="btn" onClick={exportSong}><Icon name="download" size={18} /> {t('exportSong', lang)}</button>
-            <button type="button" className="btn" onClick={saveVersion}>{t('saveVersion', lang)}</button>
-            <button type="button" className="btn ghost" onClick={openVersions}>{t('versions', lang)}</button>
-          </div>
-          <div className="stack" style={{ gap: 6 }}>
-            {songList.map((s) => (
-              <button key={s.id} type="button" className="track-btn" aria-current={s.id === song.id} onClick={() => switchTo(s)}>
-                <span className="stack grow" style={{ gap: 0 }}>
-                  <strong>{s.title}</strong>
-                  <span className="small muted">{tonicDisplay(s.key_tonic, naming)} {scaleById(s.key_mode).name[lang].toLowerCase()} · {s.tempo_bpm} BPM · {new Date(s.updated_at).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </Modal>
-      )}
-
-      {modal === 'versions' && (
-        <Modal title={t('versions', lang)} closeLabel={t('close', lang)} onClose={() => setModal(null)}>
-          {versions.length === 0 && <p className="muted">{t('noVersions', lang)}</p>}
-          {versions.map((v) => (
-            <div key={v.id} className="row card" style={{ padding: 10 }}>
-              <span className="grow">{t('versionN', lang, { n: v.version_no })} <span className="small muted">· {new Date(v.created_at).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')}</span></span>
-              <button type="button" className="btn" onClick={() => { apply(() => ({ ...normalizeSong(v.snapshot), updated_at: new Date().toISOString() })); setModal(null); showToast(t('versionRestored', lang, { n: v.version_no })); }}>{t('restore', lang)}</button>
-            </div>
-          ))}
-        </Modal>
-      )}
-
       {modal === 'clear' && (
-        <Modal title={t('clearTitle', lang)} closeLabel={t('close', lang)} onClose={() => setModal(null)}>
+        <Modal title={t('clearTitleTrack', lang, { name: track.name })} closeLabel={t('close', lang)} onClose={() => setModal(null)}>
           <div className="row warn-box" role="alert">
             <Icon name="warning" size={28} />
-            <p style={{ margin: 0 }}><strong>{t('clearBody', lang)}</strong></p>
+            <p style={{ margin: 0 }}>
+              {clearCount > 0
+                ? <>{t('clearWhat', lang, { name: track.name, where: clearScope.label })} <strong>{unit(clearCount)}</strong>.</>
+                : t('clearNothingHere', lang, { name: track.name, where: clearScope.label })}
+            </p>
           </div>
-          <p className="muted" style={{ margin: 0 }}>{t('clearKeeps', lang)}</p>
+          <p className="muted" style={{ margin: 0 }}>{t('clearKeepsTrack', lang)}</p>
           <div className="row wrap" style={{ justifyContent: 'flex-end' }}>
             <button type="button" className="btn ghost" onClick={() => setModal(null)}>{t('cancel', lang)}</button>
-            {C.hasWritten(song, track.id) && (
-              <button type="button" className="btn" onClick={() => { apply((x) => C.clearWritten(x, track.id, by)); setModal(null); showToast(t('cleared', lang)); }}>
-                {t('clearTrack', lang, { name: track.name })}
+            {focusSection && clearCountSong > clearCount && (
+              <button type="button" className="btn" onClick={() => { apply((x) => C.clearRange(x, track.id, 0, bars * BAR_TICKS, by)); setModal(null); showToast(t('clearedWhere', lang, { name: track.name, where: t('clearInSong', lang, { n: bars }) })); }}>
+                {t('clearWholeSong', lang, { n: unit(clearCountSong) })}
               </button>
             )}
-            <button type="button" className="btn danger" onClick={() => { apply((x) => C.clearWritten(x, null, by)); setModal(null); showToast(t('cleared', lang)); }}>
-              <Icon name="trash" size={18} /> {t('clearAll', lang)}
+            <button type="button" className="btn danger" disabled={clearCount === 0}
+              onClick={() => { apply((x) => C.clearRange(x, track.id, clearScope.from, clearScope.to, by)); setModal(null); showToast(t('clearedWhere', lang, { name: track.name, where: clearScope.label })); }}>
+              <Icon name="trash" size={18} /> {t('clearDo', lang, { name: track.name })}
             </button>
           </div>
         </Modal>
@@ -896,7 +938,7 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
           onCreate={async (s) => {
             await store.saveSong(s);
             await switchTo(s);
-            switchHat('musician');
+            onRoom('musician');
             showToast(t('beatCreated', lang, { style: s.title.replace(/^Beat |\s*beat$/i, '') }));
           }} />
       )}
@@ -904,26 +946,4 @@ export default function Studio({ store, profile, lang, onLang, mode, onToggleMod
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
-}
-
-/** A small level bar next to Play: if it moves and nothing is heard, the device volume or silent mode is the cause. */
-function OutMeter({ label }: { label: string }) {
-  const bar = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    let id = 0;
-    let peak = 0;
-    const tick = () => {
-      const v = engine.outputLevel();
-      peak = Math.max(peak * 0.97, v);
-      const el = bar.current;
-      if (el) {
-        el.style.transform = `scaleX(${v.toFixed(3)})`;
-        el.parentElement!.dataset.peak = peak.toFixed(2);
-      }
-      id = requestAnimationFrame(tick);
-    };
-    id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
-  }, []);
-  return <span className="outmeter" title={label} aria-hidden="true"><span ref={bar} /></span>;
 }

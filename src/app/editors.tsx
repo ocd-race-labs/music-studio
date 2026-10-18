@@ -34,6 +34,18 @@ export function chordAtBar(song: Song, bar: number): Chord | null {
   return ev ? diatonicTriads(songKey(song))[ev.degree] ?? null : null;
 }
 
+/**
+ * The bar ruler stays in view while the grid scrolls down: a sticky band of no height at the top of the grid,
+ * with the bars hanging from it over an opaque strip.
+ */
+const StickyRuler = ({ label, text, children }: { label: number; text: string; children: React.ReactNode }) => (
+  <div className="ruler-sticky">
+    <div className="ruler-bg" aria-hidden="true" />
+    {children}
+    <div className="ruler-corner rlabel" style={{ width: label - GAP }} aria-hidden="true">{text}</div>
+  </div>
+);
+
 const Playhead = ({ local, offset, pitch, cell, top, height }: { local: number; offset: number; pitch: number; cell: number; top: number; height: number }) =>
   local < 0 ? null : (
     <div aria-hidden="true" style={{
@@ -111,9 +123,13 @@ export function DrumGrid({ track, step, zoom, width, lang, frame, onToggle, onPr
   useScrollControl(scroller, view, pitch, DRUM_LABEL, step, frame.jump);
   const rowsH = pattern.rows.length * (DRUM_H + GAP);
   return (
-    <div className="scroll-x" ref={scroller}>
+    <div className="scroll-x scroll-both" ref={scroller}>
       <div style={{ position: 'relative', width: DRUM_LABEL + view.length * pitch + tailRoom(width, DRUM_LABEL, pitch, view.length), height: RULER_H + GAP + rowsH }}
         onMouseDown={(e) => { if ((e.target as HTMLElement).closest('.cell, .rbar')) e.preventDefault(); }}>
+        <StickyRuler label={DRUM_LABEL} text={t('bar', lang)}>
+          <Ruler view={view} win={win} pitch={pitch} label={DRUM_LABEL} sections={frame.sections} lang={lang}
+            marking={frame.marking} sel={frame.sel} cursorBar={frame.cursorBar} onBarTap={frame.onBarTap} />
+        </StickyRuler>
         <div className="tg-labels" style={{ width: DRUM_LABEL - GAP }}>
           <span className="rlabel">{t('bar', lang)}</span>
           {pattern.rows.map((row) => (
@@ -122,8 +138,6 @@ export function DrumGrid({ track, step, zoom, width, lang, frame, onToggle, onPr
             </button>
           ))}
         </div>
-        <Ruler view={view} win={win} pitch={pitch} label={DRUM_LABEL} sections={frame.sections} lang={lang}
-          marking={frame.marking} sel={frame.sel} cursorBar={frame.cursorBar} onBarTap={frame.onBarTap} />
         <DrumCells pattern={pattern} view={view} from={win.from} to={win.to} cell={cell} lang={lang} onToggle={onToggle} />
         <Playhead local={step >= view.start && step < view.start + view.length ? step - view.start : -1} offset={DRUM_LABEL} pitch={pitch} cell={cell} top={RULER_H + GAP} height={rowsH - GAP} />
       </div>
@@ -186,7 +200,9 @@ interface NoteDrag {
   timer: number | null;
 }
 
-export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, frame, onToggle, onSpan, onPreview, onShift }: {
+export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, frame, tools, onToggle, onSpan, onPreview, onShift }: {
+  /** View controls (zoom, full screen) shown at the end of the grid's own tool row. */
+  tools?: React.ReactNode;
   lang: Lang;
   song: Song;
   track: Track;
@@ -302,16 +318,21 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
   const rowsH = 24 * (ROW_H + GAP);
 
   return (
-    <div className="stack" style={{ gap: 6 }}>
-      <div className="row small muted">
-        <button type="button" className="btn ghost" onClick={() => onShift(12)} aria-label={t('octaveUp', lang)}>▲ {t('octave', lang)}{above ? ` (${t('nAbove', lang, { n: above })})` : ''}</button>
-        <button type="button" className="btn ghost" onClick={() => onShift(-12)} aria-label={t('octaveDown', lang)}>▼ {t('octave', lang)}{below ? ` (${t('nBelow', lang, { n: below })})` : ''}</button>
-        <span className="hide-sm" style={{ marginLeft: 'auto' }}>{t('dragHint', lang)}</span>
+    <div className="note-wrap">
+      <div className="row small muted note-tools">
+        <button type="button" className="btn ghost small-btn" onClick={() => onShift(12)} aria-label={t('octaveUp', lang)}>▲ {t('octave', lang)}{above ? ` (${t('nAbove', lang, { n: above })})` : ''}</button>
+        <button type="button" className="btn ghost small-btn" onClick={() => onShift(-12)} aria-label={t('octaveDown', lang)}>▼ {t('octave', lang)}{below ? ` (${t('nBelow', lang, { n: below })})` : ''}</button>
+        <span className="hide-md grow" style={{ marginLeft: 8 }}>{t('dragHint', lang)}</span>
+        {tools}
       </div>
-      <div className="scroll-x" ref={scroller} style={{ maxHeight: 560, overflowY: 'auto' }}>
+      <div className="scroll-x scroll-both" ref={scroller}>
         <div ref={area} className="note-area" style={{ position: 'relative', width: NOTE_LABEL + view.length * pitch + tailRoom(width, NOTE_LABEL, pitch, view.length), height: top + rowsH }}
           onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={endDrag}
           onContextMenu={(e) => { if (drag.current) e.preventDefault(); }}>
+          <StickyRuler label={NOTE_LABEL} text={t('bar', lang)}>
+            <Ruler view={view} win={win} pitch={pitch} label={NOTE_LABEL} sections={frame.sections} lang={lang}
+              marking={frame.marking} sel={frame.sel} cursorBar={frame.cursorBar} onBarTap={frame.onBarTap} />
+          </StickyRuler>
           <div className="tg-labels" style={{ width: NOTE_LABEL - GAP }}>
             <span className="rlabel">{t('bar', lang)}</span>
             {pitches.map((m) => {
@@ -324,8 +345,6 @@ export function NoteGrid({ song, track, low, step, zoom, width, focusBar, lang, 
               );
             })}
           </div>
-          <Ruler view={view} win={win} pitch={pitch} label={NOTE_LABEL} sections={frame.sections} lang={lang}
-            marking={frame.marking} sel={frame.sel} cursorBar={frame.cursorBar} onBarTap={frame.onBarTap} />
           <NoteCells pitches={pitches} view={view} from={win.from} to={win.to} cell={cell} keyName={key} lang={lang} focusChord={focusChord} onToggle={onToggle} />
           {visible.map((n) => {
             const bar = Math.floor(n.tick / BAR_TICKS);

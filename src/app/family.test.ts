@@ -17,7 +17,7 @@ describe('family link', () => {
     await applyFamily(store, ['Ana', 'Juan'], 'es', true);
     const list = await store.listProfiles();
     expect(list.map((p) => p.name)).toEqual(['Ana', 'Juan']);
-    expect(list.map((p) => p.theme.preset)).toEqual(['midnight-jewel', 'graphite']);
+    expect(list.map((p) => p.theme.preset)).toEqual(['midnight-jewel', 'daylight']);
     expect(list[0].instruments).toEqual(['violin', 'beats', 'lyrics']);
     expect(list[1].instruments).toEqual(['drums', 'guitar']);
     expect(list[1].default_hat).toBe('producer');

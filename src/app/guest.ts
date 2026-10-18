@@ -3,9 +3,9 @@ import type { Profile } from '../domain/types';
 
 export const GUEST_ID = 'guest';
 
-/** Guest: Daylight theme, an in-memory store, nothing kept after leaving. */
+/** Guest: Graphite theme, an in-memory store, nothing kept after leaving. */
 export const guestProfile: Profile = {
-  ...newProfile('Guest', 'daylight', '#C2410C'),
+  ...newProfile('Guest', 'graphite', '#74747A'),
   id: GUEST_ID,
   default_hat: 'musician',
 };

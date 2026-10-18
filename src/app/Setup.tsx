@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Lang, ThemePreset } from '../domain/types';
+import type { Hat, Lang, ThemePreset } from '../domain/types';
 import { INSTRUMENT_IDS, instrumentName, t, themeName } from './i18n';
 import type { Mode } from './prefs';
 import { LangSwitch, ModeSwitch } from './ui';
@@ -9,6 +9,8 @@ export interface Person {
   preset: ThemePreset;
   ring: string;
   instruments: string[];
+  /** The room the studio opens in; the look no longer decides it. */
+  hat?: Hat;
 }
 
 /* Swatches show each palette's character; the studio then uses its light or dark version. */
@@ -18,13 +20,14 @@ const THEMES: { id: ThemePreset; colors: string[] }[] = [
   { id: 'daylight', colors: ['#F3F4F6', '#C2410C', '#AEB3BC'] },
 ];
 
-const RING: Record<ThemePreset, string> = { graphite: '#74747A', 'midnight-jewel': '#F0509E', daylight: '#C2410C' };
+export const RING: Record<ThemePreset, string> = { graphite: '#74747A', 'midnight-jewel': '#F0509E', daylight: '#C2410C' };
 
-/* The two people from the mockups, in home order: the young musician first, then the producer.
-   Only the look and instruments are preset; names are typed here and stay on this device. */
+/* The two people from the mockups, in home order: the young musician first, then the producer (in Daylight, the
+   orange theme; Graphite is the guest's). Only the look and instruments are preset; names are typed here and stay
+   on this device. */
 export const PRESETS: Person[] = [
-  { name: '', preset: 'midnight-jewel', ring: RING['midnight-jewel'], instruments: ['violin', 'beats', 'lyrics'] },
-  { name: '', preset: 'graphite', ring: RING.graphite, instruments: ['drums', 'guitar'] },
+  { name: '', preset: 'midnight-jewel', ring: RING['midnight-jewel'], instruments: ['violin', 'beats', 'lyrics'], hat: 'musician' },
+  { name: '', preset: 'daylight', ring: RING.daylight, instruments: ['drums', 'guitar'], hat: 'producer' },
 ];
 
 /** First run: the family's profiles are created here and stored only on this device. */

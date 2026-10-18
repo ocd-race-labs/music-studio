@@ -7,6 +7,7 @@ import { memoryStore } from '../store/memory';
 import Home from './Home';
 import Setup from './Setup';
 import Studio from './Studio';
+import type { Room } from './rooms';
 import Settings from './Settings';
 import Lab from './Lab';
 import Classroom from './Classroom';
@@ -20,7 +21,7 @@ type Route =
   | { name: 'loading' }
   | { name: 'setup' }
   | { name: 'home' }
-  | { name: 'studio'; profileId: string }
+  | { name: 'studio'; profileId: string; room: Room }
   | { name: 'settings'; profileId: string }
   | { name: 'classroom'; profileId: string }
   | { name: 'lab' }
@@ -47,6 +48,15 @@ export default function App() {
         const unset = list.filter((p) => p.classroom === undefined);
         if (unset.length) {
           for (const p of unset) await s.saveProfile({ ...p, classroom: classroomOn(p) });
+          list = await s.listProfiles();
+        }
+        // October 2026: the producer moved to Daylight (orange) and the guest to Graphite. Once per device, the
+        // producer profile still on Graphite follows; a theme picked later in settings is never touched again.
+        if (!(await s.getMeta<boolean>('theme_swap_2026_10'))) {
+          for (const p of list.filter((x) => x.theme.preset === 'graphite' && x.default_hat === 'producer')) {
+            await s.saveProfile({ ...p, theme: { preset: 'daylight', base: 'light' }, avatar: { ...p.avatar, ring: '#C2410C' }, updated_at: new Date().toISOString() });
+          }
+          await s.setMeta('theme_swap_2026_10', true);
           list = await s.listProfiles();
         }
         setProfiles(list);
@@ -132,7 +142,7 @@ export default function App() {
           onDone={async (people) => {
             const start = profiles.reduce((m, x) => Math.max(m, (x.order ?? -1) + 1), profiles.length);
             for (const [i, p] of people.entries()) {
-              await store.saveProfile({ ...newProfile(p.name, p.preset, p.ring), ui_lang: lang, instruments: p.instruments, order: start + i });
+              await store.saveProfile({ ...newProfile(p.name, p.preset, p.ring, p.hat), ui_lang: lang, instruments: p.instruments, order: start + i });
             }
             await reloadProfiles();
             setRoute({ name: 'home' });
@@ -168,12 +178,12 @@ export default function App() {
       }
       if (route.name === 'classroom') {
         if (!classroomOn(profile)) {
-          setRoute({ name: 'studio', profileId: profile.id });
+          setRoute({ name: 'studio', profileId: profile.id, room: 'hub' });
           return null;
         }
         return (
           <Classroom profile={profile} lang={lang} onLang={changeLang} {...look}
-            onStudio={() => setRoute({ name: 'studio', profileId: profile.id })} />
+            onStudio={() => setRoute({ name: 'studio', profileId: profile.id, room: 'hub' })} />
         );
       }
       if (route.name === 'settings') {
@@ -195,7 +205,7 @@ export default function App() {
             onSwitch={(id) => setRoute({ name: 'settings', profileId: id })}
             onSaved={reloadProfiles}
             onHome={() => setRoute({ name: 'home' })}
-            onStudio={() => setRoute({ name: 'studio', profileId: profile.id })}
+            onStudio={() => setRoute({ name: 'studio', profileId: profile.id, room: 'hub' })}
           />
         );
       }
@@ -204,11 +214,13 @@ export default function App() {
           key={profile.id}
           store={profile.id === GUEST_ID ? guestStore : store}
           profile={profile}
+          room={route.room}
+          onRoom={(room) => setRoute({ name: 'studio', profileId: profile.id, room })}
           lang={lang}
           onLang={changeLang}
           {...look}
-          onHome={() => setRoute({ name: 'home' })}
-          onSettings={() => profile.id !== GUEST_ID && setRoute({ name: 'settings', profileId: profile.id })}
+          onProfiles={() => setRoute({ name: 'home' })}
+          onSettings={profile.id !== GUEST_ID ? () => setRoute({ name: 'settings', profileId: profile.id }) : undefined}
           onClassroom={profile.id !== GUEST_ID && classroomOn(profile) ? () => setRoute({ name: 'classroom', profileId: profile.id }) : undefined}
           onProfile={(p) => {
             if (p.id === GUEST_ID) { setGuest(p); return; }
@@ -225,7 +237,7 @@ export default function App() {
         lang={lang}
         onLang={changeLang}
         {...look}
-        onOpen={(id) => setRoute({ name: 'studio', profileId: id })}
+        onOpen={(id) => setRoute({ name: 'studio', profileId: id, room: 'hub' })}
         onClassroom={(id) => setRoute({ name: 'classroom', profileId: id })}
         onSettings={() => profiles[0] && setRoute({ name: 'settings', profileId: profiles[0].id })}
         onLab={() => setRoute({ name: 'lab' })}

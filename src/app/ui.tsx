@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { Lang, Profile } from '../domain/types';
 import { t } from './i18n';
 
-type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music' | 'crate';
+type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music' | 'crate' | 'disc' | 'bulb' | 'chevronDown' | 'chevronRight' | 'panel' | 'amp' | 'list' | 'swap' | 'copy' | 'edit';
 
 const PATHS: Record<IconName, ReactNode> = {
   home: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /></>,
@@ -39,6 +39,18 @@ const PATHS: Record<IconName, ReactNode> = {
   music: <><path d="M9 18V5.5l11-2V16" /><circle cx="6.5" cy="18" r="2.6" fill="currentColor" /><circle cx="17.5" cy="16" r="2.6" fill="currentColor" /></>,
   // A crate of records: the Colección.
   crate: <><rect x="3" y="12" width="18" height="8.5" rx="1.5" /><path d="M6.5 12V5.5h3.5V12M11.5 12V4h3.5v8M16.5 12V6.5h2.5V12" /><path d="M9 16.2h6" /></>,
+  // A record: the songs.
+  disc: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /><path d="M12 3a9 9 0 0 1 9 9" opacity="0.5" /></>,
+  bulb: <><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 0 0-3.6 10.8c.8.6 1.1 1.4 1.1 2.2h5c0-.8.3-1.6 1.1-2.2A6 6 0 0 0 12 3z" /></>,
+  chevronDown: <path d="M6 9l6 6 6-6" />,
+  chevronRight: <path d="M9 6l6 6-6 6" />,
+  panel: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M15 4v16" /></>,
+  // An amplifier with two knobs and a speaker: the sound studio.
+  amp: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18" /><circle cx="7" cy="6.5" r="0.6" fill="currentColor" /><circle cx="10" cy="6.5" r="0.6" fill="currentColor" /><circle cx="12" cy="14.5" r="3.5" /></>,
+  list: <><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4.5" cy="6" r="1" fill="currentColor" /><circle cx="4.5" cy="12" r="1" fill="currentColor" /><circle cx="4.5" cy="18" r="1" fill="currentColor" /></>,
+  swap: <><path d="M7 4L3 8l4 4" /><path d="M3 8h14" /><path d="M17 20l4-4-4-4" /><path d="M21 16H7" /></>,
+  copy: <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" /></>,
+  edit: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M14 6l4 4" /></>,
   starFill: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill="currentColor" />,
 };
 

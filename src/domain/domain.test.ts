@@ -177,3 +177,37 @@ describe('browser song store', () => {
     expect(newSong(me.id, 'Canción', 2, 'es').tracks.map((t) => t.name)).toEqual(['Batería', 'Bajo', 'Acordes', 'Acompañamiento', 'Melodía', 'Contramelodía']);
   });
 });
+
+describe('the trash with a place', () => {
+  it('clears one track inside a range only and counts what is there', async () => {
+    const { newSong } = await import('./factory');
+    const C = await import('./commands');
+    let s = newSong('p', 'T', 4, 'en', 'kit.hiphop', [], false);
+    const lead = s.tracks.find((t) => t.clips[0].kind === 'notes')!;
+    for (const step of [0, 4, 16, 20, 36]) s = C.toggleNote(s, lead.id, 72, step, 1, 'p');
+    // a long note from bar 1 into bar 2 is shortened, not removed
+    s = C.setNoteSpan(s, lead.id, 60, 8, 16, 'p');
+    expect(C.countWritten(s, lead.id, 3840, 7680)).toBe(2);
+    const cleared = C.clearRange(s, lead.id, 3840, 7680, 'p');
+    const notes = (cleared.tracks.find((t) => t.id === lead.id)!.clips[0].content as { notes: { tick: number; dur: number; midi: number }[] }).notes;
+    expect(notes.map((n) => n.tick).sort((a, b) => a - b)).toEqual([0, 240 * 4, 240 * 8, 240 * 36]);
+    expect(notes.find((n) => n.midi === 60)!.dur).toBe(3840 - 240 * 8);
+    // other tracks untouched
+    expect(cleared.tracks.filter((t) => t.id !== lead.id)).toEqual(s.tracks.filter((t) => t.id !== lead.id));
+  });
+
+  it('keeps the producer sound beside the musician sound', async () => {
+    const { newSong } = await import('./factory');
+    const C = await import('./commands');
+    let s = newSong('p', 'T', 2, 'en');
+    const id = s.tracks[1].id;
+    expect(C.setVoiceFrom(s, id, 'producer', 'p')).toBe(s);
+    s = C.setProducerSound(s, id, { instrument: { key: 'instrument.bass-synth', version: '1.0.0' } }, 'p');
+    expect(s.tracks[1].voice_from).toBe('producer');
+    expect(s.tracks[1].instrument?.key).not.toBe('instrument.bass-synth');
+    s = C.setVoiceFrom(s, id, 'musician', 'p');
+    expect(s.tracks[1].voice_from).toBe('musician');
+    s = C.clearProducerSound(s, id, 'p');
+    expect(s.tracks[1].producer).toBeUndefined();
+  });
+});

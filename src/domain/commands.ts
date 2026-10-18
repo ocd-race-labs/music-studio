@@ -3,7 +3,7 @@
 
 import { noteNameAscii, spellInKey } from '../theory';
 import type {
-  CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Track, CustomSound } from './types';
+  CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Track, TrackVariant, CustomSound } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
 import { DEFAULT_SWING, defaultFxParams, newId, now, retarget, roleOf, switchKit as switchKitOf } from './factory';
 import { pedalRank, ref, rowFor } from '../packs/core';
@@ -121,6 +121,50 @@ export function clearWritten(song: Song, trackId: string | null, by: string | nu
   }, by);
 }
 
+/** How many notes, hits or chords a track (or every track, with null) has between two ticks. */
+export function countWritten(song: Song, trackId: string | null, from: number, to: number): number {
+  let n = 0;
+  for (const t of song.tracks) {
+    if (trackId && t.id !== trackId) continue;
+    for (const c of t.clips) {
+      if (c.kind === 'notes') n += (c.content as NotesContent).notes.filter((x) => x.tick >= from && x.tick < to).length;
+      else if (c.kind === 'chords') n += (c.content as ChordsContent).chords.filter((x) => x.tick >= from && x.tick < to).length;
+      else if (c.kind === 'pattern') {
+        const [a, b] = [from / STEP_TICKS, to / STEP_TICKS];
+        n += (c.content as PatternContent).rows.reduce((sum, r) => sum + r.hits.filter((h) => h.step >= a && h.step < b).length, 0);
+      }
+    }
+  }
+  return n;
+}
+
+/**
+ * The trash with a place: clear one track (or every track, with null) between two ticks, usually the part of the
+ * song in view. A note that starts before the range and rings into it is shortened to end where the range starts.
+ */
+export function clearRange(song: Song, trackId: string | null, from: number, to: number, by: string | null): Song {
+  const at = now();
+  const clearClip = (c: Clip): Clip => {
+    if (c.kind === 'notes') {
+      const notes = (c.content as NotesContent).notes
+        .filter((x) => x.tick < from || x.tick >= to)
+        .map((x) => (x.tick < from && x.tick + x.dur > from ? { ...x, dur: from - x.tick } : x));
+      return { ...c, content: { notes }, updated_at: at };
+    }
+    if (c.kind === 'chords') return { ...c, content: { chords: (c.content as ChordsContent).chords.filter((x) => x.tick < from || x.tick >= to) }, updated_at: at };
+    if (c.kind === 'pattern') {
+      const p = c.content as PatternContent;
+      const [a, b] = [from / STEP_TICKS, to / STEP_TICKS];
+      return { ...c, content: { steps: p.steps, rows: p.rows.map((r) => ({ ...r, hits: r.hits.filter((h) => h.step < a || h.step >= b) })) }, updated_at: at };
+    }
+    return c;
+  };
+  return touch({
+    ...song,
+    tracks: song.tracks.map((t) => (trackId && t.id !== trackId ? t : { ...t, clips: t.clips.map(clearClip), updated_at: at })),
+  }, by);
+}
+
 /** True when a track (or the song) has notes, hits or chords. */
 export function hasWritten(song: Song, trackId: string | null = null): boolean {
   return song.tracks.some((t) => (!trackId || t.id === trackId) && t.clips.some((c) => {
@@ -173,6 +217,21 @@ export const applySound = (song: Song, trackId: string, sound: CustomSound, by: 
     ...retarget(t, sound.base.key, roleOf(t), t.name),
     sound: { id: sound.id, name: sound.name, chain: structuredClone(sound.chain) },
   }), by);
+
+/** Which sound a track plays: the musician's, or the producer's when there is one. */
+export const setVoiceFrom = (song: Song, trackId: string, from: 'musician' | 'producer', by: string | null): Song => {
+  const t = song.tracks.find((x) => x.id === trackId);
+  if (!t || (from === 'producer' && !t.producer) || (t.voice_from ?? 'musician') === from) return song;
+  return mapTrack(song, trackId, (x) => ({ ...x, voice_from: from }), by);
+};
+
+/** The producer's version of a track's sound; it plays right away and the musician's stays beside it. */
+export const setProducerSound = (song: Song, trackId: string, variant: Omit<TrackVariant, 'updated_at' | 'by'>, by: string | null): Song =>
+  mapTrack(song, trackId, (t) => ({ ...t, producer: { ...variant, by, updated_at: now() }, voice_from: 'producer' }), by);
+
+/** Drop the producer's version; the musician's sound plays again. */
+export const clearProducerSound = (song: Song, trackId: string, by: string | null): Song =>
+  mapTrack(song, trackId, (t) => { const { producer: _p, voice_from: _v, ...rest } = t; return rest; }, by);
 
 /** Move the whole song to another kit, keeping what was written (see factory.switchKit). */
 export const switchKit = (song: Song, kitKey: string, slots: KitSlot[], lang: Lang, by: string | null): Song =>
