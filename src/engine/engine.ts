@@ -176,8 +176,75 @@ export class StudioEngine {
       // The song's sounds are built once the audio runs, and a sound that fails to build never silences the rest.
       if (Tone.getContext().state === 'running') { if (this.song) this.sync(this.song); }
       else resumed.then(() => { if (this.song) this.sync(this.song); });
+      this.watchClock();
     }
     return resumed;
+  }
+
+  /**
+   * A connection to the speakers can get stuck: the audio says it runs but its clock stops, nothing is heard and
+   * the meter shows the last sound frozen. Checked every second while the page is in view; when the clock has not
+   * moved for two seconds the audio is built again on a new connection.
+   */
+  private clockWatch: number | undefined;
+  private watchClock(): void {
+    if (this.clockWatch !== undefined || typeof window === 'undefined') return;
+    let last = -1;
+    let still = 0;
+    this.clockWatch = window.setInterval(() => {
+      const raw = Tone.getContext().rawContext as unknown as BaseAudioContext;
+      if (raw.state !== 'running' || document.hidden) { last = -1; still = 0; return; }
+      const now = raw.currentTime;
+      still = last >= 0 && now - last < 0.05 ? still + 1 : 0;
+      last = now;
+      if (still >= 2) {
+        still = 0;
+        last = -1;
+        console.warn('[music-studio] the audio clock stopped; building the audio again');
+        this.problem('audio', 'stuck');
+        void this.restart();
+      }
+    }, 1000);
+  }
+
+  /** How fast the audio clock moves against real time over a moment: about 1 while sound flows, 0 when stuck. */
+  async clockRate(ms = 1000): Promise<{ state: string; rate: number }> {
+    const raw = Tone.getContext().rawContext as unknown as BaseAudioContext;
+    const a0 = raw.currentTime;
+    const w0 = performance.now();
+    await new Promise((r) => setTimeout(r, ms));
+    const dw = (performance.now() - w0) / 1000;
+    return { state: raw.state, rate: dw > 0 ? (raw.currentTime - a0) / dw : 0 };
+  }
+
+  /** A short beep straight to the speakers, outside the studio's chain: tells a stuck chain from a silent device. */
+  directBeep(): void {
+    try {
+      const raw = Tone.getContext().rawContext as unknown as AudioContext;
+      const osc = raw.createOscillator();
+      const g = raw.createGain();
+      osc.frequency.value = 880;
+      g.gain.setValueAtTime(0.2, raw.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, raw.currentTime + 0.3);
+      osc.connect(g);
+      g.connect(raw.destination);
+      osc.start();
+      osc.stop(raw.currentTime + 0.32);
+    } catch (e) { this.problem('beep', e); }
+  }
+
+  /** Throw the audio away and build it again on a new connection: the song's sounds come back as they were. */
+  async restart(): Promise<boolean> {
+    try { Tone.getTransport().stop(); } catch { /* the old clock may be gone */ }
+    this.repeatId = null;
+    this.stopPreview();
+    this.channels.clear();
+    this.previews.clear();
+    this.glueOn = false;
+    this.reported.clear();
+    this.started = false;
+    this.stepListeners.forEach((fn) => fn(-1));
+    return this.start();
   }
 
   /** A track whose sound could not be built: the rest keep playing, and the app can say which one. */
@@ -845,6 +912,8 @@ function buildVoice(manifest: Record<string, unknown> | undefined, ownGear = tru
 }
 
 export const engine = new StudioEngine();
+// For checking a device from the browser's console: __musicStudio.engine.clockRate(), .restart().
+if (typeof window !== 'undefined') (window as unknown as { __musicStudio?: unknown }).__musicStudio = { engine, Tone };
 
 /**
  * iPhone and iPad mute web audio in silent mode unless the page asks for playback.

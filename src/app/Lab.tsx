@@ -34,6 +34,43 @@ export default function Lab({ store, lang, onHome }: { store: SongStore; lang: L
     setInfo(engine.latencyInfo());
   };
 
+  // The audio clock, live: if it stops while the audio says it runs, the connection to the speakers is stuck.
+  const [clock, setClock] = useState<{ state: string; rate: number } | null>(null);
+  useEffect(() => {
+    if (!info) return;
+    let alive = true;
+    const loop = async () => {
+      while (alive) {
+        const r = await engine.clockRate(1000);
+        if (alive) setClock(r);
+      }
+    };
+    loop();
+    return () => { alive = false; };
+  }, [info]);
+  const freshBeep = async () => {
+    try {
+      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const c = new Ctx();
+      await c.resume();
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.frequency.value = 660;
+      g.gain.setValueAtTime(0.2, c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.3);
+      osc.connect(g);
+      g.connect(c.destination);
+      osc.start();
+      osc.stop(c.currentTime + 0.32);
+      setTimeout(() => { c.close().catch(() => undefined); }, 800);
+    } catch (e) { showToast(String(e)); }
+  };
+  const rebuild = async () => {
+    await engine.restart();
+    setInfo(engine.latencyInfo());
+    engine.previewClick();
+  };
+
   const testTone = async () => {
     setCheck(t('testTonePlaying', lang));
     const r = await engine.testTone();
@@ -62,9 +99,20 @@ export default function Lab({ store, lang, onHome }: { store: SongStore; lang: L
               <tr><td className="muted">{t('baseLatency', lang)}</td><td className="mono">{info.baseLatencyMs !== null ? `${info.baseLatencyMs.toFixed(1)} ms` : t('notReported', lang)}</td></tr>
               <tr><td className="muted">{t('outputLatency', lang)}</td><td className="mono">{info.outputLatencyMs !== null ? `${info.outputLatencyMs.toFixed(1)} ms` : t('notReported', lang)}</td></tr>
               <tr><td className="muted">{t('lookAhead', lang)}</td><td className="mono">{info.lookAheadMs.toFixed(0)} ms</td></tr>
+              <tr><td className="muted">{t('labClock', lang)}</td><td className={`mono${clock && clock.state === 'running' && clock.rate < 0.5 ? ' warn' : ''}`}>
+                {clock ? (clock.state === 'running' && clock.rate < 0.5 ? t('labClockStuck', lang) : `${clock.state} · ${t('labClockMoving', lang, { rate: clock.rate.toFixed(2) })}`) : '…'}
+              </td></tr>
             </tbody></table>
           )}
           {info && <button type="button" className="btn" onClick={testTone}><Icon name="play" size={18} /> {t('playTestTone', lang)}</button>}
+          {info && (
+            <div className="row wrap" style={{ gap: 6 }}>
+              <button type="button" className="btn small-btn" onClick={() => engine.directBeep()}>{t('labDirectBeep', lang)}</button>
+              <button type="button" className="btn small-btn" onClick={freshBeep}>{t('labFreshBeep', lang)}</button>
+              <button type="button" className="btn small-btn" onClick={rebuild}><Icon name="reset" size={16} /> {t('labRestart', lang)}</button>
+            </div>
+          )}
+          {info && <p className="small muted" style={{ margin: 0 }}>{t('labBeepHint', lang)}</p>}
           {check && <p className="small" role="status" style={{ margin: 0 }}>{check}</p>}
           <p className="small" style={{ margin: 0 }}>
             {t('storageLabel', lang)} {storage?.persisted ? <span className="ok">{t('storageKeptShort', lang)}</span> : <span className="warn">{t('storageMayClearShort', lang)}</span>}

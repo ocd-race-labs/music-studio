@@ -330,7 +330,10 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const low = track ? lows[track.id] ?? lowOf(track.instrument?.key ?? '') : 60;
 
   // A sound that could not be built is named, so it can be fixed; the rest of the song keeps playing.
-  useEffect(() => engine.onProblem((name, error) => showToast(t('soundProblem', lang, { track: name, error }))), [lang, showToast]);
+  useEffect(() => engine.onProblem((name, error) => {
+    if (name === 'audio') { setPlaying(false); showToast(t('audioRebuilt', lang)); return; }
+    showToast(t('soundProblem', lang, { track: name, error }));
+  }), [lang, showToast]);
 
   const startAudio = async () => {
     const ok = await engine.start();
