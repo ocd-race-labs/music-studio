@@ -95,8 +95,8 @@ export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom,
               return (
                 <div key={tr.id} className="vt-row" role="row">
                   <span role="cell" className="row" style={{ gap: 8, minWidth: 0 }}><span className="swatch" style={{ background: tr.color }} /><strong className="ellipsis">{tr.name}</strong></span>
-                  <span role="cell" className={`ellipsis${from === 'musician' ? ' vt-on' : ''}`}>{soundName(tr.instrument, tr.sound, lang) || '—'}</span>
-                  <span role="cell" className={`ellipsis${from === 'producer' ? ' vt-on' : ''}`}>{tr.producer ? soundName(tr.producer.instrument, tr.producer.sound, lang) : <span className="muted">{t('noProducerSound', lang)}</span>}</span>
+                  <span role="cell" data-k={t('musician', lang)} className={`ellipsis${from === 'musician' ? ' vt-on' : ''}`}>{soundName(tr.instrument, tr.sound, lang) || '—'}</span>
+                  <span role="cell" data-k={t('producer', lang)} className={`ellipsis${from === 'producer' ? ' vt-on' : ''}`}>{tr.producer ? soundName(tr.producer.instrument, tr.producer.sound, lang) : <span className="muted">{t('noProducerSound', lang)}</span>}</span>
                   <span role="cell">
                     <span className="seg small-seg" aria-label={`${t('plays', lang)}: ${tr.name}`}>
                       <button type="button" aria-pressed={from === 'musician'} onClick={() => onVoice(tr.id, 'musician')}>{t('musician', lang)}</button>

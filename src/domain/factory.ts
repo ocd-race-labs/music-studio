@@ -170,7 +170,7 @@ export function roleOf(t: Track): Role {
 /** The slots of a kit. The custom kit is the starred instruments, grouped by role; with no stars it is hip hop. */
 export function slotsFor(kitKey: string, starred: StarredInstrument[] = []): KitSlot[] {
   if (kitKey === CUSTOM_KIT) {
-    const slots = ROLES.flatMap((role) => starred.filter((s) => s.role === role && rowsOrVoice(s.key)).map((s) => ({ role, instrument: s.key })));
+    const slots = ROLES.flatMap((role) => starred.filter((s) => s.role === role && rowsOrVoice(s.key)).map((s) => ({ role, instrument: s.key, ...(s.sound ? { sound: s.sound } : {}) })));
     if (slots.length) return slots;
   }
   const slots = kitSlots(kitKey);
@@ -186,7 +186,8 @@ function trackFor(slot: KitSlot, position: number, name: string, bars: number, o
     : slot.role === 'chords'
       ? clip('chords', length, opts.chords ?? { chords: [] })
       : clip('notes', length, { notes: [] });
-  return track(position, name, drums ? 'drums' : 'instrument', ref(slot.instrument), c, slot.role);
+  const t = track(position, name, drums ? 'drums' : 'instrument', ref(slot.instrument), c, slot.role);
+  return slot.sound ? { ...t, sound: structuredClone(slot.sound) } : t;
 }
 
 /**
@@ -286,7 +287,8 @@ export function switchKit(song: Song, kitKey: string, slots: KitSlot[], lang: La
     const match = song.tracks.find((t) => !used.has(t.id) && roleOf(t) === slot.role && !!t.instrument && isDrumKit(t.instrument.key) === isDrumKit(slot.instrument));
     if (match) {
       used.add(match.id);
-      tracks.push(retarget(match, slot.instrument, slot.role, isAutoName(match.name) ? name : match.name));
+      const moved = retarget(match, slot.instrument, slot.role, isAutoName(match.name) ? name : match.name);
+      tracks.push(slot.sound ? { ...moved, sound: structuredClone(slot.sound) } : moved);
     } else {
       tracks.push(trackFor(slot, tracks.length + 1, name, bars, { starter: false }));
     }

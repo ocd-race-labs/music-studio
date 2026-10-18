@@ -18,7 +18,9 @@ import { autoZoom, ZOOMS } from './zoom';
 import type { Zoom } from './zoom';
 import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panels';
 import MixerBoard from './MixerBoard';
-import Collection from './Collection';
+import SoundStudio from './SoundStudio';
+import type { DesignRequest } from './SoundStudio';
+import { rackOf } from './rack';
 import BeatAssistant from './BeatAssistant';
 import Hub from './Hub';
 import SongsRoom, { soundName } from './SongsRoom';
@@ -119,6 +121,8 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   // The musician's mixer takes the editor's place while it is open.
   const [board, setBoard] = useState(false);
   const [sounds, setSounds] = useState<CustomSound[]>([]);
+  // A signal chain open in the sound studio's designer, possibly for one track of the song (the producer's version).
+  const [design, setDesign] = useState<DesignRequest | null>(null);
   useEffect(() => { store.listSounds(profile.id).then(setSounds).catch(() => setSounds([])); }, [store, profile.id]);
   useEffect(() => { store.listSongs(profile.id).then(setSongList).catch(() => undefined); }, [store, profile.id, room]);
   // Each room keeps its own tools: leaving the musician closes its mixer and stops recording taps.
@@ -737,6 +741,27 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const side = (
     <aside className={`side${sideOpen ? ' open' : ''}`} aria-label={t(room === 'producer' ? 'sideChannel' : 'sideKey', lang)}>
       <div className="side-close"><button type="button" className="btn icon ghost" onClick={() => setSideOpen(false)} aria-label={t('close', lang)}><Icon name="close" /></button></div>
+      {room === 'producer' && (
+        <section className="card stack track-sound" aria-label={t('songSounds', lang)}>
+          <div className="row"><span className="swatch" style={{ background: track.color }} /><h3 className="grow" style={{ fontSize: 16 }}>{t('trackSoundOf', lang, { name: track.name })}</h3></div>
+          <div className="seg" aria-label={t('plays', lang)}>
+            <button type="button" aria-pressed={!(track.producer && track.voice_from === 'producer')} onClick={() => apply((x) => C.setVoiceFrom(x, track.id, 'musician', by))}>{t('musician', lang)}</button>
+            <button type="button" aria-pressed={!!track.producer && track.voice_from === 'producer'} disabled={!track.producer} onClick={() => apply((x) => C.setVoiceFrom(x, track.id, 'producer', by))}>{t('producer', lang)}</button>
+          </div>
+          <span className="small muted">{t('musicianSound', lang)}: <strong>{soundName(track.instrument, track.sound, lang) || '—'}</strong></span>
+          <span className="small muted">{t('producerSound', lang)}: <strong>{track.producer ? soundName(track.producer.instrument, track.producer.sound, lang) : t('noProducerSound', lang)}</strong></span>
+          <div className="row wrap" style={{ gap: 6 }}>
+            <button type="button" className="btn small-btn primary" disabled={!track.instrument} onClick={() => {
+              const useP = !!track.producer && track.voice_from === 'producer';
+              const inst = (useP ? track.producer!.instrument : track.instrument) ?? track.instrument!;
+              const snd = useP ? track.producer!.sound : track.sound;
+              setDesign({ base: inst.key, from: inst.key, start: snd ? structuredClone(snd.chain) : rackOf(inst.key), target: { trackId: track.id, trackName: track.name, as: 'producer' } });
+              onRoom('sounds');
+            }}><Icon name="sliders" size={16} /> {t(track.producer ? 'refineProducer' : 'makeProducer', lang)}</button>
+            {track.producer && <button type="button" className="btn small-btn ghost" onClick={() => apply((x) => C.clearProducerSound(x, track.id, by))}>{t('dropProducer', lang)}</button>}
+          </div>
+        </section>
+      )}
       {room === 'producer' ? (
         <MixerPanel song={song} track={track} lang={lang}
           onGain={(g) => apply((x) => C.setGain(x, track.id, g, by))}
@@ -762,19 +787,25 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     if (room === 'sounds') {
       return (
         <div className="body room-sounds">
-          <Collection song={song} selectedId={track.id} profileId={profile.id} lang={lang} sounds={sounds} onClose={() => onRoom('musician')} onBeat={() => setModal('beat')}
+          <SoundStudio song={song} selectedId={track.id} starred={starred} sounds={sounds} profileId={profile.id} lang={lang}
+            design={design} onDesign={setDesign} onBeat={() => setModal('beat')}
             onUse={(trackId, key) => {
               const ref = { key, version: '1.0.0' };
               apply((x) => C.setInstrument(x, trackId, ref, by));
               setSelected(trackId);
               const tr = song.tracks.find((x) => x.id === trackId);
-              showToast(t('collectionUsed', lang, { name: catalogTitle(ref, lang), track: tr?.name ?? '' }));
+              showToast(t('collectionUsed', lang, { name: soundName(ref, undefined, lang), track: tr?.name ?? '' }));
             }}
             onUseSound={(trackId, sound) => {
               apply((x) => C.applySound(x, trackId, sound, by));
               setSelected(trackId);
               const tr = song.tracks.find((x) => x.id === trackId);
               showToast(t('collectionUsed', lang, { name: sound.name, track: tr?.name ?? '' }));
+            }}
+            onProducerSound={(trackId, sound) => {
+              apply((x) => C.setProducerSound(x, trackId, { instrument: sound.base, sound: { id: sound.id, name: sound.name, chain: structuredClone(sound.chain) } }, by));
+              const tr = song.tracks.find((x) => x.id === trackId);
+              showToast(t('producerSoundSet', lang, { name: sound.name, track: tr?.name ?? '' }));
             }}
             onSaveSound={async (sound) => {
               await store.saveSound(sound);
@@ -784,7 +815,24 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
             onDeleteSound={async (id) => {
               await store.deleteSound(id);
               setSounds(await store.listSounds(profile.id));
-            }} />
+              onProfile({ ...profile, starred: starred.filter((x) => x.sound?.id !== id), updated_at: new Date().toISOString() });
+            }}
+            onStar={(x) => {
+              const same = (y: StarredInstrument) => y.key === x.key && (y.sound?.id ?? '') === (x.sound?.id ?? '');
+              onProfile({ ...profile, starred: [...starred.filter((y) => !same(y)), x], updated_at: new Date().toISOString() });
+              showToast(t('kitAdded', lang, { name: x.sound?.name ?? soundName({ key: x.key, version: '1.0.0' }, undefined, lang), role: ROLE_NAMES[lang][x.role] }));
+            }}
+            onUnstar={(x) => onProfile({ ...profile, starred: starred.filter((y) => !(y.key === x.key && (y.sound?.id ?? '') === (x.sound?.id ?? '') && y.role === x.role)), updated_at: new Date().toISOString() })}
+            onNewWithKit={async () => {
+              const count = (await store.listSongs(profile.id)).length;
+              const s = newSong(profile.id, t('songN', lang, { n: count + 1 }), 4, lang, CUSTOM_KIT, starred, false);
+              await store.saveSong(s);
+              rememberKit(CUSTOM_KIT);
+              await switchTo(s);
+              onRoom('musician');
+              showToast(t('kitSwitched', lang, { kit: t('myKit', lang) }));
+            }}
+            onApplyKit={() => { setPendingKit(CUSTOM_KIT); setModal('kit'); }} />
         </div>
       );
     }

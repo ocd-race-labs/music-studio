@@ -2,7 +2,7 @@
 // instant loading on the iPad. Real recordings replace the main instruments in a later pack.
 // Keys and versions follow the catalog rules: kind.name@x.y.z, never edited once published.
 
-import type { CatalogRef, Role } from '../domain/types';
+import type { CatalogRef, Role, TrackSound } from '../domain/types';
 import { ENTRIES, SAMPLED_KITS, SAMPLERS, TRIMS } from './collection';
 
 export interface CatalogItem {
@@ -172,7 +172,8 @@ export const INSTRUMENTS: CatalogItem[] = [...CORE_INSTRUMENTS, ...COLLECTION_IN
 
 /* ---------------------------------------------------------------- kits by genre */
 
-export interface KitSlot { role: Role; instrument: string }
+/** One place in a kit: the job, the instrument, and for Mi kit a saved sound on top of it. */
+export interface KitSlot { role: Role; instrument: string; sound?: TrackSound }
 
 const genre = (id: string, en: string, es: string, slots: [Role, string][]) =>
   item('kit', `kit.${id}`, en, es, { slots: slots.map(([role, instrument]) => ({ role, instrument: `instrument.${instrument}` })) });

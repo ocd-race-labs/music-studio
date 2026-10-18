@@ -433,6 +433,7 @@ export class StudioEngine {
       pedal?.set(slot.params, slot.bypass);
       return pedal;
     });
+    this.grooveKeys = (chain?.slots ?? []).map((x) => x.effect.key);
     let prev: Tone.ToneAudioNode = voice.output;
     for (const pedal of this.groovePedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
     prev.connect(this.master);
@@ -466,7 +467,35 @@ export class StudioEngine {
 
   /** Follow the knobs while a groove plays through a chain being shaped. Same pedals in the same order only. */
   updatePreviewChain(chain: FxChain): void {
+    if (this.groovePedals.length !== chain.slots.length || chain.slots.some((x, i) => this.grooveKeys[i] !== x.effect.key)) {
+      this.rewirePreview(chain);
+      return;
+    }
     chain.slots.forEach((slot, i) => this.groovePedals[i]?.set(slot.params, slot.bypass));
+  }
+
+  private grooveKeys: string[] = [];
+
+  /**
+   * Swap the chain a groove plays through without stopping it: listen up to one stage, add or take out a unit,
+   * compare with the original. The old units ring out for a moment before they go.
+   */
+  rewirePreview(chain: FxChain): void {
+    const voice = this.groove;
+    if (!voice || !this.master) return;
+    const old = this.groovePedals;
+    const pedals = chain.slots.map((slot) => {
+      const pedal = createPedal(slot.effect.key);
+      pedal?.set(slot.params, slot.bypass);
+      return pedal;
+    });
+    voice.output.disconnect();
+    let prev: Tone.ToneAudioNode = voice.output;
+    for (const pedal of pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
+    prev.connect(this.master);
+    this.groovePedals = pedals;
+    this.grooveKeys = chain.slots.map((x) => x.effect.key);
+    setTimeout(() => old.forEach((p) => p?.dispose()), 400);
   }
 
   /** Hear one piece of a kit (the snare, the china). */
@@ -486,6 +515,7 @@ export class StudioEngine {
     const pedals = this.groovePedals;
     this.groove = null;
     this.groovePedals = [];
+    this.grooveKeys = [];
     v?.dispose();
     // Let the last echoes ring out before the chain goes away.
     setTimeout(() => pedals.forEach((p) => p?.dispose()), 400);
