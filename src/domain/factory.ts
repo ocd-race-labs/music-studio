@@ -148,7 +148,7 @@ export const ROLE_NAMES: Record<Lang, Record<Role, string>> = {
 /** Names songs got before kits existed; switching kit may rename them. */
 const OLD_NAMES = ['Drums', '808', 'Chords', 'Keys', 'Lead', 'Strings', 'Batería', 'Acordes', 'Teclado', 'Melodía', 'Cuerdas'];
 
-const roleName = (role: Role, lang: Lang, n: number) => (n > 1 ? `${ROLE_NAMES[lang][role]} ${n}` : ROLE_NAMES[lang][role]);
+export const roleName = (role: Role, lang: Lang, n: number) => (n > 1 ? `${ROLE_NAMES[lang][role]} ${n}` : ROLE_NAMES[lang][role]);
 
 /** True for a name the app gave, never one a person typed. */
 export const isAutoName = (name: string): boolean => {
@@ -178,7 +178,7 @@ export function slotsFor(kitKey: string, starred: StarredInstrument[] = []): Kit
 }
 const rowsOrVoice = (key: string) => { try { ref(key); return true; } catch { return false; } };
 
-function trackFor(slot: KitSlot, position: number, name: string, bars: number, opts: { starter: boolean; chords?: Clip['content'] }): Track {
+export function trackFor(slot: KitSlot, position: number, name: string, bars: number, opts: { starter: boolean; chords?: Clip['content'] }): Track {
   const length = bars * BAR_TICKS;
   const drums = isDrumKit(slot.instrument);
   const c = drums

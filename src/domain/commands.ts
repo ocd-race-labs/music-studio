@@ -3,7 +3,7 @@
 
 import { noteNameAscii, spellInKey } from '../theory';
 import type {
-  CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Track, TrackVariant, CustomSound } from './types';
+  CatalogRef, ChordEvent, ChordsContent, Clip, Idea, Note, NotesContent, PatternContent, Song, Sketch, Track, TrackVariant, CustomSound } from './types';
 import { BAR_TICKS, STEP_TICKS } from './types';
 import { DEFAULT_SWING, defaultFxParams, newId, now, retarget, roleOf, switchKit as switchKitOf } from './factory';
 import { pedalRank, ref, rowFor } from '../packs/core';
@@ -217,6 +217,9 @@ export const applySound = (song: Song, trackId: string, sound: CustomSound, by: 
     ...retarget(t, sound.base.key, roleOf(t), t.name),
     sound: { id: sound.id, name: sound.name, chain: structuredClone(sound.chain) },
   }), by);
+
+/** The musician's idea changes; the detail stays as it is until the idea is written into it. */
+export const setSketch = (song: Song, sketch: Sketch, by: string | null): Song => touch({ ...song, sketch }, by);
 
 /** Which sound a track plays: the musician's, or the producer's when there is one. */
 export const setVoiceFrom = (song: Song, trackId: string, from: 'musician' | 'producer', by: string | null): Song => {

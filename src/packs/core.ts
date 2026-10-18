@@ -118,6 +118,7 @@ const CORE_INSTRUMENTS = [
   synth('instrument.pad-warm', 'Warm pad', 'Pad cálido', 'padWarm', 55),
   synth('instrument.pad-supersaw', 'Supersaw pad', 'Pad supersaw', 'padSupersaw', 55),
   synth('instrument.strings-ensemble', 'String ensemble', 'Cuerdas', 'strings', 55),
+  synth('instrument.choir-aah', 'Choir (aah)', 'Coro de voces', 'choirAah', 55),
   synth('instrument.brass-section', 'Brass section', 'Metales', 'brassSection', 48),
 
   synth('instrument.lead-bright', 'Bright lead', 'Lead brillante', 'leadBright', 60),

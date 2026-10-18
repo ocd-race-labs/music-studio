@@ -9,7 +9,9 @@ import { LengthStepper, songDuration } from './Arrange';
 import { t } from './i18n';
 import { Icon } from './ui';
 
-export function Transport({ song, lang, playing, step, cursorBar, rec, onPlay, onTempo, onBars, onRec, children }: {
+export function Transport({ song, lang, playing, step, cursorBar, rec, lead, onPlay, onTempo, onBars, onRec, children }: {
+  /** Controls before Play: the musician's two steps. */
+  lead?: React.ReactNode;
   song: Song;
   lang: Lang;
   playing: boolean;
@@ -19,7 +21,8 @@ export function Transport({ song, lang, playing, step, cursorBar, rec, onPlay, o
   rec?: boolean;
   onPlay: () => void;
   onTempo: (bpm: number) => void;
-  onBars: (bars: number) => void;
+  /** Absent where the length comes from elsewhere (the idea's form). */
+  onBars?: (bars: number) => void;
   onRec?: () => void;
   /** Room-specific controls at the right end of the strip. */
   children?: React.ReactNode;
@@ -28,6 +31,8 @@ export function Transport({ song, lang, playing, step, cursorBar, rec, onPlay, o
   const pos = step >= 0 ? `${Math.floor(step / 16) + 1}.${Math.floor((step % 16) / 4) + 1}` : `${cursorBar + 1}`;
   return (
     <div className="transport" role="group" aria-label={t('transport', lang)}>
+      {lead}
+      {lead && <span className="tp-sep" aria-hidden="true" />}
       <button type="button" className={`play${playing ? ' on' : ''}`} onClick={onPlay} aria-label={t(playing ? 'stop' : 'play', lang)} title={t('playHint', lang)}>
         <Icon name={playing ? 'stop' : 'play'} size={22} />
       </button>
@@ -41,10 +46,10 @@ export function Transport({ song, lang, playing, step, cursorBar, rec, onPlay, o
         <input className="field mono" type="number" min={40} max={200} value={song.tempo_bpm}
           onChange={(e) => onTempo(Number(e.target.value) || song.tempo_bpm)} aria-label={t('tempo', lang)} />
       </label>
-      <LengthStepper bars={bars} lang={lang} onBars={onBars} />
+      {onBars && <LengthStepper bars={bars} lang={lang} onBars={onBars} />}
       {onRec && (
         <button type="button" className="btn rec" aria-pressed={rec} onClick={onRec} title={t('recordHint', lang)} aria-label={t('record', lang)}>
-          <span className="dot" style={{ background: rec ? 'var(--highlight-ink)' : 'var(--highlight)' }} /> <span className="hide-sm">{t('record', lang)}</span>
+          <span className="dot" style={{ background: rec ? 'var(--highlight-ink)' : 'var(--highlight)' }} /> <span className="hide-lg">{t('record', lang)}</span>
         </button>
       )}
       <OutMeter label={t('soundOutput', lang)} />

@@ -141,6 +141,24 @@ const MELODIC: Record<string, () => MelodicVoice> = {
     oscillator: { type: 'fatsawtooth', count: 5, spread: 16 },
     envelope: { attack: 0.22, decay: 0.2, sustain: 0.85, release: 1.1 }, volume: -22,
   }), [lowpass(2400)]),
+  // A choir singing "aah": a soft, slightly detuned saw shaped by the three formants of the vowel, with vibrato.
+  choirAah: () => {
+    const synth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', count: 3, spread: 22 },
+      envelope: { attack: 0.45, decay: 0.3, sustain: 0.85, release: 1.3 }, volume: -2,
+    });
+    const vib = new Tone.Vibrato(5.1, 0.09);
+    const out = new Tone.Gain(1);
+    const parts: Tone.ToneAudioNode[] = [vib, out];
+    for (const [hz, q, g] of [[730, 6, 1], [1090, 8, 0.55], [2440, 11, 0.3]]) {
+      const bp = new Tone.Filter({ frequency: hz, type: 'bandpass', Q: q });
+      const gain = new Tone.Gain(g);
+      vib.connect(bp); bp.connect(gain); gain.connect(out);
+      parts.push(bp, gain);
+    }
+    synth.connect(vib);
+    return polyVoice(synth, out, parts);
+  },
   brassSection: () => poly(new Tone.PolySynth(Tone.Synth, {
     oscillator: { type: 'fatsawtooth', count: 3, spread: 12 },
     envelope: { attack: 0.05, decay: 0.2, sustain: 0.7, release: 0.25 }, volume: -20,
@@ -299,6 +317,7 @@ const TRIM_DB: Record<string, number> = {
   "pluck": 11.7,
   "sax": 4.9,
   "strings": 12.5,
+  "choirAah": 10.8,
   "trumpet": 5.8,
   "trumpetMute": 1.2,
   "vibes": 13.6,

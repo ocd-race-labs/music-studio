@@ -62,9 +62,11 @@ export function StructureBar({ song, lang, focusId, marking, sel, compact, onFoc
 }) {
   const bars = songBars(song);
   const focus = song.sections.find((s) => s.id === focusId) ?? null;
+  // In the compact strip the actions of a part (copy, repeat, delete) open on request, so the grid keeps its room.
+  const [actions, setActions] = useState(false);
   return (
-    <section className="structure" aria-label={t('structure', lang)}>
-      <div className="row wrap" style={{ gap: 6 }}>
+    <section className={`structure${compact ? ' compact' : ''}`} aria-label={t('structure', lang)}>
+      <div className={`row${compact ? ' chips-scroll' : ' wrap'}`} style={{ gap: 6 }}>
         <span className="lbl" style={{ marginRight: 4 }}>{t('structure', lang)}</span>
         <button type="button" className="chip" aria-pressed={!focus} onClick={() => onFocus(null)}>
           {t('wholeSong', lang)} <span className="count mono">{bars}</span>
@@ -76,12 +78,17 @@ export function StructureBar({ song, lang, focusId, marking, sel, compact, onFoc
             {s.name} <span className="count mono" aria-label={`${sectionBars(s)} ${t('barsShort', lang)}`}>{sectionBars(s)}</span>
           </button>
         ))}
+        {compact && focus && !marking && (
+          <button type="button" className="btn small-btn" aria-expanded={actions} onClick={() => setActions((a) => !a)}>
+            <Icon name="edit" size={16} /> {t('partActions', lang, { name: focus.name })}
+          </button>
+        )}
         <button type="button" className="btn small-btn" aria-pressed={marking} onClick={() => onMarking(!marking)} title={t('noSectionsHint', lang)}>
           <Icon name={marking ? 'check' : 'plus'} size={16} /> {t(marking ? 'markDone' : 'markSections', lang)}
         </button>
       </div>
       {marking && <MarkPanel song={song} lang={lang} sel={sel} onPick={onPick} onClear={onClearSel} />}
-      {!marking && focus && (
+      {!marking && focus && (!compact || actions) && (
         <SectionActions key={focus.id} song={song} section={focus} lang={lang}
           onRename={onRename} onKind={onKind} onCopy={onCopy} onRepeat={onRepeat} onUnmark={onUnmark} onDeleteBars={onDeleteBars} />
       )}

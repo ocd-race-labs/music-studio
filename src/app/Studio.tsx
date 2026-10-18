@@ -23,6 +23,9 @@ import type { DesignRequest } from './SoundStudio';
 import { rackOf } from './rack';
 import BeatAssistant from './BeatAssistant';
 import Hub from './Hub';
+import IdeaStage from './IdeaStage';
+import * as SK from '../domain/sketch';
+import type { Place } from '../domain/sketch';
 import SongsRoom, { soundName } from './SongsRoom';
 import { OutMeter, Transport } from './Transport';
 import { t, tn } from './i18n';
@@ -61,6 +64,9 @@ const LENGTHS = [
   { steps: 8, label: '1/2' },
   { steps: 16, label: '1' },
 ];
+
+/** Where the musician lands in a song: the idea while it is a draft or the song is empty, else the detail. */
+const stageFor = (s: Song): 'idea' | 'detail' => (s.sketch && !s.sketch.accepted_at) || (!s.sketch && !C.hasWritten(s)) ? 'idea' : 'detail';
 
 const kitName = (key: string, lang: Lang) => (key === CUSTOM_KIT ? t('kitCustom', lang) : kitTitle(key, lang));
 const sameSlots = (a: { role: Role; instrument: string }[], b: { role: Role; instrument: string }[]) =>
@@ -121,6 +127,12 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   // The musician's mixer takes the editor's place while it is open.
   const [board, setBoard] = useState(false);
   const [sounds, setSounds] = useState<CustomSound[]>([]);
+  // The musician works in two steps: the idea (form, chords, rhythm), then the detail. With an accepted idea, the
+  // detail can also play the idea, to compare.
+  const [stage, setStage] = useState<'idea' | 'detail'>('detail');
+  const [hear, setHear] = useState<'detail' | 'idea'>('detail');
+  const [ideaPlace, setIdeaPlace] = useState<Place | null>(null);
+  const [ideaWrite, setIdeaWrite] = useState<{ blockId?: string } | null>(null);
   // A signal chain open in the sound studio's designer, possibly for one track of the song (the producer's version).
   const [design, setDesign] = useState<DesignRequest | null>(null);
   useEffect(() => { store.listSounds(profile.id).then(setSounds).catch(() => setSounds([])); }, [store, profile.id]);
@@ -177,6 +189,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       if (!alive) return;
       songRef.current = s;
       setSong(s);
+      setStage(stageFor(s));
       setSelected(s.tracks[0]?.id ?? null);
       await store.setMeta(`last_song:${profile.id}`, s.id);
       setIdeas(await store.listIdeas(s.id));
@@ -187,9 +200,14 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   }, [store, profile.id]);
 
   /* ---------- engine follows the song; autosave a moment after each change */
+  const ideaSong = useMemo(() => (song?.sketch?.order.length ? SK.renderIdea(song, lang) : null), [song, lang]);
+  const playIdea = room === 'musician' && !!ideaSong && (stage === 'idea' || hear === 'idea');
+  useEffect(() => {
+    const target = playIdea ? ideaSong : song;
+    if (target) engine.setSong(target);
+  }, [song, ideaSong, playIdea]);
   useEffect(() => {
     if (!song) return;
-    engine.setSong(song);
     setSaveState('saving');
     const timer = window.setTimeout(() => {
       store.saveSong(song).then(() => setSaveState('saved'));
@@ -324,6 +342,9 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     setSel({ a: null, b: null });
     setCursorBar(0);
     commit(s);
+    setStage(stageFor(s));
+    setHear('detail');
+    setIdeaPlace(null);
     setSelected(s.tracks[0]?.id ?? null);
     setFocusBar(0);
     await store.setMeta(`last_song:${profile.id}`, s.id);
@@ -459,11 +480,17 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     ? { start: fStart / STEP_TICKS, length: fLen / STEP_TICKS }
     : { start: 0, length: songTotal }), [fStart, fLen, songTotal]);
   const focused = fStart >= 0;
-  useEffect(() => { engine.setRange(focused ? view : null); }, [focused, view]);
+  const inIdea = room === 'musician' && stage === 'idea';
+  useEffect(() => {
+    if (inIdea) engine.setRange(ideaPlace ? { start: ideaPlace.startBar * 16, length: ideaPlace.bars * 16 } : null);
+    else engine.setRange(focused && !playIdea ? view : null);
+  }, [focused, view, inIdea, ideaPlace, playIdea]);
   useEffect(() => () => engine.setRange(null), []);
   useEffect(() => { if (focusId && song && !song.sections.some((x) => x.id === focusId)) setFocusId(null); }, [focusId, song]);
   useEffect(() => { if (cursorBar > bars - 1) setCursorBar(Math.max(0, bars - 1)); }, [cursorBar, bars]);
-  useLayoutEffect(() => { playFrom.current = focused ? view.start : Math.min(cursorBar, bars - 1) * 16; }, [focused, view, cursorBar, bars]);
+  useLayoutEffect(() => {
+    playFrom.current = inIdea ? (ideaPlace ? ideaPlace.startBar * 16 : 0) : focused ? view.start : Math.min(cursorBar, bars - 1) * 16;
+  }, [focused, view, cursorBar, bars, inIdea, ideaPlace]);
   useLayoutEffect(() => { markRef.current = marking; }, [marking]);
   // Changing track keeps the same bars in view.
   useEffect(() => { jumpTo(onScreenRef.current.bar * 16); }, [selected, jumpTo]);
@@ -553,10 +580,10 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const unit = (n: number) => t(clipKind === 'pattern' ? (n === 1 ? 'nHitsOne' : 'nHits') : clipKind === 'chords' ? (n === 1 ? 'nChordsOne' : 'nChords') : (n === 1 ? 'nNotesOne' : 'nNotes'), lang, { n });
 
   /* ---------- the parts of the screen */
-  const transport = (extra?: React.ReactNode) => (
-    <Transport song={song} lang={lang} playing={playing} step={step} cursorBar={cursorBar}
-      rec={room === 'musician' ? rec : undefined} onRec={room === 'musician' ? () => setRec((r) => !r) : undefined}
-      onPlay={togglePlay} onTempo={(bpm) => apply((x) => C.setTempo(x, bpm, by))} onBars={(n) => apply((x) => A.setSongBars(x, n, by))}>
+  const transport = (extra?: React.ReactNode, lead?: React.ReactNode) => (
+    <Transport lead={lead} song={inIdea && ideaSong ? ideaSong : song} lang={lang} playing={playing} step={step} cursorBar={inIdea ? (ideaPlace?.startBar ?? 0) : cursorBar}
+      rec={room === 'musician' && !inIdea ? rec : undefined} onRec={room === 'musician' && !inIdea ? () => setRec((r) => !r) : undefined}
+      onPlay={togglePlay} onTempo={(bpm) => apply((x) => C.setTempo(x, bpm, by))} onBars={inIdea ? undefined : (n) => apply((x) => A.setSongBars(x, n, by))}>
       {extra}
       <button type="button" className="btn icon side-toggle" aria-pressed={sideOpen} onClick={() => setSideOpen((o) => !o)}
         aria-label={t(room === 'producer' ? 'sideChannel' : 'sideKey', lang)} title={t(room === 'producer' ? 'sideChannel' : 'sideKey', lang)}>
@@ -648,9 +675,44 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     </div>
   );
 
+  const stageTabs = (
+    <div className="seg stage-tabs" aria-label={t('stages', lang)}>
+      <button type="button" aria-pressed={stage === 'idea'} onClick={() => { setStage('idea'); setBoard(false); }} title={t('stageIdea1', lang)}><Icon name="bulb" size={16} /> <span className="stage-label">{t('stageIdea1', lang)}</span><span className="stage-short">{t('stageIdea', lang)}</span></button>
+      <button type="button" aria-pressed={stage === 'detail'} onClick={() => { setStage('detail'); setIdeaPlace(null); }} title={t('stageDetail2', lang)}><Icon name="music" size={16} /> <span className="stage-label">{t('stageDetail2', lang)}</span><span className="stage-short">{t('stageDetail', lang)}</span></button>
+    </div>
+  );
+  const hearToggle = stage === 'detail' && song.sketch?.accepted_at ? (
+    <div className="seg small-seg hear-toggle" aria-label={t('hearWhich', lang)} title={t('hearIdeaHint', lang)}>
+      <button type="button" aria-pressed={hear === 'detail'} onClick={() => setHear('detail')}>{t('hearDetail', lang)}</button>
+      <button type="button" aria-pressed={hear === 'idea'} onClick={() => setHear('idea')}>{t('hearIdea', lang)}</button>
+    </div>
+  ) : null;
+
+  const ideaWork = (
+    <main className="work idea-work" ref={editorRef}>
+      {transport(undefined, stageTabs)}
+      <IdeaStage song={song} idea={ideaSong ?? song} lang={lang} playing={playing} step={step}
+        onSketch={(fn) => {
+          const cur = songRef.current;
+          if (!cur) return;
+          const next = fn(cur.sketch ?? SK.newSketch(cur));
+          if (!next) { showToast(t('tooLong', lang, { max: A.MAX_BARS })); return; }
+          apply((x) => C.setSketch(x, next, by));
+        }}
+        onPlace={(p) => {
+          setIdeaPlace(p);
+          if (!p) { if (engine.playing) { engine.stop(); setPlaying(false); } return; }
+          if (engine.playing) engine.seek(p.startBar * 16);
+          else { playFrom.current = p.startBar * 16; togglePlay(); }
+        }}
+        onAccept={(blockId) => setIdeaWrite({ blockId })}
+        onDetail={() => { setStage('detail'); setIdeaPlace(null); }} />
+    </main>
+  );
+
   const musicianWork = (
     <main className="work" ref={editorRef}>
-      {transport()}
+      {transport(hearToggle, stageTabs)}
       {board ? (
         <section className="stack board-wrap" aria-label={t('mixerBoard', lang)}>
           <div className="row wrap">
@@ -848,6 +910,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       );
     }
     if (room === 'producer') return <div className="body room-producer">{producerWork}{side}</div>;
+    if (inIdea) return <div className="body room-musician stage-idea">{ideaWork}{side}</div>;
     return <div className="body room-musician">{trackList}{musicianWork}{side}</div>;
   })();
 
@@ -925,6 +988,42 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
           </div>
         </Modal>
       )}
+
+      {ideaWrite && song.sketch && (() => {
+        const plan = SK.applyPlan(song, lang);
+        const blk = ideaWrite.blockId ? song.sketch.blocks.find((b) => b.id === ideaWrite.blockId) : undefined;
+        const follows = song.sections.some((x) => x.id.startsWith('sk-'));
+        if (!plan) return null;
+        return (
+          <Modal title={blk ? t('ideaConfirmBlockTitle', lang, { name: SK.blockName(blk, lang) }) : t('ideaConfirmTitle', lang)} closeLabel={t('close', lang)} onClose={() => setIdeaWrite(null)}>
+            <div className="warn-box row" role="alert">
+              <Icon name="warning" size={26} />
+              <div className="stack" style={{ gap: 6 }}>
+                <span>{blk ? t('ideaWritesBlock', lang, { name: SK.blockName(blk, lang) }) : t('ideaWrites', lang)}</span>
+                <ul className="idea-writes">
+                  {plan.writes.map((w) => <li key={w.trackId}><strong>{w.name}</strong>: {soundName({ key: w.instrument, version: '1.0.0' }, undefined, lang)}</li>)}
+                </ul>
+              </div>
+            </div>
+            {!blk && <p style={{ margin: 0 }}>{t('ideaFormNote', lang, { n: plan.bars })}</p>}
+            {!blk && plan.keeps.length > 0 && <p className="muted" style={{ margin: 0 }}>{t(follows ? 'ideaKeeps' : 'ideaKeepsFirst', lang, { names: plan.keeps.join(', ') })}</p>}
+            <div className="row wrap" style={{ justifyContent: 'flex-end' }}>
+              <button type="button" className="btn ghost" onClick={() => setIdeaWrite(null)}>{t('cancel', lang)}</button>
+              <button type="button" className="btn primary" onClick={() => {
+                const id = ideaWrite.blockId;
+                engine.stop(); setPlaying(false);
+                apply((x) => SK.applyIdea(x, lang, by, id));
+                setIdeaWrite(null);
+                setIdeaPlace(null);
+                setStage('detail');
+                setHear('detail');
+                setFocusId(null);
+                showToast(t('ideaWritten', lang));
+              }}><Icon name="check" size={18} /> {t('ideaDo', lang)}</button>
+            </div>
+          </Modal>
+        );
+      })()}
 
       {modal === 'kit' && pendingKit && (
         <Modal title={t('switchKitTitle', lang, { kit: kitName(pendingKit, lang) })} closeLabel={t('close', lang)} onClose={() => { setModal(null); setPendingKit(null); }}>
