@@ -4,7 +4,7 @@
 // and they cost the most CPU on a tablet.
 
 import * as Tone from 'tone';
-import { findByKey, findItem, lowOf, resolveRow, rowsOf, rowVoice, STANDARD_ROWS } from '../packs/core';
+import { DRUM_VOICES, findByKey, findItem, FULL_KIT_VOICES, LATIN_VOICES, lowOf, ORCH_VOICES, resolveRow, rowsOf, rowVoice, STANDARD_ROWS } from '../packs/core';
 import { chordMidi, diatonicTriads } from '../theory';
 import type { ChordsContent, FxChain, NotesContent, PatternContent, Song, Track } from '../domain/types';
 import { PPQ, STEP_TICKS } from '../domain/types';
@@ -716,11 +716,18 @@ export class StudioEngine {
     }
     const span = groove.bars * 16;
     const swing = Math.max(0, (groove.swing ?? 0.5) - 0.5) * 2 * step;
+    // A rhythm names standard pieces; each plays on this kit's piece in the same place, as a song's beat does
+    // (kick on the low conga or the bass drum), so any kit can play any sample rhythm.
+    const kitVoice = (name: string) => {
+      const piece = VOICE_PIECE.get(name);
+      return (piece && rowVoice(instrumentKey, piece)) ?? name;
+    };
     for (let r = 0; r < repeats; r++) {
       for (const [name, steps] of Object.entries(groove.steps)) {
+        const played = kitVoice(name);
         for (const s of steps ?? []) {
           const soft = groove.soft?.[name]?.includes(s);
-          voice.hit(name, t0 + (r * span + s) * step + (s % 2 === 1 ? swing : 0), soft ? 0.42 : s % 4 === 0 ? 0.95 : 0.8);
+          voice.hit(played, t0 + (r * span + s) * step + (s % 2 === 1 ? swing : 0), soft ? 0.42 : s % 4 === 0 ? 0.95 : 0.8);
         }
       }
     }
@@ -808,6 +815,11 @@ export class StudioEngine {
 }
 
 /** The song as it sounds: each track with the sound chosen for it, the musician's or the producer's. */
+/** Every drum piece by the voice that plays it: 'kick' → sound.kick, 'congaLow' → sound.conga-low. */
+const VOICE_PIECE = new Map<string, string>(
+  [...DRUM_VOICES, ...FULL_KIT_VOICES, ...ORCH_VOICES, ...LATIN_VOICES].map((i) => [String(i.manifest.voice), i.key]),
+);
+
 function playedSong(song: Song): Song {
   if (!song.tracks.some((t) => t.producer && t.voice_from === 'producer')) return song;
   return {

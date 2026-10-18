@@ -1,7 +1,7 @@
 // The studio rack of the Colección: which gear a new chain starts with, and where a Colección sound goes in a song.
 
 import { ENTRIES, entryOf } from '../packs/collection';
-import type { Family } from '../packs/collection';
+import type { Entry, Family, Groove } from '../packs/collection';
 import { findByKey, ref } from '../packs/core';
 import type { FxChain, Song, Track } from '../domain/types';
 import { defaultFxParams, roleOf } from '../domain/factory';
@@ -75,8 +75,47 @@ export function rackOf(instrumentKey: string): FxChain {
   };
 }
 
-/** The entry whose groove or phrase plays a sound: its own, or the first of its family. */
-export const templateFor = (instrumentKey: string) => entryOf(instrumentKey) ?? ENTRIES.find((e) => e.family === familyOf(instrumentKey));
+/*
+ * Sample rhythms for the two hand-percussion kits, written on the standard rows; each row lands on the kit's piece in
+ * the same place (kick → low conga or bass drum, snare → conga or concert snare, and so on).
+ */
+const LATIN_GROOVE: Groove = {
+  bars: 2,
+  steps: {
+    rim: [0, 6, 12, 20, 24], // son clave, 3-2
+    kick: [6, 14, 22, 30], // low conga on the "and" of 2 and 4
+    snare: [4, 12, 20, 28], // conga slaps
+    clap: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30], // bongo, eighths
+    hatClosed: [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15, 16, 18, 19, 20, 22, 23, 24, 26, 27, 28, 30, 31], // güiro: long, short-short
+    crash: [0, 4, 8, 12, 16, 20, 24, 28], // cowbell on the beat
+  },
+  soft: { clap: [2, 6, 10, 14, 18, 22, 26, 30], hatClosed: [3, 7, 11, 15, 19, 23, 27, 31] },
+};
+const ORCH_GROOVE: Groove = {
+  bars: 2,
+  steps: {
+    kick: [0, 8, 16, 24], // bass drum
+    snare: [4, 12, 20, 25, 26, 27, 28], // concert snare, a short roll into beat 4 of bar 2
+    tom: [0, 16], // timpani
+    hatClosed: [6, 14, 22], // triangle
+    clap: [2, 10, 18], // tambourine
+    crash: [16], // cymbals
+  },
+  soft: { snare: [25, 26, 27], clap: [2, 10, 18], hatClosed: [6, 14, 22] },
+};
+const OWN_GROOVE: Record<string, { groove: Groove; tempo: number }> = {
+  'instrument.perc-latin': { groove: LATIN_GROOVE, tempo: 104 },
+  'instrument.drums-orch': { groove: ORCH_GROOVE, tempo: 96 },
+};
+
+/** The entry whose groove or phrase plays a sound: its own, a rhythm made for it, or the first of its family. */
+export const templateFor = (instrumentKey: string): Entry | undefined => {
+  const own = entryOf(instrumentKey);
+  if (own) return own;
+  const base = ENTRIES.find((e) => e.family === familyOf(instrumentKey));
+  const made = OWN_GROOVE[instrumentKey];
+  return made && base ? { ...base, instrument: instrumentKey, groove: made.groove, tempo: made.tempo } : base;
+};
 
 /** The track a Colección sound goes to: the selected one when it plays that family, else the first that does. */
 export function targetTrack(song: Song, selectedId: string | null, family: Family): Track | undefined {
