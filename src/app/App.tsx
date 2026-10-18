@@ -16,6 +16,8 @@ import Family, { applyFamily, familyFromHash } from './Family';
 import { t } from './i18n';
 import { GROUND, useAppearance } from './prefs';
 import { useUpdateAvailable } from './update';
+import { engine } from '../engine/engine';
+import { readAudioMode, rememberResume, takeResume, writeAudioMode } from '../engine/audiomode';
 
 type Route =
   | { name: 'loading' }
@@ -38,6 +40,9 @@ export default function App() {
   const [storageError, setStorageError] = useState<string | null>(null);
   const { appearance, mode, setAppearance, toggle: toggleMode } = useAppearance();
   const updateReady = useUpdateAvailable();
+  // The audio cannot keep up on this device: offer the stable mode once a visit.
+  const [glitch, setGlitch] = useState(false);
+  useEffect(() => engine.onGlitch(() => setGlitch(true)), []);
 
   useEffect(() => {
     openBrowserStore()
@@ -68,7 +73,10 @@ export default function App() {
           window.history.replaceState(null, '', window.location.pathname + window.location.search);
           setRoute({ name: 'family', names: family });
         } else {
-          setRoute(list.length ? { name: 'home' } : { name: 'setup' });
+          // Back where the person was when the page reloaded to apply a new sound mode.
+          const back = takeResume<Route>();
+          const known = back && (back.name === 'studio' || back.name === 'settings') && list.some((p) => p.id === back.profileId);
+          setRoute(known && back ? back : list.length ? { name: 'home' } : { name: 'setup' });
         }
         requestPersistence().catch(() => undefined);
       })
@@ -246,5 +254,25 @@ export default function App() {
     );
   })();
 
-  return <>{screen}{updateBar}</>;
+  const inStudio = route.name === 'studio' || route.name === 'classroom';
+  const stable = readAudioMode() === 'stable';
+  const guestHere = route.name === 'studio' && route.profileId === GUEST_ID;
+  const glitchBar = glitch && inStudio && (
+    <div className="update-bar glitch-bar" role="alert">
+      <span className="stack" style={{ gap: 2 }}>
+        <strong>{t(stable ? 'glitchStableTitle' : 'glitchTitle', lang)}</strong>
+        <span className="small muted">{t(stable ? 'glitchStableBody' : guestHere ? 'glitchBodyGuest' : 'glitchBody', lang)}</span>
+      </span>
+      {!stable && (
+        <button type="button" className="btn primary" onClick={() => {
+          writeAudioMode('stable');
+          rememberResume(route);
+          window.setTimeout(() => window.location.reload(), 700); // let the last edit save first
+        }}>{t('glitchUse', lang)}</button>
+      )}
+      <button type="button" className="btn ghost" onClick={() => setGlitch(false)}>{t(stable ? 'glitchOk' : 'glitchLater', lang)}</button>
+    </div>
+  );
+
+  return <>{screen}{updateBar}{glitchBar}</>;
 }

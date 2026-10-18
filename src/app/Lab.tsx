@@ -62,6 +62,8 @@ export default function Lab({ store, lang, onHome }: { store: SongStore; lang: L
               <tr><td className="muted">{t('baseLatency', lang)}</td><td className="mono">{info.baseLatencyMs !== null ? `${info.baseLatencyMs.toFixed(1)} ms` : t('notReported', lang)}</td></tr>
               <tr><td className="muted">{t('outputLatency', lang)}</td><td className="mono">{info.outputLatencyMs !== null ? `${info.outputLatencyMs.toFixed(1)} ms` : t('notReported', lang)}</td></tr>
               <tr><td className="muted">{t('lookAhead', lang)}</td><td className="mono">{info.lookAheadMs.toFixed(0)} ms</td></tr>
+              <tr><td className="muted">{t('audioModeTitle', lang)}</td><td className="mono">{t(info.mode === 'stable' ? 'audioStable' : 'audioFast', lang)}</td></tr>
+              <tr><td className="muted">{t('audioClock', lang)}</td><td className="mono">{info.clock}</td></tr>
             </tbody></table>
           )}
           {info && <button type="button" className="btn" onClick={testTone}><Icon name="play" size={18} /> {t('playTestTone', lang)}</button>}

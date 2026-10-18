@@ -17,6 +17,8 @@ import { SAMPLED_KITS, SAMPLERS } from '../packs/collection';
 import type { ChainSpec, Groove, Phrase } from '../packs/collection';
 import { createPedal } from './pedals';
 import type { Pedal } from './pedals';
+import { AUDIO_MODES, readAudioMode } from './audiomode';
+import type { AudioMode } from './audiomode';
 import { compSettings, consoleOf, driveCurve, echoSeconds, glueSettings, mixOf, qFor, ROOM_SECONDS, stripOf } from '../domain/mix';
 
 /** The desk channel after a track's sound: gain, low cut, compressor, EQ, warmth, and the sends. */
@@ -134,14 +136,15 @@ export class StudioEngine {
     if (!this.started) {
       // iPhone and iPad: a context created inside the tap starts reliably; the one Tone made at page load may stay suspended.
       try {
-        Tone.setContext(new Tone.Context({ latencyHint: 'interactive', lookAhead: 0.05 }), true);
+        const m = AUDIO_MODES[readAudioMode()];
+        Tone.setContext(new Tone.Context({ latencyHint: m.latencyHint, lookAhead: m.lookAhead }), true);
       } catch { /* keep the existing context */ }
     }
     const resumed = Tone.start().catch(() => undefined);
     kickWebKit();
     this.bindUnlock();
     if (!this.started) {
-      Tone.getContext().lookAhead = 0.05;
+      Tone.getContext().lookAhead = AUDIO_MODES[readAudioMode()].lookAhead;
       this.meter = new Tone.Meter({ smoothing: 0.5 });
       this.master = new Tone.Limiter(-1);
       // The limiter's own makeup pushes peaks past its ceiling; this trim takes it back, a soft knee catches the rest.
@@ -195,6 +198,50 @@ export class StudioEngine {
       }
     };
     for (const ev of ['pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, unlock, { capture: true, passive: true });
+  }
+
+  /**
+   * Notice when this device cannot keep up: the page's timer comes back later than the look-ahead (notes get
+   * planned late), or the audio clock moves slower than real time (the sound card ran dry). Three in 15 seconds is
+   * reported once a visit, so the app can offer the stable mode.
+   */
+  private watchId: number | undefined;
+  private glitchTimes: number[] = [];
+  private glitchSent = false;
+  private glitchFns = new Set<() => void>();
+  onGlitch(fn: () => void): () => void {
+    this.glitchFns.add(fn);
+    return () => { this.glitchFns.delete(fn); };
+  }
+  private startWatch(): void {
+    this.stopWatch();
+    if (typeof window === 'undefined' || this.glitchSent) return;
+    const raw = Tone.getContext().rawContext as unknown as BaseAudioContext;
+    let wall = performance.now() + 2000; // the first two seconds load sounds; they do not count
+    let audio = raw.currentTime + 2;
+    this.watchId = window.setInterval(() => {
+      const w = performance.now();
+      const a = raw.currentTime;
+      if (w < wall) return;
+      const dw = (w - wall) / 1000;
+      const da = a - audio;
+      wall = w;
+      audio = a;
+      if (document.hidden || dw > 2 || raw.state !== 'running') return; // background tabs are slowed on purpose
+      const late = dw - 0.25 > Tone.getContext().lookAhead * 0.8;
+      const starved = dw > 0.2 && da < dw * 0.8;
+      if (!late && !starved) return;
+      this.glitchTimes = [...this.glitchTimes.filter((x) => w - x < 15000), w];
+      if (this.glitchTimes.length >= 3 && !this.glitchSent) {
+        this.glitchSent = true;
+        this.glitchFns.forEach((fn) => fn());
+        this.stopWatch();
+      }
+    }, 250);
+  }
+  private stopWatch(): void {
+    if (this.watchId !== undefined) window.clearInterval(this.watchId);
+    this.watchId = undefined;
   }
 
   /** One second of A4, for the Lab sound check. Resolves with the loudest output level seen. */
@@ -485,12 +532,16 @@ export class StudioEngine {
       const ctx = Tone.getContext();
       if (this.repeatId !== null && counter === 0 && this.running && ctx instanceof Tone.Context && ctx.clockSource === 'worker') {
         ctx.clockSource = 'timeout';
+        // Timers wander more than the worker clock: plan further ahead so notes still land on time.
+        ctx.lookAhead = Math.max(ctx.lookAhead, 0.15);
       }
     }, 600);
+    this.startWatch();
     return ok;
   }
 
   stop(): void {
+    this.stopWatch();
     const transport = Tone.getTransport();
     transport.stop();
     if (this.repeatId !== null) transport.clear(this.repeatId);
@@ -545,14 +596,15 @@ export class StudioEngine {
   async previewNote(trackId: string, midi: number): Promise<void> {
     this.ensure();
     const ch = this.channels.get(trackId);
-    if (ch?.voice.kind === 'melodic') ch.voice.play(midi, 0.4, Tone.now(), 0.8, this.song?.tuning_a4_hz ?? 440);
+    // Live playing sounds right away, never after the scheduling look-ahead.
+    if (ch?.voice.kind === 'melodic') ch.voice.play(midi, 0.4, Tone.immediate(), 0.8, this.song?.tuning_a4_hz ?? 440);
   }
 
   async previewDrum(trackId: string, soundKey: string): Promise<void> {
     this.ensure();
     const ch = this.channels.get(trackId);
     const name = ch && rowVoice(ch.instrumentKey, soundKey);
-    if (ch?.voice.kind === 'drums' && name) ch.voice.hit(name, Tone.now(), 1);
+    if (ch?.voice.kind === 'drums' && name) ch.voice.hit(name, Tone.immediate(), 1);
   }
 
   /** Hear an idea before keeping it: notes (seconds from now) on a melodic track. */
@@ -726,7 +778,7 @@ export class StudioEngine {
   }
 
   /** What the device reports about its audio timing, for the Phase 0 latency spike. */
-  latencyInfo(): { state: string; session: string; sampleRate: number; baseLatencyMs: number | null; outputLatencyMs: number | null; lookAheadMs: number } {
+  latencyInfo(): { state: string; session: string; sampleRate: number; baseLatencyMs: number | null; outputLatencyMs: number | null; lookAheadMs: number; clock: string; mode: AudioMode } {
     const raw = Tone.getContext().rawContext as AudioContext;
     return {
       state: Tone.getContext().state,
@@ -735,6 +787,8 @@ export class StudioEngine {
       baseLatencyMs: typeof raw.baseLatency === 'number' ? raw.baseLatency * 1000 : null,
       outputLatencyMs: typeof raw.outputLatency === 'number' ? raw.outputLatency * 1000 : null,
       lookAheadMs: Tone.getContext().lookAhead * 1000,
+      clock: (Tone.getContext() as Tone.Context).clockSource ?? 'worker',
+      mode: readAudioMode(),
     };
   }
 }
