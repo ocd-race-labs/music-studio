@@ -25,6 +25,14 @@ const readZoom = (): Zoom | null => {
     return z && (ZOOMS as string[]).includes(z) ? (z as Zoom) : null;
   } catch { return null; }
 };
+/* Note length is remembered per device too; one square, one note by default. */
+const LEN_KEY = 'music-studio.note-length';
+const readLen = (): number => {
+  try {
+    const n = Number(localStorage.getItem(LEN_KEY));
+    return [1, 2, 4, 8, 16].includes(n) ? n : 1;
+  } catch { return 1; }
+};
 const isTouch = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 const ZOOM_LABEL = { fit: 'zoomFit', bar: 'zoomBar', half: 'zoomHalf' } as const;
 
@@ -68,7 +76,11 @@ export default function Studio({ store, profile, lang, mode, onToggleMode, onHom
   const stepRef = useRef(-1);
   const [playing, setPlaying] = useState(false);
   const [rec, setRec] = useState(false);
-  const [noteLen, setNoteLen] = useState(2);
+  const [noteLen, setNoteLenState] = useState(readLen);
+  const setNoteLen = (n: number) => {
+    setNoteLenState(n);
+    try { localStorage.setItem(LEN_KEY, String(n)); } catch { /* lasts this visit */ }
+  };
   const [lows, setLows] = useState<Record<string, number>>({});
   const [focusBar, setFocusBar] = useState(0);
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -412,8 +424,11 @@ export default function Studio({ store, profile, lang, mode, onToggleMode, onHom
               <Icon name="headphones" size={18} /> <span className="hide-sm">{t('onlyThis', lang)}</span>
             </button>
             {clipKind === 'notes' && (
+              <div className="row" style={{ gap: 8 }}>
+              <span className="small muted hide-sm">{t('noteLength', lang)}</span>
               <div className="seg" aria-label={t('noteLength', lang)}>
                 {LENGTHS.map((l) => <button key={l.steps} type="button" aria-pressed={noteLen === l.steps} onClick={() => setNoteLen(l.steps)}>{l.label}</button>)}
+              </div>
               </div>
             )}
             {(clipKind === 'pattern' || clipKind === 'notes') && (

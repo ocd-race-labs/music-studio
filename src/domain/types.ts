@@ -32,6 +32,8 @@ export interface Profile {
   musician_styles: string[];
   producer_styles: string[];
   instruments: string[];
+  /** Place on the home screen, left to right. */
+  order?: number;
   status: 'active' | 'archived';
   settings_schema_version: 1;
   created_at: string;

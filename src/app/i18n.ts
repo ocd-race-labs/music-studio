@@ -25,6 +25,14 @@ const STRINGS = {
   lab: { en: 'Lab: device tests', es: 'Lab: pruebas del equipo' },
   addPerson: { en: 'Add a person', es: 'Agregar a alguien' },
 
+  iPlay: { en: 'Plays', es: 'Toca' },
+  instrumentsIPlay: { en: 'Instruments I play', es: 'Instrumentos que toco' },
+  startOver: { en: 'Start over on this device', es: 'Empezar de nuevo en este dispositivo' },
+  startOverHint: { en: 'Removes every profile and song saved in this browser and goes back to the first screen. Back up first if you want to keep them.', es: 'Borra todos los perfiles y canciones guardados en este navegador y vuelve a la primera pantalla. Respalda antes si quieres conservarlos.' },
+  startOverAsk: { en: 'This removes {n} profiles and all their songs from this browser. It cannot be undone.', es: 'Esto borra {n} perfiles y todas sus canciones de este navegador. No se puede deshacer.' },
+  startOverYes: { en: 'Yes, remove everything', es: 'Sí, borrar todo' },
+  cancel: { en: 'Cancel', es: 'Cancelar' },
+
   /* first run */
   setupTitle: { en: 'Set up your family studio', es: 'Arma tu estudio familiar' },
   setupBody: { en: "Add the people who'll make music here. Names and songs stay in this browser; nothing is sent anywhere.", es: 'Agrega a quienes harán música aquí. Los nombres y las canciones se quedan en este navegador; nada se envía a ningún lado.' },
@@ -267,3 +275,15 @@ const STYLES: Record<string, string> = {
   Electronic: 'Electrónica', 'R&B': 'R&B', Acoustic: 'Acústica',
 };
 export const styleName = (s: string, lang: Lang): string => (lang === 'es' ? STYLES[s] ?? s : s);
+
+/** What a person plays, shown on the home card. Stored by id. */
+export const INSTRUMENT_IDS = ['violin', 'drums', 'guitar', 'piano', 'bass', 'voice', 'beats', 'lyrics'] as const;
+const INSTRUMENT_NAMES: Record<string, { en: string; es: string }> = {
+  violin: { en: 'Violin', es: 'Violín' }, drums: { en: 'Drums', es: 'Batería' }, guitar: { en: 'Guitar', es: 'Guitarra' },
+  piano: { en: 'Piano', es: 'Piano' }, bass: { en: 'Bass', es: 'Bajo' }, voice: { en: 'Voice', es: 'Voz' },
+  beats: { en: 'Beats', es: 'Beats' }, lyrics: { en: 'Lyrics', es: 'Letras' },
+};
+export const instrumentName = (id: string, lang: Lang): string => INSTRUMENT_NAMES[id]?.[lang] ?? id;
+/** "Violin, beats, lyrics": first word capitalized, the rest in lower case, as in the mockup. */
+export const instrumentsLine = (ids: string[], lang: Lang): string =>
+  ids.map((id, i) => (i === 0 ? instrumentName(id, lang) : instrumentName(id, lang).toLowerCase())).join(', ');

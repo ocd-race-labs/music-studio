@@ -55,7 +55,7 @@ export function createMelodicVoice(voice: string): MelodicVoice {
         pitchDecay: 0.03,
         octaves: 1.5,
         oscillator: { type: 'sine' },
-        envelope: { attack: 0.002, decay: 0.9, sustain: 0.5, release: 0.5 },
+        envelope: { attack: 0.002, decay: 0.9, sustain: 0.5, release: 0.12 },
         volume: -4,
       });
       return monoVoice(s, s);

@@ -122,7 +122,8 @@ create table studio.profiles (
   producer_level           text        not null default 'starter',
   musician_styles          text[]      not null default '{}',   -- catalog style keys
   producer_styles          text[]      not null default '{}',   -- catalog style keys
-  instruments              text[]      not null default '{}',   -- catalog instrument keys
+  instruments              text[]      not null default '{}',   -- what the person plays: violin, drums, beats...
+  position                 smallint    not null default 0,      -- place on the home screen (app field: order)
   status                   text        not null default 'active',
   settings_schema_version  integer     not null default 1,
   created_at               timestamptz not null default now(),

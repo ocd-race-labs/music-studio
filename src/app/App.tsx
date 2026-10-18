@@ -90,7 +90,10 @@ export default function App() {
         onLang={changeLang}
         {...look}
         onDone={async (people) => {
-          for (const p of people) await store.saveProfile({ ...newProfile(p.name, p.preset, p.ring), ui_lang: lang });
+          const start = profiles.reduce((m, x) => Math.max(m, (x.order ?? -1) + 1), profiles.length);
+          for (const [i, p] of people.entries()) {
+            await store.saveProfile({ ...newProfile(p.name, p.preset, p.ring), ui_lang: lang, instruments: p.instruments, order: start + i });
+          }
           await reloadProfiles();
           setRoute({ name: 'home' });
         }}
@@ -117,6 +120,11 @@ export default function App() {
           appearance={appearance}
           mode={mode}
           onAppearance={setAppearance}
+          onStartOver={async () => {
+            await store.clearAll();
+            setProfiles([]);
+            setRoute({ name: 'setup' });
+          }}
           onSwitch={(id) => setRoute({ name: 'settings', profileId: id })}
           onSaved={reloadProfiles}
           onHome={() => setRoute({ name: 'home' })}

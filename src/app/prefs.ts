@@ -67,17 +67,17 @@ export const GROUND: Record<ThemePreset, Record<Mode, string>> = {
 };
 
 /** Small previews of each palette for the home cards and settings. */
-export const PREVIEW: Record<ThemePreset, Record<Mode, { ground: string; panel: string; ink: string; ink2: string; line: string; bars: string[][] }>> = {
+export const PREVIEW: Record<ThemePreset, Record<Mode, { ground: string; panel: string; ink: string; ink2: string; line: string; main: string; mainInk: string; bars: string[][] }>> = {
   graphite: {
-    dark: { ground: '#0E0E0F', panel: '#161617', ink: '#F2F2F2', ink2: '#A6A6AB', line: '#2A2A2D', bars: [['#3A3A3E', '#3A3A3E'], ['#55555B', '#55555B'], ['#74747A', '#F2F2F2']] },
-    light: { ground: '#E8E8EA', panel: '#FFFFFF', ink: '#111113', ink2: '#55555B', line: '#D4D4D8', bars: [['#C4C4C8', '#C4C4C8'], ['#A1A1AA', '#A1A1AA'], ['#71717A', '#111113']] },
+    dark: { ground: '#0E0E0F', panel: '#161617', ink: '#F2F2F2', ink2: '#A6A6AB', line: '#2A2A2D', main: '#F2F2F2', mainInk: '#0E0E0F', bars: [['#3A3A3E', '#3A3A3E'], ['#55555B', '#55555B'], ['#74747A', '#F2F2F2']] },
+    light: { ground: '#E8E8EA', panel: '#FFFFFF', ink: '#111113', ink2: '#55555B', line: '#D4D4D8', main: '#111113', mainInk: '#FFFFFF', bars: [['#C4C4C8', '#C4C4C8'], ['#A1A1AA', '#A1A1AA'], ['#71717A', '#111113']] },
   },
   'midnight-jewel': {
-    dark: { ground: '#120F1F', panel: '#1A1630', ink: '#F4F1FF', ink2: '#B9B2D9', line: '#342C55', bars: [['#2DD4BF', '#2DD4BF'], ['#A78BFA', '#A78BFA'], ['#F0509E', '#38BDF8']] },
-    light: { ground: '#ECE8FA', panel: '#FFFFFF', ink: '#1A1630', ink2: '#4B4470', line: '#D9D2F2', bars: [['#0F8C7E', '#0F8C7E'], ['#7C5CE0', '#7C5CE0'], ['#BE185D', '#0284C7']] },
+    dark: { ground: '#120F1F', panel: '#1A1630', ink: '#F4F1FF', ink2: '#B9B2D9', line: '#342C55', main: '#2DD4BF', mainInk: '#0C2A27', bars: [['#2DD4BF', '#2DD4BF'], ['#A78BFA', '#A78BFA'], ['#F0509E', '#38BDF8']] },
+    light: { ground: '#ECE8FA', panel: '#FFFFFF', ink: '#1A1630', ink2: '#4B4470', line: '#D9D2F2', main: '#0F766E', mainInk: '#FFFFFF', bars: [['#0F8C7E', '#0F8C7E'], ['#7C5CE0', '#7C5CE0'], ['#BE185D', '#0284C7']] },
   },
   daylight: {
-    light: { ground: '#E9EBEF', panel: '#FFFFFF', ink: '#15171C', ink2: '#4A4F5A', line: '#D5D8DE', bars: [['#C9CDD4', '#C9CDD4'], ['#C2410C', '#AEB3BC'], ['#AEB3BC', '#C9CDD4']] },
-    dark: { ground: '#141518', panel: '#1C1E22', ink: '#F3F4F6', ink2: '#A9AEB8', line: '#33363D', bars: [['#33363D', '#33363D'], ['#F97316', '#5B6170'], ['#5B6170', '#33363D']] },
+    light: { ground: '#E9EBEF', panel: '#FFFFFF', ink: '#15171C', ink2: '#4A4F5A', line: '#D5D8DE', main: '#C2410C', mainInk: '#FFFFFF', bars: [['#C9CDD4', '#C9CDD4'], ['#C2410C', '#AEB3BC'], ['#AEB3BC', '#C9CDD4']] },
+    dark: { ground: '#141518', panel: '#1C1E22', ink: '#F3F4F6', ink2: '#A9AEB8', line: '#33363D', main: '#F97316', mainInk: '#1A0D04', bars: [['#33363D', '#33363D'], ['#F97316', '#5B6170'], ['#5B6170', '#33363D']] },
   },
 };

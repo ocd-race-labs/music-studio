@@ -2,6 +2,7 @@
 
 import { newId, now } from '../domain/factory';
 import type { Idea, Profile, Recording, Song, SongVersion } from '../domain/types';
+import { byOrder } from './store';
 import type { SongStore } from './store';
 
 export function memoryStore(): SongStore {
@@ -13,7 +14,8 @@ export function memoryStore(): SongStore {
   const audio = new Map<string, Blob>();
   const meta = new Map<string, unknown>();
   return {
-    async listProfiles() { return [...profiles.values()]; },
+    async listProfiles() { return byOrder([...profiles.values()]); },
+    async clearAll() { for (const m of [profiles, songs, versions, ideas, recordings, audio, meta]) m.clear(); },
     async saveProfile(p) { profiles.set(p.id, p); },
     async listSongs(profileId) {
       return [...songs.values()].filter((s) => s.owner_profile_id === profileId && s.status === 'active')

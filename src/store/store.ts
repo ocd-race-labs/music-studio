@@ -8,6 +8,8 @@ import type { Idea, Profile, Recording, Song, SongVersion } from '../domain/type
 
 export interface SongStore {
   listProfiles(): Promise<Profile[]>;
+  /** Start over on this device: profiles, songs, versions, ideas and recordings are removed. */
+  clearAll(): Promise<void>;
   saveProfile(p: Profile): Promise<void>;
   listSongs(profileId: string): Promise<Song[]>;
   getSong(id: string): Promise<Song | undefined>;
@@ -34,6 +36,10 @@ interface StudioDB extends DBSchema {
   meta: { key: string; value: unknown };
 }
 
+/** Home order: the order people were set up in, then creation time. */
+export const byOrder = (list: Profile[]): Profile[] =>
+  [...list].sort((a, b) => (a.order ?? 1e9) - (b.order ?? 1e9) || a.created_at.localeCompare(b.created_at));
+
 export async function openBrowserStore(name = 'music-studio'): Promise<SongStore> {
   const db: IDBPDatabase<StudioDB> = await openDB<StudioDB>(name, 1, {
     upgrade(d) {
@@ -49,7 +55,10 @@ export async function openBrowserStore(name = 'music-studio'): Promise<SongStore
 
   return {
     async listProfiles() {
-      return (await db.getAll('profiles')).filter((p) => p.status === 'active').sort((a, b) => a.created_at.localeCompare(b.created_at));
+      return byOrder((await db.getAll('profiles')).filter((p) => p.status === 'active'));
+    },
+    async clearAll() {
+      for (const name of ['profiles', 'songs', 'song_versions', 'ideas', 'recordings', 'audio', 'meta'] as const) await db.clear(name);
     },
     async saveProfile(p) {
       await db.put('profiles', { ...p, updated_at: now() });

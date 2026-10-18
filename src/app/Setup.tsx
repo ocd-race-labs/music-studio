@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Lang, ThemePreset } from '../domain/types';
-import { t, themeName } from './i18n';
+import { INSTRUMENT_IDS, instrumentName, t, themeName } from './i18n';
 import type { Mode } from './prefs';
 import { LangSwitch, ModeSwitch } from './ui';
 
@@ -8,16 +8,24 @@ export interface Person {
   name: string;
   preset: ThemePreset;
   ring: string;
+  instruments: string[];
 }
 
 /* Swatches show each palette's character; the studio then uses its light or dark version. */
 const THEMES: { id: ThemePreset; colors: string[] }[] = [
-  { id: 'graphite', colors: ['#0E0E0F', '#55555B', '#F2F2F2'] },
   { id: 'midnight-jewel', colors: ['#120F1F', '#2DD4BF', '#F0509E', '#A78BFA'] },
+  { id: 'graphite', colors: ['#0E0E0F', '#55555B', '#F2F2F2'] },
   { id: 'daylight', colors: ['#F3F4F6', '#C2410C', '#AEB3BC'] },
 ];
 
 const RING: Record<ThemePreset, string> = { graphite: '#74747A', 'midnight-jewel': '#F0509E', daylight: '#C2410C' };
+
+/* The two people from the mockups, in home order: the young musician first, then the producer.
+   Only the look and instruments are preset; names are typed here and stay on this device. */
+const PRESETS: Person[] = [
+  { name: '', preset: 'midnight-jewel', ring: RING['midnight-jewel'], instruments: ['violin', 'beats', 'lyrics'] },
+  { name: '', preset: 'graphite', ring: RING.graphite, instruments: ['drums', 'guitar'] },
+];
 
 /** First run: the family's profiles are created here and stored only on this device. */
 export default function Setup({ lang, onLang, mode, onToggleMode, onDone }: {
@@ -27,14 +35,13 @@ export default function Setup({ lang, onLang, mode, onToggleMode, onDone }: {
   onToggleMode: () => void;
   onDone: (people: Person[]) => void;
 }) {
-  const [people, setPeople] = useState<Person[]>([
-    { name: '', preset: 'graphite', ring: RING.graphite },
-    { name: '', preset: 'midnight-jewel', ring: RING['midnight-jewel'] },
-  ]);
+  const [people, setPeople] = useState<Person[]>(PRESETS);
   const ready = people.some((p) => p.name.trim());
 
   const update = (i: number, patch: Partial<Person>) =>
     setPeople((ps) => ps.map((p, j) => (j === i ? { ...p, ...patch, ring: patch.preset ? RING[patch.preset] : p.ring } : p)));
+  const toggleInstrument = (i: number, id: string) =>
+    update(i, { instruments: people[i].instruments.includes(id) ? people[i].instruments.filter((x) => x !== id) : [...people[i].instruments, id] });
 
   return (
     <main className="home">
@@ -60,6 +67,12 @@ export default function Setup({ lang, onLang, mode, onToggleMode, onDone }: {
                     {th.colors.map((c) => <span key={c} className="swatch" style={{ background: c, border: '1px solid var(--line)' }} />)}
                   </span>
                 </button>
+              ))}
+            </div>
+            <span className="lbl">{t('iPlay', lang)}</span>
+            <div className="row wrap" style={{ gap: 6 }}>
+              {INSTRUMENT_IDS.map((id) => (
+                <button key={id} type="button" className="chip" aria-pressed={p.instruments.includes(id)} onClick={() => toggleInstrument(i, id)}>{instrumentName(id, lang)}</button>
               ))}
             </div>
           </section>

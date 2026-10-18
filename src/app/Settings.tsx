@@ -3,7 +3,7 @@ import { exportSongFile, parseSongFile } from '../domain/files';
 import type { Hat, Lang, Level, Profile, Song, ThemePreset } from '../domain/types';
 import { requestPersistence } from '../store/store';
 import type { SongStore } from '../store/store';
-import { levelName, styleName, t, themeName, tn } from './i18n';
+import { INSTRUMENT_IDS, instrumentName, levelName, styleName, t, themeName, tn } from './i18n';
 import { PREVIEW } from './prefs';
 import type { Appearance, Mode } from './prefs';
 import { Avatar, downloadText, Icon, pickFile, useToast } from './ui';
@@ -23,7 +23,7 @@ function Seg<T extends string>({ value, options, onChange, label }: { value: T; 
   );
 }
 
-export default function Settings({ store, profile, profiles, lang, onLang, appearance, mode, onAppearance, onSwitch, onSaved, onHome, onStudio }: {
+export default function Settings({ store, profile, profiles, lang, onLang, appearance, mode, onAppearance, onStartOver, onSwitch, onSaved, onHome, onStudio }: {
   store: SongStore;
   profile: Profile;
   profiles: Profile[];
@@ -32,6 +32,7 @@ export default function Settings({ store, profile, profiles, lang, onLang, appea
   appearance: Appearance;
   mode: Mode;
   onAppearance: (a: Appearance) => void;
+  onStartOver: () => void;
   onSwitch: (id: string) => void;
   onSaved: () => void;
   onHome: () => void;
@@ -40,6 +41,7 @@ export default function Settings({ store, profile, profiles, lang, onLang, appea
   const [p, setP] = useState<Profile>(profile);
   const [storage, setStorage] = useState<{ persisted: boolean; usage?: number; quota?: number } | null>(null);
   const [toast, showToast] = useToast();
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => setP(profile), [profile]);
   useEffect(() => { requestPersistence().then(setStorage).catch(() => setStorage({ persisted: false })); }, []);
@@ -112,6 +114,13 @@ export default function Settings({ store, profile, profiles, lang, onLang, appea
             {RINGS.map((c) => (
               <button key={c} type="button" aria-label={t('ringN', lang, { color: c })} aria-pressed={p.avatar.ring === c} onClick={() => save({ ...p, avatar: { ...p.avatar, ring: c } })}
                 style={{ width: 44, height: 44, borderRadius: 999, background: c, border: p.avatar.ring === c ? '3px solid var(--ink)' : '3px solid transparent' }} />
+            ))}
+          </div>
+          <span className="lbl">{t('instrumentsIPlay', lang)}</span>
+          <div className="row wrap" style={{ gap: 6 }}>
+            {INSTRUMENT_IDS.map((id) => (
+              <button key={id} type="button" className="chip" aria-pressed={p.instruments.includes(id)}
+                onClick={() => save({ ...p, instruments: toggle(p.instruments, id) })}>{instrumentName(id, lang)}</button>
             ))}
           </div>
         </section>
@@ -188,6 +197,22 @@ export default function Settings({ store, profile, profiles, lang, onLang, appea
             <div className="row wrap">
               <button type="button" className="btn" onClick={backup}><Icon name="download" size={18} /> {t('backupAll', lang)}</button>
               <button type="button" className="btn ghost" onClick={restore}><Icon name="upload" size={18} /> {t('restoreBackup', lang)}</button>
+            </div>
+            <div className="stack" style={{ gap: 8, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+              {!confirmReset ? (
+                <>
+                  <button type="button" className="btn ghost" style={{ alignSelf: 'flex-start' }} onClick={() => setConfirmReset(true)}>{t('startOver', lang)}</button>
+                  <span className="small muted">{t('startOverHint', lang)}</span>
+                </>
+              ) : (
+                <>
+                  <span className="warn small" role="alert">{t('startOverAsk', lang, { n: profiles.length })}</span>
+                  <div className="row wrap">
+                    <button type="button" className="btn danger" onClick={onStartOver}>{t('startOverYes', lang)}</button>
+                    <button type="button" className="btn" onClick={() => setConfirmReset(false)}>{t('cancel', lang)}</button>
+                  </div>
+                </>
+              )}
             </div>
           </section>
         </div>

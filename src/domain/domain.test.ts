@@ -157,4 +157,21 @@ describe('browser song store', () => {
     await store.setMeta('last_profile', me.id);
     expect(await store.getMeta('last_profile')).toBe(me.id);
   });
+
+  it('keeps the home order people were set up in, and can start over', async () => {
+    const store = await openBrowserStore(`test-${Math.random()}`);
+    const second = { ...newProfile('Second', 'graphite', '#74747A'), order: 1, created_at: '2026-01-01T00:00:00.000Z' };
+    const first = { ...newProfile('First', 'midnight-jewel', '#F0509E'), order: 0, created_at: '2026-01-02T00:00:00.000Z' };
+    await store.saveProfile(second);
+    await store.saveProfile(first);
+    expect((await store.listProfiles()).map((p) => p.name)).toEqual(['First', 'Second']);
+    await store.saveSong(newSong(first.id, 'Mine'));
+    await store.clearAll();
+    expect(await store.listProfiles()).toHaveLength(0);
+    expect(await store.listSongs(first.id)).toHaveLength(0);
+  });
+
+  it('names the tracks of a new song in Spanish when asked', () => {
+    expect(newSong(me.id, 'Canción', 2, 'es').tracks.map((t) => t.name)).toEqual(['Batería', '808', 'Acordes', 'Teclado', 'Melodía', 'Cuerdas']);
+  });
 });

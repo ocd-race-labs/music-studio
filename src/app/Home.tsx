@@ -1,6 +1,6 @@
 import type { Lang, Profile } from '../domain/types';
 import { GUEST_ID, guestProfile } from './guest';
-import { t, themeName } from './i18n';
+import { instrumentsLine, t, themeName } from './i18n';
 import { PREVIEW } from './prefs';
 import type { Mode } from './prefs';
 import { Avatar, Icon, LangSwitch, ModeSwitch } from './ui';
@@ -16,9 +16,10 @@ function ProfileCard({ profile, lang, mode, guest, onOpen }: { profile: Profile;
       </div>
       <div className="info" style={{ width: '100%' }}>
         <div className="row" style={{ gap: 14 }}>
-          <Avatar profile={profile} size={52} />
+          <Avatar profile={profile} size={52} colors={{ bg: c.main, fg: c.mainInk }} />
           <div className="stack" style={{ gap: 2 }}>
             <span style={{ fontSize: 22, fontWeight: 600 }}>{guest ? t('guest', lang) : profile.name}</span>
+            {!guest && profile.instruments.length > 0 && <span style={{ fontSize: 15 }}>{instrumentsLine(profile.instruments, lang)}</span>}
             <span style={{ fontSize: 14, color: c.ink2 }}>{guest ? t('tryStudio', lang) : `${themeName(profile.theme.preset, lang)} · ${t(profile.default_hat, lang)}`}</span>
           </div>
         </div>

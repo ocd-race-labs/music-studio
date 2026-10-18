@@ -240,6 +240,7 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 /* Only this track: the other tracks fade in the list while it is on. */
 .btn.alone[aria-pressed='true'] { background: var(--main); color: var(--main-ink); border-color: var(--main); }
 .tracks .quiet { opacity: 0.45; }
+.btn.danger { background: var(--highlight); color: var(--highlight-ink); border-color: var(--highlight); }
 .btn.reset { width: 36px; min-height: 36px; height: 36px; color: var(--ink-2); }
 .btn.reset:disabled { opacity: 0.35; }
 /* Full screen: tracks become a strip on top, the side panel steps away, the grid gets the width. */
