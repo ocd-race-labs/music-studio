@@ -14,7 +14,7 @@ import type { Zoom } from './zoom';
 import { CLAUDE_INSTRUCTIONS, IdeasTray, MixerPanel, TheoryPanel } from './panels';
 import { namingFor, t, tn } from './i18n';
 import type { Mode } from './prefs';
-import { Avatar, downloadText, Icon, Modal, ModeSwitch, pickFile, slug, useToast, useWidth } from './ui';
+import { Avatar, downloadText, Icon, LangToggle, Modal, ModeSwitch, pickFile, slug, useToast, useWidth } from './ui';
 import type { Lang } from '../domain/types';
 
 /* Zoom is remembered per device: the iPhone, the iPad and the laptop each keep their own. */
@@ -52,10 +52,11 @@ const LENGTHS = [
   { steps: 16, label: '1' },
 ];
 
-export default function Studio({ store, profile, lang, mode, onToggleMode, onHome, onSettings }: {
+export default function Studio({ store, profile, lang, onLang, mode, onToggleMode, onHome, onSettings }: {
   store: SongStore;
   profile: Profile;
   lang: Lang;
+  onLang: (l: Lang) => void;
   mode: Mode;
   onToggleMode: () => void;
   onHome: () => void;
@@ -374,6 +375,7 @@ export default function Studio({ store, profile, lang, mode, onToggleMode, onHom
         <span className="small muted hide-sm" aria-live="polite" style={{ minWidth: 70 }}>{saveState === 'saving' ? t('saving', lang) : t('saved', lang)}</span>
         </div>
         <div className="tb-group tb-right">
+        <LangToggle lang={lang} onLang={onLang} />
         <ModeSwitch mode={mode} onToggle={onToggleMode} lang={lang} />
         <div className="seg" aria-label={t('hat', lang)}>
           <button type="button" aria-pressed={hat === 'musician'} onClick={() => setHat('musician')}>{t('musician', lang)}</button>

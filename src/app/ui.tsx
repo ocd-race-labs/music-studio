@@ -39,6 +39,16 @@ export function ModeSwitch({ mode, onToggle, lang }: { mode: 'light' | 'dark'; o
   );
 }
 
+/** One tap between English and Spanish; shows the language in use. */
+export function LangToggle({ lang, onLang }: { lang: Lang; onLang: (l: Lang) => void }) {
+  const label = t('switchLanguage', lang);
+  return (
+    <button type="button" className="btn icon lang-toggle" onClick={() => onLang(lang === 'es' ? 'en' : 'es')} aria-label={label} title={label}>
+      {lang.toUpperCase()}
+    </button>
+  );
+}
+
 /** English or Spanish for the whole app on this device. */
 export function LangSwitch({ lang, onLang }: { lang: Lang; onLang: (l: Lang) => void }) {
   return (

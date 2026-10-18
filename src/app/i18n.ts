@@ -12,6 +12,9 @@ const STRINGS = {
   interfaceLanguage: { en: 'Interface language', es: 'Idioma de la app' },
   switchToDark: { en: 'Switch to dark', es: 'Cambiar a oscuro' },
   switchToLight: { en: 'Switch to light', es: 'Cambiar a claro' },
+  updateReady: { en: 'A new version of Music Studio is ready.', es: 'Hay una versión nueva de Music Studio.' },
+  updateNow: { en: 'Update', es: 'Actualizar' },
+  switchLanguage: { en: 'Cambiar a español', es: 'Switch to English' },
 
   /* home */
   whoPlaying: { en: "Who's making music today?", es: '¿Quién hace música hoy?' },
