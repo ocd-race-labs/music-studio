@@ -124,7 +124,7 @@ create table studio.profiles (
   producer_styles          text[]      not null default '{}',   -- catalog style keys
   instruments              text[]      not null default '{}',   -- what the person plays: violin, drums, beats...
   position                 smallint    not null default 0,      -- place on the home screen (app field: order)
-  starred                  jsonb       not null default '[]',   -- custom kit: [{"key": "instrument.violin", "role": "lead"}]
+  starred                  jsonb       not null default '[]',   -- Mi kit: [{"key": "instrument.violin", "role": "lead", "sound"?: {...}}]
   last_kit                 text,                                -- kit new songs start with: a catalog kit key or 'custom'
   classroom                boolean     not null default false,  -- shows Music Studio Classroom (video lessons, music-only helper)
   status                   text        not null default 'active',
@@ -164,6 +164,8 @@ create table studio.songs (
   producer_style_key  text,                                        -- catalog style key, unpinned
   kit_key             text,                                        -- genre kit: catalog kit key, unpinned, or 'custom'
   length_ticks        bigint        not null default 7680,         -- song length; 3840 per bar of 4/4, up to 96 bars
+  sketch              jsonb,                                       -- the idea: form, chords per bar, grooves, idea instruments
+  mix                 jsonb,                                       -- the producer's desk: console, glue, master tone, ceiling, returns
   status              text          not null default 'active',
   origin              text          not null default 'person',
   schema_version      integer       not null default 1,
@@ -183,6 +185,8 @@ create table studio.songs (
   constraint songs_lyrics_lang   check (lyrics_lang in ('en', 'es')),
   constraint songs_kit_key       check (kit_key is null or kit_key = 'custom' or kit_key ~ '^kit\.[a-z0-9-]+$'),
   constraint songs_length        check (length_ticks > 0 and length_ticks <= 368640),
+  constraint songs_sketch_object check (sketch is null or jsonb_typeof(sketch) = 'object'),
+  constraint songs_mix_object    check (mix is null or jsonb_typeof(mix) = 'object'),
   constraint songs_status        check (status in ('active', 'archived')),
   constraint songs_origin        check (origin in ('person', 'claude', 'pack', 'system'))
 );
@@ -233,7 +237,10 @@ create table studio.tracks (
   pan                 numeric(4, 3) not null default 0,     -- -1 left, 0 centre, 1 right
   fx_chain            jsonb         not null default '{"routing": "series", "slots": []}',
   fx_schema_version   integer       not null default 1,
-  sound               jsonb,                               -- copy of a saved Colección sound (id, name, chain); runs before fx_chain
+  sound               jsonb,                               -- the musician's saved sound (id, name, chain); runs before fx_chain
+  producer            jsonb,                               -- the producer's version: {"instrument": {key, version}, "sound"?, "by", "updated_at"}
+  voice_from          text          not null default 'musician',  -- which sound plays; both are kept
+  strip               jsonb,                               -- the desk channel: gain, low cut, compressor, EQ, warmth, sends; null = flat
   origin              text          not null default 'person',
   created_by          uuid          references studio.profiles (id) on delete set null,
   updated_by          uuid          references studio.profiles (id) on delete set null,
@@ -253,6 +260,9 @@ create table studio.tracks (
   constraint tracks_pan         check (pan between -1 and 1),
   constraint tracks_fx_object   check (jsonb_typeof(fx_chain) = 'object'),
   constraint tracks_sound_object check (sound is null or jsonb_typeof(sound) = 'object'),
+  constraint tracks_producer_object check (producer is null or jsonb_typeof(producer) = 'object'),
+  constraint tracks_voice_from  check (voice_from in ('musician', 'producer') and (voice_from = 'musician' or producer is not null)),
+  constraint tracks_strip_object check (strip is null or jsonb_typeof(strip) = 'object'),
   constraint tracks_origin      check (origin in ('person', 'claude', 'pack', 'system'))
 );
 
