@@ -310,7 +310,7 @@ const STRINGS = {
   testToneSilent: { en: 'The app made no sound (audio {state}). Tap the button again; if it repeats, tell Claude this line.', es: 'La app no produjo sonido (audio {state}). Toca el botón otra vez; si se repite, cuéntale esta línea a Claude.' },
   storageLabel: { en: 'Storage:', es: 'Almacenamiento:' },
   storageKeptShort: { en: 'kept by the browser', es: 'el navegador lo guarda' },
-  storageMayClearShort: { en: 'may be cleared; add to Home Screen on the iPad', es: 'podría borrarse; agrégala a la pantalla de inicio en el iPad' },
+  storageMayClearShort: { en: 'may be cleared; add the app to the Home Screen on this iPhone or iPad', es: 'podría borrarse; agrega la app a la pantalla de inicio de este iPhone o iPad' },
   labTap: { en: '2. Tap along (latency feel)', es: '2. Toca al ritmo (sensación de latencia)' },
   labTapHint: { en: 'Press start, then tap the big pad on every click, twelve times. Positive means you hear the click late or tap late.', es: 'Toca empezar y luego golpea el pad grande con cada clic, doce veces. Positivo significa que oyes el clic tarde o que golpeas tarde.' },
   start: { en: 'Start', es: 'Empezar' },
