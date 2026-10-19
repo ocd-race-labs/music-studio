@@ -248,9 +248,62 @@ const kindIn = (text: string): SectionKind | null => KIND_WORDS.find(([, w]) => 
 const word = (lang: Lang, en: string, es: string) => (lang === 'es' ? es : en);
 const kindWord = (k: SectionKind, lang: Lang) => kindLabel(k, lang).toLowerCase();
 
+const NUMBER_WORDS: Record<string, number> = {
+  uno: 1, una: 1, one: 1, dos: 2, two: 2, tres: 3, three: 3, cuatro: 4, four: 4, cinco: 5, five: 5, seis: 6, six: 6, siete: 7, seven: 7,
+  ocho: 8, eight: 8, diez: 10, ten: 10, doce: 12, twelve: 12, dieciseis: 16, sixteen: 16, veinte: 20, twenty: 20, veinticuatro: 24, treinta: 30,
+};
+const DEFAULT_BARS: Partial<Record<SectionKind, number>> = { intro: 4, verse: 8, prechorus: 4, chorus: 8, bridge: 8, solo: 8, break: 4, outro: 4 };
+const NEGATION = /\b(sin|nada mas|ni|ningun|ninguna|no mas|without|no more|nothing more|no)\b/;
+const kindOfWord = (w: string): SectionKind | null => KIND_WORDS.find(([, words]) => words.some((x) => norm(x) === w))?.[0] ?? null;
+const numberAt = (tokens: string[], i: number): number | null => {
+  const t = tokens[i];
+  if (t === undefined) return null;
+  if (/^\d{1,2}$/.test(t)) return Number(t);
+  return NUMBER_WORDS[t] ?? null;
+};
+
+/**
+ * Parts listed in order ("intro de 4, verso de 8, coro de 4, puente de 4 y al outro"): the form is exactly that list.
+ * A part named after "sin" or "nada más de" is left out; a part with no number gets its usual length. Needs three or
+ * more parts, so a single change ("intro más largo") is read as a change, not as a whole form.
+ */
+export function formFromList(raw: string): { parts: FormPart[]; guessed: SectionKind[] } | null {
+  const parts: FormPart[] = [];
+  const guessed: SectionKind[] = [];
+  for (const clause of raw.split(/[,.;:\n]+|\s+(?:y luego|luego|despues|then|and then)\s+/i)) {
+    const tokens = norm(clause).split(' ').filter(Boolean);
+    let negated = false;
+    for (let i = 0; i < tokens.length; i++) {
+      const two = `${tokens[i]} ${tokens[i + 1] ?? ''}`.trim();
+      if (NEGATION.test(two) && (/^(nada mas|no mas|no more|nothing more)$/.test(two) || NEGATION.test(tokens[i]))) negated = true;
+      const kind = kindOfWord(tokens[i]) ?? (two === 'pre coro' ? 'prechorus' : null);
+      if (!kind || negated) continue;
+      // "verso de 8", "verso 8", "verso de ocho compases", or "8 compases de verso" just before it.
+      let bars = numberAt(tokens, i + 1) ?? (tokens[i + 1] === 'de' || tokens[i + 1] === 'of' ? numberAt(tokens, i + 2) : null);
+      if (bars === null && (tokens[i - 1] === 'de' || tokens[i - 1] === 'of') && /^(compases|bars|compas|bar)$/.test(tokens[i - 2] ?? '')) bars = numberAt(tokens, i - 3);
+      if (bars === null) guessed.push(kind);
+      parts.push({ kind, bars: Math.max(1, Math.min(32, bars ?? DEFAULT_BARS[kind] ?? 8)), letter: '' });
+    }
+  }
+  if (parts.length < 3) return null;
+  // The same kind at the same length is the same part played again (its chords repeat); otherwise a new one.
+  const seen = new Map<string, string>();
+  parts.forEach((p, i) => { const key = `${p.kind}:${p.bars}`; p.letter = seen.get(key) ?? `w${i}`; seen.set(key, p.letter); });
+  return { parts, guessed };
+}
+
 /** "Sin puente", "intro más largo", "versos de 16", "con solo", "más corta". */
 export function refineForm(raw: string, base: FormPick, lang: Lang): Refined<FormPick> {
   const text = norm(raw);
+  const listed = formFromList(raw);
+  if (listed) {
+    const total = listed.parts.reduce((n, p) => n + p.bars, 0);
+    const kept = total > MAX_BARS ? listed.parts.slice(0, listed.parts.findIndex((_, i) => listed.parts.slice(0, i + 1).reduce((n, p) => n + p.bars, 0) > MAX_BARS)) : listed.parts;
+    const said = kept.map((p) => `${kindWord(p.kind, lang)} ${p.bars}`);
+    const guessed = [...new Set(listed.guessed)].map((k) => kindWord(k, lang));
+    const understood = [said.join(', '), ...(guessed.length ? [word(lang, `${guessed.join(' and ')} at the usual length`, `${guessed.join(' y ')} con su largo habitual`)] : [])];
+    return { pick: { ...base, parts: kept, title: tx('Your version', 'Tu versión'), note: tx(understood.join('; '), understood.join('; ')) }, understood, missed: false };
+  }
   let parts = base.parts.map((p) => ({ ...p }));
   const understood: string[] = [];
   const without = text.match(/\bsin (el |la |los |las )?(intro|introduccion|puente|solo|quiebre|break|outro|final|precoro)\b|\bno (intro|bridge|solo|break|outro)\b|\bwithout (an |a |the )?(intro|bridge|solo|break|outro)\b/);

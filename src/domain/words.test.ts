@@ -51,6 +51,21 @@ describe('idea from words', () => {
     expect(refineForm('qwerty', base, 'es').missed).toBe(true);
   });
 
+  it('takes a form listed part by part exactly as written', () => {
+    const base = formPicks(ideaPicks('boom bap').picks[0])[0];
+    const shape = (text: string) => refineForm(text, base, 'es').pick!.parts.map((p) => `${p.kind} ${p.bars}`);
+    const want = ['intro 4', 'verse 8', 'chorus 4', 'verse 4', 'bridge 4', 'outro 4'];
+    expect(shape('intro de 4, verso de 8, coro de 4, verso de 4, puente de 4, y nada más de coros y versos, para pasar al outro directo.')).toEqual(want);
+    expect(shape('intro 4 compases, verso 8, coro 4, verso 4, puente 4 y luego el outro')).toEqual(want);
+    expect(shape('intro de cuatro, verso de ocho, coro de cuatro, verso de cuatro, puente de cuatro, outro de cuatro')).toEqual(want);
+    expect(shape('intro 8, verso 16, coro 8, verso 16, coro 8, outro 4')).toEqual(['intro 8', 'verse 16', 'chorus 8', 'verse 16', 'chorus 8', 'outro 4']);
+    const r = refineForm('intro de 4, verso de 8, coro de 4, verso de 4, puente de 4, y nada más de coros y versos, para pasar al outro directo.', base, 'es');
+    expect(r.understood.join(' ')).toContain('outro con su largo habitual');
+    const repeated = refineForm('intro 8, verso 16, coro 8, verso 16, coro 8, outro 4', base, 'es').pick!.parts;
+    expect(repeated[3].letter).toBe(repeated[1].letter);
+    expect(refineForm('intro más largo y sin puente', base, 'es').pick!.parts.length).toBe(base.parts.length);
+  });
+
   it('reads free text for chords, instruments and groove', () => {
     const idea = ideaPicks('trip hop').picks[0];
     expect(refineChords('verso i VI III VII', chordPicks(idea)[0], 'es').pick!.verse).toEqual([0, 5, 2, 6]);
