@@ -18,7 +18,7 @@ export function soundName(instrument: Track['instrument'], sound: Track['sound']
   return entryOf(instrument.key)?.title[lang] ?? catalogTitle(instrument, lang);
 }
 
-export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom, onNew, onBeat, onImport, onExport, onSaveVersion, onRestore, onVoice }: {
+export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom, onNew, onBeat, onWords, onImport, onExport, onSaveVersion, onRestore, onVoice }: {
   song: Song;
   songs: Song[];
   versions: SongVersion[];
@@ -27,6 +27,7 @@ export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom,
   onRoom: (room: Room) => void;
   onNew: () => void;
   onBeat: () => void;
+  onWords: () => void;
   onImport: () => void;
   onExport: () => void;
   onSaveVersion: () => void;
@@ -45,6 +46,7 @@ export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom,
           <button type="button" className="btn primary" onClick={onNew}><Icon name="plus" size={18} /> {t('newSong', lang)}</button>
         </div>
         <div className="row wrap" style={{ gap: 8 }}>
+          <button type="button" className="btn small-btn words-btn" onClick={onWords} title={t('iwOpenHint', lang)}><Icon name="bulb" size={16} /> {t('iwOpen', lang)}</button>
           <button type="button" className="btn small-btn beat-btn" onClick={onBeat} title={t('beatOpenHint', lang)}><Icon name="drumpad" size={16} /> {t('beatOpen', lang)}</button>
           <button type="button" className="btn small-btn" onClick={onImport}><Icon name="upload" size={16} /> {t('importSong', lang)}</button>
         </div>

@@ -259,6 +259,22 @@ function barHits(groove: Groove, feel: Feel, barInPlace: number, bars: number, f
   return hits;
 }
 
+/**
+ * One bar of a style's groove as the idea would play it at a given feel, reduced to three lanes to draw it small:
+ * low (kick), backbeat (snare, clap, rim) and cymbals (hats, ride). Sixteen steps each, true where something hits.
+ */
+export function grooveGrid(group: string, feel: Feel | null): { low: boolean[]; back: boolean[]; top: boolean[] } {
+  const lanes = { low: Array(16).fill(false) as boolean[], back: Array(16).fill(false) as boolean[], top: Array(16).fill(false) as boolean[] };
+  const groove = drumsOf(group)?.groove;
+  if (!groove || !feel) return lanes;
+  for (const h of barHits(groove, feel, 0, 4, false)) {
+    if (h.voice === 'kick') lanes.low[h.step] = true;
+    else if (['snare', 'clap', 'rim'].includes(h.voice)) lanes.back[h.step] = true;
+    else if (['hatClosed', 'hatOpen', 'ride'].includes(h.voice)) lanes.top[h.step] = true;
+  }
+  return lanes;
+}
+
 const rootMidi = (song: Song, degree: number): number | null => {
   const triad = diatonicTriads({ tonic: song.key_tonic, mode: song.key_mode })[degree];
   if (!triad) return null;
