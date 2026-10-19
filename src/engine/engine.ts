@@ -73,6 +73,8 @@ interface TrackChannel {
   voice: Voice;
   /** The pedal chain, in the song's order; rebuilt when pedals are added, removed or moved. */
   pedals: { key: string; pedal: Pedal | null }[];
+  /** Where the chain meets the desk channel: a new chain fades in here while the old one fades out. */
+  chainOut: Tone.Gain;
   chainSig: string;
   strip: StripNodes;
   channel: Tone.Channel;
@@ -81,6 +83,17 @@ interface TrackChannel {
 
 type AudioSessionNav = Navigator & { audioSession?: { type: string } };
 
+
+/** How long a sound takes to fade when it is switched or taken away: short enough to feel instant, long enough not to click. */
+const FADE_MS = 15;
+const FADE = FADE_MS / 1000;
+/**
+ * How far ahead the song's notes are planned. A moment when the page is busy (building a sound, loading samples)
+ * shorter than this costs nothing; longer, notes land late and click. Live pads and keys never wait for it.
+ */
+const LOOK_AHEAD = 0.1;
+/** Instruments kept ready for previews outside the song. */
+const PREVIEWS_KEPT = 4;
 
 const gainToDb = (g: number) => (g <= 0.0001 ? -Infinity : 20 * Math.log10(g));
 
@@ -138,15 +151,15 @@ export class StudioEngine {
         // uses. Safari keeps the audio library's own, which smooths over its differences.
         const webkitOnly = /AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|Edg|CriOS/.test(navigator.userAgent);
         Tone.setContext(webkitOnly || typeof window.AudioContext !== 'function'
-          ? new Tone.Context({ latencyHint: 'interactive', lookAhead: 0.05 })
-          : new Tone.Context({ context: new window.AudioContext(), lookAhead: 0.05 }), true);
+          ? new Tone.Context({ latencyHint: 'interactive', lookAhead: LOOK_AHEAD })
+          : new Tone.Context({ context: new window.AudioContext(), lookAhead: LOOK_AHEAD }), true);
       } catch { /* keep the existing context */ }
     }
     const resumed = Tone.start().catch(() => undefined);
     kickWebKit();
     this.bindUnlock();
     if (!this.started) {
-      Tone.getContext().lookAhead = 0.05;
+      Tone.getContext().lookAhead = LOOK_AHEAD;
       this.meter = new Tone.Meter({ smoothing: 0.5 });
       this.master = new Tone.Limiter(-1);
       // The limiter's own makeup pushes peaks past its ceiling; this trim takes it back, a soft knee catches the rest.
@@ -245,6 +258,12 @@ export class StudioEngine {
     await new Promise((r) => setTimeout(r, ms));
     const dw = (performance.now() - w0) / 1000;
     return { state: raw.state, rate: dw > 0 ? (raw.currentTime - a0) / dw : 0 };
+  }
+
+  /** Times the sound card ran dry since the audio started, where the browser tells (Chrome); null elsewhere. */
+  underruns(): number | null {
+    const raw = Tone.getContext().rawContext as unknown as { playbackStats?: { underrunEvents?: number } };
+    return typeof raw.playbackStats?.underrunEvents === 'number' ? raw.playbackStats.underrunEvents : null;
   }
 
   /** A short beep straight to the speakers, outside the studio's chain: tells a stuck chain from a silent device. */
@@ -388,8 +407,11 @@ export class StudioEngine {
         const key = voiceKey(t);
         let ch = this.channels.get(t.id);
         if (ch && ch.voiceKey !== key) {
-          this.disposeChannel(ch);
-          ch = undefined;
+          // A new instrument on the same track: the desk channel stays, the instrument and its chain cross-fade.
+          const item = t.instrument ? findItem(t.instrument) : undefined;
+          ch.instrumentKey = t.instrument?.key ?? '';
+          ch.voiceKey = key;
+          this.buildChain(ch, t, buildVoice(item?.manifest, !t.sound));
         }
         if (!ch) {
           ch = this.createChannel(t);
@@ -476,7 +498,8 @@ export class StudioEngine {
     channel.connect(strip.echo);
     strip.room.connect(this.roomIn!);
     strip.echo.connect(this.echoIn!);
-    const ch: TrackChannel = { instrumentKey: t.instrument?.key ?? '', voiceKey: voiceKey(t), voice, pedals: [], chainSig: '', strip, channel, meter };
+    const ch: TrackChannel = { instrumentKey: t.instrument?.key ?? '', voiceKey: voiceKey(t), voice, pedals: [], chainOut: new Tone.Gain(0), chainSig: '', strip, channel, meter };
+    ch.chainOut.connect(strip.trim);
     this.buildChain(ch, t);
     return ch;
   }
@@ -485,14 +508,36 @@ export class StudioEngine {
    * Wire voice -> saved sound's studio chain -> pedals -> channel for the track's current chains.
    * Unknown pedals (from a newer file) keep their place in the list but pass the sound through.
    */
-  private buildChain(ch: TrackChannel, t: Track): void {
-    ch.voice.output.disconnect();
-    ch.pedals.forEach(({ pedal }) => pedal?.dispose());
+  private buildChain(ch: TrackChannel, t: Track, voice: Voice = ch.voice): void {
+    // A switch never cuts the sound mid-wave (that is the click of a loose cable): the new path fades in over a few
+    // milliseconds while the old one fades out, and the old units go once they are silent.
+    const oldOut = ch.chainOut;
+    const oldPedals = ch.pedals;
+    const oldVoice = voice !== ch.voice ? ch.voice : null;
     const slots = [...(t.sound?.chain.slots ?? []), ...t.fx_chain.slots];
-    ch.pedals = slots.map((slot) => ({ key: slot.effect.key, pedal: createPedal(slot.effect.key) }));
-    let prev: Tone.ToneAudioNode = ch.voice.output;
-    for (const { pedal } of ch.pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
-    prev.connect(ch.strip.trim);
+    const pedals = slots.map((slot) => ({ key: slot.effect.key, pedal: createPedal(slot.effect.key) }));
+    const out = new Tone.Gain(0);
+    out.connect(ch.strip.trim);
+    let prev: Tone.ToneAudioNode = voice.output;
+    for (const { pedal } of pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
+    prev.connect(out);
+    const now = Tone.immediate();
+    out.gain.setValueAtTime(0, now);
+    out.gain.linearRampToValueAtTime(1, now + FADE);
+    oldOut.gain.cancelScheduledValues(now);
+    oldOut.gain.setValueAtTime(oldOut.gain.value, now);
+    oldOut.gain.linearRampToValueAtTime(0, now + FADE);
+    const firstOld = oldPedals.find((x) => x.pedal)?.pedal;
+    window.setTimeout(() => {
+      // A new instrument takes the old one away with its chain; the same instrument only leaves its old chain.
+      if (oldVoice) oldVoice.dispose();
+      else { try { voice.output.disconnect(firstOld ? firstOld.input : oldOut); } catch { /* never joined */ } }
+      oldPedals.forEach(({ pedal }) => pedal?.dispose());
+      oldOut.dispose();
+    }, FADE_MS * 3);
+    ch.voice = voice;
+    ch.pedals = pedals;
+    ch.chainOut = out;
     ch.chainSig = chainSig(t);
   }
 
@@ -546,11 +591,19 @@ export class StudioEngine {
   }
 
   private disposeChannel(ch: TrackChannel): void {
-    ch.voice.dispose();
-    ch.pedals.forEach(({ pedal }) => pedal?.dispose());
-    disposeStrip(ch.strip);
-    ch.channel.dispose();
-    ch.meter.dispose();
+    // Fade the track out before it goes, so a track taken away never clicks.
+    const now = Tone.immediate();
+    ch.chainOut.gain.cancelScheduledValues(now);
+    ch.chainOut.gain.setValueAtTime(ch.chainOut.gain.value, now);
+    ch.chainOut.gain.linearRampToValueAtTime(0, now + FADE);
+    window.setTimeout(() => {
+      ch.voice.dispose();
+      ch.pedals.forEach(({ pedal }) => pedal?.dispose());
+      ch.chainOut.dispose();
+      disposeStrip(ch.strip);
+      ch.channel.dispose();
+      ch.meter.dispose();
+    }, FADE_MS * 3);
   }
 
   /** Level 0..1 of one track after its fader, for the mixer. */
@@ -668,14 +721,15 @@ export class StudioEngine {
   async previewNote(trackId: string, midi: number): Promise<void> {
     this.ensure();
     const ch = this.channels.get(trackId);
-    if (ch?.voice.kind === 'melodic') ch.voice.play(midi, 0.4, Tone.now(), 0.8, this.song?.tuning_a4_hz ?? 440);
+    // Live playing sounds right away; only the song is planned ahead.
+    if (ch?.voice.kind === 'melodic') ch.voice.play(midi, 0.4, Tone.immediate(), 0.8, this.song?.tuning_a4_hz ?? 440);
   }
 
   async previewDrum(trackId: string, soundKey: string): Promise<void> {
     this.ensure();
     const ch = this.channels.get(trackId);
     const name = ch && rowVoice(ch.instrumentKey, soundKey);
-    if (ch?.voice.kind === 'drums' && name) ch.voice.hit(name, Tone.now(), 1);
+    if (ch?.voice.kind === 'drums' && name) ch.voice.hit(name, Tone.immediate(), 1);
   }
 
   /** Hear an idea before keeping it: notes (seconds from now) on a melodic track. */
@@ -683,7 +737,7 @@ export class StudioEngine {
     this.ensure();
     const ch = this.channels.get(trackId);
     if (ch?.voice.kind !== 'melodic') return;
-    const t0 = Tone.now() + 0.05;
+    const t0 = Tone.immediate() + 0.03;
     for (const n of items) ch.voice.play(n.midi, n.dur, t0 + n.at, n.vel, this.song?.tuning_a4_hz ?? 440);
   }
 
@@ -692,7 +746,7 @@ export class StudioEngine {
     this.ensure();
     const ch = this.channels.get(trackId);
     if (ch?.voice.kind !== 'drums') return;
-    const t0 = Tone.now() + 0.05;
+    const t0 = Tone.immediate() + 0.03;
     for (const h of items) {
       const name = rowVoice(ch.instrumentKey, h.soundKey);
       if (name) ch.voice.hit(name, t0 + h.at, h.vel);
@@ -707,7 +761,7 @@ export class StudioEngine {
     if (!this.master) return;
     const voice = this.previewVoice(instrumentKey);
     if (!voice) return;
-    const t0 = Tone.now() + 0.05;
+    const t0 = Tone.immediate() + 0.03;
     const beat = 0.18;
     if (voice.kind === 'drums') {
       const rows = rowsOf(instrumentKey);
@@ -719,20 +773,51 @@ export class StudioEngine {
     }
   }
 
-  /** The instrument built to be heard outside the song (Colección, kit builder), made once and kept. */
+  /**
+   * The instruments built to be heard outside the song (the idea's picker, the kit builder): the last few are kept
+   * ready, older ones go, so trying many sounds never piles instruments up on the speakers.
+   */
   private previewVoice(instrumentKey: string): Voice | null {
     if (!this.master) return null;
     let voice = this.previews.get(instrumentKey);
-    if (!voice) {
+    if (voice) {
+      this.previews.delete(instrumentKey);
+    } else {
       voice = buildVoice(findByKey(instrumentKey)?.manifest);
       voice.output.connect(this.master);
-      this.previews.set(instrumentKey, voice);
+    }
+    this.previews.set(instrumentKey, voice);
+    while (this.previews.size > PREVIEWS_KEPT) {
+      const [oldest, v] = this.previews.entries().next().value as [string, Voice];
+      this.previews.delete(oldest);
+      window.setTimeout(() => v.dispose(), 2500); // whatever it still plays rings out first
     }
     return voice;
   }
 
   private groove: Voice | null = null;
   private grooveToken = 0;
+  /** The groove's path: instrument -> fade -> units -> fade -> speakers, so it starts, swaps and stops without clicks. */
+  private grooveIn: Tone.Gain | null = null;
+  private groovePedals: (Pedal | null)[] = [];
+  private grooveOut: Tone.Gain | null = null;
+  private grooveKeys: string[] = [];
+
+  /** Units for a preview, from the fade after the instrument to a fresh output fade on the speakers. */
+  private wirePreview(chain: FxChain | undefined, fadeIn: boolean): { pedals: (Pedal | null)[]; out: Tone.Gain } {
+    const pedals = (chain?.slots ?? []).map((slot) => {
+      const pedal = createPedal(slot.effect.key);
+      pedal?.set(slot.params, slot.bypass);
+      return pedal;
+    });
+    const out = new Tone.Gain(fadeIn ? 0 : 1);
+    out.connect(this.master!);
+    let prev: Tone.ToneAudioNode = this.grooveIn!;
+    for (const pedal of pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
+    prev.connect(out);
+    if (fadeIn) { const now = Tone.immediate(); out.gain.setValueAtTime(0, now); out.gain.linearRampToValueAtTime(1, now + FADE); }
+    return { pedals, out };
+  }
 
   /**
    * Hear a Colección sound in context: its groove at its tempo. Waits for recorded kits to load (only the first
@@ -748,18 +833,14 @@ export class StudioEngine {
     // A chain being shaped (or a saved sound) replaces the instrument's own gear, as it does on a track.
     const voice = buildVoice(findByKey(instrumentKey)?.manifest, !chain);
     this.groove = voice;
-    // Through a studio chain when one is being shaped (Colección rack), straight to the speakers otherwise.
-    this.groovePedals = (chain?.slots ?? []).map((slot) => {
-      const pedal = createPedal(slot.effect.key);
-      pedal?.set(slot.params, slot.bypass);
-      return pedal;
-    });
+    this.grooveIn = new Tone.Gain(1);
+    voice.output.connect(this.grooveIn);
+    const wired = this.wirePreview(chain, false);
+    this.groovePedals = wired.pedals;
+    this.grooveOut = wired.out;
     this.grooveKeys = (chain?.slots ?? []).map((x) => x.effect.key);
-    let prev: Tone.ToneAudioNode = voice.output;
-    for (const pedal of this.groovePedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
-    prev.connect(this.master);
     const step = 60 / tempo / 4;
-    const t0 = Tone.now() + 0.08;
+    const t0 = Tone.immediate() + 0.1;
     if (voice.kind === 'melodic') {
       if (!phrase) return 0;
       const span = phrase.bars * 16;
@@ -791,8 +872,6 @@ export class StudioEngine {
     return repeats * span * step + 0.6;
   }
 
-  private groovePedals: (Pedal | null)[] = [];
-
   /** Follow the knobs while a groove plays through a chain being shaped. Same pedals in the same order only. */
   updatePreviewChain(chain: FxChain): void {
     if (this.groovePedals.length !== chain.slots.length || chain.slots.some((x, i) => this.grooveKeys[i] !== x.effect.key)) {
@@ -802,28 +881,29 @@ export class StudioEngine {
     chain.slots.forEach((slot, i) => this.groovePedals[i]?.set(slot.params, slot.bypass));
   }
 
-  private grooveKeys: string[] = [];
-
   /**
    * Swap the chain a groove plays through without stopping it: listen up to one stage, add or take out a unit,
-   * compare with the original. The old units ring out for a moment before they go.
+   * compare with the original. The new chain fades in as the old one fades out.
    */
   rewirePreview(chain: FxChain): void {
-    const voice = this.groove;
-    if (!voice || !this.master) return;
-    const old = this.groovePedals;
-    const pedals = chain.slots.map((slot) => {
-      const pedal = createPedal(slot.effect.key);
-      pedal?.set(slot.params, slot.bypass);
-      return pedal;
-    });
-    voice.output.disconnect();
-    let prev: Tone.ToneAudioNode = voice.output;
-    for (const pedal of pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
-    prev.connect(this.master);
-    this.groovePedals = pedals;
+    if (!this.groove || !this.grooveIn || !this.grooveOut || !this.master) return;
+    const oldPedals = this.groovePedals;
+    const oldOut = this.grooveOut;
+    const input = this.grooveIn;
+    const wired = this.wirePreview(chain, true);
+    const now = Tone.immediate();
+    oldOut.gain.cancelScheduledValues(now);
+    oldOut.gain.setValueAtTime(oldOut.gain.value, now);
+    oldOut.gain.linearRampToValueAtTime(0, now + FADE);
+    const firstOld = oldPedals.find(Boolean);
+    window.setTimeout(() => {
+      try { input.disconnect(firstOld ? firstOld.input : oldOut); } catch { /* already gone */ }
+      oldPedals.forEach((p) => p?.dispose());
+      oldOut.dispose();
+    }, FADE_MS * 3);
+    this.groovePedals = wired.pedals;
+    this.grooveOut = wired.out;
     this.grooveKeys = chain.slots.map((x) => x.effect.key);
-    setTimeout(() => old.forEach((p) => p?.dispose()), 400);
   }
 
   /** Hear one piece of a kit (the snare, the china). */
@@ -833,20 +913,31 @@ export class StudioEngine {
     if (voice?.kind !== 'drums') return;
     const asked = performance.now();
     await loadInstrument(findByKey(instrumentKey)?.manifest);
-    if (performance.now() - asked < 1500) voice.hit(voiceName, Tone.now() + 0.01, 0.9);
+    if (performance.now() - asked < 1500) voice.hit(voiceName, Tone.immediate() + 0.01, 0.9);
   }
 
-  /** Stop a groove being previewed. */
+  /** Stop a groove being previewed: the notes fade at once, the echoes and rooms die away, then everything goes. */
   stopPreview(): void {
     this.grooveToken++;
     const v = this.groove;
+    const input = this.grooveIn;
+    const out = this.grooveOut;
     const pedals = this.groovePedals;
     this.groove = null;
+    this.grooveIn = null;
+    this.grooveOut = null;
     this.groovePedals = [];
     this.grooveKeys = [];
-    v?.dispose();
-    // Let the last echoes ring out before the chain goes away.
-    setTimeout(() => pedals.forEach((p) => p?.dispose()), 400);
+    if (!v) return;
+    const now = Tone.immediate();
+    if (input) { input.gain.cancelScheduledValues(now); input.gain.setValueAtTime(input.gain.value, now); input.gain.linearRampToValueAtTime(0, now + FADE); }
+    if (out) { out.gain.cancelScheduledValues(now); out.gain.setValueAtTime(out.gain.value, now); out.gain.linearRampToValueAtTime(0, now + 0.3); }
+    window.setTimeout(() => {
+      v.dispose();
+      input?.dispose();
+      pedals.forEach((p) => p?.dispose());
+      out?.dispose();
+    }, 360);
   }
 
   /** Free the instruments built only to be previewed. */

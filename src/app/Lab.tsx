@@ -10,6 +10,7 @@ import { newId } from '../domain/factory';
 import { requestPersistence } from '../store/store';
 import type { SongStore } from '../store/store';
 import { CLAUDE_INSTRUCTIONS } from './panels';
+import { ENTRIES } from '../packs/collection';
 import { t } from './i18n';
 import type { Lang } from '../domain/types';
 import { downloadBlob, Icon, pickFile, useToast } from './ui';
@@ -119,6 +120,7 @@ export default function Lab({ store, lang, onHome }: { store: SongStore; lang: L
           </p>
           <p className="small muted mono" style={{ margin: 0, wordBreak: 'break-word' }}>{navigator.userAgent}</p>
         </Section>
+        <LoadTest lang={lang} />
         <TapTest lang={lang} />
         <MidiTest lang={lang} />
         <RecordTest store={store} lang={lang} showToast={showToast} />
@@ -127,6 +129,66 @@ export default function Lab({ store, lang, onHome }: { store: SongStore; lang: L
       </div>
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
+  );
+}
+
+/* ---------------------------------------------------------------- load test */
+
+/**
+ * Many sounds in a row, the way a person browses them: whether the sound card ran dry (where the browser tells),
+ * whether the page froze longer than the audio plans ahead (notes land late and click), and whether anything kept
+ * sounding afterwards. Run it on each device.
+ */
+function LoadTest({ lang }: { lang: Lang }) {
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(0);
+  const [result, setResult] = useState<{ sounds: number; stalls: number; worst: number; underruns: number | null; leftover: boolean } | null>(null);
+  const picks = ENTRIES.filter((_, i) => i % 3 === 0).slice(0, 20);
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const run = async () => {
+    await engine.start();
+    setRunning(true); setResult(null); setDone(0);
+    const u0 = engine.underruns();
+    let stalls = 0;
+    let worst = 0;
+    let last = performance.now();
+    const id = window.setInterval(() => {
+      const now = performance.now();
+      const late = now - last - 50;
+      if (late > 100) stalls++;
+      worst = Math.max(worst, late);
+      last = now;
+    }, 50);
+    for (let i = 0; i < picks.length; i++) {
+      const e = picks[i];
+      void engine.previewGroove(e.instrument, e.groove, e.tempo, undefined, 1, e.phrase);
+      setDone(i + 1);
+      await wait(1500);
+    }
+    engine.stopPreview();
+    window.clearInterval(id);
+    await wait(2000);
+    const u1 = engine.underruns();
+    setResult({ sounds: picks.length, stalls, worst: Math.max(0, Math.round(worst)), underruns: u0 === null || u1 === null ? null : u1 - u0, leftover: engine.outputLevel() > 0.05 });
+    setRunning(false);
+  };
+  const clean = result && !result.stalls && !result.leftover && !result.underruns;
+  return (
+    <Section title={t('labLoadTitle', lang)}>
+      <p className="small muted" style={{ margin: 0 }}>{t('labLoadHint', lang, { n: picks.length })}</p>
+      <button type="button" className="btn" disabled={running} onClick={run}>
+        <Icon name="play" size={18} /> {running ? t('labLoadRunning', lang, { n: done, of: picks.length }) : t('labLoadRun', lang)}
+      </button>
+      {result && (
+        <table className="small" style={{ borderSpacing: '0 6px' }}><tbody>
+          <tr><td className="muted">{t('labLoadSounds', lang)}</td><td className="mono">{result.sounds}</td></tr>
+          <tr><td className="muted">{t('labLoadUnderruns', lang)}</td><td className="mono">{result.underruns === null ? t('labLoadNotTold', lang) : result.underruns}</td></tr>
+          <tr><td className="muted">{t('labLoadStalls', lang)}</td><td className="mono">{result.stalls} · {t('labLoadWorst', lang, { ms: result.worst })}</td></tr>
+          <tr><td className="muted">{t('labLoadLeftover', lang)}</td><td className="mono">{t(result.leftover ? 'yes' : 'no', lang)}</td></tr>
+        </tbody></table>
+      )}
+      {result && <p className="small" role="status" style={{ margin: 0 }}>{t(clean ? 'labLoadClean' : 'labLoadTrouble', lang)}</p>}
+    </Section>
   );
 }
 

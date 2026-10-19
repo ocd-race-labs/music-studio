@@ -66,20 +66,22 @@ const PEDALS: Record<string, () => Pedal> = {
     return effect(d, (p) => { d.feedback.value = num(p, 'feedback', 0.35); return num(p, 'mix', 0.25); });
   },
   'effect.reverb': () => {
-    const r = new Tone.Reverb({ decay: 2.5, preDelay: 0.01, wet: 0 });
-    let size = 2.5;
+    // The room's echo is computed once per size and shared by every reverb that uses it, so adding or trying a
+    // reverb costs nothing while the music plays.
+    const conv = new Tone.Convolver();
+    let size = -1;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const base = effect(r, (p) => {
+    const base = blended([conv], (p) => {
       const next = Math.max(0.3, Math.min(8, num(p, 'size', 2.5)));
-      if (Math.abs(next - size) > 0.04) {
-        // A new size rebuilds the room's echo; wait until the slider rests.
+      if (size < 0) { size = next; conv.buffer = new Tone.ToneAudioBuffer(roomImpulse(next)); }
+      else if (Math.abs(next - size) > 0.04) {
         size = next;
         if (timer) clearTimeout(timer);
-        timer = setTimeout(() => { timer = null; r.decay = next; }, 250);
+        timer = setTimeout(() => { timer = null; conv.buffer = new Tone.ToneAudioBuffer(roomImpulse(next)); }, 250);
       }
       return num(p, 'mix', 0.3);
     });
-    return { ...base, dispose() { if (timer) clearTimeout(timer); r.dispose(); } };
+    return { ...base, dispose() { if (timer) clearTimeout(timer); base.dispose(); } };
   },
   'effect.chorus': () => {
     const c = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, spread: 180 }).start();
@@ -251,6 +253,35 @@ const COMP_STYLES = [
 ];
 
 /** A dense burst of noise that stops dead: the room of the 80s gated drum sound. */
+/**
+ * A room's echo: noise that dies away over the decay time, after a short pre-delay, the same shape Tone's reverb
+ * renders. Made in place (no offline rendering) and kept per size and sample rate.
+ */
+const rooms = new Map<string, AudioBuffer>();
+function roomImpulse(decay: number, preDelay = 0.01): AudioBuffer {
+  const ctx = Tone.getContext().rawContext as BaseAudioContext;
+  const rate = ctx.sampleRate;
+  const d = Math.round(decay * 10) / 10;
+  const key = `${rate}:${d}:${preDelay}`;
+  const hit = rooms.get(key);
+  if (hit) return hit;
+  const n = Math.max(1, Math.round(rate * (d + preDelay)));
+  const buf = ctx.createBuffer(2, n, rate);
+  const tc = Math.log(d + 1) / Math.log(200);
+  const pre = Math.round(rate * preDelay);
+  const fadeFrom = Math.round(n * 0.9);
+  for (let c = 0; c < 2; c++) {
+    const data = buf.getChannelData(c);
+    for (let i = pre; i < n; i++) {
+      const t = (i - pre) / rate;
+      const end = i > fadeFrom ? (n - i) / (n - fadeFrom) : 1;
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-t / tc) * end;
+    }
+  }
+  rooms.set(key, buf);
+  return buf;
+}
+
 function gatedImpulse(seconds: number): AudioBuffer {
   const ctx = Tone.getContext().rawContext as BaseAudioContext;
   const rate = ctx.sampleRate;
