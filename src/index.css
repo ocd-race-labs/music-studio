@@ -253,6 +253,8 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 }
 .play { width: 48px; height: 48px; border-radius: 999px; border: 0; background: var(--ink); color: var(--ground); display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .play.on { background: var(--main); color: var(--main-ink); }
+.tp-reconnect { width: 36px; height: 36px; min-height: 36px; padding: 0; flex: none; color: var(--ink-2); margin-left: -4px; }
+.tp-reconnect:hover { color: var(--ink); }
 .outmeter { width: 40px; height: 6px; border-radius: 3px; background: var(--raised); border: 1px solid var(--line); overflow: hidden; display: inline-block; flex: none; }
 .outmeter > span { display: block; height: 100%; background: var(--main); transform-origin: left center; transform: scaleX(0); }
 .rec[aria-pressed='true'] { background: var(--highlight); color: var(--highlight-ink); border-color: var(--highlight); }

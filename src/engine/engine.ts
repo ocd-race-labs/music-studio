@@ -134,7 +134,12 @@ export class StudioEngine {
     if (!this.started) {
       // iPhone and iPad: a context created inside the tap starts reliably; the one Tone made at page load may stay suspended.
       try {
-        Tone.setContext(new Tone.Context({ latencyHint: 'interactive', lookAhead: 0.05 }), true);
+        // Chrome and Edge: a plain browser connection to the speakers, the same kind the Lab's "new connection" beep
+        // uses. Safari keeps the audio library's own, which smooths over its differences.
+        const webkitOnly = /AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|Edg|CriOS/.test(navigator.userAgent);
+        Tone.setContext(webkitOnly || typeof window.AudioContext !== 'function'
+          ? new Tone.Context({ latencyHint: 'interactive', lookAhead: 0.05 })
+          : new Tone.Context({ context: new window.AudioContext(), lookAhead: 0.05 }), true);
       } catch { /* keep the existing context */ }
     }
     const resumed = Tone.start().catch(() => undefined);
@@ -176,8 +181,102 @@ export class StudioEngine {
       // The song's sounds are built once the audio runs, and a sound that fails to build never silences the rest.
       if (Tone.getContext().state === 'running') { if (this.song) this.sync(this.song); }
       else resumed.then(() => { if (this.song) this.sync(this.song); });
+      this.watchClock();
+      this.watchDevice();
     }
     return resumed;
+  }
+
+  /**
+   * When the speakers fail while sound is rendered (a device change, an overload), the browser keeps rendering into
+   * nowhere: the meter moves and nothing is heard. Browsers that report it fire 'error' on the context; the audio is
+   * then built again on a new connection.
+   */
+  private watched = new WeakSet<object>();
+  private watchDevice(): void {
+    const raw = Tone.getContext().rawContext as unknown as EventTarget;
+    if (this.watched.has(raw) || typeof raw.addEventListener !== 'function') return;
+    this.watched.add(raw);
+    raw.addEventListener('error', (ev) => {
+      console.warn('[music-studio] the audio device failed; building the audio again', ev);
+      this.problem('audio', 'device');
+      void this.restart();
+    });
+  }
+
+  /** Someone rebuilt the audio (by hand or after a failure): screens drop their playing state. */
+  private restartFns = new Set<() => void>();
+  onRestart(fn: () => void): () => void {
+    this.restartFns.add(fn);
+    return () => { this.restartFns.delete(fn); };
+  }
+
+  /**
+   * A connection to the speakers can get stuck: the audio says it runs but its clock stops, nothing is heard and
+   * the meter shows the last sound frozen. Checked every second while the page is in view; when the clock has not
+   * moved for two seconds the audio is built again on a new connection.
+   */
+  private clockWatch: number | undefined;
+  private watchClock(): void {
+    if (this.clockWatch !== undefined || typeof window === 'undefined') return;
+    let last = -1;
+    let still = 0;
+    this.clockWatch = window.setInterval(() => {
+      const raw = Tone.getContext().rawContext as unknown as BaseAudioContext;
+      if (raw.state !== 'running' || document.hidden) { last = -1; still = 0; return; }
+      const now = raw.currentTime;
+      still = last >= 0 && now - last < 0.05 ? still + 1 : 0;
+      last = now;
+      if (still >= 2) {
+        still = 0;
+        last = -1;
+        console.warn('[music-studio] the audio clock stopped; building the audio again');
+        this.problem('audio', 'stuck');
+        void this.restart();
+      }
+    }, 1000);
+  }
+
+  /** How fast the audio clock moves against real time over a moment: about 1 while sound flows, 0 when stuck. */
+  async clockRate(ms = 1000): Promise<{ state: string; rate: number }> {
+    const raw = Tone.getContext().rawContext as unknown as BaseAudioContext;
+    const a0 = raw.currentTime;
+    const w0 = performance.now();
+    await new Promise((r) => setTimeout(r, ms));
+    const dw = (performance.now() - w0) / 1000;
+    return { state: raw.state, rate: dw > 0 ? (raw.currentTime - a0) / dw : 0 };
+  }
+
+  /** A short beep straight to the speakers, outside the studio's chain: tells a stuck chain from a silent device. */
+  directBeep(): void {
+    try {
+      const raw = Tone.getContext().rawContext as unknown as AudioContext;
+      const osc = raw.createOscillator();
+      const g = raw.createGain();
+      osc.frequency.value = 880;
+      g.gain.setValueAtTime(0.2, raw.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, raw.currentTime + 0.3);
+      osc.connect(g);
+      g.connect(raw.destination);
+      osc.start();
+      osc.stop(raw.currentTime + 0.32);
+    } catch (e) { this.problem('beep', e); }
+  }
+
+  /** Throw the audio away and build it again on a new connection: the song's sounds come back as they were. */
+  async restart(): Promise<boolean> {
+    try { Tone.getTransport().stop(); } catch { /* the old clock may be gone */ }
+    this.repeatId = null;
+    this.stopPreview();
+    this.channels.clear();
+    this.previews.clear();
+    this.glueOn = false;
+    this.reported.clear();
+    this.started = false;
+    this.stepListeners.forEach((fn) => fn(-1));
+    const ok = await this.start();
+    this.restartFns.forEach((fn) => fn());
+    return ok;
   }
 
   /** A track whose sound could not be built: the rest keep playing, and the app can say which one. */
@@ -802,7 +901,7 @@ const sampledSpec = (m: Record<string, unknown> | undefined) => {
 };
 
 /** Load the recordings an instrument needs (none for synthesized ones). False when they could not load. */
-async function loadInstrument(manifest: Record<string, unknown> | undefined): Promise<boolean> {
+export async function loadInstrument(manifest: Record<string, unknown> | undefined): Promise<boolean> {
   const m = (manifest ?? {}) as NonNullable<Manifest>;
   const kit = sampledSpec(manifest);
   if (kit) return (await loadKit(kit)) > 0;
@@ -833,7 +932,7 @@ function withGear(voice: Voice, chain: ChainSpec | undefined, trimDb: number): V
  * The voice that plays an instrument: a recorded kit, a recorded guitar or bass, or a synthesized voice, each
  * through its own gear. A saved sound brings its own chain, which replaces that gear (ownGear false).
  */
-function buildVoice(manifest: Record<string, unknown> | undefined, ownGear = true): Voice {
+export function buildVoice(manifest: Record<string, unknown> | undefined, ownGear = true): Voice {
   const m = (manifest ?? {}) as NonNullable<Manifest>;
   const spec = sampledSpec(manifest);
   if (spec) return createSampledKit(spec);
@@ -845,6 +944,8 @@ function buildVoice(manifest: Record<string, unknown> | undefined, ownGear = tru
 }
 
 export const engine = new StudioEngine();
+// For checking a device from the browser's console: __musicStudio.engine.clockRate(), .restart().
+if (typeof window !== 'undefined') (window as unknown as { __musicStudio?: unknown }).__musicStudio = { engine, Tone };
 
 /**
  * iPhone and iPad mute web audio in silent mode unless the page asks for playback.

@@ -28,7 +28,7 @@ import IdeaStage from './IdeaStage';
 import * as SK from '../domain/sketch';
 import type { Place } from '../domain/sketch';
 import SongsRoom, { soundName } from './SongsRoom';
-import { OutMeter, Transport } from './Transport';
+import { OutMeter, Reconnect, Transport } from './Transport';
 import { t, tn } from './i18n';
 import type { StringKey } from './i18n';
 import type { Mode } from './prefs';
@@ -330,7 +330,11 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const low = track ? lows[track.id] ?? lowOf(track.instrument?.key ?? '') : 60;
 
   // A sound that could not be built is named, so it can be fixed; the rest of the song keeps playing.
-  useEffect(() => engine.onProblem((name, error) => showToast(t('soundProblem', lang, { track: name, error }))), [lang, showToast]);
+  useEffect(() => engine.onRestart(() => setPlaying(false)), []);
+  useEffect(() => engine.onProblem((name, error) => {
+    if (name === 'audio') { setPlaying(false); showToast(t('audioRebuilt', lang)); return; }
+    showToast(t('soundProblem', lang, { track: name, error }));
+  }), [lang, showToast]);
 
   const startAudio = async () => {
     const ok = await engine.start();
@@ -965,7 +969,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
             <span className="small muted hide-sm save-state" aria-live="polite">{saveState === 'saving' ? t('saving', lang) : t('saved', lang)}</span>
           </div>
           <div className="tb-group tb-right">
-            {room === 'sounds' && <OutMeter label={t('soundOutput', lang)} />}
+            {room === 'sounds' && <><OutMeter label={t('soundOutput', lang)} /><Reconnect lang={lang} /></>}
             <button type="button" className="btn icon" onClick={undo} disabled={!hist.past} aria-label={t('undo', lang)} title={t('undo', lang)}><Icon name="undo" /></button>
             <button type="button" className="btn icon" onClick={redo} disabled={!hist.future} aria-label={t('redo', lang)} title={t('redo', lang)}><Icon name="redo" /></button>
             {onClassroom && (

@@ -53,9 +53,23 @@ export function Transport({ song, lang, playing, step, cursorBar, rec, lead, onP
         </button>
       )}
       <OutMeter label={t('soundOutput', lang)} />
+      <Reconnect lang={lang} />
       <span className="grow" />
       {children}
     </div>
+  );
+}
+
+/**
+ * The way out when the meter moves and nothing is heard: the connection to the speakers is built again, with a beep
+ * to confirm it. The song's sounds come back as they were.
+ */
+export function Reconnect({ lang }: { lang: Lang }) {
+  return (
+    <button type="button" className="btn icon ghost tp-reconnect" title={t('reconnectHint', lang)} aria-label={t('reconnectHint', lang)}
+      onClick={async () => { await engine.restart(); engine.previewClick(); }}>
+      <Icon name="speaker" size={18} />
+    </button>
   );
 }
 
