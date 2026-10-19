@@ -3,7 +3,7 @@
 // view shows the whole strip. The inspector at the side opens one channel in detail, with its EQ curve.
 
 import { useEffect, useRef } from 'react';
-import type { PointerEvent } from 'react';
+import type { PointerEvent, ReactNode } from 'react';
 import type { ChannelStrip, ConsoleModel, Lang, MixSettings, Song, Track } from '../domain/types';
 import { CONSOLES, consoleOf, GLUES, mixOf, snapFreq, snapGain, STRIP_FLAT, stripOf } from '../domain/mix';
 import type { Band, ConsoleSpec } from '../domain/mix';
@@ -31,8 +31,12 @@ function FreqKnob({ c, band, value, label, lang, onChange }: { c: ConsoleSpec; b
   return <Knob value={value} min={spec.min} max={spec.max} def={snapFreq(spec, (STRIP_FLAT as unknown as Record<string, number>)[`${band}_hz`])} log steps={spec.steps} label={label} display={fmtHz(value)} onChange={(hz) => onChange(snapFreq(spec, hz))} />;
 }
 
-export default function Desk({ song, selected, lang, view, showConsole, onSelect, onStrip, onGain, onPan, onMute, onSolo, onMix, onConsole, onView }: {
+export default function Desk({ song, tracks, extra, selected, lang, view, showConsole, onSelect, onStrip, onGain, onPan, onMute, onSolo, onMix, onConsole, onView }: {
   song: Song;
+  /** The tracks shown (unused ones may be tucked away). */
+  tracks?: Track[];
+  /** Shown in the head, beside the view switch. */
+  extra?: ReactNode;
   selected: string;
   lang: Lang;
   view: DeskView;
@@ -159,9 +163,10 @@ export default function Desk({ song, selected, lang, view, showConsole, onSelect
           <button type="button" aria-pressed={view === 'full'} onClick={() => onView('full')}>{t('deskFull', lang)}</button>
         </div>
         <span className="small muted desk-blurb" title={c.blurb[lang]}>{c.blurb[lang]}</span>
+        {extra}
       </div>
       <div className="desk-row">
-        <div className="desk-strips">{song.tracks.map(strip)}</div>
+        <div className="desk-strips">{(tracks ?? song.tracks).map(strip)}</div>
         <div className="dstrip master">
           <span className="dstrip-name"><strong>{t('masterOut', lang)}</strong><span className="small muted">{t('deskMasterHint', lang)}</span></span>
           {view === 'full' ? (<>

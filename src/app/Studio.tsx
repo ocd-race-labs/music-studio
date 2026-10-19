@@ -133,6 +133,12 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
 
   // Listen to the selected track alone. Not saved in the song: mute and solo stay as they were.
   const [alone, setAlone] = useState(false);
+  // Tracks with nothing written can be tucked away (a kit brings many instruments; a song uses a few).
+  const [hideEmpty, setHideEmptyState] = useState<boolean>(() => { try { return localStorage.getItem('music-studio.hideEmpty') === '1'; } catch { return false; } });
+  const setHideEmpty = (on: boolean) => {
+    setHideEmptyState(on);
+    try { localStorage.setItem('music-studio.hideEmpty', on ? '1' : '0'); } catch { /* the choice lasts this visit */ }
+  };
   // The musician's mixer takes the editor's place while it is open.
   const [board, setBoard] = useState(false);
   const [sounds, setSounds] = useState<CustomSound[]>([]);
@@ -657,7 +663,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       marking={marking} sel={sel} onBarTap={onBarTap} onScrub={scrub} />
   );
   const desk = (producer: boolean) => (
-    <Desk song={song} selected={track.id} lang={lang} view={producer ? deskView : 'simple'} showConsole={producer} onSelect={setSelected}
+    <Desk song={song} tracks={shownTracks} extra={emptyToggle} selected={track.id} lang={lang} view={producer ? deskView : 'simple'} showConsole={producer} onSelect={setSelected}
       onStrip={(id, patch) => apply((x) => MX.setStrip(x, id, patch, by), `strip:${id}:${Object.keys(patch).join()}`)}
       onGain={(id, g) => apply((x) => C.setGain(x, id, g, by), `gain:${id}`)}
       onPan={(id, v) => apply((x) => C.setPan(x, id, v, by), `pan:${id}`)}
@@ -671,6 +677,17 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     <button type="button" className="btn alone" aria-pressed={alone} onClick={() => setAlone((a) => !a)}
       aria-label={t('onlyThis', lang)} title={t('onlyThisHint', lang)}>
       <Icon name="headphones" size={18} /> <span className="hide-md">{t('onlyThis', lang)}</span>
+    </button>
+  );
+
+  // Hidden only while something else is written; the track in front of you always shows.
+  const written = new Set(song.tracks.filter((x) => C.hasWritten(song, x.id)).map((x) => x.id));
+  const unused = written.size ? song.tracks.filter((x) => !written.has(x.id) && x.id !== track.id).length : 0;
+  const shownTracks = hideEmpty && unused ? song.tracks.filter((x) => written.has(x.id) || x.id === track.id) : song.tracks;
+  const emptyToggle = unused > 0 && (
+    <button type="button" className="btn small-btn ghost tracks-filter" aria-pressed={hideEmpty} onClick={() => setHideEmpty(!hideEmpty)}
+      title={t(hideEmpty ? 'tracksShowHint' : 'tracksHideHint', lang)}>
+      <Icon name={hideEmpty ? 'plus' : 'shrink'} size={14} /> {t(hideEmpty ? 'tracksShowUnused' : 'tracksHideUnused', lang, { n: unused })}
     </button>
   );
 
@@ -693,7 +710,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
           </button>
         )}
       </div>
-      {song.tracks.map((tr) => (
+      {shownTracks.map((tr) => (
         <div key={tr.id} className={`row track-line${alone && tr.id !== track.id ? ' quiet' : ''}`} style={{ gap: 4 }}>
           <button type="button" className="track-btn grow" aria-current={tr.id === track.id} onClick={() => setSelected(tr.id)}>
             <TrackBadge track={tr} size="sm" />
@@ -714,6 +731,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
           <button type="button" className="mini" aria-pressed={tr.muted} onClick={() => apply((x) => C.toggleMute(x, tr.id, by))} aria-label={t('muteTrack', lang, { name: tr.name })} title={t('muteHint', lang)}>M</button>
         </div>
       ))}
+      {emptyToggle}
     </nav>
   );
 
