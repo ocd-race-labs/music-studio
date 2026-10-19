@@ -5,7 +5,7 @@ import { t } from './i18n';
 import { instIcon, trackIcon } from './instIcon';
 import type { Track } from '../domain/types';
 
-type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music' | 'crate' | 'disc' | 'bulb' | 'chevronDown' | 'chevronRight' | 'panel' | 'amp' | 'list' | 'swap' | 'copy' | 'edit'
+type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music' | 'crate' | 'disc' | 'bulb' | 'chevronDown' | 'chevronRight' | 'panel' | 'amp' | 'list' | 'swap' | 'repeat' | 'once' | 'copy' | 'edit'
   | 'drums' | 'drumpad' | 'conga' | 'timpani' | 'guitar' | 'acoustic' | 'bass' | 'piano' | 'organ' | 'synth' | 'lead' | 'pad' | 'sub' | 'violin' | 'trumpet' | 'sax' | 'flute' | 'choir' | 'bells' | 'knob' | 'pedal' | 'cab' | 'tape' | 'space' | 'eq';
 export type { IconName };
 
@@ -52,6 +52,8 @@ const PATHS: Record<IconName, ReactNode> = {
   // An amplifier with two knobs and a speaker: the sound studio.
   amp: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18" /><circle cx="7" cy="6.5" r="0.6" fill="currentColor" /><circle cx="10" cy="6.5" r="0.6" fill="currentColor" /><circle cx="12" cy="14.5" r="3.5" /></>,
   list: <><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4.5" cy="6" r="1" fill="currentColor" /><circle cx="4.5" cy="12" r="1" fill="currentColor" /><circle cx="4.5" cy="18" r="1" fill="currentColor" /></>,
+  repeat: <><path d="M17 2l4 4-4 4" /><path d="M3 11V9a3 3 0 0 1 3-3h15" /><path d="M7 22l-4-4 4-4" /><path d="M21 13v2a3 3 0 0 1-3 3H3" /></>,
+  once: <><path d="M3 12h13" /><path d="M11 7l5 5-5 5" /><path d="M20 5v14" /></>,
   swap: <><path d="M7 4L3 8l4 4" /><path d="M3 8h14" /><path d="M17 20l4-4-4-4" /><path d="M21 16H7" /></>,
   copy: <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" /></>,
   edit: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M14 6l4 4" /></>,

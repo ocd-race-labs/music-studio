@@ -9,7 +9,7 @@ import { LengthStepper, songDuration } from './Arrange';
 import { t } from './i18n';
 import { Icon } from './ui';
 
-export function Transport({ song, lang, playing, step, cursorBar, rec, lead, onPlay, onTempo, onBars, onRec, children }: {
+export function Transport({ song, lang, playing, step, cursorBar, rec, lead, loop, onLoop, onPlay, onTempo, onBars, onRec, children }: {
   /** Controls before Play: the musician's two steps. */
   lead?: React.ReactNode;
   song: Song;
@@ -19,6 +19,9 @@ export function Transport({ song, lang, playing, step, cursorBar, rec, lead, onP
   cursorBar: number;
   /** Record taps is the musician's; the producer's strip has no record button. */
   rec?: boolean;
+  /** Start again at the end (true) or stop there (false); absent where it does not apply. */
+  loop?: boolean;
+  onLoop?: (loop: boolean) => void;
   onPlay: () => void;
   onTempo: (bpm: number) => void;
   /** Absent where the length comes from elsewhere (the idea's form). */
@@ -36,6 +39,12 @@ export function Transport({ song, lang, playing, step, cursorBar, rec, lead, onP
       <button type="button" className={`play${playing ? ' on' : ''}`} onClick={onPlay} aria-label={t(playing ? 'stop' : 'play', lang)} title={t('playHint', lang)}>
         <Icon name={playing ? 'stop' : 'play'} size={22} />
       </button>
+      {onLoop && (
+        <button type="button" className="btn icon ghost tp-loop" onClick={() => onLoop(!loop)}
+          aria-pressed={loop} aria-label={t('loopLabel', lang)} title={t(loop ? 'loopOn' : 'loopOff', lang)}>
+          <Icon name={loop ? 'repeat' : 'once'} size={18} />
+        </button>
+      )}
       <div className="tp-pos mono" aria-live="off" title={t(step >= 0 ? 'positionNow' : 'positionStart', lang, { pos })}>
         <span className="tp-big">{pos}</span>
         <span className="tp-small">{t('timelineLength', lang, { bars, time: songDuration(song) })}</span>

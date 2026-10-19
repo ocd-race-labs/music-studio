@@ -214,7 +214,16 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
 
   /* ---------- engine follows the song; autosave a moment after each change */
   const ideaSong = useMemo(() => (song?.sketch?.order.length ? SK.renderIdea(song, lang) : null), [song, lang]);
-  const playIdea = room === 'musician' && !!ideaSong && (stage === 'idea' || hear === 'idea');
+  /** The detail sounds exactly like the idea (just accepted, nothing changed since): comparing them shows nothing. */
+  const sameAsIdea = useMemo(() => {
+    if (!song || !ideaSong || !song.sketch?.accepted_at) return false;
+    const body = (x: unknown) => JSON.stringify(x, (k, v) => (k === 'id' || k === 'updated_at' ? undefined : v));
+    return ideaSong.tracks.length === song.tracks.length && ideaSong.tracks.every((it) => {
+      const st = song.tracks.find((x) => x.id === it.id);
+      return !!st && st.instrument?.key === it.instrument?.key && body(st.clips[0]?.content) === body(it.clips[0]?.content);
+    });
+  }, [song, ideaSong]);
+  const playIdea = room === 'musician' && !!ideaSong && (stage === 'idea' || (hear === 'idea' && !sameAsIdea));
   useEffect(() => {
     const target = room === 'sounds' && audition ? audition : playIdea ? ideaSong : song;
     if (target) engine.setSong(target);
@@ -275,12 +284,23 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     commit(next);
   }, [commit]);
 
+  // Repeat at the end, or play once and stop there; remembered on this device.
+  const [loop, setLoop] = useState<boolean>(() => { try { return localStorage.getItem('music-studio.loop') !== '0'; } catch { return true; } });
+  const loopRef = useRef(loop);
+  const pickLoop = (on: boolean) => {
+    setLoop(on);
+    loopRef.current = on;
+    try { localStorage.setItem('music-studio.loop', on ? '1' : '0'); } catch { /* the choice lasts this visit */ }
+    // Already playing: the change counts from the next time it reaches the end.
+    engine.setOnce(!on);
+  };
+  useEffect(() => engine.onEnded(() => setPlaying(false)), []);
   const togglePlay = useCallback(async () => {
     if (engine.playing) {
       engine.stop();
       setPlaying(false);
     } else {
-      const ok = await engine.play(playFrom.current);
+      const ok = await engine.play(playFrom.current, { once: !loopRef.current });
       setAudioReady(true);
       setPlaying(true);
       if (!ok) showToast(t('soundBlocked', lang));
@@ -612,6 +632,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const transport = (extra?: React.ReactNode, lead?: React.ReactNode) => (
     <Transport lead={lead} song={inIdea && ideaSong ? ideaSong : song} lang={lang} playing={playing} step={step} cursorBar={inIdea ? (ideaPlace?.startBar ?? 0) : cursorBar}
       rec={room === 'musician' && !inIdea ? rec : undefined} onRec={room === 'musician' && !inIdea ? () => setRec((r) => !r) : undefined}
+      loop={loop} onLoop={pickLoop}
       onPlay={togglePlay} onTempo={(bpm) => apply((x) => C.setTempo(x, bpm, by))} onBars={inIdea ? undefined : (n) => apply((x) => A.setSongBars(x, n, by))}>
       {extra}
       <button type="button" className="btn icon side-toggle" aria-pressed={sideOpen} onClick={() => setSideOpen((o) => !o)}
@@ -714,10 +735,16 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       <button type="button" aria-pressed={stage === 'detail'} onClick={() => { setStage('detail'); setIdeaPlace(null); }} title={t('stageDetail2', lang)}><Icon name="music" size={16} /> <span className="stage-label">{t('stageDetail2', lang)}</span><span className="stage-short">{t('stageDetail', lang)}</span></button>
     </div>
   );
+  // What plays while the detail is on screen: the detail, or the accepted idea as it was (to compare by ear). Right
+  // after accepting they sound the same, so the choice waits until the detail changes.
   const hearToggle = stage === 'detail' && song.sketch?.accepted_at ? (
-    <div className="seg small-seg hear-toggle" aria-label={t('hearWhich', lang)} title={t('hearIdeaHint', lang)}>
-      <button type="button" aria-pressed={hear === 'detail'} onClick={() => setHear('detail')}>{t('hearDetail', lang)}</button>
-      <button type="button" aria-pressed={hear === 'idea'} onClick={() => setHear('idea')}>{t('hearIdea', lang)}</button>
+    <div className="hear-wrap" title={t(sameAsIdea ? 'hearSame' : 'hearIdeaHint', lang)}>
+      <Icon name="headphones" size={16} />
+      <span className="lbl hear-lbl">{t('hearWhich', lang)}</span>
+      <div className="seg small-seg hear-toggle" role="group" aria-label={t('hearWhich', lang)}>
+        <button type="button" aria-pressed={hear === 'detail' || sameAsIdea} onClick={() => setHear('detail')}>{t('hearDetail', lang)}</button>
+        <button type="button" aria-pressed={hear === 'idea' && !sameAsIdea} disabled={sameAsIdea} onClick={() => { setHear('idea'); showToast(t('hearIdeaNow', lang)); }}>{t('hearIdea', lang)}</button>
+      </div>
     </div>
   ) : null;
 
