@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as C from '../domain/commands';
-import { loopBars, newSong, normalizeSong, ROLE_NAMES, roleOf, slotsFor, songSteps } from '../domain/factory';
+import { classroomOn, loopBars, newSong, normalizeSong, ROLE_NAMES, roleOf, slotsFor, songSteps } from '../domain/factory';
 import * as A from '../domain/arrange';
 import type { CopyMode } from '../domain/arrange';
 import { SongTimeline, StructureBar } from './Arrange';
@@ -23,6 +23,7 @@ import * as MX from '../domain/mix';
 import SoundStudio from './SoundStudio';
 import type { Slot } from './sounddraft';
 import BeatAssistant from './BeatAssistant';
+import IdeaWords from './IdeaWords';
 import Hub from './Hub';
 import IdeaStage from './IdeaStage';
 import * as SK from '../domain/sketch';
@@ -116,7 +117,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const [lows, setLows] = useState<Record<string, number>>({});
   const [focusBar, setFocusBar] = useState(0);
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [modal, setModal] = useState<null | 'kit' | 'builder' | 'clear' | 'beat'>(null);
+  const [modal, setModal] = useState<null | 'kit' | 'builder' | 'clear' | 'beat' | 'words'>(null);
   const [pendingKit, setPendingKit] = useState<string | null>(null);
   const [songList, setSongList] = useState<Song[]>([]);
   const [versions, setVersions] = useState<SongVersion[]>([]);
@@ -931,7 +932,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       return (
         <div className="body room-songs">
           <SongsRoom song={song} songs={songList} versions={versions} lang={lang}
-            onOpen={(s) => { if (s.id !== song.id) switchTo(s); }} onRoom={onRoom} onNew={createSong} onBeat={() => setModal('beat')}
+            onOpen={(s) => { if (s.id !== song.id) switchTo(s); }} onRoom={onRoom} onNew={createSong} onBeat={() => setModal('beat')} onWords={() => setModal('words')}
             onImport={importSong} onExport={exportSong} onSaveVersion={saveVersion}
             onRestore={(v) => { apply(() => ({ ...normalizeSong(v.snapshot), updated_at: new Date().toISOString() })); showToast(t('versionRestored', lang, { n: v.version_no })); }}
             onVoice={(id, from) => apply((x) => C.setVoiceFrom(x, id, from, by))} />
@@ -1117,6 +1118,21 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
             await switchTo(s);
             onRoom('musician');
             showToast(t('beatCreated', lang, { style: s.title.replace(/^Beat |\s*beat$/i, '') }));
+          }} />
+      )}
+
+      {modal === 'words' && (
+        <IdeaWords lang={lang} owner={profile.id} claude={profile.id !== 'guest' && !classroomOn(profile)}
+          onClose={() => { setModal(null); engine.stop(); if (engine.started) setAudioReady(true); if (song) engine.setSong(song); }}
+          onCreate={async (s) => {
+            setModal(null);
+            // Hearing the choices already started the sound: no tap-to-start screen in the room it lands in.
+            if (engine.started) setAudioReady(true);
+            await store.saveSong(s);
+            await switchTo(s);
+            setStage('idea');
+            onRoom('musician');
+            showToast(t('iwCreated', lang, { title: s.title }));
           }} />
       )}
 

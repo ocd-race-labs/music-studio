@@ -12,12 +12,12 @@ import { newId, newSong, now, roleOf } from './factory';
 import type { Lang, Note, NotesContent, PatternContent, Song } from './types';
 import { STEP_TICKS } from './types';
 
-const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9& ]+/g, ' ').replace(/\s+/g, ' ').trim();
+export const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9& ]+/g, ' ').replace(/\s+/g, ' ').trim();
 
 /** Words and phrases that point to each style (Spanish and English). Longer phrases are checked first. */
 const STYLE_WORDS: Record<string, string[]> = {
   'el-house': ['house', 'chicago house', 'disco', 'para bailar', 'bailar', 'club', 'cuatro en el piso', 'four on the floor', 'piano house', 'french house'],
-  'el-deephouse': ['deep house', 'deep', 'sunset', 'lounge', 'chill house', 'atardecer'],
+  'el-deephouse': ['deep house', 'deep', 'sunset', 'lounge', 'chill house', 'atardecer', 'afro house', 'organic house', 'melodic house', 'house organico', 'house melodico'],
   'el-techno': ['techno', 'tecno', 'berlin', 'detroit', 'warehouse', 'rave', 'industrial', 'minimal', 'acid house', 'acid techno', 'acid'],
   'el-edm': ['edm', 'big room', 'festival', 'drop', 'progressive', 'future bass', 'electro house', 'dance', 'pop electronico', 'electronica bailable'],
   'el-triphop': ['trip hop', 'triphop', 'downtempo', 'chill out', 'chillout', 'chill', 'acid jazz', 'bristol', 'cinematic', 'cinematografico', 'noir', 'jazz electronico'],
@@ -27,14 +27,14 @@ const STYLE_WORDS: Record<string, string[]> = {
   'el-dubstep': ['dubstep', 'wobble', 'brostep', 'bass music', 'riddim'],
   'el-ambient': ['ambient', 'ambiental', 'atmosferico', 'relajante', 'meditacion', 'para dormir', 'espacial', 'drone'],
   'hh-oldschool': ['old school', 'oldschool', 'vieja escuela', 'electro', 'breakdance', 'hip hop de los 80', '80s hip hop'],
-  'hh-boombap': ['boom bap', 'boombap', 'noventero', '90s hip hop', 'hip hop de los 90', 'golden age', 'sampleado', 'jazzy hip hop', 'rap clasico', 'hip hop clasico'],
+  'hh-boombap': ['boom bap', 'boombap', 'noventero', '90s hip hop', 'hip hop de los 90', 'golden age', 'sampleado', 'jazzy hip hop', 'rap clasico', 'hip hop clasico', 'beat de hip hop', 'hip hop beat', 'hip hop', 'hiphop', 'rap'],
   'hh-trap': ['trap', '808', 'redobles de hi hat', 'hi hat rolls', 'atlanta'],
   'hh-lofi': ['lofi', 'lo fi', 'lo-fi', 'para estudiar', 'study', 'beats to relax', 'relax'],
   'hh-drill': ['drill', 'uk drill', 'brooklyn drill', '808 deslizante', 'sliding 808'],
   'hh-westcoast': ['west coast', 'g funk', 'gfunk', 'california', 'funk', 'talkbox'],
   'rock-classic': ['rock clasico', 'classic rock', 'rock de los 70', '70s rock', 'rock de los 60', '60s', 'rock and roll', 'rock n roll', 'blues rock', 'hard rock'],
   'rock-modern': ['grunge', 'alternativo', 'alternative', 'indie', 'garage rock', 'rock moderno', 'rock de los 90', '90s rock', 'rock'],
-  'rock-metal': ['metal', 'thrash', 'heavy', 'djent', 'metalcore', 'doble bombo', 'double kick'],
+  'rock-metal': ['metal', 'thrash', 'heavy', 'djent', 'metalcore', 'doble bombo', 'double kick', 'nu metal', 'metal alternativo', 'alternative metal'],
   'rock-punk': ['punk', 'pop punk', 'skate punk', 'hardcore', 'skate'],
 };
 
@@ -42,7 +42,7 @@ const STYLE_WORDS: Record<string, string[]> = {
 const REFERENCES: Record<string, string[]> = {
   'el-triphop': ['portishead', 'massive attack', 'tricky', 'morcheeba', 'zero 7', 'bonobo', 'thievery corporation', 'air'],
   'el-house': ['daft punk', 'frankie knuckles', 'disclosure', 'fisher'],
-  'el-deephouse': ['larry heard', 'kerri chandler', 'moodymann'],
+  'el-deephouse': ['larry heard', 'kerri chandler', 'moodymann', 'keinemusik', 'rampa', 'adam port', '&me', 'black coffee'],
   'el-techno': ['jeff mills', 'richie hawtin', 'carl cox', 'charlotte de witte', 'amelie lens'],
   'el-edm': ['avicii', 'martin garrix', 'david guetta', 'calvin harris', 'tiesto', 'alesso', 'swedish house mafia'],
   'el-idm': ['aphex twin', 'autechre', 'boards of canada', 'squarepusher', 'four tet'],
@@ -58,7 +58,7 @@ const REFERENCES: Record<string, string[]> = {
   'hh-westcoast': ['dr dre', 'snoop dogg', 'warren g', '2pac', 'tupac', 'kendrick'],
   'rock-classic': ['led zeppelin', 'ac dc', 'acdc', 'beatles', 'rolling stones', 'queen', 'deep purple', 'jimi hendrix', 'black sabbath'],
   'rock-modern': ['nirvana', 'foo fighters', 'pearl jam', 'the strokes', 'arctic monkeys', 'white stripes', 'radiohead', 'soda stereo', 'los bunkers'],
-  'rock-metal': ['metallica', 'slayer', 'iron maiden', 'megadeth', 'pantera', 'slipknot', 'gojira', 'tool'],
+  'rock-metal': ['metallica', 'slayer', 'iron maiden', 'megadeth', 'pantera', 'slipknot', 'gojira', 'tool', 'deftones', 'korn', 'system of a down', 'linkin park', 'chevelle', 'incubus'],
   'rock-punk': ['ramones', 'sex pistols', 'the clash', 'green day', 'blink 182', 'the offspring'],
 };
 

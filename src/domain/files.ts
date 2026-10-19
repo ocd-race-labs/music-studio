@@ -2,8 +2,10 @@
 
 import { findItem } from '../packs/core';
 import { newId, now, normalizeSong } from './factory';
-import { errorsOf, validateIdeasFile, validateSongFile } from './schemas';
+import { errorsOf, validateIdeasFile, validateSongFile, validateSongIdeasFile } from './schemas';
 import type { CatalogRef, Idea, IdeaKind, Song } from './types';
+import type { SongIdeaPayload } from './words';
+import { MAX_BARS } from './arrange';
 
 export const SONG_FILE_EXT = '.mstudio.json';
 
@@ -74,6 +76,19 @@ export function parseIdeasFile(text: string, songId: string, requestedBy: string
     };
   });
   return { ok: true, value: ideas };
+}
+
+/** Reads a song idea file (version 2) from Claude: up to three whole ideas for Idea from words. */
+export function parseSongIdeasFile(text: string): Parsed<{ title: string; payload: SongIdeaPayload }[]> {
+  const json = parseJson(text);
+  if (!json.ok) return json;
+  if (!validateSongIdeasFile(json.value)) return { ok: false, errors: errorsOf(validateSongIdeasFile) };
+  const ideas = (json.value as { ideas: { title: string; payload: SongIdeaPayload }[] }).ideas;
+  const tooLong = ideas.find((i) => i.payload.form.reduce((n, p) => n + p.bars, 0) > MAX_BARS);
+  if (tooLong) return { ok: false, errors: [`"${tooLong.title}" runs past ${MAX_BARS} bars.`] };
+  const badRepeat = ideas.find((i) => i.payload.form.some((p, k) => p.same_as !== undefined && p.same_as >= k));
+  if (badRepeat) return { ok: false, errors: [`"${badRepeat.title}": same_as must point to an earlier part.`] };
+  return { ok: true, value: ideas.map((i) => ({ title: i.title, payload: i.payload })) };
 }
 
 /** A copy of a song with fresh ids, for importing a song that already exists on this device. */

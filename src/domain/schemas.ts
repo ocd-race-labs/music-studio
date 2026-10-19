@@ -113,6 +113,67 @@ export const ideasFileSchema = {
   },
 } as const;
 
+/** Version 2 of the idea file: whole song ideas (form, chords per bar, feel, instruments) for Idea from words. */
+export const songIdeasFileSchema = {
+  type: 'object',
+  required: ['format', 'version', 'ideas'],
+  properties: {
+    format: { const: 'music-studio.ideas' },
+    version: { const: 2 },
+    song_title: { type: 'string', maxLength: 120 },
+    ideas: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 3,
+      items: {
+        type: 'object',
+        required: ['kind', 'title', 'payload'],
+        properties: {
+          kind: { const: 'song' },
+          title: { type: 'string', minLength: 1, maxLength: 120 },
+          prompt: { type: 'string', maxLength: 1000 },
+          payload: {
+            type: 'object',
+            required: ['style', 'tempo', 'key', 'form', 'instruments'],
+            properties: {
+              style: { type: 'string', maxLength: 40 },
+              tempo: { type: 'number', minimum: 40, maximum: 220 },
+              key: {
+                type: 'object',
+                required: ['tonic', 'mode'],
+                properties: { tonic: { type: 'string', pattern: '^[A-G](bb|b|##|#)?$' }, mode: { enum: ['minor', 'major'] } },
+              },
+              swing: { type: 'number', minimum: 0, maximum: 0.75 },
+              form: {
+                type: 'array',
+                minItems: 1,
+                maxItems: 32,
+                items: {
+                  type: 'object',
+                  required: ['kind', 'bars'],
+                  properties: {
+                    kind: { enum: ['intro', 'verse', 'prechorus', 'chorus', 'bridge', 'break', 'solo', 'outro', 'other'] },
+                    bars: { type: 'integer', minimum: 1, maximum: 32 },
+                    same_as: { type: 'integer', minimum: 0 },
+                    chords: { type: 'array', maxItems: 64, items: { anyOf: [{ type: 'integer', minimum: 0, maximum: 6 }, { type: 'null' }] } },
+                    feel: { anyOf: [{ enum: ['soft', 'normal', 'strong', 'half'] }, { type: 'null' }] },
+                    name: { type: 'string', maxLength: 40 },
+                  },
+                },
+              },
+              instruments: {
+                type: 'object',
+                required: ['chords'],
+                properties: { chords: catalogRef, drums: { anyOf: [catalogRef, { type: 'null' }] }, bass: { anyOf: [catalogRef, { type: 'null' }] } },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
 export const songFileSchema = {
   type: 'object',
   required: ['format', 'version', 'song'],
@@ -151,6 +212,7 @@ export const songFileSchema = {
 const ajv = new Ajv({ allErrors: true, strict: false });
 export const validateIdeasFile = ajv.compile(ideasFileSchema);
 export const validateSongFile = ajv.compile(songFileSchema);
+export const validateSongIdeasFile = ajv.compile(songIdeasFileSchema);
 
 export function errorsOf(validate: { errors?: { instancePath: string; message?: string }[] | null }): string[] {
   return (validate.errors ?? []).map((e) => `${e.instancePath || '(file)'} ${e.message ?? 'is invalid'}`);
