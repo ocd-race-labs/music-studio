@@ -697,7 +697,7 @@ input.field.num { width: 64px; text-align: center; }
 .cd-x::after { content: ''; position: absolute; inset: -8px; }
 .cd-x:hover, .cd-x:focus-visible { color: var(--ink); border-color: var(--line); background: var(--panel); }
 .cd-box:not(.io) .cd-box-main { padding-right: 30px; }
-.cd-box.es-addbox { flex: 0 1 132px; min-width: 112px; border-style: dashed; background: transparent; box-shadow: none; }
+.cd-box.es-addbox { flex: 0 0 96px; min-width: 96px; max-width: 96px; border-style: dashed; background: transparent; box-shadow: none; }
 .cd-box.es-addbox .cd-box-main { align-items: center; justify-content: center; text-align: center; gap: 8px; padding-right: 10px; }
 .cd-box.es-addbox:hover, .cd-box.es-addbox.sel { border-color: var(--main); }
 .es-addbox-plus { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; background: color-mix(in srgb, var(--main) 16%, transparent); color: color-mix(in srgb, var(--main) 70%, var(--ink)); }
