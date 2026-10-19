@@ -808,6 +808,8 @@ input.field.num { width: 64px; text-align: center; }
 .backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
 .modal { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 18px; padding: 20px; width: min(560px, 100%); max-height: 85vh; overflow: auto; display: flex; flex-direction: column; gap: 14px; }
 .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--ground); padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 60; }
+.toast.with-action { display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 16px; }
+.toast .toast-act { background: var(--ground); color: var(--ink); border-color: transparent; min-height: 34px; }
 .start-overlay { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--ground) 86%, transparent); }
 .meter { height: 10px; border-radius: 999px; background: var(--raised); overflow: hidden; }
 .meter > div { height: 100%; background: var(--main); transition: width 80ms linear; }

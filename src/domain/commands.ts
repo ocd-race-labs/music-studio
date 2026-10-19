@@ -207,13 +207,31 @@ export const toggleMute = (song: Song, trackId: string, by: string | null): Song
 export const toggleSolo = (song: Song, trackId: string, by: string | null): Song =>
   mapTrack(song, trackId, (t) => ({ ...t, solo: !t.solo }), by);
 
-/** Another instrument for one track; drum rows follow by place, the role stays. */
+/**
+ * The track that would end up as a duplicate: another track that already plays this instrument and has nothing
+ * written. Giving the instrument to `trackId` swaps the two, so that track takes the instrument that left.
+ */
+export function swapPartner(song: Song, trackId: string, instrumentKey: string): Track | undefined {
+  const t = song.tracks.find((x) => x.id === trackId);
+  if (!t?.instrument || t.instrument.key === instrumentKey) return undefined;
+  return song.tracks.find((o) => o.id !== trackId && o.instrument?.key === instrumentKey && !hasWritten(song, o.id));
+}
+
+/** Gives the empty partner (if any) the instrument the track had: one change, undone in one step. */
+function swapOut(song: Song, trackId: string, instrumentKey: string): Song {
+  const partner = swapPartner(song, trackId, instrumentKey);
+  const old = song.tracks.find((x) => x.id === trackId)?.instrument;
+  if (!partner || !old) return song;
+  return { ...song, tracks: song.tracks.map((o) => (o.id === partner.id ? retarget(o, old.key, roleOf(o), o.name) : o)) };
+}
+
+/** Another instrument for one track; drum rows follow by place, the role stays. An empty twin takes the old one. */
 export const setInstrument = (song: Song, trackId: string, instrument: CatalogRef, by: string | null): Song =>
-  mapTrack(song, trackId, (t) => retarget(t, instrument.key, roleOf(t), t.name), by);
+  mapTrack(swapOut(song, trackId, instrument.key), trackId, (t) => retarget(t, instrument.key, roleOf(t), t.name), by);
 
 /** Put a saved sound on a track: its instrument (the beat or notes move as with any swap) plus its studio chain. */
 export const applySound = (song: Song, trackId: string, sound: CustomSound, by: string | null): Song =>
-  mapTrack(song, trackId, (t) => ({
+  mapTrack(swapOut(song, trackId, sound.base.key), trackId, (t) => ({
     ...retarget(t, sound.base.key, roleOf(t), t.name),
     sound: { id: sound.id, name: sound.name, chain: structuredClone(sound.chain) },
   }), by);

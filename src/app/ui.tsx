@@ -189,15 +189,21 @@ export function Modal({ title, onClose, children, closeLabel = 'Close' }: { titl
   );
 }
 
-export function useToast(): [string | null, (msg: string) => void] {
+export interface ToastAction { label: string; run: () => void }
+
+/** A short message; with an action (like Undo) it stays a little longer and carries a button. */
+export function useToast(): [string | null, (msg: string, action?: ToastAction) => void, ToastAction | null, () => void] {
   const [msg, setMsg] = useState<string | null>(null);
+  const [action, setAction] = useState<ToastAction | null>(null);
   const timer = useRef<number | undefined>(undefined);
-  const show = useCallback((m: string) => {
+  const hide = useCallback(() => { window.clearTimeout(timer.current); setMsg(null); setAction(null); }, []);
+  const show = useCallback((m: string, a?: ToastAction) => {
     setMsg(m);
+    setAction(a ?? null);
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setMsg(null), 2600);
+    timer.current = window.setTimeout(() => { setMsg(null); setAction(null); }, a ? 6000 : 2600);
   }, []);
-  return [msg, show];
+  return [msg, show, action, hide];
 }
 
 export function downloadText(filename: string, text: string, type = 'application/json'): void {

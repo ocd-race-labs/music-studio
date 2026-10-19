@@ -122,7 +122,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const [songList, setSongList] = useState<Song[]>([]);
   const [versions, setVersions] = useState<SongVersion[]>([]);
   const [audioReady, setAudioReady] = useState(engine.started);
-  const [toast, showToast] = useToast();
+  const [toast, showToast, toastAction, hideToast] = useToast();
   const [zoomPref, setZoomPref] = useState<Zoom | null>(readZoom);
   const [editorRef, editorWidth] = useWidth<HTMLElement>();
   const touch = useMemo(() => isTouch(), []);
@@ -910,16 +910,20 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
             onDropProducer={(id) => apply((x) => C.clearProducerSound(x, id, by))}
             onUse={(trackId, key) => {
               const ref = { key, version: '1.0.0' };
+              const twin = C.swapPartner(song, trackId, key);
               apply((x) => C.setInstrument(x, trackId, ref, by));
               setSelected(trackId);
               const tr = song.tracks.find((x) => x.id === trackId);
-              showToast(t('collectionUsed', lang, { name: soundName(ref, undefined, lang), track: tr?.name ?? '' }));
+              if (twin) showToast(t('swappedWith', lang, { track: tr?.name ?? '', other: twin.name }), { label: t('undo', lang), run: undo });
+              else showToast(t('collectionUsed', lang, { name: soundName(ref, undefined, lang), track: tr?.name ?? '' }));
             }}
             onUseSound={(trackId, sound) => {
+              const twin = C.swapPartner(song, trackId, sound.base.key);
               apply((x) => C.applySound(x, trackId, sound, by));
               setSelected(trackId);
               const tr = song.tracks.find((x) => x.id === trackId);
-              showToast(t('collectionUsed', lang, { name: sound.name, track: tr?.name ?? '' }));
+              if (twin) showToast(t('swappedWith', lang, { track: tr?.name ?? '', other: twin.name }), { label: t('undo', lang), run: undo });
+              else showToast(t('collectionUsed', lang, { name: sound.name, track: tr?.name ?? '' }));
             }}
             onProducerSound={(trackId, variant) => {
               apply((x) => C.setProducerSound(x, trackId, variant, by));
@@ -1163,7 +1167,12 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
           }} />
       )}
 
-      {toast && <div className="toast" role="status">{toast}</div>}
+      {toast && (
+        <div className={`toast${toastAction ? ' with-action' : ''}`} role="status">
+          <span>{toast}</span>
+          {toastAction && <button type="button" className="btn small-btn toast-act" onClick={() => { toastAction.run(); hideToast(); }}>{toastAction.label}</button>}
+        </div>
+      )}
     </div>
   );
 }

@@ -758,6 +758,7 @@ const STRINGS = {
   ideaChangedNote: { en: 'The idea changed since it was written into the detail. The detail stays as it is until you write it again.', es: 'La idea cambió desde que se escribió en el detalle. El detalle queda igual hasta que la vuelvas a escribir.' },
   ideaAcceptedNote: { en: 'Accepted on {when}. It stays as your reference: what you change in the detail never changes it.', es: 'Aceptada el {when}. Queda como tu referencia: lo que cambies en el detalle nunca la cambia.' },
   ideaAccept: { en: 'Accept the idea and go to the detail', es: 'Aceptar la idea y pasar al detalle' },
+  swappedWith: { en: '{track} and {other} swapped instruments, so none is repeated', es: '{track} y {other} intercambiaron instrumentos: ninguno queda repetido' },
   ideaRewrite: { en: 'Write the detail again from the idea', es: 'Volver a escribir el detalle desde la idea' },
   ideaRewriteNote: { en: 'You changed the detail by hand. This writes the idea over it again; first it shows what gets replaced.', es: 'Cambiaste el detalle a mano. Esto vuelve a escribir la idea encima; antes te muestra qué se reemplaza.' },
   ideaWriteAgain: { en: 'Write the whole idea again', es: 'Escribir de nuevo toda la idea' },
