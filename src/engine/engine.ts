@@ -134,7 +134,12 @@ export class StudioEngine {
     if (!this.started) {
       // iPhone and iPad: a context created inside the tap starts reliably; the one Tone made at page load may stay suspended.
       try {
-        Tone.setContext(new Tone.Context({ latencyHint: 'interactive', lookAhead: 0.05 }), true);
+        // Chrome and Edge: a plain browser connection to the speakers, the same kind the Lab's "new connection" beep
+        // uses. Safari keeps the audio library's own, which smooths over its differences.
+        const webkitOnly = /AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|Edg|CriOS/.test(navigator.userAgent);
+        Tone.setContext(webkitOnly || typeof window.AudioContext !== 'function'
+          ? new Tone.Context({ latencyHint: 'interactive', lookAhead: 0.05 })
+          : new Tone.Context({ context: new window.AudioContext(), lookAhead: 0.05 }), true);
       } catch { /* keep the existing context */ }
     }
     const resumed = Tone.start().catch(() => undefined);
