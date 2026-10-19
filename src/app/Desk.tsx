@@ -94,35 +94,40 @@ export default function Desk({ song, selected, lang, view, showConsole, onSelect
           <span className="small muted ellipsis">{soundName(playing ? playing.instrument : tr.instrument, playing ? playing.sound : tr.sound, lang)}</span>
           {playing && <span className="tag prod">{t('deskProducerTag', lang)}</span>}
         </button>
-        {view === 'full' && (
+        {view === 'full' ? (<>
+          {/* The full strip in rows of four, so a whole channel fits on screen: input and dynamics, the EQ, then the sends and pan. */}
           <div className="dstrip-sec">
             <Knob size={KS} value={s.trim_db} min={-12} max={12} def={0} label={t('deskTrim', lang)} display={fmtDb(s.trim_db)} onChange={(v) => set({ trim_db: v })} />
             <Knob size={KS} value={s.hpf_hz} min={0} max={400} def={0} steps={c.hpfSteps} label={t('deskHpf', lang)} display={s.hpf_hz > 0 ? fmtHz(s.hpf_hz) : t('deskOff', lang)}
               onChange={(v) => set({ hpf_hz: v < 15 ? 0 : Math.round(v) })} />
+            <Knob size={KS} value={s.comp} min={0} max={1} def={0} label={t('deskComp', lang)} display={s.comp > 0 ? fmtPct(s.comp) : t('deskOff', lang)} onChange={(v) => set({ comp: v })} />
+            <Knob size={KS} value={s.drive} min={0} max={1} def={0} label={t('deskDrive', lang)} display={fmtPct(s.drive)} onChange={(v) => set({ drive: v })} />
           </div>
-        )}
-        <div className="dstrip-sec eq">
-          {view === 'full' ? (<>
+          <div className="dstrip-sec eq">
             {gain('high', t('deskHigh', lang))}
             {gain('hmid', t('deskHmid', lang))}
             {gain('lmid', t('deskLmid', lang))}
             {gain('low', t('deskLow', lang))}
-          </>) : (<>
+          </div>
+          <div className="dstrip-sec sends">
+            <Knob size={KS} value={s.send_room} min={0} max={1} def={0} label={t('deskRoom', lang)} display={fmtPct(s.send_room)} onChange={(v) => set({ send_room: v })} />
+            <Knob size={KS} value={s.send_echo} min={0} max={1} def={0} label={t('deskEcho', lang)} display={fmtPct(s.send_echo)} onChange={(v) => set({ send_echo: v })} />
+            <Knob size={KS} value={tr.pan} min={-1} max={1} def={0} label={t('pan', lang)} display={panLabel(tr.pan)} onChange={(v) => onPan(tr.id, Math.abs(v) < 0.02 ? 0 : v)} />
+          </div>
+        </>) : (<>
+          <div className="dstrip-sec eq">
             {gain('high', t('deskAir', lang))}
             {gain('low', t('deskBody', lang))}
-          </>)}
-        </div>
-        <div className="dstrip-sec">
-          <Knob size={KS} value={s.comp} min={0} max={1} def={0} label={t('deskComp', lang)} display={s.comp > 0 ? fmtPct(s.comp) : t('deskOff', lang)} onChange={(v) => set({ comp: v })} />
-          {view === 'full'
-            ? <Knob size={KS} value={s.drive} min={0} max={1} def={0} label={t('deskDrive', lang)} display={fmtPct(s.drive)} onChange={(v) => set({ drive: v })} />
-            : <Knob size={KS} value={tr.pan} min={-1} max={1} def={0} label={t('pan', lang)} display={panLabel(tr.pan)} onChange={(v) => onPan(tr.id, Math.abs(v) < 0.02 ? 0 : v)} />}
-        </div>
-        <div className="dstrip-sec sends">
-          <Knob size={KS} value={s.send_room} min={0} max={1} def={0} label={t('deskRoom', lang)} display={fmtPct(s.send_room)} onChange={(v) => set({ send_room: v })} />
-          <Knob size={KS} value={s.send_echo} min={0} max={1} def={0} label={t('deskEcho', lang)} display={fmtPct(s.send_echo)} onChange={(v) => set({ send_echo: v })} />
-        </div>
-        {view === 'full' && <Knob size={KS} value={tr.pan} min={-1} max={1} def={0} label={t('pan', lang)} display={panLabel(tr.pan)} onChange={(v) => onPan(tr.id, Math.abs(v) < 0.02 ? 0 : v)} />}
+          </div>
+          <div className="dstrip-sec">
+            <Knob size={KS} value={s.comp} min={0} max={1} def={0} label={t('deskComp', lang)} display={s.comp > 0 ? fmtPct(s.comp) : t('deskOff', lang)} onChange={(v) => set({ comp: v })} />
+            <Knob size={KS} value={tr.pan} min={-1} max={1} def={0} label={t('pan', lang)} display={panLabel(tr.pan)} onChange={(v) => onPan(tr.id, Math.abs(v) < 0.02 ? 0 : v)} />
+          </div>
+          <div className="dstrip-sec sends">
+            <Knob size={KS} value={s.send_room} min={0} max={1} def={0} label={t('deskRoom', lang)} display={fmtPct(s.send_room)} onChange={(v) => set({ send_room: v })} />
+            <Knob size={KS} value={s.send_echo} min={0} max={1} def={0} label={t('deskEcho', lang)} display={fmtPct(s.send_echo)} onChange={(v) => set({ send_echo: v })} />
+          </div>
+        </>)}
         <div className="strip-fader">
           <span className="gr" title={t('deskGr', lang)} aria-hidden="true"><span ref={(el) => { if (el) grs.current.set(tr.id, el); else grs.current.delete(tr.id); }} /></span>
           <input className="fader" type="range" min={FADER_MIN_DB} max={FADER_MAX_DB} step={0.5} value={dbOfGain(tr.gain)}
@@ -159,34 +164,44 @@ export default function Desk({ song, selected, lang, view, showConsole, onSelect
         <div className="desk-strips">{song.tracks.map(strip)}</div>
         <div className="dstrip master">
           <span className="dstrip-name"><strong>{t('masterOut', lang)}</strong><span className="small muted">{t('deskMasterHint', lang)}</span></span>
-          <div className="dstrip-sec">
-            <Knob size={KS} value={mix.glue} min={0} max={1} def={0} label={t('deskGlue', lang)} display={mix.glue > 0 ? fmtPct(mix.glue) : t('deskOff', lang)} onChange={(v) => onMix({ glue: v })} />
-            {view === 'full' && (
+          {view === 'full' ? (<>
+            <div className="dstrip-sec">
+              <Knob size={KS} value={mix.glue} min={0} max={1} def={0} label={t('deskGlue', lang)} display={mix.glue > 0 ? fmtPct(mix.glue) : t('deskOff', lang)} onChange={(v) => onMix({ glue: v })} />
+              <Knob size={KS} value={mix.air_db} min={-6} max={6} def={0} label={t('deskAir', lang)} display={fmtDb(mix.air_db)} onChange={(v) => onMix({ air_db: v })} />
+              <Knob size={KS} value={mix.body_db} min={-6} max={6} def={0} label={t('deskBody', lang)} display={fmtDb(mix.body_db)} onChange={(v) => onMix({ body_db: v })} />
+              <Knob size={KS} value={mix.ceiling_db} min={-3} max={-0.3} def={-1} label={t('deskCeiling', lang)} display={fmtDb(mix.ceiling_db)} onChange={(v) => onMix({ ceiling_db: v })} />
+            </div>
+            <div className="dstrip-sec selects">
               <select className="field small-field" value={mix.glue_model} onChange={(e) => onMix({ glue_model: e.target.value as MixSettings['glue_model'] })} aria-label={t('deskGlueModel', lang)} title={GLUES.find((g) => g.id === mix.glue_model)?.blurb[lang]}>
                 {GLUES.map((g) => <option key={g.id} value={g.id}>{g.name[lang]}</option>)}
               </select>
-            )}
-          </div>
-          <div className="dstrip-sec eq">
-            <Knob size={KS} value={mix.air_db} min={-6} max={6} def={0} label={t('deskAir', lang)} display={fmtDb(mix.air_db)} onChange={(v) => onMix({ air_db: v })} />
-            <Knob size={KS} value={mix.body_db} min={-6} max={6} def={0} label={t('deskBody', lang)} display={fmtDb(mix.body_db)} onChange={(v) => onMix({ body_db: v })} />
-          </div>
-          <div className="dstrip-sec sends">
-            <Knob size={KS} value={mix.room_level} min={0} max={1} def={0.8} label={t('deskRoomReturn', lang)} display={fmtPct(mix.room_level)} onChange={(v) => onMix({ room_level: v })} />
-            <Knob size={KS} value={mix.echo_level} min={0} max={1} def={0.7} label={t('deskEchoReturn', lang)} display={fmtPct(mix.echo_level)} onChange={(v) => onMix({ echo_level: v })} />
-          </div>
-          {view === 'full' && (
-            <div className="dstrip-sec col">
+            </div>
+            <div className="dstrip-sec sends">
+              <Knob size={KS} value={mix.room_level} min={0} max={1} def={0.8} label={t('deskRoomReturn', lang)} display={fmtPct(mix.room_level)} onChange={(v) => onMix({ room_level: v })} />
+              <Knob size={KS} value={mix.echo_level} min={0} max={1} def={0.7} label={t('deskEchoReturn', lang)} display={fmtPct(mix.echo_level)} onChange={(v) => onMix({ echo_level: v })} />
+              <Knob size={KS} value={mix.echo_feedback} min={0} max={0.85} def={0.3} label={t('deskRepeats', lang)} display={fmtPct(mix.echo_feedback)} onChange={(v) => onMix({ echo_feedback: v })} />
+            </div>
+            <div className="dstrip-sec selects">
               <select className="field small-field" value={mix.room_kind} onChange={(e) => onMix({ room_kind: e.target.value as MixSettings['room_kind'] })} aria-label={t('deskRoomKind', lang)}>
                 {(['room', 'plate', 'hall'] as const).map((k) => <option key={k} value={k}>{t(k === 'room' ? 'roomRoom' : k === 'plate' ? 'roomPlate' : 'roomHall', lang)}</option>)}
               </select>
               <select className="field small-field" value={mix.echo_time} onChange={(e) => onMix({ echo_time: e.target.value as MixSettings['echo_time'] })} aria-label={t('deskEchoTime', lang)}>
                 {(['1/8', '1/4', '3/8', '1/2'] as const).map((k) => <option key={k} value={k}>{t('deskEchoEvery', lang, { n: k })}</option>)}
               </select>
-              <Knob size={KS} value={mix.echo_feedback} min={0} max={0.85} def={0.3} label={t('deskRepeats', lang)} display={fmtPct(mix.echo_feedback)} onChange={(v) => onMix({ echo_feedback: v })} />
-              <Knob size={KS} value={mix.ceiling_db} min={-3} max={-0.3} def={-1} label={t('deskCeiling', lang)} display={fmtDb(mix.ceiling_db)} onChange={(v) => onMix({ ceiling_db: v })} />
             </div>
-          )}
+          </>) : (<>
+            <div className="dstrip-sec">
+              <Knob size={KS} value={mix.glue} min={0} max={1} def={0} label={t('deskGlue', lang)} display={mix.glue > 0 ? fmtPct(mix.glue) : t('deskOff', lang)} onChange={(v) => onMix({ glue: v })} />
+            </div>
+            <div className="dstrip-sec eq">
+              <Knob size={KS} value={mix.air_db} min={-6} max={6} def={0} label={t('deskAir', lang)} display={fmtDb(mix.air_db)} onChange={(v) => onMix({ air_db: v })} />
+              <Knob size={KS} value={mix.body_db} min={-6} max={6} def={0} label={t('deskBody', lang)} display={fmtDb(mix.body_db)} onChange={(v) => onMix({ body_db: v })} />
+            </div>
+            <div className="dstrip-sec sends">
+              <Knob size={KS} value={mix.room_level} min={0} max={1} def={0.8} label={t('deskRoomReturn', lang)} display={fmtPct(mix.room_level)} onChange={(v) => onMix({ room_level: v })} />
+              <Knob size={KS} value={mix.echo_level} min={0} max={1} def={0.7} label={t('deskEchoReturn', lang)} display={fmtPct(mix.echo_level)} onChange={(v) => onMix({ echo_level: v })} />
+            </div>
+          </>)}
           <div className="strip-fader">
             <span className="gr" title={t('deskGlueGr', lang)} aria-hidden="true"><span ref={glueGr} /></span>
             <span className="vmeter wide" aria-hidden="true"><span ref={master} /></span>

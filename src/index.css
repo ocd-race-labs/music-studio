@@ -1026,9 +1026,9 @@ input.field.num { width: 64px; text-align: center; }
 .desk { display: flex; flex-direction: column; gap: 8px; flex: none; }
 /* Simple view fills the room's height and the faders take what is left, so a whole channel is in view. */
 .room-producer .board-wrap { flex: 1 1 auto; }
-.desk.v-simple { flex: 1 1 auto; min-height: 430px; }
-.desk.v-simple .desk-row { flex: 1 1 auto; }
-.desk.v-simple .strip-fader { flex: 1 1 auto; height: auto; min-height: 100px; max-height: 260px; }
+.desk.v-simple, .desk.v-full { flex: 1 1 auto; min-height: 430px; }
+.desk.v-simple .desk-row, .desk.v-full .desk-row { flex: 1 1 auto; }
+.desk.v-simple .strip-fader, .desk.v-full .strip-fader { flex: 1 1 auto; height: auto; min-height: 100px; max-height: 260px; }
 .desk-head { gap: 10px; flex-wrap: nowrap; }
 .desk-blurb { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dstrip-foot { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; }
@@ -1044,6 +1044,17 @@ input.field.num { width: 64px; text-align: center; }
 .tag.prod { background: var(--highlight); color: var(--highlight-ink); font-size: 10px; padding: 1px 7px; }
 .dstrip-sec { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; width: 100%; padding-top: 6px; border-top: 1px solid var(--line); }
 .dstrip-sec.col { flex-direction: column; align-items: center; gap: 6px; }
+/* Knobs go two by two, as in the simple view, so a whole channel fits on screen in the full view too. */
+.dstrip-sec:not(.col) > .knob { flex: 0 0 calc(50% - 2px); min-width: 0; }
+.dstrip-sec:not(.col) .knob-label { max-width: 100%; }
+/* The full view: wider strips with knobs four by four, so the whole channel and its fader fit without scrolling. */
+.desk.v-full .dstrip { width: 208px; }
+.desk.v-full .knob-label { font-size: 9.5px; letter-spacing: -0.2px; }
+.desk.v-full .knob-num { font-size: 9.5px; }
+.desk.v-full .strip-fader { min-height: 52px; }
+.desk.v-full .dstrip-sec:not(.col) > .knob { flex: 0 0 calc(25% - 3px); }
+.desk.v-full .dstrip-sec.selects { gap: 4px; flex-wrap: nowrap; }
+.desk.v-full .dstrip-sec.selects .small-field { flex: 1 1 0; min-width: 0; }
 .dstrip-sec .small-field { width: 100%; min-height: 34px; font-size: 12px; padding: 0 6px; }
 .dstrip .strip-fader, .dstrip.master .strip-fader { display: flex; justify-content: center; align-items: stretch; gap: 8px; height: 150px; }
 .gr { width: 6px; border-radius: 3px; background: var(--raised); border: 1px solid var(--line); overflow: hidden; display: flex; align-items: flex-start; }
@@ -1051,7 +1062,7 @@ input.field.num { width: 64px; text-align: center; }
 .lufs { display: flex; flex-direction: column; align-items: center; gap: 0; }
 .lufs-num { font-size: 20px; }
 .lufs-num[data-hot='true'] { color: var(--highlight); }
-@media (max-width: 720px) { .desk-head { flex-wrap: wrap; } .desk-blurb { flex-basis: 100%; white-space: normal; } .desk.v-simple { min-height: 0; } .desk.v-simple .strip-fader { flex: none; height: 150px; } .desk-row { flex-direction: column; } .dstrip.master { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; } .desk-console select { min-width: 0; } }
+@media (max-width: 720px) { .desk-head { flex-wrap: wrap; } .desk-blurb { flex-basis: 100%; white-space: normal; } .desk.v-simple, .desk.v-full { min-height: 0; } .desk.v-simple .strip-fader, .desk.v-full .strip-fader { flex: none; height: 150px; } .desk-row { flex-direction: column; } .dstrip.master { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; } .desk-console select { min-width: 0; } }
 
 /* ---------------------------------------------------------------- the channel inspector */
 .inspector { gap: 10px; }
