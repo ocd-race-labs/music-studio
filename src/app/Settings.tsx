@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { exportSongFile, parseSongFile } from '../domain/files';
-import { classroomOn } from '../domain/factory';
+import { classroomOn, studentOf } from '../domain/factory';
 import type { Hat, Lang, Level, Profile, Song, ThemePreset } from '../domain/types';
 import { requestPersistence } from '../store/store';
 import type { SongStore } from '../store/store';
@@ -193,6 +193,12 @@ export default function Settings({ store, profile, profiles, lang, onLang, appea
             <div className="stack" style={{ gap: 6 }}><span className="lbl">{t('clShow', lang)}</span>
               <Seg<'on' | 'off'> label={t('clShow', lang)} value={classroomOn(p) ? 'on' : 'off'} options={[{ v: 'on', l: t('yes', lang) }, { v: 'off', l: t('no', lang) }]}
                 onChange={(v) => save({ ...p, classroom: v === 'on' })} /></div>
+            {classroomOn(p) && (
+              <div className="stack" style={{ gap: 6 }}><span className="lbl">{t('clStudent', lang)}</span>
+                <Seg<'f' | 'm'> label={t('clStudent', lang)} value={studentOf(p)} options={[{ v: 'f', l: t('clStudentF', lang) }, { v: 'm', l: t('clStudentM', lang) }]}
+                  onChange={(v) => save({ ...p, student: v })} />
+                <span className="small muted">{t('clStudentHint', lang)}</span></div>
+            )}
           </section>
 
           <section className="card stack" aria-label={t('storageBackup', lang)}>

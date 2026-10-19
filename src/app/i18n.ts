@@ -460,6 +460,10 @@ const STRINGS = {
   clVoiceTrouble: { en: "The voice didn't play. Check that the iPhone or iPad isn't on silent and the volume is up, then tap Read aloud again.", es: 'No se escuchó la voz. Revisa que el iPhone o iPad no esté en silencio y que el volumen esté arriba, y vuelve a tocar Leer en voz alta.' },
   clSettingHint: { en: 'Short video lessons and Clave, a helper that only answers about music. Adds a Classroom button to this profile.', es: 'Lecciones en video cortas y Clave, un asistente que solo responde sobre música. Agrega el botón Classroom a este perfil.' },
   clShow: { en: 'Show Classroom', es: 'Mostrar Classroom' },
+  clStudent: { en: 'The lessons speak to', es: 'Las lecciones le hablan a' },
+  clStudentF: { en: 'a girl', es: 'una alumna' },
+  clStudentM: { en: 'a boy', es: 'un alumno' },
+  clStudentHint: { en: 'In Spanish: "Bienvenida" or "Bienvenido", in the voice and the captions.', es: 'Bienvenida o Bienvenido, en la voz y en los textos.' },
   yes: { en: 'Yes', es: 'Sí' },
   no: { en: 'No', es: 'No' },
   /* rooms and the profile hub */

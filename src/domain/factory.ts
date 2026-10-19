@@ -32,6 +32,7 @@ export function newProfile(name: string, preset: ThemePreset, ring: string, hat?
 }
 
 /** Classroom is on for a profile that says so; profiles made before it existed follow the young musician's theme. */
+export const studentOf = (p: Profile): 'f' | 'm' => p.student ?? 'f';
 export const classroomOn = (p: Profile): boolean => p.classroom ?? p.theme.preset === 'midnight-jewel';
 
 /** Swing a new song starts with; the reset button returns here. */
