@@ -1069,3 +1069,8 @@ input.field.num { width: 64px; text-align: center; }
 .insp-help { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; color: var(--ink-2); }
 .insp-help dt { font-weight: 700; color: var(--ink); }
 .insp-help dd { margin: 0; }
+
+/* Lab tap test: the pad flashes with each click (the key change restarts the animation). */
+@keyframes tap-beat { from { background: var(--main); color: var(--main-ink); } to { background: var(--raised); color: var(--ink); } }
+.pad.tap-beat { animation: tap-beat 0.35s ease-out; }
+@media (prefers-reduced-motion: reduce) { .pad.tap-beat { animation: none; outline: 3px solid var(--main); } }

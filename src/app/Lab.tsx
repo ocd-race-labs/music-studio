@@ -203,7 +203,8 @@ function LoadTest({ lang }: { lang: Lang }) {
 
 function TapTest({ lang }: { lang: Lang }) {
   const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<{ mean: number; spread: number; n: number } | null>(null);
+  const [result, setResult] = useState<{ mean: number; spread: number; n: number } | { wrong: 'many' | 'few'; n: number } | null>(null);
+  const [beat, setBeat] = useState(0);
   const beats = useRef<number[]>([]);
   const taps = useRef<number[]>([]);
 
@@ -217,16 +218,27 @@ function TapTest({ lang }: { lang: Lang }) {
     beats.current.forEach((t, i) => click.triggerAttackRelease(i % 4 === 0 ? 'C5' : 'C4', '32n', t));
     taps.current = [];
     setResult(null);
+    setBeat(0);
     setRunning(true);
+    // The pad lights with each click and counts them, so it is clear the taps go along with the clicks.
+    let frame = 0;
+    const follow = () => {
+      const n = beats.current.filter((t) => ctx.currentTime >= t).length;
+      setBeat(n);
+      if (n < beats.current.length) frame = requestAnimationFrame(follow);
+    };
+    frame = requestAnimationFrame(follow);
     window.setTimeout(() => {
+      cancelAnimationFrame(frame);
       click.dispose();
       setRunning(false);
+      if (taps.current.length > beats.current.length * 1.5) { setResult({ wrong: 'many', n: taps.current.length }); return; }
       const out = (ctx as AudioContext & { outputLatency?: number }).outputLatency ?? 0;
       const offsets = taps.current.map((tap) => {
         const nearest = beats.current.reduce((a, b) => (Math.abs(b + out - tap) < Math.abs(a + out - tap) ? b : a));
         return (tap - (nearest + out)) * 1000;
       }).filter((o) => Math.abs(o) < 250);
-      if (!offsets.length) return;
+      if (offsets.length < 6) { setResult({ wrong: 'few', n: offsets.length }); return; }
       const mean = offsets.reduce((a, b) => a + b, 0) / offsets.length;
       const spread = Math.sqrt(offsets.reduce((a, b) => a + (b - mean) ** 2, 0) / offsets.length);
       setResult({ mean, spread, n: offsets.length });
@@ -243,9 +255,12 @@ function TapTest({ lang }: { lang: Lang }) {
       <p className="small muted" style={{ margin: 0 }}>{t('labTapHint', lang)}</p>
       <div className="row">
         <button type="button" className="btn" onClick={run} disabled={running}>{t('start', lang)}</button>
-        <button type="button" className="pad grow" style={{ minHeight: 90 }} onPointerDown={(e) => { e.preventDefault(); tap(); }}>{running ? t('tapNow', lang) : t('pad', lang)}</button>
+        <button type="button" className={`pad grow${running && beat > 0 ? ' tap-beat' : ''}`} key={running ? beat : 'idle'} style={{ minHeight: 90 }} onPointerDown={(e) => { e.preventDefault(); tap(); }}>
+          {running ? (beat > 0 ? t('tapCount', lang, { n: beat }) : t('tapNow', lang)) : t('pad', lang)}
+        </button>
       </div>
-      {result && <p style={{ margin: 0 }}>{t('tapResult', lang, { mean: result.mean.toFixed(0), spread: result.spread.toFixed(0), n: result.n })}
+      {result && 'wrong' in result && <p className="warn" style={{ margin: 0 }}>{t(result.wrong === 'many' ? 'tapTooMany' : 'tapTooFew', lang, { n: result.n })}</p>}
+      {result && !('wrong' in result) && <p style={{ margin: 0 }}>{t('tapResult', lang, { mean: result.mean.toFixed(0), spread: result.spread.toFixed(0), n: result.n })}
         {' '}{Math.abs(result.mean) < 40 ? <span className="ok">{t('feelsTight', lang)}</span> : <span className="warn">{t('noticeable', lang)}</span>}</p>}
     </Section>
   );
