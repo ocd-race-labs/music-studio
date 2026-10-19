@@ -22,11 +22,13 @@ import { compSettings, consoleOf, driveCurve, echoSeconds, glueSettings, mixOf, 
 /** The desk channel after a track's sound: gain, low cut, compressor, EQ, warmth, and the sends. */
 interface StripNodes {
   trim: Tone.Gain;
-  hpf: Tone.Filter;
+  /** The low cut: two filters in series, 24 dB per octave. */
+  hpf: Tone.BiquadFilter;
+  hpf2: Tone.BiquadFilter;
   comp: Tone.Compressor;
   compTrim: Tone.Gain;
-  eq: Tone.Filter[];
-  bumps: Tone.Filter[];
+  eq: Tone.BiquadFilter[];
+  bumps: Tone.BiquadFilter[];
   shaper: Tone.WaveShaper;
   driveSig: string;
   /** The compressor is in the path only while it works: off, it adds no look-ahead delay to live playing. */
@@ -37,23 +39,25 @@ interface StripNodes {
 
 function createStrip(): StripNodes {
   const trim = new Tone.Gain(1);
-  const hpf = new Tone.Filter({ type: 'highpass', frequency: 5, rolloff: -24 });
+  // Plain filters with fixed settings: the browser works out their curve once per block, not once per sample.
+  const hpf = new Tone.BiquadFilter({ type: 'highpass', frequency: 5 });
+  const hpf2 = new Tone.BiquadFilter({ type: 'highpass', frequency: 5 });
   const comp = new Tone.Compressor({ threshold: 0, ratio: 1, attack: 0.01, release: 0.3, knee: 6 });
   const compTrim = new Tone.Gain(1);
   const eq = [
-    new Tone.Filter({ type: 'lowshelf', frequency: 100, gain: 0 }),
-    new Tone.Filter({ type: 'peaking', frequency: 400, gain: 0, Q: 0.9 }),
-    new Tone.Filter({ type: 'peaking', frequency: 2500, gain: 0, Q: 0.9 }),
-    new Tone.Filter({ type: 'highshelf', frequency: 10000, gain: 0 }),
+    new Tone.BiquadFilter({ type: 'lowshelf', frequency: 100, gain: 0 }),
+    new Tone.BiquadFilter({ type: 'peaking', frequency: 400, gain: 0, Q: 0.9 }),
+    new Tone.BiquadFilter({ type: 'peaking', frequency: 2500, gain: 0, Q: 0.9 }),
+    new Tone.BiquadFilter({ type: 'highshelf', frequency: 10000, gain: 0 }),
   ];
-  const bumps = [new Tone.Filter({ type: 'peaking', frequency: 200, gain: 0, Q: 1 }), new Tone.Filter({ type: 'peaking', frequency: 5000, gain: 0, Q: 1 })];
+  const bumps = [new Tone.BiquadFilter({ type: 'peaking', frequency: 200, gain: 0, Q: 1 }), new Tone.BiquadFilter({ type: 'peaking', frequency: 5000, gain: 0, Q: 1 })];
   const shaper = new Tone.WaveShaper(driveCurve('clean', 0), 2048);
   shaper.oversample = 'none';
-  trim.chain(hpf, compTrim, ...eq, ...bumps, shaper);
+  trim.chain(hpf, hpf2, compTrim, ...eq, ...bumps, shaper);
   comp.connect(compTrim);
-  return { trim, hpf, comp, compTrim, eq, bumps, shaper, driveSig: 'clean:0', compOn: false, room: new Tone.Gain(0), echo: new Tone.Gain(0) };
+  return { trim, hpf, hpf2, comp, compTrim, eq, bumps, shaper, driveSig: 'clean:0', compOn: false, room: new Tone.Gain(0), echo: new Tone.Gain(0) };
 }
-const disposeStrip = (x: StripNodes) => [x.trim, x.hpf, x.comp, x.compTrim, ...x.eq, ...x.bumps, x.shaper, x.room, x.echo].forEach((n) => n.dispose());
+const disposeStrip = (x: StripNodes) => [x.trim, x.hpf, x.hpf2, x.comp, x.compTrim, ...x.eq, ...x.bumps, x.shaper, x.room, x.echo].forEach((n) => n.dispose());
 
 /** A soft ceiling after the limiter: flat until 0.98, then a gentle knee, so nothing ever clips hard. */
 function softClipCurve(size = 2048): Float32Array<ArrayBuffer> {
@@ -72,7 +76,7 @@ interface TrackChannel {
   voiceKey: string;
   voice: Voice;
   /** The pedal chain, in the song's order; rebuilt when pedals are added, removed or moved. */
-  pedals: { key: string; pedal: Pedal | null }[];
+  pedals: { key: string; pedal: Pedal | null; on: boolean }[];
   /** Where the chain meets the desk channel: a new chain fades in here while the old one fades out. */
   chainOut: Tone.Gain;
   chainSig: string;
@@ -97,6 +101,19 @@ const PREVIEWS_KEPT = 4;
 
 const gainToDb = (g: number) => (g <= 0.0001 ? -Infinity : 20 * Math.log10(g));
 
+/**
+ * Move a setting only when it changes. While a setting glides the browser works it out sample by sample, which
+ * for a filter is costly, so a mix applied again with the same values must leave every setting still.
+ */
+type Knob = { value: unknown; rampTo(v: number, t: number): unknown; linearRampTo(v: number, t: number): unknown };
+function glide(p: Knob, v: number, linear = false): void {
+  if (Math.abs(Number(p.value) - v) < 1e-4) return;
+  if (linear) p.linearRampTo(v, 0.05); else p.rampTo(v, 0.05);
+}
+function set(p: { value: unknown }, v: number): void {
+  if (Math.abs(Number(p.value) - v) >= 1e-4) p.value = v;
+}
+
 export class StudioEngine {
   private song: Song | null = null;
   private channels = new Map<string, TrackChannel>();
@@ -107,8 +124,8 @@ export class StudioEngine {
   private glue: Tone.Compressor | null = null;
   private glueOn = false;
   private glueTrim: Tone.Gain | null = null;
-  private body: Tone.Filter | null = null;
-  private air: Tone.Filter | null = null;
+  private body: Tone.BiquadFilter | null = null;
+  private air: Tone.BiquadFilter | null = null;
   private limiterTrim: Tone.Gain | null = null;
   private roomIn: Tone.Gain | null = null;
   private reverb: Tone.Reverb | null = null;
@@ -170,14 +187,14 @@ export class StudioEngine {
       clip.toDestination();
       // Loudness as people hear it: K-weighting (a high shelf and a low cut), then the level over time.
       this.analyser = new Tone.Analyser({ type: 'waveform', size: 2048 });
-      const kShelf = new Tone.Filter({ type: 'highshelf', frequency: 1682, gain: 4 });
-      const kCut = new Tone.Filter({ type: 'highpass', frequency: 38, Q: 0.5 });
+      const kShelf = new Tone.BiquadFilter({ type: 'highshelf', frequency: 1682, gain: 4 });
+      const kCut = new Tone.BiquadFilter({ type: 'highpass', frequency: 38, Q: 0.5 });
       clip.chain(kShelf, kCut, this.analyser);
       this.bus = new Tone.Gain(1);
       this.glue = new Tone.Compressor({ threshold: 0, ratio: 1, attack: 0.03, release: 0.3, knee: 0 });
       this.glueTrim = new Tone.Gain(1);
-      this.body = new Tone.Filter({ type: 'lowshelf', frequency: 100, gain: 0 });
-      this.air = new Tone.Filter({ type: 'highshelf', frequency: 10000, gain: 0 });
+      this.body = new Tone.BiquadFilter({ type: 'lowshelf', frequency: 100, gain: 0 });
+      this.air = new Tone.BiquadFilter({ type: 'highshelf', frequency: 10000, gain: 0 });
       this.bus.connect(this.glueTrim);
       this.glue.chain(this.glueTrim, this.body, this.air, this.master);
       // Shared returns: a room and an echo, each kept out of the lows and the very top so they never muddy the mix.
@@ -185,11 +202,11 @@ export class StudioEngine {
       this.reverb = new Tone.Reverb({ decay: 1.8, preDelay: 0.02, wet: 1 });
       this.roomDecay = 1.8;
       this.roomOut = new Tone.Gain(0.8);
-      this.roomIn.chain(this.reverb, new Tone.Filter({ type: 'highpass', frequency: 150 }), new Tone.Filter({ type: 'lowpass', frequency: 8000 }), this.roomOut, this.bus);
+      this.roomIn.chain(this.reverb, new Tone.BiquadFilter({ type: 'highpass', frequency: 150 }), new Tone.BiquadFilter({ type: 'lowpass', frequency: 8000 }), this.roomOut, this.bus);
       this.echoIn = new Tone.Gain(1);
       this.delay = new Tone.FeedbackDelay({ delayTime: 0.5, feedback: 0.3, wet: 1, maxDelay: 4 });
       this.echoOut = new Tone.Gain(0.7);
-      this.echoIn.chain(this.delay, new Tone.Filter({ type: 'lowpass', frequency: 4500 }), new Tone.Filter({ type: 'highpass', frequency: 150 }), this.echoOut, this.bus);
+      this.echoIn.chain(this.delay, new Tone.BiquadFilter({ type: 'lowpass', frequency: 4500 }), new Tone.BiquadFilter({ type: 'highpass', frequency: 150 }), this.echoOut, this.bus);
       this.started = true;
       // The song's sounds are built once the audio runs, and a sound that fails to build never silences the rest.
       if (Tone.getContext().state === 'running') { if (this.song) this.sync(this.song); }
@@ -445,8 +462,8 @@ export class StudioEngine {
     this.glue.release.value = g.release;
     this.glue.knee.value = g.knee;
     this.glueTrim.gain.rampTo(Tone.dbToGain(g.trimDb), 0.05);
-    this.body.gain.linearRampTo(m.body_db, 0.05);
-    this.air.gain.linearRampTo(m.air_db, 0.05);
+    glide(this.body.gain, m.body_db, true);
+    glide(this.air.gain, m.air_db, true);
     this.master.threshold.value = m.ceiling_db;
     this.limiterTrim.gain.value = Tone.dbToGain(-0.6 * Math.abs(m.ceiling_db) * (1 - 1 / 20));
     const decay = ROOM_SECONDS[m.room_kind];
@@ -515,11 +532,12 @@ export class StudioEngine {
     const oldPedals = ch.pedals;
     const oldVoice = voice !== ch.voice ? ch.voice : null;
     const slots = [...(t.sound?.chain.slots ?? []), ...t.fx_chain.slots];
-    const pedals = slots.map((slot) => ({ key: slot.effect.key, pedal: createPedal(slot.effect.key) }));
+    const pedals = slots.map((slot) => ({ key: slot.effect.key, pedal: createPedal(slot.effect.key), on: !slot.bypass }));
     const out = new Tone.Gain(0);
     out.connect(ch.strip.trim);
     let prev: Tone.ToneAudioNode = voice.output;
-    for (const { pedal } of pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
+    // A pedal switched off is left out of the path: it costs nothing, and switching it on rebuilds the chain.
+    pedals.forEach(({ pedal }, i) => { if (pedal && !slots[i].bypass) { prev.connect(pedal.input); prev = pedal.output; } });
     prev.connect(out);
     const now = Tone.immediate();
     out.gain.setValueAtTime(0, now);
@@ -527,7 +545,7 @@ export class StudioEngine {
     oldOut.gain.cancelScheduledValues(now);
     oldOut.gain.setValueAtTime(oldOut.gain.value, now);
     oldOut.gain.linearRampToValueAtTime(0, now + FADE);
-    const firstOld = oldPedals.find((x) => x.pedal)?.pedal;
+    const firstOld = oldPedals.find((x) => x.pedal && x.on)?.pedal;
     window.setTimeout(() => {
       // A new instrument takes the old one away with its chain; the same instrument only leaves its old chain.
       if (oldVoice) oldVoice.dispose();
@@ -557,13 +575,14 @@ export class StudioEngine {
     const s = stripOf(t);
     const c = consoleOf(mixOf(this.song ?? ({} as Song)).console);
     const x = ch.strip;
-    x.trim.gain.rampTo(Tone.dbToGain(s.trim_db), 0.05);
-    x.hpf.frequency.rampTo(s.hpf_hz > 0 ? s.hpf_hz : 5, 0.05);
+    glide(x.trim.gain, Tone.dbToGain(s.trim_db));
+    const cut = s.hpf_hz > 0 ? s.hpf_hz : 5;
+    glide(x.hpf.frequency, cut); glide(x.hpf2.frequency, cut);
     const k = compSettings(c, s.comp);
     if ((k.ratio > 1) !== x.compOn) {
       x.compOn = k.ratio > 1;
-      x.hpf.disconnect();
-      x.hpf.connect(x.compOn ? x.comp : x.compTrim);
+      x.hpf2.disconnect();
+      x.hpf2.connect(x.compOn ? x.comp : x.compTrim);
     }
     x.comp.threshold.value = k.threshold;
     x.comp.ratio.value = k.ratio;
@@ -572,13 +591,13 @@ export class StudioEngine {
     x.comp.knee.value = k.knee;
     x.compTrim.gain.rampTo(Tone.dbToGain(k.trimDb), 0.05);
     const [low, lmid, hmid, high] = x.eq;
-    low.frequency.rampTo(s.low_hz, 0.05); low.gain.linearRampTo(s.low_db, 0.05);
-    lmid.frequency.rampTo(s.lmid_hz, 0.05); lmid.gain.linearRampTo(c.bands.lmid.hidden ? 0 : s.lmid_db, 0.05); lmid.Q.value = qFor(c, s.lmid_db);
-    hmid.frequency.rampTo(s.hmid_hz, 0.05); hmid.gain.linearRampTo(s.hmid_db, 0.05); hmid.Q.value = qFor(c, s.hmid_db);
-    high.frequency.rampTo(s.high_hz, 0.05); high.gain.linearRampTo(s.high_db, 0.05);
+    glide(low.frequency, s.low_hz); glide(low.gain, s.low_db, true);
+    glide(lmid.frequency, s.lmid_hz); glide(lmid.gain, c.bands.lmid.hidden ? 0 : s.lmid_db, true); set(lmid.Q, qFor(c, s.lmid_db));
+    glide(hmid.frequency, s.hmid_hz); glide(hmid.gain, s.hmid_db, true); set(hmid.Q, qFor(c, s.hmid_db));
+    glide(high.frequency, s.high_hz); glide(high.gain, s.high_db, true);
     // Classic shelves dip a little before they rise (and the reverse): a small opposite bump next to each.
-    x.bumps[0].frequency.value = Math.min(2000, s.low_hz * 2); x.bumps[0].gain.linearRampTo(c.shelfBump ? -s.low_db / 6 : 0, 0.05);
-    x.bumps[1].frequency.value = Math.max(500, s.high_hz / 2); x.bumps[1].gain.linearRampTo(c.shelfBump ? -s.high_db / 6 : 0, 0.05);
+    set(x.bumps[0].frequency, Math.min(2000, s.low_hz * 2)); glide(x.bumps[0].gain, c.shelfBump ? -s.low_db / 6 : 0, true);
+    set(x.bumps[1].frequency, Math.max(500, s.high_hz / 2)); glide(x.bumps[1].gain, c.shelfBump ? -s.high_db / 6 : 0, true);
     const sig = `${c.drive}:${s.drive.toFixed(3)}`;
     if (sig !== x.driveSig) {
       x.shaper.curve = driveCurve(c.drive, s.drive);
@@ -586,8 +605,8 @@ export class StudioEngine {
       x.shaper.oversample = s.drive > 0 ? '2x' : 'none';
       x.driveSig = sig;
     }
-    x.room.gain.rampTo(s.send_room, 0.05);
-    x.echo.gain.rampTo(s.send_echo, 0.05);
+    glide(x.room.gain, s.send_room);
+    glide(x.echo.gain, s.send_echo);
   }
 
   private disposeChannel(ch: TrackChannel): void {
@@ -813,7 +832,7 @@ export class StudioEngine {
     const out = new Tone.Gain(fadeIn ? 0 : 1);
     out.connect(this.master!);
     let prev: Tone.ToneAudioNode = this.grooveIn!;
-    for (const pedal of pedals) if (pedal) { prev.connect(pedal.input); prev = pedal.output; }
+    pedals.forEach((pedal, i) => { if (pedal && !chain?.slots[i].bypass) { prev.connect(pedal.input); prev = pedal.output; } });
     prev.connect(out);
     if (fadeIn) { const now = Tone.immediate(); out.gain.setValueAtTime(0, now); out.gain.linearRampToValueAtTime(1, now + FADE); }
     return { pedals, out };
@@ -838,7 +857,7 @@ export class StudioEngine {
     const wired = this.wirePreview(chain, false);
     this.groovePedals = wired.pedals;
     this.grooveOut = wired.out;
-    this.grooveKeys = (chain?.slots ?? []).map((x) => x.effect.key);
+    this.grooveKeys = (chain?.slots ?? []).map(slotSig);
     const step = 60 / tempo / 4;
     const t0 = Tone.immediate() + 0.1;
     if (voice.kind === 'melodic') {
@@ -874,7 +893,7 @@ export class StudioEngine {
 
   /** Follow the knobs while a groove plays through a chain being shaped. Same pedals in the same order only. */
   updatePreviewChain(chain: FxChain): void {
-    if (this.groovePedals.length !== chain.slots.length || chain.slots.some((x, i) => this.grooveKeys[i] !== x.effect.key)) {
+    if (this.groovePedals.length !== chain.slots.length || chain.slots.some((x, i) => this.grooveKeys[i] !== slotSig(x))) {
       this.rewirePreview(chain);
       return;
     }
@@ -895,7 +914,8 @@ export class StudioEngine {
     oldOut.gain.cancelScheduledValues(now);
     oldOut.gain.setValueAtTime(oldOut.gain.value, now);
     oldOut.gain.linearRampToValueAtTime(0, now + FADE);
-    const firstOld = oldPedals.find(Boolean);
+    const oldKeys = this.grooveKeys;
+    const firstOld = oldPedals.find((p, i) => p && !oldKeys[i]?.endsWith(':off'));
     window.setTimeout(() => {
       try { input.disconnect(firstOld ? firstOld.input : oldOut); } catch { /* already gone */ }
       oldPedals.forEach((p) => p?.dispose());
@@ -903,7 +923,7 @@ export class StudioEngine {
     }, FADE_MS * 3);
     this.groovePedals = wired.pedals;
     this.grooveOut = wired.out;
-    this.grooveKeys = chain.slots.map((x) => x.effect.key);
+    this.grooveKeys = chain.slots.map(slotSig);
   }
 
   /** Hear one piece of a kit (the snare, the china). */
@@ -980,8 +1000,11 @@ function playedSong(song: Song): Song {
 const voiceKey = (t: Track): string => `${t.instrument?.key ?? ''}${t.sound ? '+sound' : ''}`;
 
 /** What decides the wiring of a track: its saved sound's chain, then its pedals. */
+/** A unit as the wiring sees it: which effect, and whether it is in the path. */
+const slotSig = (x: { effect: { key: string }; bypass: boolean }) => `${x.effect.key}${x.bypass ? ':off' : ''}`;
+
 const chainSig = (t: Track): string =>
-  [...(t.sound?.chain.slots ?? []).map((x) => `s:${x.effect.key}`), ...t.fx_chain.slots.map((x) => x.effect.key)].join('|');
+  [...(t.sound?.chain.slots ?? []).map((x) => `s:${x.effect.key}${x.bypass ? ':off' : ''}`), ...t.fx_chain.slots.map((x) => `${x.effect.key}${x.bypass ? ':off' : ''}`)].join('|');
 
 type Manifest = { type?: string; kit?: string; voice?: string; set?: string; mono?: boolean; chain?: ChainSpec; trimDb?: number } | undefined;
 
