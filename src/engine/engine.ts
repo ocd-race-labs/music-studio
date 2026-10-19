@@ -651,7 +651,7 @@ export class StudioEngine {
   }
 
   /** Start playing; `fromStep` picks where (inside the part on repeat, or anywhere in the song). */
-  async play(fromStep = 0): Promise<boolean> {
+  async play(fromStep = 0, opts: { once?: boolean } = {}): Promise<boolean> {
     const ok = await this.start();
     if (!this.song) return ok;
     const transport = Tone.getTransport();
@@ -660,12 +660,20 @@ export class StudioEngine {
     this.lufsAll = { sum: 0, n: 0 };
     // Count sixteenths ourselves: swing moves the off-beats in time, so deriving the step from time is fragile.
     let counter = 0;
+    let ending = false;
+    this.once = !!opts.once;
     this.repeatId = transport.scheduleRepeat((time) => {
       const song = this.song;
-      if (!song) return;
+      if (!song || ending) return;
       counter++;
       const { start, end } = this.bounds(song);
       let step = this.nextStep;
+      // Played once: at the end it stops (what still rings rings out) instead of starting again from the top.
+      if (this.once && step >= end && counter > 1) {
+        ending = true;
+        Tone.getDraw().schedule(() => { this.stop(); this.endedFns.forEach((fn) => fn()); }, time);
+        return;
+      }
       if (step < start || step >= end) step = start;
       this.nextStep = step + 1;
       this.playStep(song, step, time);
@@ -681,6 +689,17 @@ export class StudioEngine {
       }
     }, 600);
     return ok;
+  }
+
+  /** Play once and stop at the end, instead of starting again; can change while playing. */
+  private once = false;
+  setOnce(once: boolean): void { this.once = once; }
+
+  /** Playback that reached its end and stopped by itself (played once). */
+  private endedFns = new Set<() => void>();
+  onEnded(fn: () => void): () => void {
+    this.endedFns.add(fn);
+    return () => { this.endedFns.delete(fn); };
   }
 
   stop(): void {

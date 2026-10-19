@@ -294,7 +294,7 @@ input[type='range'] { accent-color: var(--main); width: 100%; }
 }
 
 /* The transport strip: play, where the song is, tempo, length, record, level. */
-.transport { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); flex: none; flex-wrap: wrap; }
+.transport { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); flex: none; flex-wrap: wrap; }
 .tp-pos { display: flex; flex-direction: column; line-height: 1.1; min-width: 88px; }
 .tp-big { font-size: 20px; font-weight: 500; }
 .tp-small { font-size: 11px; color: var(--ink-2); white-space: nowrap; }
@@ -1128,3 +1128,11 @@ input.field.num { width: 64px; text-align: center; }
 .iw-sum dd { margin: 0; flex: 1 1 260px; min-width: 0; }
 .iw-accept { min-height: 52px; font-size: 16px; }
 .iw-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 14px; }
+
+/* What plays in the detail: the detail or the accepted idea. */
+.hear-wrap { display: flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.hear-lbl { margin: 0; }
+.hear-toggle button:disabled { opacity: 0.45; cursor: default; }
+.btn.tp-loop, .btn.tp-loop[aria-pressed=true] { background: transparent; color: var(--ink-2); width: 34px; min-width: 34px; padding: 0; margin-left: -4px; }
+.btn.tp-loop[aria-pressed=true] { color: var(--main); }
+@media (max-width: 1700px) { .hear-lbl { display: none; } }

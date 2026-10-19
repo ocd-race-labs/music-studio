@@ -70,27 +70,56 @@ export function useStepWindow(
   return { win, first };
 }
 
-/** Scroll on request (the timeline, a section chosen), and turn the page as the playhead moves on, like a score. */
+/**
+ * Scroll on request (the timeline, a section chosen), and turn the page as the playhead moves on, like a score.
+ * When the person scrolls away while it plays (to look ahead or fix something), the view stays where they put it:
+ * pages turn again once the playhead comes into view, when the song starts again, or after a jump.
+ */
 export function useScrollControl(
   scroller: RefObject<HTMLDivElement | null>, view: View, pitch: number, label: number, step: number, jump: Jump | undefined,
 ) {
+  const held = useRef(false);
+  const ours = useRef(0);
+  const prev = useRef(-1);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const byHand = () => { held.current = true; };
+    // A scroll the grid did itself shows up as a scroll event too: only the ones that follow none of ours count.
+    const onScroll = () => { if (performance.now() - ours.current > 300) held.current = true; };
+    el.addEventListener('wheel', byHand, { passive: true });
+    el.addEventListener('touchmove', byHand, { passive: true });
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('wheel', byHand);
+      el.removeEventListener('touchmove', byHand);
+      el.removeEventListener('scroll', onScroll);
+    };
+  }, [scroller]);
   const jumpN = jump?.n;
   useLayoutEffect(() => {
     const el = scroller.current;
     if (!el || !jump) return;
     const local = Math.max(0, Math.min(view.length - 1, jump.step - view.start));
+    ours.current = performance.now();
+    held.current = false;
     el.scrollLeft = Math.floor(local / 16) * 16 * pitch;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jumpN, view.start, view.length]);
   useEffect(() => {
     const el = scroller.current;
+    const started = prev.current < 0 && step >= 0;
+    prev.current = step;
     if (!el || step < 0) return;
+    if (started) held.current = false;
     const local = step - view.start;
     if (local < 0 || local >= view.length) return;
     const fits = Math.max(1, Math.floor((el.clientWidth - label) / pitch));
     const firstOnScreen = Math.round(el.scrollLeft / pitch);
-    if (local >= firstOnScreen && local < firstOnScreen + fits) return;
+    if (local >= firstOnScreen && local < firstOnScreen + fits) { held.current = false; return; }
+    if (held.current) return;
     const page = fits >= 16 ? Math.floor(fits / 16) * 16 : fits;
+    ours.current = performance.now();
     el.scrollTo({ left: Math.floor(local / page) * page * pitch });
   }, [scroller, step, view.start, view.length, pitch, label]);
 }
