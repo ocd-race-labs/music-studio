@@ -1,454 +1,484 @@
 {
  "studio": {
-  "duration": 77.6,
+  "duration": 101.5,
   "cues": [
    {
     "t": 0.21,
-    "es": "¡Hola! Este es tu estudio. Aquí creas canciones desde cero, instrumento por instrumento.",
-    "en": "Hi! This is your studio. Here you make songs from scratch, one instrument at a time."
+    "es": "¡Hola! Qué alegría verte por aquí. Bienvenid{a|o} a tu estudio de música. Vamos a conocerlo, paso a paso.",
+    "en": "Hi! It's so nice to see you here. Welcome to your music studio. Let's get to know it, one step at a time."
    },
    {
-    "t": 6.84,
-    "es": "A la izquierda están las pistas: cada pista es un instrumento de tu canción.",
-    "en": "On the left are the tracks: each track is one instrument in your song."
+    "t": 10.79,
+    "es": "Arriba está la canción en la que estás trabajando: su nombre, su velocidad, y cuánto dura.",
+    "en": "At the top is the song you are working on: its name, its speed, and how long it lasts."
    },
    {
-    "t": 13.92,
-    "es": "Al medio está el editor de la pista que elegiste. Ahora vemos la batería.",
-    "en": "In the middle is the editor for the track you picked. Right now we see the drums."
+    "t": 19.04,
+    "es": "Abajo están las salas. En Estudio eliges los sonidos, en Músico escribes la música, y en Productor la mezclas.",
+    "en": "Below are the rooms. In Studio you pick the sounds, in Musician you write the music, and in Producer you mix it."
    },
    {
-    "t": 20.93,
-    "es": "Para escuchar tu canción, aprieta Play: el botón redondo de arriba a la derecha.",
-    "en": "To hear your song, press Play: the round button at the top right."
+    "t": 28.57,
+    "es": "Entremos a Músico, donde se escriben las notas.",
+    "en": "Let's go into Musician, where the notes are written."
    },
    {
-    "t": 28.05,
+    "t": 33.06,
+    "es": "A la izquierda están las pistas. Cada pista es un instrumento de tu canción.",
+    "en": "On the left are the tracks. Each track is one instrument in your song."
+   },
+   {
+    "t": 39.61,
+    "es": "Al medio está la pista que elegiste. Ahora vemos la batería.",
+    "en": "In the middle is the track you picked. Right now we see the drums."
+   },
+   {
+    "t": 45.27,
+    "es": "Para escuchar tu canción, aprieta Play, el botón redondo.",
+    "en": "To hear your song, press Play, the round button."
+   },
+   {
+    "t": 50.96,
+    "es": "El botón de al lado decide si la canción vuelve a empezar al terminar, o suena una sola vez.",
+    "en": "The button next to it decides whether the song starts again at the end, or plays just once."
+   },
+   {
+    "t": 58.03,
     "es": "BPM es la velocidad de la canción: cuántos pulsos hay en un minuto. Ahora está en 90.",
     "en": "BPM is the song's speed: how many beats there are in one minute. Right now it is 90."
    },
    {
-    "t": 36.15,
-    "es": "Ejemplo 1: cambiemos a 120. ¡Escucha cómo se apura!",
-    "en": "Example 1: let's change it to 120. Hear how it speeds up!"
+    "t": 66.39,
+    "es": "Ejemplo uno: cambiemos a 120. Escucha cómo se apura.",
+    "en": "Example one: let's change it to 120. Hear how it speeds up."
    },
    {
-    "t": 42.33,
-    "es": "Ejemplo 2: vuelve a 90. Más lento se siente más relajado.",
-    "en": "Example 2: go back to 90. Slower feels more relaxed."
+    "t": 72.91,
+    "es": "Ejemplo dos: volvamos a 90. Más lento, se siente más suave.",
+    "en": "Example two: let's go back to 90. Slower, it feels softer."
    },
    {
-    "t": 48.48,
-    "es": "Aprieta Play otra vez para detener la música.",
-    "en": "Press Play again to stop the music."
+    "t": 80.17,
+    "es": "Aprieta Play otra vez, y la música se detiene.",
+    "en": "Press Play again, and the music stops."
    },
    {
-    "t": 53.27,
-    "es": "Arriba eliges tu sombrero: Músico para escribir notas, y Productor para mezclar y poner efectos.",
-    "en": "At the top you pick your hat: Musician to write notes, and Producer to mix and add effects."
+    "t": 84.47,
+    "es": "Con estos botones de arriba pasas de una sala a otra. La casita te lleva de vuelta al mapa.",
+    "en": "With these buttons at the top you move from room to room. The little house takes you back to the map."
    },
    {
-    "t": 60.65,
-    "es": "Y estos botones eligen cuánto ves a la vez: toda la canción, 2 compases, 1 compás o medio compás.",
-    "en": "And these buttons choose how much you see at once: the whole song, 2 bars, 1 bar or half a bar."
-   },
-   {
-    "t": 69.49,
-    "es": "¡Listo! Ya conoces tu estudio. En la próxima lección haces tu primer beat.",
-    "en": "Done! Now you know your studio. In the next lesson you make your first beat."
+    "t": 91.92,
+    "es": "¡Muy bien! Ya conoces tu estudio. En la próxima lección, haces tu primer beat.",
+    "en": "Well done! Now you know your studio. In the next lesson, you make your first beat."
    }
   ]
  },
  "beat": {
-  "duration": 85.3,
+  "duration": 87.7,
   "cues": [
    {
-    "t": 0.22,
-    "es": "Un beat es el ritmo que se repite en tu canción. Se arma en esta grilla de la batería.",
-    "en": "A beat is the rhythm that repeats in your song. You build it in this drum grid."
+    "t": 0.26,
+    "es": "Un beat es el ritmo que se repite en tu canción. Lo armamos en esta grilla de la batería.",
+    "en": "A beat is the rhythm that repeats in your song. We build it in this drum grid."
    },
    {
-    "t": 9.09,
+    "t": 8.92,
     "es": "Cada fila es un sonido: bombo, caja, hi-hat y más. Cada cuadrado es un pedacito de tiempo.",
     "en": "Each row is a sound: kick, snare, hi-hat and more. Each square is a little slice of time."
    },
    {
-    "t": 17.56,
-    "es": "Un compás tiene 16 cuadrados: son 4 tiempos, y cada tiempo tiene 4 cuadrados.",
-    "en": "A bar has 16 squares: that is 4 beats, and each beat has 4 squares."
+    "t": 18.43,
+    "es": "Un compás tiene dieciséis cuadrados. Son cuatro tiempos, y cada tiempo tiene cuatro cuadrados.",
+    "en": "A bar has sixteen squares. That is four beats, and each beat has four squares."
    },
    {
-    "t": 24.55,
-    "es": "Ejemplo 1, un beat de hip hop. El bombo, el golpe grave, va en los cuadrados 1 y 9.",
-    "en": "Example 1, a hip hop beat. The kick, the low hit, goes on squares 1 and 9."
+    "t": 26.6,
+    "es": "Ejemplo uno, un beat de hip hop. El bombo, el golpe grave, va en los cuadrados uno y nueve.",
+    "en": "Example one, a hip hop beat. The kick, the low hit, goes on squares one and nine."
    },
    {
-    "t": 33.38,
-    "es": "La caja, el golpe seco, va en el 5 y en el 13: son los tiempos 2 y 4.",
-    "en": "The snare, the sharp hit, goes on 5 and 13: those are beats 2 and 4."
+    "t": 35.48,
+    "es": "La caja, el golpe seco, va en el cinco y en el trece. Son los tiempos dos y cuatro.",
+    "en": "The snare, the sharp hit, goes on five and thirteen. Those are beats two and four."
    },
    {
-    "t": 42.22,
-    "es": "El hi-hat lleva el ritmo: un cuadrado sí y uno no.",
-    "en": "The hi-hat keeps time: one square on, one square off."
+    "t": 43.79,
+    "es": "El hi-hat lleva el pulso: un cuadrado sí, y uno no.",
+    "en": "The hi-hat keeps the pulse: one square on, and one off."
    },
    {
-    "t": 49.3,
+    "t": 51.6,
     "es": "¡Escúchalo! Aprieta Play.",
     "en": "Listen! Press Play."
    },
    {
-    "t": 56.86,
-    "es": "Ejemplo 2: mueve el bombo del 9 al 11. El golpe llega un poquito tarde y el beat tiene más onda: eso se llama síncopa.",
-    "en": "Example 2: move the kick from 9 to 11. The hit arrives a little late and the beat grooves more: that is called syncopation."
+    "t": 58.27,
+    "es": "Ejemplo dos: mueve el bombo del nueve al once. El golpe llega un poquito tarde, y el beat se mueve más. Eso se llama síncopa.",
+    "en": "Example two: move the kick from nine to eleven. The hit arrives a little late, and the beat moves more. That is called syncopation."
    },
    {
-    "t": 68.73,
+    "t": 69.79,
     "es": "Para quitar un golpe, tócalo otra vez. ¡Ahora inventa tu propio beat!",
     "en": "To remove a hit, tap it again. Now invent your own beat!"
    },
    {
-    "t": 75.01,
-    "es": "Con Grabar toques y Play, también puedes tocar los pads con los dedos, y lo que tocas queda escrito.",
-    "en": "With Record taps and Play, you can also play the pads with your fingers, and what you play gets written."
+    "t": 77.21,
+    "es": "Abajo están los pads. Con Grabar toques y Play, tocas con los dedos, y lo que tocas queda escrito.",
+    "en": "Below are the pads. With Record taps and Play, you play with your fingers, and what you play gets written."
    }
   ]
  },
  "notes": {
-  "duration": 100.5,
+  "duration": 102.8,
   "cues": [
    {
-    "t": 0.23,
-    "es": "La melodía es la parte que cantarías o silbarías. Se escribe en el piano roll.",
-    "en": "The melody is the part you would sing or whistle. You write it in the piano roll."
+    "t": 0.25,
+    "es": "La melodía es la parte que cantarías, o silbarías. Se escribe en el piano roll.",
+    "en": "The melody is the part you would sing, or whistle. You write it in the piano roll."
    },
    {
-    "t": 7.61,
-    "es": "Cada fila es una nota: las agudas arriba y las graves abajo. Cada columna es un momento de la canción.",
-    "en": "Each row is a note: high notes on top, low notes below. Each column is a moment in the song."
+    "t": 8.76,
+    "es": "Cada fila es una nota: las agudas arriba, y las graves abajo. Cada columna es un momento de la canción.",
+    "en": "Each row is a note: high notes on top, and low notes below. Each column is a moment in the song."
    },
    {
-    "t": 17.8,
-    "es": "Los colores te ayudan a escoger. Las notas dulces son de la escala y suenan bien juntas.",
-    "en": "The colors help you choose. Sweet notes belong to the scale and sound good together."
+    "t": 19.35,
+    "es": "Los colores te ayudan a escoger. Las notas dulces son de la escala, y suenan bien juntas.",
+    "en": "The colors help you choose. Sweet notes belong to the scale, and sound good together."
    },
    {
-    "t": 25.92,
-    "es": "Las amargas están fuera de la escala y crean tensión. ¡Se pueden usar, con cuidado!",
-    "en": "Bitter notes are outside the scale and create tension. You can use them, carefully!"
+    "t": 27.48,
+    "es": "Las amargas están fuera de la escala, y crean tensión. Se pueden usar, de a poquito.",
+    "en": "Bitter notes are outside the scale, and create tension. You can use them, a little at a time."
    },
    {
-    "t": 33.33,
-    "es": "La dorada es la nota de casa, la tónica: ahí la música descansa.",
-    "en": "The gold one is the home note, the tonic: that is where music rests."
+    "t": 35.85,
+    "es": "La nota de casa es la tónica. Ahí, la música descansa.",
+    "en": "The home note is the tonic. That is where the music rests."
    },
    {
-    "t": 39.94,
-    "es": "Ejemplo 1: elige la duración 1/4, un tiempo por nota, y sube la escala: Do, Re, Mi, Fa.",
-    "en": "Example 1: pick the 1/4 length, one beat per note, and climb the scale: C, D, E, F."
+    "t": 41.97,
+    "es": "Ejemplo uno: elige la duración un cuarto, un tiempo por nota, y sube la escala: Do, Re, Mi, Fa.",
+    "en": "Example one: pick the one quarter length, one beat per note, and climb the scale: C, D, E, F."
    },
    {
-    "t": 48.77,
+    "t": 53.06,
     "es": "Escucha cómo sube, paso a paso.",
     "en": "Hear it climb, step by step."
    },
    {
-    "t": 58.64,
-    "es": "Ejemplo 2, notas largas: mantén el dedo un momento sobre un cuadrado y deslízalo hacia el lado.",
-    "en": "Example 2, long notes: hold your finger on a square for a moment, then slide it sideways."
+    "t": 62.03,
+    "es": "Ejemplo dos, notas largas: deja el dedo un momento sobre un cuadrado, y deslízalo hacia el lado.",
+    "en": "Example two, long notes: rest your finger on a square for a moment, and slide it sideways."
    },
    {
-    "t": 66.74,
-    "es": "Y termina en Do, la nota de casa: así la melodía se siente completa.",
-    "en": "And end on C, the home note: that way the melody feels complete."
+    "t": 70.6,
+    "es": "Y termina en Do, la nota de casa. Así, la melodía se siente completa.",
+    "en": "And end on C, the home note. That way, the melody feels complete."
    },
    {
-    "t": 73.72,
+    "t": 77.88,
     "es": "¡Escucha cómo llega a casa!",
     "en": "Hear it arrive home!"
    },
    {
-    "t": 85.02,
+    "t": 88.43,
     "es": "El teclado de abajo también suena al tocarlo, con los mismos colores.",
     "en": "The keyboard below plays when you touch it too, with the same colors."
    },
    {
-    "t": 91.26,
+    "t": 94.14,
     "es": "Si te equivocas, toca la nota otra vez para borrarla, o usa la flecha de deshacer.",
     "en": "If you make a mistake, tap the note again to erase it, or use the undo arrow."
    }
   ]
  },
  "chords": {
-  "duration": 70.7,
+  "duration": 69.1,
   "cues": [
    {
-    "t": 0.22,
+    "t": 0.23,
     "es": "Un acorde son varias notas que suenan juntas. Los acordes acompañan a la melodía.",
     "en": "A chord is several notes played together. Chords accompany the melody."
    },
    {
-    "t": 7.21,
-    "es": "En la pista de Acordes, cada cuadrado es un compás. Esta canción tiene dos: Do y Sol.",
-    "en": "In the Chords track, each square is one bar. This song has two: C and G."
+    "t": 7.35,
+    "es": "En la pista de Acordes, cada cuadro es un compás. Esta canción tiene dos: Do y Sol.",
+    "en": "In the Chords track, each box is one bar. This song has two: C and G."
    },
    {
-    "t": 15.31,
-    "es": "Ejemplo 1, la progresión más famosa del mundo. Primero, la canción necesita 4 compases.",
-    "en": "Example 1, the most famous progression in the world. First, the song needs 4 bars."
+    "t": 15.58,
+    "es": "Ejemplo uno, la progresión más famosa del mundo. Primero, la canción necesita cuatro compases.",
+    "en": "Example one, the most famous progression in the world. First, the song needs four bars."
    },
    {
-    "t": 22.29,
-    "es": "Toca el primer compás y luego su acorde: Do, Sol, Lam y Fa. El siguiente compás queda listo solo.",
-    "en": "Tap the first bar, then its chord: C, G, Am and F. The next bar gets ready on its own."
+    "t": 24.77,
+    "es": "Toca el primer compás, y luego su acorde: Do, Sol, La menor y Fa. El compás siguiente queda listo solo.",
+    "en": "Tap the first bar, and then its chord: C, G, A minor and F. The next bar gets ready on its own."
    },
    {
-    "t": 31.12,
-    "es": "Se escribe I, V, vi, IV: los números dicen en qué nota de la escala nace cada acorde. ¡Escúchala!",
-    "en": "It is written I, V, vi, IV: the numbers tell which note of the scale each chord is built on. Listen!"
+    "t": 35.33,
+    "es": "Se escribe uno, cinco, seis, cuatro. Los números dicen en qué nota de la escala nace cada acorde. ¡Escúchala!",
+    "en": "It is written one, five, six, four. The numbers tell which note of the scale each chord is built on. Listen!"
    },
    {
-    "t": 45.02,
-    "es": "Ejemplo 2: mira cómo los acordes pintan las notas de la melodía.",
-    "en": "Example 2: see how the chords paint the notes of the melody."
+    "t": 48.96,
+    "es": "Ejemplo dos: mira cómo los acordes pintan las notas de la melodía.",
+    "en": "Example two: see how the chords paint the notes of the melody."
    },
    {
-    "t": 51.27,
-    "es": "El anillo marca las notas del acorde de cada compás: son las más seguras para tu melodía.",
-    "en": "The ring marks the notes of each bar's chord: they are the safest ones for your melody."
+    "t": 54.6,
+    "es": "El anillo marca las notas del acorde de cada compás. Son las más seguras para tu melodía.",
+    "en": "The ring marks the notes of each bar's chord. They are the safest ones for your melody."
    },
    {
-    "t": 60.38,
-    "es": "Y en Tonalidad eliges la casa de tu canción. Do mayor no tiene sostenidos ni bemoles: perfecta para empezar.",
-    "en": "And in Key you choose your song's home. C major has no sharps or flats: perfect to start with."
-   }
-  ]
- },
- "genres": {
-  "duration": 72.4,
-  "cues": [
-   {
-    "t": 0.23,
-    "es": "Cada género trae sus propios instrumentos. Lo eliges aquí, arriba de las pistas.",
-    "en": "Each genre brings its own instruments. You pick it here, above the tracks."
-   },
-   {
-    "t": 6.85,
-    "es": "Esta canción es de hip hop. ¡Escucha!",
-    "en": "This song is hip hop. Listen!"
-   },
-   {
-    "t": 15.62,
-    "es": "Ejemplo 1: pasémosla a rock.",
-    "en": "Example 1: let's turn it into rock."
-   },
-   {
-    "t": 19.29,
-    "es": "Puedes mantener tus notas, que pasan a los instrumentos nuevos, o empezar una canción en blanco.",
-    "en": "You can keep your notes, which move to the new instruments, or start a blank song."
-   },
-   {
-    "t": 27.02,
-    "es": "¡Las mismas notas, con sonido de rock!",
-    "en": "The same notes, with a rock sound!"
-   },
-   {
-    "t": 36.08,
-    "es": "Ejemplo 2: tu kit personalizado. Toca la estrella de los instrumentos que más te gusten.",
-    "en": "Example 2: your custom kit. Tap the star on the instruments you like best."
-   },
-   {
-    "t": 43.44,
-    "es": "Con la estrella junto al género, escuchas los instrumentos de todos los géneros y marcas los que quieras.",
-    "en": "With the star next to the genre, you hear the instruments of every genre and star the ones you want."
-   },
-   {
-    "t": 51.9,
-    "es": "Después, Usar mi kit: tus instrumentos favoritos juntos, listos para tus canciones.",
-    "en": "Then, Use my kit: your favorite instruments together, ready for your songs."
-   },
-   {
-    "t": 64.27,
-    "es": "Prueba distintos géneros con la misma canción: ¡cada uno le da otra personalidad!",
-    "en": "Try different genres with the same song: each one gives it a new personality!"
+    "t": 62.12,
+    "es": "Prueba otros acordes, y escucha qué te hace sentir cada uno.",
+    "en": "Try other chords, and listen to how each one makes you feel."
    }
   ]
  },
  "form": {
-  "duration": 64.2,
+  "duration": 85.6,
   "cues": [
    {
     "t": 0.21,
-    "es": "Las canciones tienen partes: intro, verso, coro, puente… En esta lección aprendes a armarlas.",
-    "en": "Songs have parts: intro, verse, chorus, bridge… In this lesson you learn to build them."
+    "es": "Las canciones tienen partes: intro, verso, coro, puente. En esta lección, armamos la forma de tu canción.",
+    "en": "Songs have parts: intro, verse, chorus, bridge. In this lesson, we build your song's shape."
    },
    {
-    "t": 7.21,
-    "es": "El largo de la canción se cambia en Compases, con menos y más, hasta 96 compases.",
-    "en": "You change the song's length in Bars, with minus and plus, up to 96 bars."
+    "t": 11.26,
+    "es": "Todo empieza en Idea. Toca Idea, arriba a la izquierda.",
+    "en": "It all starts in Idea. Tap Idea, at the top left."
    },
    {
-    "t": 14.94,
-    "es": "Ejemplo 1: toca Marcar secciones, elige el primer y el último compás, y di qué parte es.",
-    "en": "Example 1: tap Mark sections, pick the first and last bar, and say which part it is."
+    "t": 17.03,
+    "es": "Aquí eliges una forma para partir. Cada color es una parte de la canción.",
+    "en": "Here you pick a shape to start from. Each color is a part of the song."
    },
    {
-    "t": 23.03,
-    "es": "Ahora es un Verso, con su color. Repitámoslo: la canción crece justo después.",
-    "en": "Now it is a Verse, with its own color. Let's repeat it: the song grows right after it."
+    "t": 23.34,
+    "es": "Ejemplo uno: elijamos Canción corta.",
+    "en": "Example one: let's pick Short song."
    },
    {
-    "t": 29.65,
-    "es": "Ejemplo 2: toca una parte para verla sola. Play la toca en loop: ¡perfecto para practicar!",
-    "en": "Example 2: tap a part to see it alone. Play loops it: perfect for practicing!"
+    "t": 27.44,
+    "es": "Ahora tu canción tiene intro, verso, coro, verso, coro y outro. Cada parte trae sus acordes y su ritmo.",
+    "en": "Now your song has an intro, verse, chorus, verse, chorus and outro. Each part brings its chords and its rhythm."
    },
    {
-    "t": 42.07,
-    "es": "La línea de tiempo muestra la canción completa con sus partes de colores. Tócala para saltar a otro compás.",
-    "en": "The timeline shows the whole song with its colored parts. Tap it to jump to another bar."
+    "t": 38.0,
+    "es": "Toca una parte para verla. Por ejemplo, el coro.",
+    "en": "Tap a part to see it. For example, the chorus."
    },
    {
-    "t": 50.91,
-    "es": "Toca Canción completa para volver a verla toda.",
-    "en": "Tap Whole song to see all of it again."
+    "t": 43.5,
+    "es": "Escucha esta parte sola.",
+    "en": "Listen to this part alone."
    },
    {
-    "t": 55.67,
-    "es": "Con partes como intro, verso, coro y puente, tu canción toma forma. ¡A construir!",
-    "en": "With parts like intro, verse, chorus and bridge, your song takes shape. Let's build!"
+    "t": 52.07,
+    "es": "Ejemplo dos: con Repetirla aquí, la parte se repite, y la canción crece.",
+    "en": "Example two: with Repeat it here, the part repeats, and the song grows."
+   },
+   {
+    "t": 59.4,
+    "es": "Cuando te guste la forma, toca Aceptar la idea. Así se escribe el detalle, nota por nota.",
+    "en": "When you like the shape, tap Accept the idea. That writes the detail, note by note."
+   },
+   {
+    "t": 68.0,
+    "es": "En Detalle, la estructura muestra las partes con sus colores. Toca una para practicarla en loop.",
+    "en": "In Detail, the structure shows the parts with their colors. Tap one to practice it in a loop."
+   },
+   {
+    "t": 76.26,
+    "es": "Con intro, verso, coro y puente, tu canción toma forma. ¡A construir!",
+    "en": "With intro, verse, chorus and bridge, your song takes shape. Let's build!"
+   }
+  ]
+ },
+ "genres": {
+  "duration": 72.2,
+  "cues": [
+   {
+    "t": 0.25,
+    "es": "Cada género trae sus propios instrumentos. Lo eliges aquí, arriba de las pistas.",
+    "en": "Each genre brings its own instruments. You pick it here, above the tracks."
+   },
+   {
+    "t": 7.5,
+    "es": "Esta canción es de hip hop. ¡Escucha!",
+    "en": "This song is hip hop. Listen!"
+   },
+   {
+    "t": 15.7,
+    "es": "Ejemplo uno: pasémosla a rock.",
+    "en": "Example one: let's turn it into rock."
+   },
+   {
+    "t": 19.4,
+    "es": "Puedes mantener tus notas, que pasan a los instrumentos nuevos, o empezar una canción en blanco.",
+    "en": "You can keep your notes, which move to the new instruments, or start a blank song."
+   },
+   {
+    "t": 27.45,
+    "es": "¡Las mismas notas, con sonido de rock!",
+    "en": "The same notes, with a rock sound!"
+   },
+   {
+    "t": 36.13,
+    "es": "Ejemplo dos: tu kit personalizado. Toca la estrella de los instrumentos que más te gusten.",
+    "en": "Example two: your custom kit. Tap the star on the instruments you like best."
+   },
+   {
+    "t": 43.91,
+    "es": "Con la estrella junto al género, escuchas los instrumentos de todos los géneros, y marcas los que quieras.",
+    "en": "With the star next to the genre, you hear the instruments of every genre, and star the ones you want."
+   },
+   {
+    "t": 52.02,
+    "es": "Después, Usar mi kit: tus instrumentos favoritos juntos, listos para tus canciones.",
+    "en": "Then, Use my kit: your favorite instruments together, ready for your songs."
+   },
+   {
+    "t": 63.54,
+    "es": "Prueba distintos géneros con la misma canción. ¡Cada uno le da otra personalidad!",
+    "en": "Try different genres with the same song. Each one gives it a new personality!"
    }
   ]
  },
  "mixer": {
-  "duration": 69.6,
+  "duration": 66.1,
   "cues": [
    {
     "t": 0.21,
-    "es": "El mezclador pone todas las pistas lado a lado. Sirve para que todas se escuchen bien juntas.",
-    "en": "The mixer puts all the tracks side by side. It helps them all sound good together."
+    "es": "En la sala Productor, la mesa pone todas las pistas lado a lado. Sirve para que todas se escuchen bien juntas.",
+    "en": "In the Producer room, the desk puts all the tracks side by side. It helps them all sound good together."
    },
    {
-    "t": 8.39,
-    "es": "Cada pista tiene un fader de volumen: arriba suena más fuerte, abajo más suave.",
-    "en": "Each track has a volume fader: up is louder, down is softer."
+    "t": 10.17,
+    "es": "Cada pista tiene su fader de volumen: arriba suena más fuerte, abajo más suave.",
+    "en": "Each track has its volume fader: up is louder, down is softer."
    },
    {
-    "t": 15.39,
-    "es": "Ejemplo 1: la batería está muy fuerte. Bajémosla un poco.",
-    "en": "Example 1: the drums are too loud. Let's turn them down a little."
+    "t": 17.23,
+    "es": "Ejemplo uno: la batería está muy fuerte. Bajémosla un poquito.",
+    "en": "Example one: the drums are too loud. Let's turn them down a little."
    },
    {
-    "t": 21.81,
-    "es": "El paneo manda el sonido a la izquierda o a la derecha. Movamos el acompañamiento un poco a la izquierda.",
-    "en": "Pan sends the sound to the left or right. Let's move the comping a little to the left."
+    "t": 24.39,
+    "es": "La perilla Paneo manda el sonido a la izquierda o a la derecha. Movamos el acompañamiento un poco a la izquierda.",
+    "en": "The Pan knob sends the sound to the left or right. Let's move the comping a little to the left."
    },
    {
-    "t": 31.08,
+    "t": 34.33,
     "es": "M es mute: esa pista se calla. S es solo: suenan solo las pistas que tienen S.",
     "en": "M is mute: that track goes quiet. S is solo: only the tracks with S play."
    },
    {
-    "t": 39.19,
-    "es": "Ejemplo 2: toca S en el bajo para escucharlo solito.",
-    "en": "Example 2: tap S on the bass to hear it alone."
+    "t": 43.22,
+    "es": "Ejemplo dos: toca S en el bajo, para escucharlo solito.",
+    "en": "Example two: tap S on the bass, to hear it alone."
    },
    {
-    "t": 46.79,
-    "es": "Toca S otra vez y vuelve toda la banda.",
-    "en": "Tap S again and the whole band comes back."
+    "t": 50.08,
+    "es": "Toca S otra vez, y vuelve toda la banda.",
+    "en": "Tap S again, and the whole band comes back."
    },
    {
-    "t": 53.99,
-    "es": "Con Volver al editor regresas a escribir tus notas.",
-    "en": "With Back to editor you go back to writing your notes."
-   },
-   {
-    "t": 59.13,
-    "es": "Un buen truco: la batería y el bajo al centro, y los otros instrumentos un poquito a los lados.",
-    "en": "A good trick: drums and bass in the center, the other instruments a little to the sides."
+    "t": 56.48,
+    "es": "Un buen truco: la batería y el bajo al centro, y los demás instrumentos un poquito a los lados.",
+    "en": "A good trick: drums and bass in the center, and the other instruments a little to the sides."
    }
   ]
  },
  "pedals": {
-  "duration": 55.8,
+  "duration": 65.1,
   "cues": [
    {
     "t": 0.21,
-    "es": "Los pedales cambian el sonido de una pista, como los pedales de una guitarra eléctrica.",
-    "en": "Pedals change a track's sound, like the pedals of an electric guitar."
+    "es": "Los efectos cambian el sonido de una pista, como los pedales de una guitarra eléctrica.",
+    "en": "Effects change a track's sound, like the pedals of an electric guitar."
    },
    {
-    "t": 7.57,
-    "es": "Están en la vista Productor. Elijamos la Melodía.",
-    "en": "They are in Producer view. Let's pick the Melody."
+    "t": 6.69,
+    "es": "Viven en la sala Estudio. Vamos con la melodía.",
+    "en": "They live in the Studio room. Let's go with the melody."
    },
    {
-    "t": 15.92,
-    "es": "Aquí están sus pedales, agrupados por familias: Control, Color, Movimiento y Espacio.",
-    "en": "Here are its pedals, grouped in families: Control, Color, Movement and Space."
+    "t": 11.37,
+    "es": "Esta es la cadena de sonido de tu pista: el instrumento, luego los efectos, y al final la mesa.",
+    "en": "This is your track's sound chain: the instrument, then the effects, and at the end the desk."
    },
    {
-    "t": 22.17,
-    "es": "La luz enciende o apaga cada pedal. Ejemplo 1: enciende el Eco y escucha cómo se repite la melodía.",
-    "en": "The light turns each pedal on or off. Example 1: turn on Echo and hear the melody repeat."
+    "t": 19.82,
+    "es": "Ejemplo uno: toca Agregar efecto, y elige Espacio, donde viven los ecos.",
+    "en": "Example one: tap Add effect, and choose Space, where echoes live."
    },
    {
-    "t": 31.0,
-    "es": "Toca el nombre del pedal para abrir sus perillas y leer qué hace.",
-    "en": "Tap the pedal's name to open its knobs and read what it does."
+    "t": 27.4,
+    "es": "¡Escucha cómo se repite la melodía!",
+    "en": "Hear the melody repeat!"
    },
    {
-    "t": 39.03,
-    "es": "Ejemplo 2: agrega Lo-fi, para que suene como un cassette antiguo.",
-    "en": "Example 2: add Lo-fi, so it sounds like an old cassette."
+    "t": 36.71,
+    "es": "Ejemplo dos: en Color está el Lo-fi, que suena como un cassette antiguo.",
+    "en": "Example two: in Color there is Lo-fi, which sounds like an old cassette."
    },
    {
-    "t": 47.43,
-    "es": "Usa los efectos de a poco: tu canción tiene que seguir escuchándose clara.",
-    "en": "Use effects gently: your song should still sound clear."
+    "t": 51.23,
+    "es": "Para que los efectos queden en tu canción, toca Guardar y usar en Melodía.",
+    "en": "To keep the effects in your song, tap Save and use on Melody."
+   },
+   {
+    "t": 57.19,
+    "es": "Usa los efectos de a poco. Tu canción tiene que seguir escuchándose clara.",
+    "en": "Use effects a little at a time. Your song should still sound clear."
    }
   ]
  },
  "save": {
-  "duration": 54.3,
+  "duration": 55.8,
   "cues": [
    {
-    "t": 0.22,
+    "t": 0.25,
     "es": "Tus canciones se guardan solas mientras trabajas. Mira, aquí dice Guardado.",
     "en": "Your songs save on their own while you work. Look, here it says Saved."
    },
    {
-    "t": 6.1,
-    "es": "Ejemplo 1: si te equivocas, no pasa nada. Pongamos unos golpes de más…",
-    "en": "Example 1: if you make a mistake, no problem. Let's add some extra hits…"
+    "t": 7.26,
+    "es": "Ejemplo uno: si te equivocas, no pasa nada. Pongamos unos golpes de más.",
+    "en": "Example one: if you make a mistake, no problem. Let's add some extra hits."
    },
    {
-    "t": 12.71,
-    "es": "…y con la flecha de deshacer vuelves atrás, un paso a la vez. Rehacer los trae de vuelta.",
-    "en": "…and the undo arrow goes back, one step at a time. Redo brings them back."
+    "t": 15.24,
+    "es": "Con la flecha de deshacer vuelves atrás, un paso a la vez. Rehacer los trae de vuelta.",
+    "en": "The undo arrow goes back, one step at a time. Redo brings them back."
    },
    {
-    "t": 21.17,
-    "es": "El tarro de basura borra el secuenciador, pero antes te avisa con un gran ¡ATENCIÓN!",
-    "en": "The trash can clears the sequencer, but first it warns you with a big WARNING!"
+    "t": 22.92,
+    "es": "El tarro de basura borra lo escrito en la pista, pero antes te pregunta.",
+    "en": "The trash can clears what is written in the track, but first it asks you."
    },
    {
-    "t": 28.52,
+    "t": 28.68,
     "es": "Si borras sin querer, deshacer lo recupera todo.",
     "en": "If you clear it by accident, undo brings it all back."
    },
    {
-    "t": 33.28,
-    "es": "Ejemplo 2: en Canciones guardas una versión, como una foto de cómo va tu canción.",
-    "en": "Example 2: in Songs you save a version, like a photo of how your song is going."
+    "t": 33.1,
+    "es": "Ejemplo dos: en Canciones guardas una versión, como una foto de cómo va tu canción.",
+    "en": "Example two: in Songs you save a version, like a photo of how your song is going."
    },
    {
-    "t": 40.65,
-    "es": "Aquí también creas una canción nueva o exportas un archivo para respaldarla.",
-    "en": "Here you also start a new song or export a file to back it up."
+    "t": 40.55,
+    "es": "Aquí también empiezas una canción nueva, o exportas un archivo para respaldarla.",
+    "en": "Here you also start a new song, or export a file to back it up."
    },
    {
-    "t": 46.9,
+    "t": 47.11,
     "es": "¡Listo! Ya sabes lo básico. Ahora, a crear tu propia música.",
     "en": "Done! You know the basics. Now, go make your own music."
    }
