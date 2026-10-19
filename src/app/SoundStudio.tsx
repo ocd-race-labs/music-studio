@@ -16,8 +16,8 @@ import { Icon, InstBadge, TrackBadge } from './ui';
 import type { IconName } from './ui';
 import { instIcon, trackIcon } from './instIcon';
 import { familyOf, rackFor, templateFor } from './rack';
-import { AddUnit, insertAt, newSlot, RigFlow, UnitEditor } from './Rig';
-import type { ListenMode, RigSel } from './Rig';
+import { EffectPicker, insertAt, newSlot, RigFlow, UnitEditor } from './Rig';
+import type { FxOption, ListenMode, RigSel, Stage } from './Rig';
 import { auditionSong, currentOf, defaultRole, draftKind, fitsTrack, ownGear, rolesFor, sameChain, songGenre, suggestionsFor } from './sounddraft';
 import type { Draft, Slot } from './sounddraft';
 
@@ -81,6 +81,9 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   const [without, setWithout] = useState(false);
   const [ab, setAb] = useState(false);
   const [adding, setAdding] = useState<number | null>(null);
+  // Adding a unit: the kind open in the picker, and the option heard alone on the instrument.
+  const [fxStage, setFxStage] = useState<Stage | null>(null);
+  const [trial, setTrial] = useState<FxOption | null>(null);
   const [source, setSource] = useState<Source>('catalog');
   const [shelf, setShelf] = useState<Shelf>(() => entryOf(track.instrument?.key ?? '')?.genre ?? songGenre(song) ?? GENRES[0].id);
   const [family, setFamily] = useState<Family | 'all'>('all');
@@ -92,7 +95,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   // A new track or version starts on its instrument, nothing skipped.
   // ...and the catalog opens where its current sound lives, so what is selected is in view.
   useEffect(() => {
-    setSel('instrument'); setUpTo(null); setWithout(false); setAb(false); setAdding(null);
+    setSel('instrument'); setUpTo(null); setWithout(false); setAb(false); setAdding(null); setTrial(null); setFxStage(null);
     const base = currentOf(track, slot).base;
     setShelf(entryOf(base)?.genre ?? (CORE.some((x) => x.key === base) ? 'more' : songGenre(song) ?? GENRES[0].id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,11 +108,12 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
 
   /** What is heard: the draft (up to a box, without a box), or, on A/B, what plays now (or the sound as it comes). */
   const heard = useMemo<{ base: string; chain: FxChain }>(() => {
+    if (trial) return { base: draft.base, chain: { routing: 'series', slots: [trial.slot] } };
     if (abOn) return kind !== 'clean' ? { base: current.base, chain: current.chain } : { base: draft.base, chain: ownGear(draft.base) };
     let slots = upTo === null ? draft.chain.slots : draft.chain.slots.slice(0, upTo + 1);
     if (without && typeof sel === 'number') slots = slots.map((x, i) => (i === sel ? { ...x, bypass: true } : x));
     return { base: draft.base, chain: { ...draft.chain, slots } };
-  }, [abOn, kind, current, draft, upTo, without, sel]);
+  }, [trial, abOn, kind, current, draft, upTo, without, sel]);
 
   /* ------------------------------------------------------------ listening */
 
@@ -169,7 +173,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   const pickListen = (m: ListenMode) => {
     setUpTo(m === 'upto' && typeof sel === 'number' ? sel : null);
     setWithout(m === 'without');
-    setAb(false);
+    setAb(false); setTrial(null);
     if (!isPlaying && m !== 'all') ensurePlaying(heard.base, heard.chain);
   };
   const pickMode = (m: 'song' | 'solo') => {
@@ -183,13 +187,13 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   const loadCatalog = (instrument: string, listen = false) => {
     const d: Draft = { base: instrument, chain: ownGear(instrument) };
     setDraft(d);
-    setSel('instrument'); setUpTo(null); setWithout(false); setAb(false); setAdding(null);
+    setSel('instrument'); setUpTo(null); setWithout(false); setAb(false); setAdding(null); setTrial(null);
     if (listen) ensurePlaying(d.base, d.chain);
   };
   const loadSound = (x: { id: string; name: string; base: string; chain: FxChain }, listen = false) => {
     const d: Draft = { base: x.base, chain: structuredClone(x.chain), soundId: x.id, soundName: x.name };
     setDraft(d);
-    setSel('instrument'); setUpTo(null); setWithout(false); setAb(false); setAdding(null);
+    setSel('instrument'); setUpTo(null); setWithout(false); setAb(false); setAdding(null); setTrial(null);
     if (listen) ensurePlaying(d.base, d.chain);
   };
 
@@ -226,10 +230,23 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
 
   const original = ownGear(draft.base);
   const unit = typeof sel === 'number' ? draft.chain.slots[sel] : undefined;
-  const addUnit = (k: string) => {
-    const at = adding ?? insertAt(draft.chain, k);
-    setChain((c) => ({ ...c, slots: [...c.slots.slice(0, at), newSlot(k), ...c.slots.slice(at)] }));
-    setSel(at); setAdding(null); setUpTo(null);
+  // A unit goes where it was asked for, or where its kind sits in the flow (pedals before the amp, space last).
+  const addOption = (o: FxOption) => {
+    const at = adding !== null && adding >= 0 ? adding : insertAt(draft.chain, o.key);
+    setChain((c) => ({ ...c, slots: [...c.slots.slice(0, at), structuredClone(o.slot), ...c.slots.slice(at)] }));
+    setSel(at); setAdding(null); setUpTo(null); setWithout(false); setTrial(null); setFxStage(null);
+  };
+  const openPicker = (at: number) => { setAdding(at); setSel('add'); setTrial(null); setUpTo(null); setWithout(false); };
+  const closePicker = () => {
+    setSel(draft.chain.slots.length ? draft.chain.slots.length - 1 : 'instrument');
+    setAdding(null); setTrial(null); setFxStage(null);
+  };
+  // Hear one option alone on the instrument, without the rest of the rack.
+  const stopListening = () => { if (songMode) { if (playing) onPlay(); } else stopSolo(); };
+  const tryOption = (o: FxOption | null) => {
+    if (!o) { setTrial(null); stopListening(); return; }
+    setTrial(o); setUpTo(null); setWithout(false); setAb(false);
+    if (!isPlaying) ensurePlaying(draft.base, { routing: 'series', slots: [o.slot] });
   };
   const moveUnit = (i: number, d: -1 | 1) => {
     const j = i + d;
@@ -237,9 +254,26 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
     setChain((c) => { const slots = [...c.slots]; [slots[i], slots[j]] = [slots[j], slots[i]]; return { ...c, slots }; });
     setSel(j); setUpTo(null);
   };
+  // Taken out from its own box; the selection stays on what it was, and the last removal can be undone.
+  const [saving, setSaving] = useState(false);
+  const [removed, setRemoved] = useState<{ key: string; at: number; slot: FxChain['slots'][number] } | null>(null);
   const removeUnit = (i: number) => {
+    const gone = draft.chain.slots[i];
+    if (!gone) return;
+    const left = draft.chain.slots.length - 1;
     setChain((c) => ({ ...c, slots: c.slots.filter((_, j) => j !== i) }));
-    setSel(draft.chain.slots.length > 1 ? Math.max(0, i - 1) : 'instrument'); setUpTo(null); setWithout(false);
+    setRemoved({ key, at: i, slot: gone });
+    if (typeof sel === 'number') {
+      if (sel === i) { if (left > 0) setSel(Math.max(0, i - 1)); else openPicker(-1); }
+      else if (sel > i) setSel(sel - 1);
+    }
+    setUpTo(null); setWithout(false);
+  };
+  const undoRemove = () => {
+    if (!removed || removed.key !== key) return;
+    const { at, slot: back } = removed;
+    setChain((c) => ({ ...c, slots: [...c.slots.slice(0, at), back, ...c.slots.slice(at)] }));
+    setSel(at); setRemoved(null); setAdding(null); setTrial(null);
   };
 
   /* ------------------------------------------------------------ what the boxes say */
@@ -258,7 +292,9 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   };
 
   const unitName = (i: number) => catalogTitle(draft.chain.slots[i].effect, lang);
-  const status = !written && mode === 'song'
+  const status = trial
+    ? t('esNowTrial', lang, { name: instrumentName, unit: trial.title })
+    : !written && mode === 'song'
     ? t('esEmptyTrack', lang, { track: track.name })
     : abOn
       ? (kind !== 'clean' ? t('esNowBefore', lang, { track: track.name }) : t('esNowOriginal', lang, { name: nameOf(draft.base, lang) }))
@@ -543,36 +579,61 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
     </section>
   );
 
-  /* ------------------------------------------------------------ the bar that uses or saves */
+  /* ------------------------------------------------------------ using or saving, next to what is heard */
 
-  const bar = kind === 'clean' ? null : (
-    <div className="es-bar" role="region" aria-label={t('esBar', lang)}>
-      <div className="stack grow" style={{ gap: 0, minWidth: 0 }}>
-        <strong className="ellipsis">{kind === 'custom' ? t('esChanged', lang) : t('esTrying', lang, { name: instrumentName, track: track.name })}</strong>
-        <span className="small muted ellipsis">{kind === 'custom' ? t('esChangedHint', lang) : t('esTryingHint', lang, { version: versionName.toLowerCase() })}</span>
-      </div>
+  const useLabel = t(slot === 'producer' ? 'esUseProducer' : 'esUseOn', lang, { track: track.name });
+  const actions = kind === 'clean' ? null : (
+    <div className="es-actions" role="group" aria-label={t('esBar', lang)}>
+      <span className="es-tag try" title={kind === 'custom' ? t('esChangedHint', lang) : t('esTryingHint', lang, { version: versionName.toLowerCase() })}>
+        {t(kind === 'custom' ? 'esChangedTag' : 'esTryingTag', lang)}
+      </span>
+      <button type="button" className="btn small-btn ghost" onClick={() => { resetDraft(); setSaving(false); }}>{t('esDiscard', lang)}</button>
       {kind === 'custom' && (
-        <label className="stack es-name" style={{ gap: 2 }}>
-          <span className="lbl">{t('mySoundNameLabel', lang)}</span>
-          <input className="field" value={name} maxLength={40} onChange={(e) => setNames((m) => ({ ...m, [key]: e.target.value }))} />
-        </label>
+        <button type="button" className="btn small-btn" aria-expanded={saving} onClick={() => setSaving((x) => !x)}>
+          <Icon name="download" size={16} /> {t('mySoundSave', lang)}
+        </button>
       )}
-      <div className="row wrap es-bar-actions">
-        <button type="button" className="btn ghost" onClick={resetDraft}>{t('esDiscard', lang)}</button>
-        {kind === 'catalog' && <button type="button" className="btn primary" onClick={applyCatalog}><Icon name="check" size={18} /> {t(slot === 'producer' ? 'esUseProducer' : 'esUseOn', lang, { track: track.name })}</button>}
-        {kind === 'mine' && saved && <button type="button" className="btn primary" onClick={() => applySaved(saved)}><Icon name="check" size={18} /> {t(slot === 'producer' ? 'esUseProducer' : 'esUseOn', lang, { track: track.name })}</button>}
-        {kind === 'custom' && (<>
-          {saved && <button type="button" className="btn" onClick={() => saveCustom(false, true)}>{t('esUpdate', lang, { name: saved.name })}</button>}
-          <button type="button" className="btn" onClick={() => saveCustom(false, false)}>{t('mySoundSave', lang)}</button>
-          <button type="button" className="btn primary" onClick={() => saveCustom(true, false)}><Icon name="check" size={18} /> {t(slot === 'producer' ? 'esSaveUseProducer' : 'esSaveUse', lang, { track: track.name })}</button>
-        </>)}
-      </div>
+      {kind === 'catalog' && <button type="button" className="btn small-btn primary" onClick={applyCatalog} title={t('esTryingHint', lang, { version: versionName.toLowerCase() })}><Icon name="check" size={16} /> {useLabel}</button>}
+      {kind === 'mine' && saved && <button type="button" className="btn small-btn primary" onClick={() => applySaved(saved)} title={t('esTryingHint', lang, { version: versionName.toLowerCase() })}><Icon name="check" size={16} /> {useLabel}</button>}
+      {kind === 'custom' && (
+        <button type="button" className="btn small-btn primary" onClick={() => { saveCustom(true, false); setSaving(false); }} title={t('esChangedHint', lang)}>
+          <Icon name="check" size={16} /> {t(slot === 'producer' ? 'esSaveUseProducer' : 'esSaveUse', lang, { track: track.name })}
+        </button>
+      )}
+      {saving && kind === 'custom' && (
+        <div className="es-savepop" role="dialog" aria-label={t('mySoundSave', lang)}>
+          <label className="stack" style={{ gap: 2 }}>
+            <span className="lbl">{t('mySoundNameLabel', lang)}</span>
+            <input className="field" value={name} maxLength={40} autoFocus onChange={(e) => setNames((m) => ({ ...m, [key]: e.target.value }))} />
+          </label>
+          <div className="row wrap" style={{ gap: 6, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn small-btn ghost" onClick={() => setSaving(false)}>{t('cancel', lang)}</button>
+            {saved && <button type="button" className="btn small-btn" onClick={() => { saveCustom(false, true); setSaving(false); }}>{t('esUpdate', lang, { name: saved.name })}</button>}
+            <button type="button" className="btn small-btn primary" onClick={() => { saveCustom(false, false); setSaving(false); }}>{t('mySoundSave', lang)}</button>
+          </div>
+        </div>
+      )}
     </div>
   );
+  const undo = removed && removed.key === key && (
+    <span className="es-undo">
+      {t('esRemoved', lang, { name: catalogTitle(removed.slot.effect, lang) })}
+      <button type="button" className="btn small-btn ghost" onClick={undoRemove}><Icon name="undo" size={16} /> {t('undo', lang)}</button>
+    </span>
+  );
+
+  const picker = (title: string, onClose?: () => void) => (
+    <EffectPicker title={title} lang={lang} stage={fxStage} trial={trial?.id ?? null} playing={isPlaying}
+      onStage={(s) => { setFxStage(s); if (trial) setTrial(null); }}
+      onTrial={tryOption} onAdd={addOption} onClose={onClose} />
+  );
+  const addTitle = adding === null || adding < 0 ? t('esFxTitle', lang)
+    : adding === 0 ? t('esFxTitleFirst', lang) : t('esFxTitleAfter', lang, { unit: unitName(adding - 1) });
 
   const work = sel === 'track' ? trackChooser
     : sel === 'out' ? destination
-      : typeof sel === 'number' && unit ? (
+      : sel === 'add' ? picker(addTitle, closePicker)
+      : typeof sel === 'number' && unit ? (<>
         <UnitEditor key={`${key}-${sel}-${unit.effect.key}`} slot={unit} index={sel} count={draft.chain.slots.length} lang={lang}
           original={original.slots.find((x) => x.effect.key === unit.effect.key)} listen={listenMode}
           onChange={(params) => setChain((c) => ({ ...c, slots: c.slots.map((x, j) => (j === sel ? { ...x, params, bypass: false } : x)) }))}
@@ -580,12 +641,12 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
           onToggle={() => setChain((c) => ({ ...c, slots: c.slots.map((x, j) => (j === sel ? { ...x, bypass: !x.bypass } : x)) }))}
           onListen={pickListen}
           onMove={(d) => moveUnit(sel, d)}
-          onRestore={() => { const o = original.slots.find((x) => x.effect.key === unit.effect.key); if (o) setChain((c) => ({ ...c, slots: c.slots.map((x, j) => (j === sel ? structuredClone(o) : x)) })); }}
-          onRemove={() => removeUnit(sel)} />
-      ) : null;
+          onRestore={() => { const o = original.slots.find((x) => x.effect.key === unit.effect.key); if (o) setChain((c) => ({ ...c, slots: c.slots.map((x, j) => (j === sel ? structuredClone(o) : x)) })); }} />
+        {picker(t('esFxAnother', lang))}
+      </>) : null;
 
   return (
-    <div className={`estudio${bar ? ' with-bar' : ''}`}>
+    <div className="estudio">
       <div className="es-head">
         <div className="row wrap" style={{ gap: 10, minWidth: 0 }}>
           <TrackBadge track={track} />
@@ -618,20 +679,23 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
             </div>
           )}
         </div>
-        <p className="small muted es-now" aria-live="polite">{status}</p>
+        <div className="es-nowrow">
+          <p className="small muted es-now" aria-live="polite">{status}</p>
+          {undo}
+          {actions}
+        </div>
       </div>
 
-      <RigFlow chain={draft.chain} ends={ends} sel={sel} upTo={upTo} adding={adding} lang={lang}
-        onSel={(s) => { setSel(s); setWithout(false); setUpTo(null); setAdding(null); }}
+      <RigFlow chain={draft.chain} ends={ends} sel={sel} upTo={upTo} adding={sel === 'add' ? adding : null} lang={lang}
+        onSel={(s) => { setSel(s); setWithout(false); setUpTo(null); setAdding(null); setTrial(null); setFxStage(null); }}
         onToggle={(i) => setChain((c) => ({ ...c, slots: c.slots.map((x, j) => (j === i ? { ...x, bypass: !x.bypass } : x)) }))}
-        onAdd={setAdding}
+        onRemove={removeUnit}
+        onAdd={(at) => (at === null ? closePicker() : openPicker(at))}
         onStarter={() => { setChain(() => rackFor(familyOf(draft.base))); setSel(0); }} />
-      {adding !== null && <AddUnit lang={lang} onPick={addUnit} onCancel={() => setAdding(null)} />}
 
-      <div className={`es-work${sel === 'instrument' ? ' split' : ''}`}>
+      <div className={`es-work${sel === 'instrument' ? ' split' : typeof sel === 'number' ? ' col two' : sel === 'add' ? ' col' : ''}`}>
         {sel === 'instrument' ? (<>{browser}{inspector}</>) : work}
       </div>
-      {bar}
     </div>
   );
 }

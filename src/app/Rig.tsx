@@ -39,6 +39,31 @@ const STAGE_NAME: Record<Stage, { en: string; es: string }> = {
 };
 export const stageName = (s: Stage, lang: Lang) => STAGE_NAME[s][lang];
 export const STAGE_ICON: Record<Stage, IconName> = { pre: 'knob', pedal: 'pedal', amp: 'amp', cab: 'cab', channel: 'sliders', color: 'tape', space: 'space' };
+/** What each kind of unit does, in a line. */
+const STAGE_HINT: Record<Stage, { en: string; es: string }> = {
+  pre: { en: 'Body and push, before everything else.', es: 'Cuerpo y empuje, antes que todo.' },
+  pedal: { en: 'Grit, movement, filters and pumping.', es: 'Saturación, movimiento, filtros y bombeo.' },
+  amp: { en: 'The character of a guitar or bass amp.', es: 'El carácter de un ampli de guitarra o bajo.' },
+  cab: { en: 'The speakers and how the mic hears them.', es: 'Los parlantes y cómo los escucha el micrófono.' },
+  channel: { en: 'Equalizer and compressors of a console.', es: 'Ecualizador y compresores de una consola.' },
+  color: { en: 'Tape, lo-fi and radio: the sound of an era.', es: 'Cinta, lo-fi y radio: el sonido de una época.' },
+  space: { en: 'Echoes, rooms and width.', es: 'Ecos, salas y amplitud.' },
+};
+
+/** One thing to try in the picker: a unit, or one model of a unit that has models (an amp's clean or crunch). */
+export interface FxOption { id: string; key: string; title: string; blurb: string; slot: FxSlot }
+export function optionsFor(stage: Stage, lang: Lang): FxOption[] {
+  return EFFECTS.filter((e) => stageOf(e.key) === stage).flatMap((e) => {
+    const model = MODEL_PRESET[e.key] ? effectParams(ref(e.key)).find((p) => p.choices) : undefined;
+    const base = newSlot(e.key);
+    if (!model?.choices) return [{ id: e.key, key: e.key, title: e.title[lang], blurb: PEDAL_BLURB[e.key]?.[lang] ?? '', slot: base }];
+    return model.choices.map((c, i) => ({
+      id: `${e.key}#${i}`, key: e.key, title: `${e.title[lang]} · ${c[lang]}`,
+      blurb: CHOICE_HINT[e.key]?.[i]?.[lang] ?? PEDAL_BLURB[e.key]?.[lang] ?? '',
+      slot: { ...base, params: { ...base.params, [model.name]: i, ...modelPreset(e.key, i) } },
+    }));
+  });
+}
 /** Short names for the boxes of the flow, where space is tight. */
 const STAGE_SHORT: Record<Stage, { en: string; es: string }> = {
   pre: { en: 'Preamp', es: 'Preamp' }, pedal: { en: 'Pedal', es: 'Pedal' }, amp: { en: 'Amp', es: 'Ampli' }, cab: { en: 'Cabinet', es: 'Gabinete' },
@@ -63,7 +88,7 @@ export function insertAt(chain: FxChain, key: string): number {
 
 export const newSlot = (key: string): FxSlot => ({ effect: ref(key), bypass: false, params: defaultFxParams(key) });
 
-export type RigSel = 'track' | 'instrument' | 'out' | number;
+export type RigSel = 'track' | 'instrument' | 'out' | 'add' | number;
 
 export interface RigEnds {
   track: { name: string; color: string; sum: string; icon: IconName };
@@ -83,7 +108,7 @@ export function OnSwitch({ on, label, lang, onToggle, small }: { on: boolean; la
 }
 
 /** The diagram itself: 1 track, 2 instrument, 3 the chain's units, 4 the desk, with a + between units to add one there. */
-export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle, onAdd, onStarter }: {
+export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle, onRemove, onAdd, onStarter }: {
   chain: FxChain;
   ends: RigEnds;
   sel: RigSel;
@@ -92,6 +117,9 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
   lang: Lang;
   onSel: (s: RigSel) => void;
   onToggle: (i: number) => void;
+  /** Take a unit out of the chain, from its own box. */
+  onRemove: (i: number) => void;
+  /** Open the picker to add a unit at a place, -1 for where its kind goes, null to close it. */
   onAdd: (at: number | null) => void;
   /** Load the family's starting rack when the chain is empty. */
   onStarter: () => void;
@@ -105,6 +133,15 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
     </div>
   );
   const arrow = (k: string) => <div key={k} className="cd-link plain" aria-hidden="true"><span className="cd-arrow" /></div>;
+  // The way in: a box at the end of the chain that opens the kinds of units to add.
+  const addBox = (
+    <div role="listitem" key="addbox" className={`cd-box es-addbox${sel === 'add' && adding === -1 ? ' sel' : ''}`}>
+      <button type="button" className="cd-box-main" onClick={() => onAdd(sel === 'add' && adding === -1 ? null : -1)} aria-pressed={sel === 'add' && adding === -1}>
+        <span className="es-addbox-plus" aria-hidden="true"><Icon name="plus" size={18} /></span>
+        <strong className="cd-name">{t('esAddEffect', lang)}</strong>
+      </button>
+    </div>
+  );
   const end = (key: 'track' | 'instrument' | 'out', kicker: string, name: string, sum: string, icon: IconName, extra?: string, color?: string) => (
     <div role="listitem" key={key} className={`cd-box io es-${key}${sel === key ? ' sel' : ''}${extra ?? ''}`} style={color ? { ['--stage' as string]: color } : undefined}>
       <button type="button" className="cd-box-main" onClick={() => onSel(key)} aria-pressed={sel === key}>
@@ -129,13 +166,14 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
         <span className="es-step">{t('esStep3', lang)} <span className="es-step-n">{chain.slots.length ? t('esUnitsOn', lang, { n: on, of: chain.slots.length }) : t('esNoGear', lang).toLowerCase()}</span></span>
         <div className="es-chainrow">
           {chain.slots.length === 0 ? (<>
-            {link(0)}
             <div role="listitem" className="cd-box es-empty">
               <div className="cd-box-main">
                 <span className="cd-sum">{t('esNoGearHint', lang)}</span>
                 <button type="button" className="btn small-btn" onClick={onStarter}><Icon name="plus" size={14} /> {t('esStarter', lang)}</button>
               </div>
             </div>
+            {arrow('a-empty')}
+            {addBox}
           </>) : (<>
             {chain.slots.map((slot, i) => {
               const stage = stageOf(slot.effect.key);
@@ -150,10 +188,15 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
                   <div className="cd-box-foot">
                     <OnSwitch small on={!slot.bypass} lang={lang} label={catalogTitle(slot.effect, lang)} onToggle={() => onToggle(i)} />
                   </div>
+                  <button type="button" className="cd-x" onClick={() => onRemove(i)}
+                    aria-label={t('esRemoveUnit', lang, { name: catalogTitle(slot.effect, lang) })} title={t('esRemoveUnit', lang, { name: catalogTitle(slot.effect, lang) })}>
+                    <Icon name="close" size={14} />
+                  </button>
                 </div>
               )];
             })}
-            {link(chain.slots.length)}
+            {arrow('a-end')}
+            {addBox}
           </>)}
         </div>
       </div>
@@ -163,23 +206,67 @@ export function RigFlow({ chain, ends, sel, upTo, adding, lang, onSel, onToggle,
   );
 }
 
-/** The palette that opens from a + : every unit by stage. */
-export function AddUnit({ lang, onPick, onCancel }: { lang: Lang; onPick: (key: string) => void; onCancel: () => void }) {
+/**
+ * Adding a unit: the kinds of units as icons. Opening one hides the others and lists its options; each is heard
+ * alone on the instrument, without the rest of the rack, before it goes into the chain.
+ */
+export function EffectPicker({ title, lang, stage, trial, playing, onStage, onTrial, onAdd, onClose }: {
+  title: string;
+  lang: Lang;
+  stage: Stage | null;
+  /** The option heard alone right now, by id. */
+  trial: string | null;
+  playing: boolean;
+  onStage: (s: Stage | null) => void;
+  onTrial: (o: FxOption | null) => void;
+  onAdd: (o: FxOption) => void;
+  onClose?: () => void;
+}) {
   return (
-    <div className="cd-add" role="group" aria-label={t('cdAddHere', lang)}>
-      <span className="lbl">{t('cdAddWhich', lang)}</span>
-      {STAGES.map((st) => {
-        const list = EFFECTS.filter((e) => stageOf(e.key) === st);
-        if (!list.length) return null;
-        return (
-          <div key={st} className="row wrap" style={{ gap: 6 }}>
-            <span className="cd-add-stage" style={{ ['--stage' as string]: STAGE_COLOR[st] }}><Icon name={STAGE_ICON[st]} size={14} /> {stageName(st, lang)}</span>
-            {list.map((e) => <button key={e.key} type="button" className="chip" onClick={() => onPick(e.key)}>{e.title[lang]}</button>)}
-          </div>
-        );
-      })}
-      <button type="button" className="btn ghost small-btn" style={{ alignSelf: 'flex-start' }} onClick={onCancel}>{t('cancel', lang)}</button>
-    </div>
+    <section className={`es-fxpick${stage ? ' open' : ''}`} aria-label={title} style={stage ? { ['--stage' as string]: STAGE_COLOR[stage] } : undefined}>
+      <div className="row wrap es-fxpick-head">
+        {stage
+          ? <button type="button" className="btn small-btn ghost" onClick={() => onStage(null)}><Icon name="back" size={16} /> {t('esFxAllKinds', lang)}</button>
+          : <span className="es-fxpick-plus" aria-hidden="true"><Icon name="plus" size={16} /></span>}
+        {stage && <span className="es-fxkind-icon small" aria-hidden="true"><Icon name={STAGE_ICON[stage]} size={20} /></span>}
+        <h3 className="grow display" style={{ fontSize: 18 }}>{stage ? stageName(stage, lang) : title}</h3>
+        {onClose && <button type="button" className="btn icon ghost" onClick={onClose} aria-label={t('close', lang)} title={t('close', lang)}><Icon name="close" size={18} /></button>}
+      </div>
+      {!stage ? (
+        <div className="es-fxkinds">
+          {STAGES.map((st) => (
+            <button key={st} type="button" className="es-fxkind" style={{ ['--stage' as string]: STAGE_COLOR[st] }} onClick={() => onStage(st)}>
+              <span className="es-fxkind-icon" aria-hidden="true"><Icon name={STAGE_ICON[st]} size={26} /></span>
+              <span className="stack" style={{ gap: 2, minWidth: 0 }}>
+                <strong>{stageName(st, lang)}</strong>
+                <span className="small muted">{STAGE_HINT[st][lang]}</span>
+              </span>
+              <span className="es-fxkind-n">{optionsFor(st, lang).length}</span>
+            </button>
+          ))}
+        </div>
+      ) : (<>
+        <p className="small muted" style={{ margin: 0 }}>{STAGE_HINT[stage][lang]} {t('esFxTryHint', lang)}</p>
+        <div className="es-fxopts">
+          {optionsFor(stage, lang).map((o) => {
+            const on = trial === o.id && playing;
+            return (
+              <div key={o.id} className={`es-fxopt${trial === o.id ? ' on' : ''}`}>
+                <button type="button" className={`ss-play${on ? ' on' : ''}`} onClick={() => onTrial(on ? null : o)}
+                  aria-label={on ? t('stop', lang) : t('esFxHearAlone', lang, { name: o.title })} title={on ? t('stop', lang) : t('esFxHearAlone', lang, { name: o.title })}>
+                  <Icon name={on ? 'stop' : 'play'} size={14} />
+                </button>
+                <span className="stack grow" style={{ gap: 2, minWidth: 0 }}>
+                  <strong>{o.title}</strong>
+                  {o.blurb && <span className="small muted">{o.blurb}</span>}
+                </span>
+                <button type="button" className="btn small-btn primary" onClick={() => onAdd(o)}><Icon name="plus" size={16} /> {t('esFxAdd', lang)}</button>
+              </div>
+            );
+          })}
+        </div>
+      </>)}
+    </section>
   );
 }
 
@@ -240,7 +327,7 @@ function ParamKnob({ p, value, lang, onChange }: { p: ParamDef; value: number; l
 
 export type ListenMode = 'all' | 'upto' | 'without';
 
-export function UnitEditor({ slot, index, count, original, listen, lang, onChange, onSwap, onToggle, onListen, onMove, onRestore, onRemove }: {
+export function UnitEditor({ slot, index, count, original, listen, lang, onChange, onSwap, onToggle, onListen, onMove, onRestore }: {
   slot: FxSlot;
   index: number;
   count: number;
@@ -254,7 +341,6 @@ export function UnitEditor({ slot, index, count, original, listen, lang, onChang
   onListen: (m: ListenMode) => void;
   onMove: (d: -1 | 1) => void;
   onRestore: () => void;
-  onRemove: () => void;
 }) {
   const stage = stageOf(slot.effect.key);
   const params = effectParams(slot.effect);
@@ -312,7 +398,6 @@ export function UnitEditor({ slot, index, count, original, listen, lang, onChang
         )}
         <span className="grow" />
         <button type="button" className="btn small-btn ghost" disabled={!original || same} onClick={onRestore}><Icon name="reset" size={16} /> {t('cdRestore', lang)}</button>
-        <button type="button" className="btn small-btn ghost" onClick={onRemove}><Icon name="trash" size={16} /> {t('cdRemove', lang)}</button>
       </div>
     </section>
   );
