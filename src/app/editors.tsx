@@ -11,6 +11,7 @@ import { cellWidth, DRUM_LABEL, GAP, NOTE_LABEL } from './zoom';
 import { RULER_H, Ruler, tailRoom, useScrollControl, useStepWindow } from './timegrid';
 import type { Jump, MarkSel, View } from './timegrid';
 import type { Zoom } from './zoom';
+import { Icon } from './ui';
 
 const ROW_H = 30;
 
@@ -397,7 +398,19 @@ export function ChordLane({ song, track, step, lang, width, frame, onSet, onPrev
   const fromBar = Math.floor((view.start + win.from) / 16);
   const toBar = Math.min(lastBar + 1, Math.ceil((view.start + win.to) / 16));
   const top = RULER_H + GAP;
+  // The chords chosen here, newest last: Undo puts each bar back as it was, one tap at a time.
+  const [taps, setTaps] = useState<{ bar: number; was: number | null }[]>([]);
+  const remember = (bar: number) => setTaps((h) => [...h.slice(-49), { bar, was: chordAt(bar)?.degree ?? null }]);
+  const undoTap = () => {
+    const last = taps[taps.length - 1];
+    if (!last) return;
+    setTaps((h) => h.slice(0, -1));
+    onSet(last.bar, last.was);
+    setPicked(last.bar);
+  };
   const choose = (degree: number) => {
+    if (current?.degree === degree) { if (sel < lastBar) setPicked(sel + 1); onPreview(chordMidi(triads[degree], 52)); return; }
+    remember(sel);
     onSet(sel, degree);
     onPreview(chordMidi(triads[degree], 52));
     if (sel < lastBar) setPicked(sel + 1);
@@ -439,7 +452,10 @@ export function ChordLane({ song, track, step, lang, width, frame, onSet, onPrev
           <strong className="grow">{t('bar', lang)} {sel + 1}{(() => { const sec = sectionAtBar(song, sel); return sec ? <span className="sec-chip" style={{ ['--sec' as string]: sectionColor(sec) }}>{sec.name}</span> : null; })()}</strong>
           <button type="button" className="btn ghost small-btn" onClick={() => setPicked(Math.max(firstBar, sel - 1))} disabled={sel <= firstBar} aria-label={t('prevBar', lang)}>←</button>
           <button type="button" className="btn ghost small-btn" onClick={() => setPicked(Math.min(lastBar, sel + 1))} disabled={sel >= lastBar} aria-label={t('nextBar', lang)}>→</button>
-          <button type="button" className="btn ghost small-btn" onClick={() => onSet(sel, null)} disabled={!current}>{t('clear', lang)}</button>
+          <button type="button" className="btn ghost small-btn chord-undo" onClick={undoTap} disabled={!taps.length} title={t('chordUndoHint', lang)}>
+            <Icon name="undo" size={16} /> {t('undo', lang)}
+          </button>
+          <button type="button" className="btn ghost small-btn" onClick={() => { remember(sel); onSet(sel, null); }} disabled={!current}>{t('clear', lang)}</button>
         </div>
         <div className="chordbar">
           {triads.map((c) => (

@@ -751,7 +751,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const ideaWork = (
     <main className="work idea-work" ref={editorRef}>
       {transport(undefined, stageTabs)}
-      <IdeaStage song={song} idea={ideaSong ?? song} lang={lang} playing={playing} step={step}
+      <IdeaStage song={song} idea={ideaSong ?? song} lang={lang} playing={playing} step={step} detailDiffers={!sameAsIdea}
         onSketch={(fn) => {
           const cur = songRef.current;
           if (!cur) return;

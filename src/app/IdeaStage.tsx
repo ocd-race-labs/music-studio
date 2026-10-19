@@ -23,13 +23,15 @@ const FEEL_LABEL: Record<Feel, StringKey> = { soft: 'feelSoft', normal: 'feelNor
 const TEMPLATE_LABEL: Record<string, StringKey> = { song: 'tplSong', short: 'tplShort', beat: 'tplBeat', loop: 'tplLoop' };
 const genreOfGroup = (g: string): Genre => GROUPS.find((x) => x.id === g)?.genre ?? 'rock';
 
-export default function IdeaStage({ song, idea, lang, playing, step, onSketch, onPlace, onAccept, onDetail }: {
+export default function IdeaStage({ song, idea, lang, playing, step, detailDiffers, onSketch, onPlace, onAccept, onDetail }: {
   song: Song;
   /** The idea rendered as a song: what is heard. */
   idea: Song;
   lang: Lang;
   playing: boolean;
   step: number;
+  /** The detail was changed by hand and no longer matches the idea. */
+  detailDiffers?: boolean;
   onSketch: (fn: (s: Sketch) => Sketch | null) => void;
   /** Play one place of the form on repeat (or the whole idea with null). */
   onPlace: (p: Place | null) => void;
@@ -120,9 +122,16 @@ export default function IdeaStage({ song, idea, lang, playing, step, onSketch, o
             <Icon name="check" size={18} /> {t('ideaWriteAgain', lang)}
           </button>
         ) : (
-          <button type="button" className="btn idea-go" onClick={onDetail} title={t('ideaAcceptedNote', lang, { when })}>
-            {t('ideaToDetail', lang)} <Icon name="arrow" size={18} />
-          </button>
+          <div className="row wrap idea-go" style={{ gap: 8 }}>
+            {detailDiffers && (
+              <button type="button" className="btn" onClick={() => onAccept()} title={t('ideaRewriteNote', lang)}>
+                <Icon name="reset" size={18} /> {t('ideaRewrite', lang)}
+              </button>
+            )}
+            <button type="button" className="btn" onClick={onDetail} title={t('ideaAcceptedNote', lang, { when })}>
+              {t('ideaToDetail', lang)} <Icon name="arrow" size={18} />
+            </button>
+          </div>
         )}
       </div>
 
