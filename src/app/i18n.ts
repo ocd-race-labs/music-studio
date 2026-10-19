@@ -773,6 +773,7 @@ const STRINGS = {
   labLoadNotTold: { en: 'this browser does not tell', es: 'este navegador no lo informa' },
   labLoadStalls: { en: 'Page pauses longer than the audio plans ahead', es: 'Pausas de la página más largas que la anticipación del audio' },
   labLoadWorst: { en: 'longest {ms} ms', es: 'la más larga {ms} ms' },
+  labLoadClock: { en: 'Audio clock speed (1.00× is right)', es: 'Velocidad del reloj del audio (1,00× es lo correcto)' },
   labLoadLeftover: { en: 'Something kept sounding at the end', es: 'Quedó algo sonando al final' },
   labLoadClean: { en: 'Clean: no cuts, no long pauses, nothing left sounding.', es: 'Limpio: sin cortes, sin pausas largas y nada quedó sonando.' },
   labLoadTrouble: { en: 'Something to fix: send a screenshot of this card.', es: 'Hay algo que arreglar: mándame un pantallazo de esta tarjeta.' },

@@ -126,7 +126,7 @@ const PEDALS: Record<string, () => Pedal> = {
   'effect.lofi': () => {
     let bits = 6;
     const shaper = new Tone.WaveShaper(quantize(bits), 4096);
-    const tone = new Tone.Filter(3500, 'lowpass');
+    const tone = new Tone.BiquadFilter(3500, 'lowpass');
     return blended([shaper, tone], (p) => {
       const b = Math.round(num(p, 'bits', 6));
       if (b !== bits) { bits = b; shaper.setMap(quantize(b)); }
@@ -135,7 +135,7 @@ const PEDALS: Record<string, () => Pedal> = {
     });
   },
   'effect.radio': () => {
-    const band = new Tone.Filter({ frequency: 1200, type: 'bandpass', Q: 1.4 });
+    const band = new Tone.BiquadFilter({ frequency: 1200, type: 'bandpass', Q: 1.4 });
     const grit = new Tone.Distortion(0.25);
     const lift = new Tone.Gain(Tone.dbToGain(4));
     return blended([band, grit, lift], (p) => { band.frequency.rampTo(num(p, 'focus', 1200), 0.05); return num(p, 'mix', 1); });
@@ -153,9 +153,9 @@ const PEDALS: Record<string, () => Pedal> = {
   },
   'effect.eq': () => {
     // Shelves and a bell in series: flat when every band is at 0 dB.
-    const low = new Tone.Filter({ type: 'lowshelf', frequency: 220 });
-    const mid = new Tone.Filter({ type: 'peaking', frequency: 1000, Q: 0.8 });
-    const high = new Tone.Filter({ type: 'highshelf', frequency: 4000 });
+    const low = new Tone.BiquadFilter({ type: 'lowshelf', frequency: 220 });
+    const mid = new Tone.BiquadFilter({ type: 'peaking', frequency: 1000, Q: 0.8 });
+    const high = new Tone.BiquadFilter({ type: 'highshelf', frequency: 4000 });
     return blended([low, mid, high], (p) => {
       low.gain.value = num(p, 'low', 0);
       mid.gain.value = num(p, 'mid', 0);
@@ -305,7 +305,7 @@ function gatedImpulse(seconds: number): AudioBuffer {
 
 const STUDIO: Record<string, () => Pedal> = {
   'effect.preamp': () => {
-    const cut = new Tone.Filter({ type: 'highpass', frequency: 30, Q: 0.7 });
+    const cut = new Tone.BiquadFilter({ type: 'highpass', frequency: 30, Q: 0.7 });
     const push = new Tone.Gain(1);
     const sat = new Tone.WaveShaper(PREAMP_CURVES[2]);
     sat.oversample = '4x';
@@ -340,15 +340,15 @@ const STUDIO: Record<string, () => Pedal> = {
     }, [], 0.006);
   },
   'effect.amp': () => {
-    const tight = new Tone.Filter({ type: 'highpass', frequency: 90, Q: 0.7 });
+    const tight = new Tone.BiquadFilter({ type: 'highpass', frequency: 90, Q: 0.7 });
     const pre = new Tone.Gain(1);
     const stage1 = new Tone.WaveShaper(tubeClip);
-    const inter = new Tone.Filter({ type: 'lowpass', frequency: 5600, Q: 0.6 });
+    const inter = new Tone.BiquadFilter({ type: 'lowpass', frequency: 5600, Q: 0.6 });
     const pre2 = new Tone.Gain(1);
     const stage2 = new Tone.WaveShaper(softClip);
-    const low = new Tone.Filter({ type: 'lowshelf', frequency: 120 });
-    const mid = new Tone.Filter({ type: 'peaking', frequency: 720, Q: 0.7 });
-    const high = new Tone.Filter({ type: 'highshelf', frequency: 2500 });
+    const low = new Tone.BiquadFilter({ type: 'lowshelf', frequency: 120 });
+    const mid = new Tone.BiquadFilter({ type: 'peaking', frequency: 720, Q: 0.7 });
+    const high = new Tone.BiquadFilter({ type: 'highshelf', frequency: 2500 });
     const power = new Tone.WaveShaper(softClip);
     const out = new Tone.Gain(1);
     stage1.oversample = '4x';
@@ -381,14 +381,14 @@ const STUDIO: Record<string, () => Pedal> = {
     });
   },
   'effect.cab': () => {
-    const hp = new Tone.Filter({ type: 'highpass', frequency: 70, Q: 0.7 });
-    const res = new Tone.Filter({ type: 'peaking', frequency: 100, Q: 1.4 });
-    const mid = new Tone.Filter({ type: 'peaking', frequency: 450, Q: 0.9 });
-    const pres = new Tone.Filter({ type: 'peaking', frequency: 2600, Q: 1.1 });
+    const hp = new Tone.BiquadFilter({ type: 'highpass', frequency: 70, Q: 0.7 });
+    const res = new Tone.BiquadFilter({ type: 'peaking', frequency: 100, Q: 1.4 });
+    const mid = new Tone.BiquadFilter({ type: 'peaking', frequency: 450, Q: 0.9 });
+    const pres = new Tone.BiquadFilter({ type: 'peaking', frequency: 2600, Q: 1.1 });
     // Two 12 dB/octave stages each side: the steep low cut and the cliff above 5 kHz that hides amp fizz.
-    const hp2 = new Tone.Filter({ type: 'highpass', frequency: 70, Q: 0.7 });
-    const lp1 = new Tone.Filter({ type: 'lowpass', frequency: 5600, Q: 0.54 });
-    const lp2 = new Tone.Filter({ type: 'lowpass', frequency: 5600, Q: 1.31 });
+    const hp2 = new Tone.BiquadFilter({ type: 'highpass', frequency: 70, Q: 0.7 });
+    const lp1 = new Tone.BiquadFilter({ type: 'lowpass', frequency: 5600, Q: 0.54 });
+    const lp2 = new Tone.BiquadFilter({ type: 'lowpass', frequency: 5600, Q: 1.31 });
     return blended([hp, hp2, res, mid, pres, lp1, lp2], (p) => {
       const c = CABS[idx(p, 'model', CABS.length, 2)];
       const mic = num(p, 'mic', 0.3);
@@ -414,10 +414,10 @@ const STUDIO: Record<string, () => Pedal> = {
     const sat = new Tone.WaveShaper(tapeCurve);
     sat.oversample = '2x';
     const back = new Tone.Gain(1);
-    const bump = new Tone.Filter({ type: 'peaking', frequency: 60, Q: 1.0 });
-    const floor = new Tone.Filter({ type: 'highpass', frequency: 22, Q: 0.7 });
-    const top = new Tone.Filter({ type: 'highshelf', frequency: 9000 });
-    const air = new Tone.Filter({ type: 'lowpass', frequency: 17000, Q: 0.7 });
+    const bump = new Tone.BiquadFilter({ type: 'peaking', frequency: 60, Q: 1.0 });
+    const floor = new Tone.BiquadFilter({ type: 'highpass', frequency: 22, Q: 0.7 });
+    const top = new Tone.BiquadFilter({ type: 'highshelf', frequency: 9000 });
+    const air = new Tone.BiquadFilter({ type: 'lowpass', frequency: 17000, Q: 0.7 });
     return blended([push, sat, back, bump, floor, top, air], (p) => {
       const fast = idx(p, 'speed', 2, 0) === 1;
       const d = num(p, 'drive', 0.4);
