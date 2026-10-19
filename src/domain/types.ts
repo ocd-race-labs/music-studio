@@ -50,6 +50,8 @@ export interface Profile {
   last_kit?: string;
   /** Shows Music Studio Classroom (video lessons and Clave, the music-only helper) in this profile. */
   classroom?: boolean;
+  /** How the Classroom speaks to this student in Spanish: as an alumna ('f') or an alumno ('m'). */
+  student?: 'f' | 'm';
   status: 'active' | 'archived';
   settings_schema_version: 1;
   created_at: string;

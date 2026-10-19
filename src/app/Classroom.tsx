@@ -3,8 +3,9 @@ import type { FormEvent } from 'react';
 import type { Lang, Profile } from '../domain/types';
 import { ask, SUGGESTIONS } from '../classroom/assistant';
 import type { ReplyKind } from '../classroom/assistant';
-import { clock, cueAt, cuesFor, durationOf, hasVideo, LESSONS, lessonById } from '../classroom/lessons';
-import type { Lesson, LessonId } from '../classroom/lessons';
+import { addressed, clock, cueAt, cuesFor, durationOf, hasVideo, LESSONS, lessonById } from '../classroom/lessons';
+import type { Lesson, LessonId, Student } from '../classroom/lessons';
+import { studentOf } from '../domain/factory';
 import { canReadAloud, hush, speak, unlockVoice } from '../classroom/speech';
 import { t } from './i18n';
 import type { Mode } from './prefs';
@@ -59,7 +60,7 @@ export default function Classroom({ profile, lang, onLang, mode, onToggleMode, o
 
       {tab === 'lessons' && !open && <LessonGrid lang={lang} onOpen={openLesson} />}
       {tab === 'lessons' && open && (
-        <LessonPlayer key={open} lesson={lessonById(open)!} lang={lang} readAloud={readAloud} onReadAloud={setReadAloud}
+        <LessonPlayer key={open} lesson={lessonById(open)!} lang={lang} who={studentOf(profile)} readAloud={readAloud} onReadAloud={setReadAloud}
           onBack={() => { hush(); setOpen(null); }} onOpen={openLesson} />
       )}
       {tab === 'ask' && <AskClave lang={lang} onLesson={openLesson} />}
@@ -94,9 +95,10 @@ function LessonGrid({ lang, onOpen }: { lang: Lang; onOpen: (id: LessonId) => vo
   );
 }
 
-function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: {
+function LessonPlayer({ lesson, lang, who, readAloud, onReadAloud, onBack, onOpen }: {
   lesson: Lesson;
   lang: Lang;
+  who: Student;
   readAloud: boolean;
   onReadAloud: (on: boolean) => void;
   onBack: () => void;
@@ -115,29 +117,47 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
   const next = LESSONS[index + 1];
 
   const reading = useRef(0); // which spoken caption is current; an older one finishing must not restart the video
+  const talking = useRef(false); // a caption's voice is playing
+  const pending = useRef(-1); // the next caption arrived while the voice was still talking
+  const resuming = useRef(false); // we restart the video ourselves: not her play
+  const voiceAt = useRef(0); // when a voice started: a pause right then is the device's, not hers
   const [voice, setVoice] = useState<'idle' | 'reading'>('idle');
   const [trouble, setTrouble] = useState(false); // the device did not speak: silent mode or no voice
+  const say = useCallback((i: number) => addressed(cues[i][lang], who), [cues, lang, who]);
+  // The video keeps playing while a caption is read: each recording already lasts as long as its voice. Only when a
+  // voice is still talking as the next caption comes does the video wait for it.
   const readCue = useCallback((i: number) => {
     const v = video.current;
     if (!v || i < 0) return;
+    if (talking.current) {
+      pending.current = i;
+      waiting.current = true;
+      v.pause();
+      return;
+    }
     const token = ++reading.current;
-    // Paused by us; on iPhone the voice starting would pause it anyway, and that must not count as her pause.
-    waiting.current = true;
-    v.pause();
+    talking.current = true;
+    voiceAt.current = Date.now();
     setVoice('reading');
-    speak(cues[i][lang], lang, {
-      onStart: () => setTrouble(false),
+    speak(say(i), lang, {
+      onStart: () => { setTrouble(false); voiceAt.current = Date.now(); },
       onEnd: (how) => {
         if (token !== reading.current) return;
+        talking.current = false;
         setVoice('idle');
         if (how === 'failed') setTrouble(true);
-        if (!waiting.current) return;
-        waiting.current = false;
-        v.play().catch(() => undefined);
+        const next = pending.current;
+        pending.current = -1;
+        if (waiting.current) {
+          waiting.current = false;
+          resuming.current = true;
+          v.play().catch(() => undefined);
+        }
+        if (next >= 0) readCue(next);
       },
     });
-  }, [cues, lang]);
-  const quiet = () => { reading.current++; hush(); setVoice('idle'); };
+  }, [say, lang]);
+  const quiet = () => { reading.current++; talking.current = false; pending.current = -1; hush(); setVoice('idle'); };
 
   const onTime = () => {
     const v = video.current;
@@ -178,7 +198,7 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
     if (v && !v.paused && at >= 0) { readCue(at); return; }
     const token = ++reading.current;
     setVoice('reading');
-    speak(at >= 0 ? cues[at][lang] : lesson.title[lang], lang, {
+    speak(at >= 0 ? say(at) : lesson.title[lang], lang, {
       onStart: () => setTrouble(false),
       onEnd: (how) => { if (token !== reading.current) return; setVoice('idle'); if (how === 'failed') setTrouble(true); },
     });
@@ -198,8 +218,18 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
           <div className="cl-video">
             <video ref={video} src={`classroom/${lesson.id}.mp4`} poster={`classroom/${lesson.id}.jpg`} controls playsInline preload="metadata"
               onTimeUpdate={onTime} onSeeked={onTime}
-              onPlay={() => { setEnded(false); if (waiting.current) { waiting.current = false; quiet(); } else if (voice === 'reading') quiet(); }}
-              onPause={() => { if (!waiting.current) quiet(); }}
+              onPlay={() => {
+                setEnded(false);
+                if (resuming.current) { resuming.current = false; return; }
+                // She pressed play while the video waited for the voice: go on without the rest of it.
+                if (waiting.current) { waiting.current = false; quiet(); }
+              }}
+              onPause={() => {
+                if (waiting.current) return;
+                // On some phones a voice starting pauses the video: that is not her pause.
+                if (talking.current && Date.now() - voiceAt.current < 700) { resuming.current = true; video.current?.play().catch(() => undefined); return; }
+                quiet();
+              }}
               onEnded={() => { quiet(); setEnded(true); }} />
             {ended && (
               <div className="cl-done">
@@ -214,7 +244,7 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
           </div>
           <p className={`cl-caption${voice === 'reading' ? ' reading' : ''}`} aria-live="polite">
             {voice === 'reading' && <span className="cl-reading" aria-label={t('clReadingNow', lang)}><Icon name="speaker" size={18} /></span>}
-            {at >= 0 ? cues[at][lang] : t('clPressPlay', lang)}
+            {at >= 0 ? say(at) : t('clPressPlay', lang)}
           </p>
           {readAloud && trouble && <p className="cl-trouble small" role="status"><Icon name="warning" size={16} /> {t('clVoiceTrouble', lang)}</p>}
         </div>
@@ -226,7 +256,7 @@ function LessonPlayer({ lesson, lang, readAloud, onReadAloud, onBack, onOpen }: 
             {cues.map((c, i) => (
               <li key={i} data-i={i}>
                 <button type="button" aria-current={i === at ? 'step' : undefined} onClick={() => seek(i)}>
-                  <span className="mono small">{clock(c.t)}</span><span>{c[lang]}</span>
+                  <span className="mono small">{clock(c.t)}</span><span>{addressed(c[lang], who)}</span>
                 </button>
               </li>
             ))}

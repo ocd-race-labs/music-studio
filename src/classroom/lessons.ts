@@ -48,26 +48,26 @@ export const LESSONS: Lesson[] = [
   {
     id: 'form',
     title: { es: 'La forma de la canción', en: 'The shape of a song' },
-    blurb: { es: 'Compases, partes como verso y coro, copiar partes y la línea de tiempo.', en: 'Bars, parts like verse and chorus, copying parts and the timeline.' },
-    examples: { es: ['Marcar una parte como Verso y repetirla', 'Ver una parte sola y practicarla en loop'], en: ['Mark a part as Verse and repeat it', 'See one part alone and loop it'] },
+    blurb: { es: 'Partir de una forma en Idea: intro, verso, coro; escuchar una parte y repetirla.', en: 'Start from a shape in Idea: intro, verse, chorus; hear one part and repeat it.' },
+    examples: { es: ['Elegir Canción corta', 'Repetir el coro y aceptar la idea'], en: ['Pick Short song', 'Repeat the chorus and accept the idea'] },
   },
   {
     id: 'mixer',
-    title: { es: 'El mezclador', en: 'The mixer' },
+    title: { es: 'La mesa del productor', en: "The producer's desk" },
     blurb: { es: 'Volumen, paneo, mute y solo: que todas las pistas se escuchen bien.', en: 'Volume, pan, mute and solo: so every track sounds right.' },
     examples: { es: ['Bajar el hi-hat', 'Escuchar solo el bajo'], en: ['Turn down the hi-hat', 'Listen to the bass alone'] },
   },
   {
     id: 'pedals',
-    title: { es: 'Pedales', en: 'Pedals' },
-    blurb: { es: 'Efectos que cambian el sonido: eco, sala, lo-fi y muchos más.', en: 'Effects that change the sound: echo, room, lo-fi and many more.' },
+    title: { es: 'Efectos', en: 'Effects' },
+    blurb: { es: 'En la sala Estudio: eco, sala, lo-fi y muchos más, en la cadena de sonido.', en: 'In the Studio room: echo, room, lo-fi and many more, in the sound chain.' },
     examples: { es: ['Ponerle eco a la melodía', 'Sonido de cassette con Lo-fi'], en: ['Add echo to the melody', 'A cassette sound with Lo-fi'] },
   },
   {
     id: 'save',
     title: { es: 'Guardar y deshacer', en: 'Saving and undo' },
     blurb: { es: 'Tus canciones se guardan solas; deshacer, versiones y canciones nuevas.', en: 'Your songs save on their own; undo, versions and new songs.' },
-    examples: { es: ['Deshacer un error', 'Guardar una versión de tu canción'], en: ['Undo a mistake', 'Save a version of your song'] },
+    examples: { es: ['Deshacer un error', 'Guardar una versión en Canciones'], en: ['Undo a mistake', 'Save a version in Songs'] },
   },
 ];
 
@@ -85,6 +85,11 @@ export function cueAt(cues: Cue[], time: number): number {
   for (let i = 0; i < cues.length; i++) if (cues[i].t <= time + 0.05) at = i;
   return at;
 }
+
+/** Who the lessons speak to. A text may hold both forms, as {a|o}: the first for an alumna, the second for an alumno. */
+export type Student = 'f' | 'm';
+export const STUDENTS: Student[] = ['f', 'm'];
+export const addressed = (text: string, who: Student): string => text.replace(/\{([^{}|]*)\|([^{}|]*)\}/g, (_, f: string, m: string) => (who === 'f' ? f : m));
 
 export const clock = (seconds: number): string => {
   const s = Math.max(0, Math.round(seconds));
