@@ -142,7 +142,7 @@ export default function Lab({ store, lang, onHome }: { store: SongStore; lang: L
 function LoadTest({ lang }: { lang: Lang }) {
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(0);
-  const [result, setResult] = useState<{ sounds: number; stalls: number; worst: number; underruns: number | null; leftover: boolean; clock: number } | null>(null);
+  const [result, setResult] = useState<{ sounds: number; stalls: number; worst: number; underruns: number | null; leftover: boolean; leftDb: number; clock: number } | null>(null);
   const picks = ENTRIES.filter((_, i) => i % 3 === 0).slice(0, 20);
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const run = async () => {
@@ -169,10 +169,13 @@ function LoadTest({ lang }: { lang: Lang }) {
     window.clearInterval(id);
     await wait(2000);
     const u1 = engine.underruns();
-    const leftover = engine.outputLevel() > 0.05;
+    const level = engine.outputLevel();
+    const leftover = level > 0.05;
+    // How loud what is left is: a faint tail near -50 dB is not the same as a sound that never stopped.
+    const leftDb = Math.round(level * 54 - 54);
     // Below 1x the audio cannot render as fast as it plays: the sound cuts and crackles.
     const clock = (await engine.clockRate(1000)).rate;
-    setResult({ sounds: picks.length, stalls, worst: Math.max(0, Math.round(worst)), underruns: u0 === null || u1 === null ? null : u1 - u0, leftover, clock });
+    setResult({ sounds: picks.length, stalls, worst: Math.max(0, Math.round(worst)), underruns: u0 === null || u1 === null ? null : u1 - u0, leftover, leftDb, clock });
     setRunning(false);
   };
   const clean = result && !result.stalls && !result.leftover && !result.underruns && result.clock > 0.97;
@@ -188,7 +191,7 @@ function LoadTest({ lang }: { lang: Lang }) {
           <tr><td className="muted">{t('labLoadUnderruns', lang)}</td><td className="mono">{result.underruns === null ? t('labLoadNotTold', lang) : result.underruns}</td></tr>
           <tr><td className="muted">{t('labLoadStalls', lang)}</td><td className="mono">{result.stalls} · {t('labLoadWorst', lang, { ms: result.worst })}</td></tr>
           <tr><td className="muted">{t('labLoadClock', lang)}</td><td className="mono">{result.clock.toFixed(2)}×</td></tr>
-          <tr><td className="muted">{t('labLoadLeftover', lang)}</td><td className="mono">{t(result.leftover ? 'yes' : 'no', lang)}</td></tr>
+          <tr><td className="muted">{t('labLoadLeftover', lang)}</td><td className="mono">{t(result.leftover ? 'yes' : 'no', lang)}{result.leftover ? ` (${result.leftDb} dB)` : ''}</td></tr>
         </tbody></table>
       )}
       {result && <p className="small" role="status" style={{ margin: 0 }}>{t(clean ? 'labLoadClean' : 'labLoadTrouble', lang)}</p>}
