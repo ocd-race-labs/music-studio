@@ -254,6 +254,39 @@ export const setProducerSound = (song: Song, trackId: string, variant: Omit<Trac
 export const clearProducerSound = (song: Song, trackId: string, by: string | null): Song =>
   mapTrack(song, trackId, (t) => { const { producer: _p, voice_from: _v, ...rest } = t; return rest; }, by);
 
+/**
+ * One sound per track. Songs made before kept two versions of a track's sound (the musician's and the producer's);
+ * the one that plays becomes the track's sound, and the other, when it carried its own effects, comes back as a saved
+ * sound so nothing made is lost. Returns the song unchanged (and no sounds) when no track had two versions.
+ */
+export function foldVersions(song: Song, profileId: string): { song: Song; sounds: CustomSound[] } {
+  if (!song.tracks.some((t) => t.producer || t.voice_from)) return { song, sounds: [] };
+  const sounds: CustomSound[] = [];
+  const at = now();
+  const keep = (instrument: CatalogRef | null | undefined, sound: Track['sound']) => {
+    if (!instrument || !sound || sounds.some((x) => x.id === sound.id)) return;
+    sounds.push({ id: sound.id, profile_id: profileId, name: sound.name, base: instrument, chain: structuredClone(sound.chain), chain_schema_version: 1,
+      status: 'active', origin: 'person', created_at: at, updated_at: at });
+  };
+  const tracks = song.tracks.map((t) => {
+    const { producer, voice_from: from, ...rest } = t;
+    if (!producer) return rest as Track;
+    if (from !== 'producer') { keep(producer.instrument, producer.sound); return rest as Track; }
+    keep(t.instrument, t.sound);
+    const key = producer.instrument?.key;
+    const moved = key && key !== t.instrument?.key ? retarget(rest as Track, key, roleOf(t), t.name) : (rest as Track);
+    const { sound: _old, ...bare } = moved;
+    return (producer.sound ? { ...bare, sound: structuredClone(producer.sound) } : bare) as Track;
+  });
+  return { song: { ...song, tracks }, sounds };
+}
+
+/** A saved sound has a new name: the tracks that play it show the new one. */
+export function renameSoundOnTracks(song: Song, soundId: string, name: string, by: string | null): Song {
+  if (!song.tracks.some((t) => t.sound?.id === soundId && t.sound.name !== name)) return song;
+  return touch({ ...song, tracks: song.tracks.map((t) => (t.sound?.id === soundId ? { ...t, sound: { ...t.sound, name } } : t)) }, by);
+}
+
 /** Move the whole song to another kit, keeping what was written (see factory.switchKit). */
 export const switchKit = (song: Song, kitKey: string, slots: KitSlot[], lang: Lang, by: string | null): Song =>
   switchKitOf(song, kitKey, slots, lang, by);

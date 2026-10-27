@@ -24,20 +24,12 @@ describe('the sound being shaped', () => {
     expect(ownGear(KIT_60).slots).toHaveLength(0);
   });
 
-  it('shows what the track plays, and the producer version starts from the musician sound', () => {
+  it('shows what the track plays', () => {
     let s = rockSong();
     const chords = trackOf(s, 'chords');
     s = C.setInstrument(s, chords.id, ref(GTR_60), me.id);
     const tr = s.tracks.find((x) => x.id === chords.id)!;
-    const mus = currentOf(tr, 'musician');
-    expect(mus.base).toBe(GTR_60);
-    expect(mus.exists).toBe(true);
-    const prod = currentOf(tr, 'producer');
-    expect(prod.base).toBe(GTR_60);
-    expect(prod.exists).toBe(false);
-    const withProd = C.setProducerSound(s, chords.id, { instrument: ref(GTR_90) }, me.id).tracks.find((x) => x.id === chords.id)!;
-    expect(currentOf(withProd, 'producer')).toMatchObject({ base: GTR_90, exists: true });
-    expect(currentOf(withProd, 'musician').base).toBe(GTR_60);
+    expect(currentOf(tr).base).toBe(GTR_60);
   });
 
   it('knows what the bar should offer', () => {
@@ -45,7 +37,7 @@ describe('the sound being shaped', () => {
     const chords = trackOf(s, 'chords');
     s = C.setInstrument(s, chords.id, ref(GTR_60), me.id);
     const tr = s.tracks.find((x) => x.id === chords.id)!;
-    const cur = currentOf(tr, 'musician');
+    const cur = currentOf(tr);
     expect(draftKind(cur, cur)).toBe('clean');
     expect(draftKind({ base: GTR_90, chain: ownGear(GTR_90) }, cur)).toBe('catalog');
     const changed = structuredClone(cur.chain);
@@ -55,7 +47,7 @@ describe('the sound being shaped', () => {
     expect(draftKind({ base: GTR_60, chain: changed, soundId: saved.id }, cur, saved)).toBe('mine');
     // Once used, the track plays it and there is nothing left to do.
     const used = C.applySound(s, chords.id, saved, me.id).tracks.find((x) => x.id === chords.id)!;
-    expect(draftKind({ base: GTR_60, chain: changed, soundId: saved.id }, currentOf(used, 'musician'), saved)).toBe('clean');
+    expect(draftKind({ base: GTR_60, chain: changed, soundId: saved.id }, currentOf(used), saved)).toBe('clean');
   });
 
   it('only offers what fits the track, unless asked for everything melodic', () => {
@@ -76,14 +68,12 @@ describe('the sound being shaped', () => {
   it('plays the draft in the song without touching the song', () => {
     let s = rockSong();
     const chords = trackOf(s, 'chords');
-    s = C.setProducerSound(s, chords.id, { instrument: ref(GTR_90) }, me.id);
     const before = JSON.stringify(s);
     const chain = ownGear(GTR_60);
     const a = auditionSong(s, chords.id, GTR_60, chain, 'prueba');
     const tr = a.tracks.find((x) => x.id === chords.id)!;
     expect(tr.instrument?.key).toBe(GTR_60);
     expect(tr.sound?.chain.slots.length).toBe(chain.slots.length);
-    expect(tr.producer).toBeUndefined();
     expect(a.tracks.filter((x) => x.id !== chords.id)).toEqual(s.tracks.filter((x) => x.id !== chords.id));
     expect(JSON.stringify(s)).toBe(before);
   });

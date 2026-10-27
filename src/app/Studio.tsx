@@ -21,7 +21,6 @@ import Desk, { ChannelInspector } from './Desk';
 import type { DeskView } from './Desk';
 import * as MX from '../domain/mix';
 import SoundStudio from './SoundStudio';
-import type { Slot } from './sounddraft';
 import BeatAssistant from './BeatAssistant';
 import IdeaWords from './IdeaWords';
 import Hub from './Hub';
@@ -150,8 +149,6 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   const [ideaWrite, setIdeaWrite] = useState<{ blockId?: string } | null>(null);
   // A signal chain open in the sound studio's designer, possibly for one track of the song (the producer's version).
   // The studio's version being made, kept per device: the musician's sound or the producer's.
-  const [soundSlot, setSoundSlotState] = useState<Slot>(() => { try { return localStorage.getItem('music-studio.sound-slot') === 'producer' ? 'producer' : 'musician'; } catch { return 'musician'; } });
-  const setSoundSlot = useCallback((s: Slot) => { setSoundSlotState(s); try { localStorage.setItem('music-studio.sound-slot', s); } catch { /* per-device convenience only */ } }, []);
   // In the studio, the song plays with the sound being tried on its track.
   const [audition, setAudition] = useState<Song | null>(null);
   useEffect(() => { store.listSounds(profile.id).then(setSounds).catch(() => setSounds([])); }, [store, profile.id]);
@@ -193,6 +190,15 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     }
   };
 
+  /** One sound per track: a song from before with two versions of a sound keeps the one that plays, the other is saved. */
+  const settle = async (s: Song): Promise<Song> => {
+    const folded = C.foldVersions(s, profile.id);
+    if (!folded.sounds.length) return folded.song;
+    for (const x of folded.sounds) await store.saveSound(x);
+    setSounds(await store.listSounds(profile.id));
+    return folded.song;
+  };
+
   /* ---------- load the last song, or start one */
   useEffect(() => {
     let alive = true;
@@ -204,7 +210,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
         s = newSong(profile.id, t(profile.id === 'guest' ? 'guestJam' : 'firstSong', langRef.current), 2, langRef.current);
         await store.saveSong(s);
       }
-      s = normalizeSong(s);
+      s = await settle(normalizeSong(s));
       if (!alive) return;
       songRef.current = s;
       setSong(s);
@@ -387,7 +393,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   /* ---------- songs */
   const refreshSongs = async () => setSongList(await store.listSongs(profile.id));
   const switchTo = async (raw: Song) => {
-    const s = normalizeSong(raw);
+    const s = await settle(normalizeSong(raw));
     engine.stop();
     setPlaying(false);
     past.current = [];
@@ -716,7 +722,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
             <TrackBadge track={tr} size="sm" />
             <span className="stack" style={{ gap: 0, minWidth: 0 }}>
               <strong>{tr.name}</strong>
-              <span className="small muted ellipsis">{tr.producer && tr.voice_from === 'producer' ? soundName(tr.producer.instrument, tr.producer.sound, lang) : soundName(tr.instrument, tr.sound, lang)}</span>
+              <span className="small muted ellipsis">{soundName(tr.instrument, tr.sound, lang)}</span>
             </span>
           </button>
           {tr.instrument && (
@@ -878,16 +884,10 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
       {room === 'producer' && (
         <section className="card stack track-sound" aria-label={t('songSounds', lang)}>
           <div className="row"><TrackBadge track={track} size="sm" /><h3 className="grow" style={{ fontSize: 16 }}>{t('trackSoundOf', lang, { name: track.name })}</h3></div>
-          <div className="seg" aria-label={t('plays', lang)}>
-            <button type="button" aria-pressed={!(track.producer && track.voice_from === 'producer')} onClick={() => apply((x) => C.setVoiceFrom(x, track.id, 'musician', by))}>{t('musician', lang)}</button>
-            <button type="button" aria-pressed={!!track.producer && track.voice_from === 'producer'} disabled={!track.producer} onClick={() => apply((x) => C.setVoiceFrom(x, track.id, 'producer', by))}>{t('producer', lang)}</button>
-          </div>
-          <span className="small muted">{t('musicianSound', lang)}: <strong>{soundName(track.instrument, track.sound, lang) || '—'}</strong></span>
-          <span className="small muted">{t('producerSound', lang)}: <strong>{track.producer ? soundName(track.producer.instrument, track.producer.sound, lang) : t('noProducerSound', lang)}</strong></span>
+          <span className="small muted">{t('trackSoundNow', lang)}: <strong>{soundName(track.instrument, track.sound, lang) || '—'}</strong></span>
           <div className="row wrap" style={{ gap: 6 }}>
-            <button type="button" className="btn small-btn primary" disabled={!track.instrument} onClick={() => { setSoundSlot('producer'); onRoom('sounds'); }}
-              title={t('makeProducerHint', lang)}><Icon name="sliders" size={16} /> {t(track.producer ? 'refineProducer' : 'makeProducer', lang)}</button>
-            {track.producer && <button type="button" className="btn small-btn ghost" onClick={() => apply((x) => C.clearProducerSound(x, track.id, by))}>{t('dropProducer', lang)}</button>}
+            <button type="button" className="btn small-btn" disabled={!track.instrument} onClick={() => onRoom('sounds')}
+              title={t('changeSoundHint', lang)}><Icon name="sliders" size={16} /> {t('changeSound', lang)}</button>
           </div>
         </section>
       )}
@@ -921,11 +921,9 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     if (room === 'sounds') {
       return (
         <div className="body room-sounds">
-          <SoundStudio song={song} selectedId={track.id} slot={soundSlot} playing={playing} alone={alone} starred={starred} sounds={sounds} profileId={profile.id} lang={lang}
-            onSelect={setSelected} onSlot={setSoundSlot} onPlay={togglePlay} onAlone={() => setAlone((a) => !a)} onAudition={setAudition}
+          <SoundStudio song={song} selectedId={track.id} playing={playing} alone={alone} starred={starred} sounds={sounds} profileId={profile.id} lang={lang}
+            onSelect={setSelected} onPlay={togglePlay} onAlone={() => setAlone((a) => !a)} onAudition={setAudition}
             onBeat={() => setModal('beat')} onDesk={() => onRoom('producer')}
-            onVoice={(id, from) => apply((x) => C.setVoiceFrom(x, id, from, by))}
-            onDropProducer={(id) => apply((x) => C.clearProducerSound(x, id, by))}
             onUse={(trackId, key) => {
               const ref = { key, version: '1.0.0' };
               const twin = C.swapPartner(song, trackId, key);
@@ -943,15 +941,19 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
               if (twin) showToast(t('swappedWith', lang, { track: tr?.name ?? '', other: twin.name }), { label: t('undo', lang), run: undo });
               else showToast(t('collectionUsed', lang, { name: sound.name, track: tr?.name ?? '' }));
             }}
-            onProducerSound={(trackId, variant) => {
-              apply((x) => C.setProducerSound(x, trackId, variant, by));
-              const tr = song.tracks.find((x) => x.id === trackId);
-              showToast(t('producerSoundSet', lang, { name: variant.sound?.name ?? soundName(variant.instrument, undefined, lang), track: tr?.name ?? '' }));
-            }}
             onSaveSound={async (sound) => {
               await store.saveSound(sound);
               setSounds(await store.listSounds(profile.id));
               showToast(t('mySoundSaved', lang, { name: sound.name }));
+            }}
+            onRenameSound={async (sound, name) => {
+              await store.saveSound({ ...sound, name, updated_at: new Date().toISOString() });
+              setSounds(await store.listSounds(profile.id));
+              apply((x) => C.renameSoundOnTracks(x, sound.id, name, by));
+              if (starred.some((x) => x.sound?.id === sound.id)) {
+                onProfile({ ...profile, starred: starred.map((x) => (x.sound?.id === sound.id ? { ...x, sound: { ...x.sound, name } } : x)), updated_at: new Date().toISOString() });
+              }
+              showToast(t('mySoundRenamed', lang, { name }));
             }}
             onDeleteSound={async (id) => {
               await store.deleteSound(id);
@@ -983,8 +985,8 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
           <SongsRoom song={song} songs={songList} versions={versions} lang={lang}
             onOpen={(s) => { if (s.id !== song.id) switchTo(s); }} onRoom={onRoom} onNew={createSong} onBeat={() => setModal('beat')} onWords={() => setModal('words')}
             onImport={importSong} onExport={exportSong} onSaveVersion={saveVersion}
-            onRestore={(v) => { apply(() => ({ ...normalizeSong(v.snapshot), updated_at: new Date().toISOString() })); showToast(t('versionRestored', lang, { n: v.version_no })); }}
-            onVoice={(id, from) => apply((x) => C.setVoiceFrom(x, id, from, by))} />
+            onRestore={(v) => { apply(() => ({ ...C.foldVersions(normalizeSong(v.snapshot), profile.id).song, updated_at: new Date().toISOString() })); showToast(t('versionRestored', lang, { n: v.version_no })); }}
+            />
         </div>
       );
     }

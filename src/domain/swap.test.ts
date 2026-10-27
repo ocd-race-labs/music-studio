@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clearWritten, hasWritten, setInstrument, swapPartner, toggleHit } from './commands';
+import { clearWritten, foldVersions, hasWritten, setInstrument, swapPartner, toggleHit } from './commands';
 import { newSong, retarget, roleOf } from './factory';
 import type { PatternContent, Song } from './types';
 
@@ -40,5 +40,22 @@ describe('changing a track to an instrument another track already has', () => {
   it('does nothing extra when no other track has the instrument', () => {
     const { song, drums } = twoKits();
     expect(swapPartner(song, drums, 'instrument.drums-jazz')).toBeUndefined();
+  });
+});
+
+describe('one sound per track', () => {
+  it('keeps the version that plays and saves the other as a sound', () => {
+    let song = newSong('p1');
+    const t = song.tracks[0];
+    const chain = { routing: 'series' as const, slots: [] };
+    song = { ...song, tracks: song.tracks.map((x) => (x.id === t.id
+      ? { ...x, sound: { id: 'mine', name: 'Mi sonido', chain }, producer: { instrument: x.instrument, sound: { id: 'prod', name: 'Producida', chain }, by: null, updated_at: '' }, voice_from: 'producer' as const }
+      : x)) };
+    const { song: out, sounds } = foldVersions(song, 'p1');
+    const o = out.tracks.find((x) => x.id === t.id)!;
+    expect(o.sound?.id).toBe('prod');
+    expect('producer' in o || 'voice_from' in o).toBe(false);
+    expect(sounds.map((x) => x.id)).toEqual(['mine']);
+    expect(foldVersions(out, 'p1').sounds).toEqual([]);
   });
 });

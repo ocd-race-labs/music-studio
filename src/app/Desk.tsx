@@ -89,14 +89,12 @@ export default function Desk({ song, tracks, extra, selected, lang, view, showCo
       const key = `${band}_db` as const;
       return <Knob size={KS} value={s[key]} min={-c.gain.max} max={c.gain.max} def={0} steps={c.gain.steps} label={label} display={fmtDb(s[key])} onChange={(v) => set({ [key]: snapGain(c, v) } as Partial<ChannelStrip>)} />;
     };
-    const playing = tr.producer && tr.voice_from === 'producer' ? tr.producer : null;
     return (
       <div key={tr.id} className={`dstrip${tr.id === selected ? ' on' : ''}`} style={{ ['--trk' as string]: tr.color }}>
         <button type="button" className="dstrip-name" onClick={() => onSelect(tr.id)} aria-current={tr.id === selected}>
           <TrackBadge track={tr} size="sm" />
           <strong className="ellipsis">{tr.name}</strong>
-          <span className="small muted ellipsis">{soundName(playing ? playing.instrument : tr.instrument, playing ? playing.sound : tr.sound, lang)}</span>
-          {playing && <span className="tag prod">{t('deskProducerTag', lang)}</span>}
+          <span className="small muted ellipsis">{soundName(tr.instrument, tr.sound, lang)}</span>
         </button>
         {view === 'full' ? (<>
           {/* The full strip in rows of four, so a whole channel fits on screen: input and dynamics, the EQ, then the sends and pan. */}

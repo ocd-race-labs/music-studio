@@ -348,6 +348,24 @@ export class StudioEngine {
       }
     };
     for (const ev of ['pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, unlock, { capture: true, passive: true });
+    // Out of sight (another app, the screen locked, the tab hidden) the studio goes quiet and the audio sleeps.
+    // On iPhone and iPad the silent keep-alive would otherwise hold the audio open and the whole graph (rooms,
+    // echoes, every track's chain) would keep running in the background, draining the battery. The next tap wakes it.
+    // On a computer a song that is playing keeps playing in another tab; a quiet studio still sleeps.
+    const touch = 'ontouchend' in document;
+    const hide = () => { if (touch || Tone.getTransport().state !== 'started') this.sleep(); };
+    document.addEventListener('visibilitychange', () => { if (document.hidden) hide(); });
+    window.addEventListener('pagehide', () => this.sleep());
+  }
+
+  /** Stops the song, lets go of the device's audio and suspends the sound graph until the next tap. */
+  sleep(): void {
+    if (!this.started) return;
+    const wasPlaying = Tone.getTransport().state === 'started';
+    try { this.stop(); } catch { /* nothing playing */ }
+    if (wasPlaying) this.endedFns.forEach((fn) => fn());
+    try { silentAudio?.pause(); } catch { /* best effort */ }
+    try { (Tone.getContext().rawContext as unknown as AudioContext).suspend?.().catch(() => undefined); } catch { /* best effort */ }
   }
 
   /** One second of A4, for the Lab sound check. Resolves with the loudest output level seen. */

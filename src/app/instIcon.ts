@@ -63,7 +63,7 @@ export function instIcon(key: string | undefined, fallback: IconName = 'music'):
 
 /** The icon for a track: what it plays, or its job when it plays nothing yet. */
 export const trackIcon = (track: Track): IconName => {
-  const key = (track.producer && track.voice_from === 'producer' ? track.producer.instrument?.key : undefined) ?? track.instrument?.key;
+  const key = track.instrument?.key;
   return instIcon(key, ROLE_ICON[roleOf(track)]);
 };
 

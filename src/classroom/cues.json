@@ -395,7 +395,7 @@
   ]
  },
  "pedals": {
-  "duration": 65.1,
+  "duration": 73.2,
   "cues": [
    {
     "t": 0.21,
@@ -423,17 +423,22 @@
     "en": "Hear the melody repeat!"
    },
    {
-    "t": 36.71,
+    "t": 36.4,
     "es": "Ejemplo dos: en Color está el Lo-fi, que suena como un cassette antiguo.",
     "en": "Example two: in Color there is Lo-fi, which sounds like an old cassette."
    },
    {
-    "t": 51.23,
+    "t": 50.73,
     "es": "Para que los efectos queden en tu canción, toca Guardar y usar en Melodía.",
     "en": "To keep the effects in your song, tap Save and use on Melody."
    },
    {
-    "t": 57.19,
+    "t": 56.78,
+    "es": "Tu sonido lleva el nombre del instrumento, y tú le pones el apellido. Por ejemplo, cassette.",
+    "en": "Your sound keeps the instrument's name, and you give it a surname. For example, cassette."
+   },
+   {
+    "t": 65.28,
     "es": "Usa los efectos de a poco. Tu canción tiene que seguir escuchándose clara.",
     "en": "Use effects a little at a time. Your song should still sound clear."
    }

@@ -531,6 +531,7 @@ input.field.num { width: 64px; text-align: center; }
 .voice-table { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 .vt-row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(120px, 1.3fr) minmax(120px, 1.3fr) auto; gap: 10px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 14px; }
 .vt-row:first-child { border-top: 0; }
+.vt-row.vt-two { grid-template-columns: minmax(110px, 1fr) minmax(120px, 2fr); }
 .vt-head { background: var(--raised); font-size: 12px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
 .vt-on { font-weight: 700; }
 .vt-on::before { content: '● '; color: var(--main-text, var(--main)); }
@@ -543,6 +544,7 @@ input.field.num { width: 64px; text-align: center; }
   .vt-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
   .vt-row > :nth-child(1) { grid-column: 1; grid-row: 1; }
   .vt-row > :nth-child(2) { grid-column: 1; grid-row: 2; font-size: 12px; }
+  .vt-row.vt-two { grid-template-columns: minmax(0, 1fr); }
   .vt-row > :nth-child(3) { grid-column: 1; grid-row: 3; font-size: 12px; }
   .vt-row > :nth-child(4) { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
   .vt-row > [data-k]::before { content: attr(data-k) ': '; color: var(--ink-2); font-weight: 500; }
@@ -1149,3 +1151,7 @@ input.field.num { width: 64px; text-align: center; }
 .btn.tp-loop, .btn.tp-loop[aria-pressed=true] { background: transparent; color: var(--ink-2); width: 34px; min-width: 34px; padding: 0; margin-left: -4px; }
 .btn.tp-loop[aria-pressed=true] { color: var(--main); }
 @media (max-width: 1700px) { .hear-lbl { display: none; } }
+
+/* A saved sound's name: the instrument stays, only the surname is written. */
+.es-surname { align-items: center; min-width: 0; }
+.es-surname-base { flex: 0 1 auto; max-width: 55%; color: var(--ink-2); font-weight: 600; }

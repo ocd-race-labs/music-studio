@@ -8,7 +8,7 @@ import { ENTRIES, entryOf, FAMILIES, GENRES, GROUPS, SOURCES } from '../packs/co
 import type { Entry, Family, Genre } from '../packs/collection';
 import { findByKey, findItem, KITS, kitSlots, ref, rowsOf, ROLES, title as catalogTitle } from '../packs/core';
 import { engine } from '../engine/engine';
-import type { CustomSound, FxChain, Lang, Role, Song, StarredInstrument, TrackVariant } from '../domain/types';
+import type { CustomSound, FxChain, Lang, Role, Song, StarredInstrument } from '../domain/types';
 import { newId, now, ROLE_NAMES, roleOf } from '../domain/factory';
 import { hasWritten } from '../domain/commands';
 import { t } from './i18n';
@@ -19,7 +19,7 @@ import { familyOf, rackFor, templateFor } from './rack';
 import { EffectPicker, insertAt, newSlot, RigFlow, UnitEditor } from './Rig';
 import type { FxOption, ListenMode, RigSel, Stage } from './Rig';
 import { auditionSong, currentOf, defaultRole, draftKind, fitsTrack, ownGear, rolesFor, sameChain, songGenre, suggestionsFor } from './sounddraft';
-import type { Draft, Slot } from './sounddraft';
+import type { Draft } from './sounddraft';
 
 type Source = 'catalog' | 'kit' | 'mine';
 type Shelf = Genre | 'more';
@@ -32,13 +32,11 @@ const FAMILY_ICON: Record<Family, IconName> = { drums: 'drums', guitar: 'guitar'
 const CORE = KITS.flatMap((k) => kitSlots(k.key).filter((s) => !entryOf(s.instrument)).map((s) => ({ kit: k, role: s.role, key: s.instrument })))
   .filter((x, i, all) => all.findIndex((y) => y.key === x.key) === i);
 
-export default function SoundStudio({ song, selectedId, slot, playing, alone, starred, sounds, profileId, lang,
-  onSelect, onSlot, onPlay, onAlone, onAudition, onUse, onUseSound, onProducerSound, onVoice, onDropProducer, onSaveSound, onDeleteSound,
+export default function SoundStudio({ song, selectedId, playing, alone, starred, sounds, profileId, lang,
+  onSelect, onPlay, onAlone, onAudition, onUse, onUseSound, onSaveSound, onRenameSound, onDeleteSound,
   onStar, onUnstar, onBeat, onNewWithKit, onApplyKit, onDesk }: {
   song: Song;
   selectedId: string | null;
-  /** The version being made: the musician's sound or the producer's. */
-  slot: Slot;
   playing: boolean;
   alone: boolean;
   starred: StarredInstrument[];
@@ -46,17 +44,15 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   profileId: string;
   lang: Lang;
   onSelect: (trackId: string) => void;
-  onSlot: (s: Slot) => void;
   onPlay: () => void;
   onAlone: () => void;
   /** The song to play while here: the real one with the draft on its track, or null for the song as it is. */
   onAudition: (s: Song | null) => void;
   onUse: (trackId: string, instrumentKey: string) => void;
   onUseSound: (trackId: string, sound: CustomSound) => void;
-  onProducerSound: (trackId: string, variant: Omit<TrackVariant, 'updated_at' | 'by'>) => void;
-  onVoice: (trackId: string, from: Slot) => void;
-  onDropProducer: (trackId: string) => void;
   onSaveSound: (sound: CustomSound) => Promise<void>;
+  /** A saved sound gets a new name; the tracks using it follow. */
+  onRenameSound: (sound: CustomSound, name: string) => Promise<void>;
   onDeleteSound: (id: string) => void;
   onStar: (s: StarredInstrument) => void;
   onUnstar: (s: StarredInstrument) => void;
@@ -66,8 +62,8 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   onDesk: () => void;
 }) {
   const track = song.tracks.find((x) => x.id === selectedId) ?? song.tracks[0];
-  const key = `${track.id}:${slot}`;
-  const current = useMemo(() => currentOf(track, slot), [track, slot]);
+  const key = track.id;
+  const current = useMemo(() => currentOf(track), [track]);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const draft = drafts[key] ?? current;
   const saved = draft.soundId ? sounds.find((x) => x.id === draft.soundId) : undefined;
@@ -96,7 +92,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
   // ...and the catalog opens where its current sound lives, so what is selected is in view.
   useEffect(() => {
     setSel('instrument'); setUpTo(null); setWithout(false); setAb(false); setAdding(null); setTrial(null); setFxStage(null);
-    const base = currentOf(track, slot).base;
+    const base = currentOf(track).base;
     setShelf(entryOf(base)?.genre ?? (CORE.some((x) => x.key === base) ? 'more' : songGenre(song) ?? GENRES[0].id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
@@ -199,18 +195,24 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
 
   /* ------------------------------------------------------------ using and saving */
 
-  const versionName = t(slot === 'producer' ? 'esVersionProducer' : 'esVersionMusician', lang);
   const instrumentName = draft.soundName ?? nameOf(draft.base, lang);
-  const defaultName = draft.soundName ? t('esCopyName', lang, { name: draft.soundName }) : t('mySoundName', lang, { name: nameOf(draft.base, lang) });
-  const name = names[key] ?? defaultName;
+  // A saved sound is named like the instrument plus a surname: "Guitarra solista · saturada". The surname is all you
+  // write; it is suggested from the main effect you added (or from the sound it started from, as a copy).
+  const baseName = nameOf(draft.base, lang);
+  const surnameOf = (full: string) => (full.includes(' · ') ? full.slice(full.lastIndexOf(' · ') + 3) : full);
+  const gear = new Set(ownGear(draft.base).slots.map((x) => x.effect.key));
+  const added = draft.chain.slots.find((x) => !x.bypass && !gear.has(x.effect.key));
+  const suggested = draft.soundName ? t('esCopyName', lang, { name: surnameOf(draft.soundName) })
+    : added ? catalogTitle(added.effect, lang).toLowerCase() : t('esSurnameTuned', lang);
+  const surname = names[key] ?? suggested;
+  const name = `${baseName} · ${surname.trim() || suggested}`;
+  const defaultName = `${baseName} · ${suggested}`;
   const applyCatalog = () => {
-    if (slot === 'producer') onProducerSound(track.id, { instrument: ref(draft.base) });
-    else onUse(track.id, draft.base);
+    onUse(track.id, draft.base);
     resetDraft();
   };
   const applySaved = (x: { id: string; name: string; base: { key: string; version: string }; chain: FxChain }) => {
-    if (slot === 'producer') onProducerSound(track.id, { instrument: x.base, sound: { id: x.id, name: x.name, chain: structuredClone(x.chain) } });
-    else onUseSound(track.id, x as CustomSound);
+    onUseSound(track.id, x as CustomSound);
     resetDraft();
   };
   const saveCustom = async (andUse: boolean, update: boolean) => {
@@ -255,7 +257,8 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
     setSel(j); setUpTo(null);
   };
   // Taken out from its own box; the selection stays on what it was, and the last removal can be undone.
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<false | 'keep' | 'use'>(false);
+  const [renaming, setRenaming] = useState<string | null>(null);
   const [removed, setRemoved] = useState<{ key: string; at: number; slot: FxChain['slots'][number] } | null>(null);
   const removeUnit = (i: number) => {
     const gone = draft.chain.slots[i];
@@ -278,16 +281,15 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
 
   /* ------------------------------------------------------------ what the boxes say */
 
-  const plays = slot === 'producer' ? !!track.producer && track.voice_from === 'producer' : !(track.producer && track.voice_from === 'producer');
   const entry = entryOf(draft.base);
   const core = CORE.find((x) => x.key === draft.base);
   const ends = {
-    track: { name: track.name, color: track.color, icon: trackIcon(track), sum: ROLE_NAMES[lang][roleOf(track)] === track.name ? versionName : `${ROLE_NAMES[lang][roleOf(track)]} · ${versionName}` },
+    track: { name: track.name, color: track.color, icon: trackIcon(track), sum: ROLE_NAMES[lang][roleOf(track)] === track.name ? '' : ROLE_NAMES[lang][roleOf(track)] },
     instrument: { name: instrumentName, icon: instIcon(draft.base), sum: draft.soundId ? t('mySounds', lang) : entry ? entry.era[lang].split(' · ')[0] : core ? t('esCoreKit', lang, { kit: core.kit.title[lang] }) : '' },
     out: {
-      name: versionName,
-      sum: slot === 'producer' && !track.producer ? t('esNoProducerYet', lang) : plays ? t('esPlaysNow', lang) : t('esNotPlaying', lang),
-      warn: !plays,
+      name: t('esToDesk', lang),
+      sum: t('esPlaysNow', lang),
+      warn: false,
     },
   };
 
@@ -326,7 +328,7 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
     ? suggestionsFor(song, track, lang).filter((x) => !x.byGenreOnly || x.entry.genre !== shelf) : []), [source, q, song, track, lang, shelf]);
   const familiesHere = shelf === 'more' ? [] : FAMILIES.filter((f) => ENTRIES.some((e) => e.genre === shelf && e.family === f.id && fit(e.instrument)));
 
-  const usedOn = (k: string) => song.tracks.filter((x) => (x.instrument?.key === k && !x.sound) || (x.producer?.instrument?.key === k && !x.producer.sound)).map((x) => x.name);
+  const usedOn = (k: string) => song.tracks.filter((x) => (x.instrument?.key === k && !x.sound)).map((x) => x.name);
   const starOf = (k: string, soundId?: string) => starred.find((x) => x.key === k && (soundId ? x.sound?.id === soundId : !x.sound));
 
   // The card that shows "playing" is the one heard: the sound in the studio, or what plays now while comparing.
@@ -366,23 +368,15 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
         <p className="small muted" style={{ margin: 0 }}>{t('esChooseTrackHint', lang)}</p>
       </div>
       <div className="es-tracks">
-        {song.tracks.map((tr) => {
-          const prodPlays = !!tr.producer && tr.voice_from === 'producer';
-          const pick = (s: Slot) => { onSelect(tr.id); onSlot(s); setSel('instrument'); };
-          return (
-            <div key={tr.id} className={`es-track${tr.id === track.id ? ' on' : ''}`} style={{ ['--trk' as string]: tr.color }}>
-              <div className="row" style={{ gap: 8 }}><TrackBadge track={tr} size="sm" /><strong className="grow ellipsis">{tr.name}</strong>{ROLE_NAMES[lang][roleOf(tr)] !== tr.name && <span className="small muted">{ROLE_NAMES[lang][roleOf(tr)]}</span>}</div>
-              <button type="button" className={`es-ver${tr.id === track.id && slot === 'musician' ? ' sel' : ''}`} onClick={() => pick('musician')}>
-                <span className="lbl">{t('musician', lang)}{!prodPlays && <span className="es-plays">{t('plays', lang)}</span>}</span>
-                <span className="ellipsis">{tr.sound?.name ?? nameOf(tr.instrument?.key ?? '', lang)}</span>
-              </button>
-              <button type="button" className={`es-ver${tr.id === track.id && slot === 'producer' ? ' sel' : ''}${tr.producer ? '' : ' none'}`} onClick={() => pick('producer')}>
-                <span className="lbl">{t('producer', lang)}{prodPlays && <span className="es-plays">{t('plays', lang)}</span>}</span>
-                <span className="ellipsis">{tr.producer ? tr.producer.sound?.name ?? nameOf(tr.producer.instrument?.key ?? '', lang) : t('esMakeProducer', lang)}</span>
-              </button>
-            </div>
-          );
-        })}
+        {song.tracks.map((tr) => (
+          <div key={tr.id} className={`es-track${tr.id === track.id ? ' on' : ''}`} style={{ ['--trk' as string]: tr.color }}>
+            <div className="row" style={{ gap: 8 }}><TrackBadge track={tr} size="sm" /><strong className="grow ellipsis">{tr.name}</strong>{ROLE_NAMES[lang][roleOf(tr)] !== tr.name && <span className="small muted">{ROLE_NAMES[lang][roleOf(tr)]}</span>}</div>
+            <button type="button" className={`es-ver${tr.id === track.id ? ' sel' : ''}`} onClick={() => { onSelect(tr.id); setSel('instrument'); }}>
+              <span className="lbl">{t('trackSoundNow', lang)}</span>
+              <span className="ellipsis">{tr.sound?.name ?? nameOf(tr.instrument?.key ?? '', lang)}</span>
+            </button>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -391,14 +385,8 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
     <section className="es-panel" aria-label={t('esDest', lang)}>
       <h3 className="display" style={{ fontSize: 20 }}>{t('esDestTitle', lang, { track: track.name })}</h3>
       <p className="small muted" style={{ margin: 0 }}>{t('cdOutputHint', lang)}</p>
-      <div className="seg" aria-label={t('esVersion', lang)}>
-        <button type="button" aria-pressed={slot === 'musician'} onClick={() => onSlot('musician')}>{t('esVersionMusician', lang)}</button>
-        <button type="button" aria-pressed={slot === 'producer'} onClick={() => onSlot('producer')}>{t('esVersionProducer', lang)}</button>
-      </div>
-      <p style={{ margin: 0 }}>{plays ? t('esDestPlays', lang, { version: versionName.toLowerCase() }) : slot === 'producer' && !track.producer ? t('esNoProducerYetLong', lang) : t('esDestNotPlaying', lang, { version: versionName.toLowerCase() })}</p>
+      <p style={{ margin: 0 }}>{t('esDestSimple', lang, { track: track.name })}</p>
       <div className="row wrap" style={{ gap: 8 }}>
-        {!plays && (slot === 'musician' || track.producer) && <button type="button" className="btn primary" onClick={() => onVoice(track.id, slot)}><Icon name="play" size={16} /> {t('esMakePlay', lang)}</button>}
-        {slot === 'producer' && track.producer && <button type="button" className="btn ghost" onClick={() => onDropProducer(track.id)}><Icon name="trash" size={16} /> {t('esDropProducer', lang)}</button>}
         <button type="button" className="btn" onClick={onDesk}><Icon name="sliders" size={16} /> {t('esOpenDesk', lang)}</button>
       </div>
     </section>
@@ -456,9 +444,38 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
         </button>
       </div>
       {draft.soundId && saved && (
-        <button type="button" className="btn ghost small-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { onDeleteSound(saved.id); resetDraft(); }}>
-          <Icon name="trash" size={16} /> {t('mySoundDelete', lang)}
-        </button>
+        <div className="stack es-rename" style={{ gap: 6 }}>
+          {renaming === saved.id ? (
+            <label className="stack" style={{ gap: 2 }}>
+              <span className="lbl">{t('mySoundNameLabel', lang)}</span>
+              <span className="row es-surname" style={{ gap: 6 }}>
+                <span className="ellipsis es-surname-base">{nameOf(saved.base.key, lang)} ·</span>
+                <input className="field grow" defaultValue={surnameOf(saved.name)} maxLength={28} autoFocus aria-label={t('esSurname', lang)}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setRenaming(null);
+                    if (e.key !== 'Enter') return;
+                    const v = e.currentTarget.value.trim();
+                    setRenaming(null);
+                    if (v) void onRenameSound(saved, `${nameOf(saved.base.key, lang)} · ${v}`).then(() => setDraft({ ...draft, soundName: `${nameOf(saved.base.key, lang)} · ${v}` }));
+                  }}
+                  onBlur={(e) => {
+                    const v = e.currentTarget.value.trim();
+                    setRenaming(null);
+                    const full = `${nameOf(saved.base.key, lang)} · ${v}`;
+                    if (v && full !== saved.name) void onRenameSound(saved, full).then(() => setDraft({ ...draft, soundName: full }));
+                  }} />
+              </span>
+            </label>
+          ) : (
+            <div className="row wrap" style={{ gap: 6 }}>
+              <button type="button" className="btn ghost small-btn" onClick={() => setRenaming(saved.id)}><Icon name="edit" size={16} /> {t('mySoundRename', lang)}</button>
+              <button type="button" className="btn ghost small-btn" onClick={() => { onDeleteSound(saved.id); resetDraft(); }}>
+                <Icon name="trash" size={16} /> {t('mySoundDelete', lang)}
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </aside>
   );
@@ -539,11 +556,17 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
       {source === 'mine' && (
         <div className="es-group">
           {!sounds.length && <p className="muted">{t('esNoMine', lang)}</p>}
-          <div className="es-cards">
-            {sounds.filter((x) => fit(x.base.key)).map((x) => card(`m:${x.id}`, x.name, t('basedOn', lang, { name: nameOf(x.base.key, lang) }),
-              (listen) => loadSound({ id: x.id, name: x.name, base: x.base.key, chain: x.chain }, listen),
-              { inst: x.base.key, loaded: draft.soundId === x.id, now: current.soundId === x.id, star: !!starOf(x.base.key, x.id), used: song.tracks.filter((tr) => tr.sound?.id === x.id || tr.producer?.sound?.id === x.id).map((tr) => tr.name) }))}
-          </div>
+          {/* Grouped by instrument: every lead guitar together, each with its surname. */}
+          {[...new Set(sounds.filter((x) => fit(x.base.key)).map((x) => x.base.key))].map((base) => (
+            <div key={base} className="stack" style={{ gap: 6 }}>
+              <h3 className="ss-group-title">{nameOf(base, lang)}</h3>
+              <div className="es-cards">
+                {sounds.filter((x) => x.base.key === base).map((x) => card(`m:${x.id}`, surnameOf(x.name), t('basedOn', lang, { name: nameOf(x.base.key, lang) }),
+                  (listen) => loadSound({ id: x.id, name: x.name, base: x.base.key, chain: x.chain }, listen),
+                  { inst: x.base.key, loaded: draft.soundId === x.id, now: current.soundId === x.id, star: !!starOf(x.base.key, x.id), used: song.tracks.filter((tr) => tr.sound?.id === x.id).map((tr) => tr.name) }))}
+              </div>
+            </div>
+          ))}
           {sounds.length > 0 && fitOnly && !sounds.some((x) => fit(x.base.key)) && <p className="muted">{t('esNothingFits', lang, { track: track.name })}</p>}
         </div>
       )}
@@ -581,35 +604,43 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
 
   /* ------------------------------------------------------------ using or saving, next to what is heard */
 
-  const useLabel = t(slot === 'producer' ? 'esUseProducer' : 'esUseOn', lang, { track: track.name });
+  const useLabel = t('esUseOn', lang, { track: track.name });
   const actions = kind === 'clean' ? null : (
     <div className="es-actions" role="group" aria-label={t('esBar', lang)}>
-      <span className="es-tag try" title={kind === 'custom' ? t('esChangedHint', lang) : t('esTryingHint', lang, { version: versionName.toLowerCase() })}>
+      <span className="es-tag try" title={kind === 'custom' ? t('esChangedHint', lang) : t('esTryingHint', lang, { track: track.name })}>
         {t(kind === 'custom' ? 'esChangedTag' : 'esTryingTag', lang)}
       </span>
       <button type="button" className="btn small-btn ghost" onClick={() => { resetDraft(); setSaving(false); }}>{t('esDiscard', lang)}</button>
       {kind === 'custom' && (
-        <button type="button" className="btn small-btn" aria-expanded={saving} onClick={() => setSaving((x) => !x)}>
+        <button type="button" className="btn small-btn" aria-expanded={saving === 'keep'} onClick={() => setSaving((x) => (x === 'keep' ? false : 'keep'))}>
           <Icon name="download" size={16} /> {t('mySoundSave', lang)}
         </button>
       )}
-      {kind === 'catalog' && <button type="button" className="btn small-btn primary" onClick={applyCatalog} title={t('esTryingHint', lang, { version: versionName.toLowerCase() })}><Icon name="check" size={16} /> {useLabel}</button>}
-      {kind === 'mine' && saved && <button type="button" className="btn small-btn primary" onClick={() => applySaved(saved)} title={t('esTryingHint', lang, { version: versionName.toLowerCase() })}><Icon name="check" size={16} /> {useLabel}</button>}
+      {kind === 'catalog' && <button type="button" className="btn small-btn primary" onClick={applyCatalog} title={t('esTryingHint', lang, { track: track.name })}><Icon name="check" size={16} /> {useLabel}</button>}
+      {kind === 'mine' && saved && <button type="button" className="btn small-btn primary" onClick={() => applySaved(saved)} title={t('esTryingHint', lang, { track: track.name })}><Icon name="check" size={16} /> {useLabel}</button>}
       {kind === 'custom' && (
-        <button type="button" className="btn small-btn primary" onClick={() => { saveCustom(true, false); setSaving(false); }} title={t('esChangedHint', lang)}>
-          <Icon name="check" size={16} /> {t(slot === 'producer' ? 'esSaveUseProducer' : 'esSaveUse', lang, { track: track.name })}
+        <button type="button" className="btn small-btn primary" aria-expanded={saving === 'use'} onClick={() => setSaving((x) => (x === 'use' ? false : 'use'))} title={t('esChangedHint', lang)}>
+          <Icon name="check" size={16} /> {t('esSaveUse', lang, { track: track.name })}
         </button>
       )}
       {saving && kind === 'custom' && (
         <div className="es-savepop" role="dialog" aria-label={t('mySoundSave', lang)}>
           <label className="stack" style={{ gap: 2 }}>
             <span className="lbl">{t('mySoundNameLabel', lang)}</span>
-            <input className="field" value={name} maxLength={40} autoFocus onChange={(e) => setNames((m) => ({ ...m, [key]: e.target.value }))} />
+            <span className="row es-surname" style={{ gap: 6 }}>
+              <span className="ellipsis es-surname-base">{baseName} ·</span>
+              <input className="field grow" value={surname} maxLength={28} autoFocus aria-label={t('esSurname', lang)} placeholder={suggested}
+                onFocus={(e) => e.currentTarget.select()} onChange={(e) => setNames((m) => ({ ...m, [key]: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === 'Enter') { saveCustom(saving === 'use', false); setSaving(false); } }} />
+            </span>
+            <span className="small muted">{t('esSurnameHint', lang)}</span>
           </label>
           <div className="row wrap" style={{ gap: 6, justifyContent: 'flex-end' }}>
             <button type="button" className="btn small-btn ghost" onClick={() => setSaving(false)}>{t('cancel', lang)}</button>
-            {saved && <button type="button" className="btn small-btn" onClick={() => { saveCustom(false, true); setSaving(false); }}>{t('esUpdate', lang, { name: saved.name })}</button>}
-            <button type="button" className="btn small-btn primary" onClick={() => { saveCustom(false, false); setSaving(false); }}>{t('mySoundSave', lang)}</button>
+            {saved && <button type="button" className="btn small-btn" onClick={() => { saveCustom(saving === 'use', true); setSaving(false); }}>{t('esUpdate', lang, { name: saved.name })}</button>}
+            <button type="button" className="btn small-btn primary" onClick={() => { saveCustom(saving === 'use', false); setSaving(false); }}>
+              {saving === 'use' ? t('esSaveUse', lang, { track: track.name }) : t('mySoundSave', lang)}
+            </button>
           </div>
         </div>
       )}
@@ -651,10 +682,6 @@ export default function SoundStudio({ song, selectedId, slot, playing, alone, st
         <div className="row wrap" style={{ gap: 10, minWidth: 0 }}>
           <TrackBadge track={track} />
           <h2 className="display es-title ellipsis">{t('trackSoundOf', lang, { name: track.name })}</h2>
-          <div className="seg" role="group" aria-label={t('esVersion', lang)}>
-            <button type="button" aria-pressed={slot === 'musician'} onClick={() => onSlot('musician')}>{t('musician', lang)}</button>
-            <button type="button" aria-pressed={slot === 'producer'} onClick={() => onSlot('producer')}>{t('producer', lang)}{track.producer && <span className="es-dot" aria-hidden="true" />}</button>
-          </div>
         </div>
         <div className="row wrap es-listen">
           <button type="button" className={`btn${isPlaying ? ' primary' : ''}`} onClick={play}>

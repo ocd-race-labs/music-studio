@@ -29,7 +29,6 @@ export default function Hub({ profile, song, lang, mode, stats, onLang, onToggle
     ? t('hubIdeaNone', lang)
     : sketch.accepted_at ? t('hubIdeaAccepted', lang, { n: sketch.order.length }) : t('hubIdeaDraft', lang, { n: sketch.order.length });
   const tracks = song?.tracks.length ?? 0;
-  const alt = song?.tracks.filter((tr) => tr.producer).length ?? 0;
   const continueRoom: Room = profile.default_hat === 'producer' ? 'producer' : 'musician';
 
   const node = (room: Room, n: number | null, icon: 'amp' | 'music' | 'sliders' | 'disc', title: string, blurb: string, status: string[]) => (
@@ -93,7 +92,7 @@ export default function Hub({ profile, song, lang, mode, stats, onLang, onToggle
           <span className="hub-link" aria-hidden="true" />
           {node('musician', 2, 'music', t('roomMusician', lang), t('roomMusicianBlurb', lang), [ideaLine, t('hubTracks', lang, { n: tracks })])}
           <span className="hub-link" aria-hidden="true" />
-          {node('producer', 3, 'sliders', t('roomProducer', lang), t('roomProducerBlurb', lang), [t('hubChannels', lang, { n: tracks }), alt ? t('hubAlt', lang, { n: alt }) : t('hubAltNone', lang)])}
+          {node('producer', 3, 'sliders', t('roomProducer', lang), t('roomProducerBlurb', lang), [t('hubChannels', lang, { n: tracks })])}
         </div>
         <div className="hub-bus" aria-hidden="true"><span /><span /><span /></div>
         {node('songs', null, 'disc', t('roomSongs', lang), t('roomSongsBlurb', lang), [t('hubSongs', lang, { n: stats.songs })])}

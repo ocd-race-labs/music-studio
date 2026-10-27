@@ -18,7 +18,7 @@ export function soundName(instrument: Track['instrument'], sound: Track['sound']
   return entryOf(instrument.key)?.title[lang] ?? catalogTitle(instrument, lang);
 }
 
-export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom, onNew, onBeat, onWords, onImport, onExport, onSaveVersion, onRestore, onVoice }: {
+export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom, onNew, onBeat, onWords, onImport, onExport, onSaveVersion, onRestore }: {
   song: Song;
   songs: Song[];
   versions: SongVersion[];
@@ -32,7 +32,6 @@ export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom,
   onExport: () => void;
   onSaveVersion: () => void;
   onRestore: (v: SongVersion) => void;
-  onVoice: (trackId: string, from: 'musician' | 'producer') => void;
 }) {
   const naming = namingFor(lang);
   const meta = (s: Song) => `${tonicDisplay(s.key_tonic, naming)} ${scaleById(s.key_mode).name[lang].toLowerCase()} · ${s.tempo_bpm} BPM · ${t('nBars', lang, { n: songBars(s) })} · ${songDuration(s)}`;
@@ -86,28 +85,16 @@ export default function SongsRoom({ song, songs, versions, lang, onOpen, onRoom,
           <h3 className="sub">{t('songSounds', lang)}</h3>
           <p className="small muted" style={{ margin: 0 }}>{t('songSoundsHint', lang)}</p>
           <div className="voice-table" role="table" aria-label={t('songSounds', lang)}>
-            <div className="vt-row vt-head" role="row">
+            <div className="vt-row vt-head vt-two" role="row">
               <span role="columnheader">{t('track', lang)}</span>
-              <span role="columnheader">{t('musicianSound', lang)}</span>
-              <span role="columnheader">{t('producerSound', lang)}</span>
-              <span role="columnheader">{t('plays', lang)}</span>
+              <span role="columnheader">{t('sound', lang)}</span>
             </div>
-            {song.tracks.map((tr) => {
-              const from = tr.producer && tr.voice_from === 'producer' ? 'producer' : 'musician';
-              return (
-                <div key={tr.id} className="vt-row" role="row">
-                  <span role="cell" className="row" style={{ gap: 8, minWidth: 0 }}><TrackBadge track={tr} size="sm" /><strong className="ellipsis">{tr.name}</strong></span>
-                  <span role="cell" data-k={t('musician', lang)} className={`ellipsis${from === 'musician' ? ' vt-on' : ''}`}>{soundName(tr.instrument, tr.sound, lang) || '—'}</span>
-                  <span role="cell" data-k={t('producer', lang)} className={`ellipsis${from === 'producer' ? ' vt-on' : ''}`}>{tr.producer ? soundName(tr.producer.instrument, tr.producer.sound, lang) : <span className="muted">{t('noProducerSound', lang)}</span>}</span>
-                  <span role="cell">
-                    <span className="seg small-seg" aria-label={`${t('plays', lang)}: ${tr.name}`}>
-                      <button type="button" aria-pressed={from === 'musician'} onClick={() => onVoice(tr.id, 'musician')}>{t('musician', lang)}</button>
-                      <button type="button" aria-pressed={from === 'producer'} disabled={!tr.producer} onClick={() => onVoice(tr.id, 'producer')}>{t('producer', lang)}</button>
-                    </span>
-                  </span>
-                </div>
-              );
-            })}
+            {song.tracks.map((tr) => (
+              <div key={tr.id} className="vt-row vt-two" role="row">
+                <span role="cell" className="row" style={{ gap: 8, minWidth: 0 }}><TrackBadge track={tr} size="sm" /><strong className="ellipsis">{tr.name}</strong></span>
+                <span role="cell" className="ellipsis">{soundName(tr.instrument, tr.sound, lang) || '—'}</span>
+              </div>
+            ))}
           </div>
         </div>
 

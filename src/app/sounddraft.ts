@@ -10,7 +10,6 @@ import { defaultFxParams, roleOf } from '../domain/factory';
 import * as C from '../domain/commands';
 import { familyOf } from './rack';
 
-export type Slot = 'musician' | 'producer';
 
 /** The job a sound usually does in a kit, used when it is starred: drums, bass, chords or melody. */
 export function defaultRole(instrumentKey: string): Role {
@@ -47,18 +46,10 @@ export function ownGear(instrumentKey: string): FxChain {
   return { routing: 'series', slots: spec.map(([key, on, params]) => ({ effect: ref(key), bypass: !on, params: { ...defaultFxParams(key), ...params } })) };
 }
 
-/** What a track plays today in one of its two versions. The producer's version starts from the musician's sound. */
-export function currentOf(track: Track, slot: Slot): Draft & { exists: boolean } {
-  if (slot === 'producer' && track.producer) {
-    const p = track.producer;
-    const base = p.instrument?.key ?? track.instrument?.key ?? '';
-    return { base, chain: p.sound ? structuredClone(p.sound.chain) : ownGear(base), soundId: p.sound?.id, soundName: p.sound?.name, exists: true };
-  }
+/** What a track plays today: its instrument, and the saved sound's chain when it has one. */
+export function currentOf(track: Track): Draft {
   const base = track.instrument?.key ?? '';
-  return {
-    base, chain: track.sound ? structuredClone(track.sound.chain) : ownGear(base), soundId: track.sound?.id, soundName: track.sound?.name,
-    exists: slot === 'musician',
-  };
+  return { base, chain: track.sound ? structuredClone(track.sound.chain) : ownGear(base), soundId: track.sound?.id, soundName: track.sound?.name };
 }
 
 /** Tracks a sound can go on, the ones whose job matches it first. */
@@ -77,7 +68,7 @@ export const sameChain = (a: FxChain, b: FxChain): boolean => slotSig(a) === slo
  * as it comes (use it); a saved sound as it was saved (use it); or a chain of your own (name it and save it).
  */
 export type DraftKind = 'clean' | 'catalog' | 'mine' | 'custom';
-export function draftKind(d: Draft, current: Draft & { exists: boolean }, saved?: CustomSound): DraftKind {
+export function draftKind(d: Draft, current: Draft, saved?: CustomSound): DraftKind {
   const same = d.base === current.base && sameChain(d.chain, current.chain) && (d.soundId ?? '') === (current.soundId ?? '');
   if (same) return 'clean';
   if (d.soundId && saved && saved.base.key === d.base && sameChain(d.chain, saved.chain)) return 'mine';
@@ -102,7 +93,7 @@ export function fitsTrack(instrumentKey: string, track: Track, loose = false): b
 export function auditionSong(song: Song, trackId: string, base: string, chain: FxChain, name: string): Song {
   const tr = song.tracks.find((x) => x.id === trackId);
   if (!tr || !base) return song;
-  const plain: Song = { ...song, tracks: song.tracks.map((x) => (x.id === trackId ? { ...x, producer: undefined, voice_from: undefined } : x)) };
+  const plain = song;
   const sound: CustomSound = {
     id: 'audition', profile_id: '', name, base: ref(base), chain, chain_schema_version: 1, status: 'active', origin: 'person',
     created_at: song.updated_at, updated_at: song.updated_at,
