@@ -13,3 +13,17 @@ How the rock kits in `public/collection/drums/` are made. Nothing here runs in t
 
 Needs ffmpeg (libmp3lame) and Python with numpy, scipy, soundfile, pyloudnorm and pedalboard.
 Credits and licenses: `public/collection/drums/CREDITS.txt`.
+
+# Real recordings for the core instruments
+
+`orchestra.py` turns two CC0 libraries (VSCO 2 Community Edition and VCSL, both by Versilian Studios) into the
+sampler sets behind the app's own piano, violin, strings, cello, upright bass, flute, trumpet, muted trumpet, horns,
+tenor sax and vibraphone.
+
+1. Clone both repos with `--filter=blob:none --no-checkout`, run `python3 -I orchestra.py select <vsco> <vcsl> list.json`,
+   then `git checkout HEAD -- <files>` in each clone for the chosen files only.
+2. `python3 -I orchestra.py build <vsco> <vcsl> <repo>`: every note is pitch-measured (YIN, to fix octave naming),
+   trimmed, given a longer sustain by crossfading its steady middle, faded, levelled per layer (mf at -20 LUFS, f louder)
+   and encoded to MP3 under `public/collection/strings/<set>/<layer>/`. Specs go to `src/packs/collection-strings.json`.
+
+Credits: `public/collection/strings/CREDITS.txt`.

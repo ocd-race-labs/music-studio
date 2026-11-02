@@ -5,3 +5,13 @@ Both are recorded direct (no amp), edited (onset, length, fade) and played throu
 
 - Emilyguitar by Karoryfer Samples. CC0 1.0. https://github.com/sfzinstruments/karoryfer.emilyguitar
 - Growlybass by Karoryfer Samples. CC0 1.0. https://github.com/sfzinstruments/karoryfer.growlybass
+
+Music Studio Colección: orchestra, piano, vibes, brass, woodwinds and upright bass
+
+Real recordings, one note every few semitones in two dynamics (mf, f). Each note is pitch-checked, trimmed,
+given a longer sustain by crossfading its steady middle, faded and levelled (tools/collection/orchestra.py).
+
+- VSCO 2 Community Edition by Versilian Studios. CC0 1.0. https://github.com/sgossner/VSCO-2-CE
+  (violin, violin and cello sections, cello, upright bass pizzicato, flute, trumpet, muted trumpet, horns)
+- Versilian Community Sample Library by Versilian Studios. CC0 1.0. https://github.com/sgossner/VCSL
+  (Steinway B piano, tenor saxophone, vibraphone)

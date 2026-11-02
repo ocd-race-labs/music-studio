@@ -1089,7 +1089,7 @@ export function buildVoice(manifest: Record<string, unknown> | undefined, ownGea
   if (spec) return createSampledKit(spec);
   if (m.type === 'drumkit') return createDrumKit(m.kit ?? 'boomBap');
   const voice = m.type === 'sampler' && m.set && SAMPLERS[m.set]
-    ? createSampler(SAMPLERS[m.set], { mono: m.mono, release: m.mono ? 0.06 : 0.14 })
+    ? createSampler(SAMPLERS[m.set], { mono: m.mono, release: SAMPLERS[m.set].release ?? (m.mono ? 0.06 : 0.14) })
     : createMelodicVoice(m.voice ?? 'keysEp');
   return withGear(voice, ownGear ? m.chain : undefined, m.trimDb ?? 0);
 }

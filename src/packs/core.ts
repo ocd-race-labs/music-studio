@@ -1,5 +1,6 @@
-// The core pack. Every sound is synthesized in the browser: nothing to download, nothing to license,
-// instant loading on the iPad. Real recordings replace the main instruments in a later pack.
+// The core pack. Drum kits, synths, guitars and electric keys are synthesized in the browser. The acoustic
+// instruments (piano, strings, winds, brass, vibraphone, upright bass) are real recordings from CC0 libraries,
+// loaded when a song uses them.
 // Keys and versions follow the catalog rules: kind.name@x.y.z, never edited once published.
 
 import type { CatalogRef, Role, TrackSound } from '../domain/types';
@@ -90,6 +91,26 @@ const kit = (key: string, en: string, es: string, kitId: string, rows: string[] 
 /** low: the lowest note shown when the 2-octave grid opens. */
 const synth = (key: string, en: string, es: string, voice: string, low: number) =>
   item('instrument', key, en, es, { type: 'synth', voice, low });
+/** A real recording (CC0 libraries, see collection-strings.json), with the loudness trim that puts it at the app's level. */
+const rec = (key: string, en: string, es: string, set: string, low: number, mono = false): CatalogItem => ({
+  ...item('instrument', key, en, es, { type: 'sampler', set, low, mono, trimDb: CORE_TRIMS[key] ?? 0 }),
+  license: SAMPLERS[set]?.license ?? 'CC0 1.0', source: SAMPLERS[set]?.credit ?? 'Versilian Studios (CC0)',
+});
+/** Loudness trims (dB) for the recorded core instruments, measured against the synthesized voices they replaced
+ * (the same phrase in short and long notes, averaged; bowed notes swell, so short notes need more). */
+const CORE_TRIMS: Record<string, number> = {
+  'instrument.bass-upright': 0.2,
+  'instrument.brass-section': 1.2,
+  'instrument.cello': 6,
+  'instrument.flute': 2.2,
+  'instrument.keys-piano': -0.7,
+  'instrument.sax': 1.9,
+  'instrument.strings-ensemble': 4.0,
+  'instrument.trumpet': 1.6,
+  'instrument.trumpet-mute': 1.6,
+  'instrument.vibes': 0.8,
+  'instrument.violin': 4.5,
+};
 
 const CORE_INSTRUMENTS = [
   kit('instrument.drums-boom-bap', 'Drums: boom bap', 'Batería: boom bap', 'boomBap'),
@@ -105,29 +126,29 @@ const CORE_INSTRUMENTS = [
   synth('instrument.bass-808', '808 bass', 'Bajo 808', 'bass808', 36),
   synth('instrument.bass-synth', 'Synth bass', 'Bajo sintetizado', 'bassSynth', 36),
   synth('instrument.bass-electric', 'Electric bass', 'Bajo eléctrico', 'bassElectric', 36),
-  synth('instrument.bass-upright', 'Upright bass', 'Contrabajo', 'bassUpright', 36),
-  synth('instrument.cello', 'Cello', 'Chelo', 'cello', 36),
+  rec('instrument.bass-upright', 'Upright bass', 'Contrabajo', 'upright', 36, true),
+  rec('instrument.cello', 'Cello', 'Chelo', 'cello', 36),
 
   synth('instrument.keys-ep', 'Electric piano', 'Piano eléctrico', 'keysEp', 60),
-  synth('instrument.keys-piano', 'Piano', 'Piano', 'keysPiano', 48),
+  rec('instrument.keys-piano', 'Piano', 'Piano', 'piano', 48),
   synth('instrument.organ', 'Organ', 'Órgano', 'organ', 48),
   synth('instrument.pluck', 'Pluck', 'Pluck', 'pluck', 60),
-  synth('instrument.vibes', 'Vibraphone', 'Vibráfono', 'vibes', 60),
+  rec('instrument.vibes', 'Vibraphone', 'Vibráfono', 'vibes', 60),
   synth('instrument.bells-fm', 'Bells', 'Campanas', 'bellsFm', 60),
 
   synth('instrument.pad-warm', 'Warm pad', 'Pad cálido', 'padWarm', 55),
   synth('instrument.pad-supersaw', 'Supersaw pad', 'Pad supersaw', 'padSupersaw', 55),
-  synth('instrument.strings-ensemble', 'String ensemble', 'Cuerdas', 'strings', 55),
+  rec('instrument.strings-ensemble', 'String ensemble', 'Cuerdas', 'strings', 55),
   synth('instrument.choir-aah', 'Choir (aah)', 'Coro de voces', 'choirAah', 55),
-  synth('instrument.brass-section', 'Brass section', 'Metales', 'brassSection', 48),
+  rec('instrument.brass-section', 'Brass section', 'Metales', 'horns', 48),
 
   synth('instrument.lead-bright', 'Bright lead', 'Lead brillante', 'leadBright', 60),
   synth('instrument.lead-saw', 'Saw lead', 'Lead sierra', 'leadSaw', 60),
-  synth('instrument.violin', 'Violin', 'Violín', 'violin', 55),
-  synth('instrument.flute', 'Flute', 'Flauta', 'flute', 60),
-  synth('instrument.sax', 'Saxophone', 'Saxofón', 'sax', 55),
-  synth('instrument.trumpet', 'Trumpet', 'Trompeta', 'trumpet', 55),
-  synth('instrument.trumpet-mute', 'Muted trumpet', 'Trompeta con sordina', 'trumpetMute', 55),
+  rec('instrument.violin', 'Violin', 'Violín', 'violin', 55),
+  rec('instrument.flute', 'Flute', 'Flauta', 'flute', 60),
+  rec('instrument.sax', 'Saxophone', 'Saxofón', 'sax', 55),
+  rec('instrument.trumpet', 'Trumpet', 'Trompeta', 'trumpet', 55),
+  rec('instrument.trumpet-mute', 'Muted trumpet', 'Trompeta con sordina', 'trumpetMute', 55),
 
   synth('instrument.guitar-clean', 'Clean guitar', 'Guitarra limpia', 'guitarClean', 48),
   synth('instrument.guitar-dist', 'Distorted guitar', 'Guitarra distorsionada', 'guitarDist', 40),

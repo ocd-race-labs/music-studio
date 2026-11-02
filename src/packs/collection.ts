@@ -541,6 +541,8 @@ export const SOURCES: { name: string; by: string; license: string; url: string }
   { name: 'Analog-style drum machines', by: 'Music Studio (original synthesis)', license: 'Original', url: 'https://github.com/ocd-race-labs/music-studio/tree/main/tools/collection' },
   { name: 'Emilyguitar', by: 'Karoryfer Samples', license: 'CC0 1.0', url: 'https://github.com/sfzinstruments/karoryfer.emilyguitar' },
   { name: 'Growlybass', by: 'Karoryfer Samples', license: 'CC0 1.0', url: 'https://github.com/sfzinstruments/karoryfer.growlybass' },
+  { name: 'VSCO 2 Community Edition', by: 'Versilian Studios', license: 'CC0 1.0', url: 'https://github.com/sgossner/VSCO-2-CE' },
+  { name: 'Versilian Community Sample Library', by: 'Versilian Studios', license: 'CC0 1.0', url: 'https://github.com/sgossner/VCSL' },
 ];
 
 /* ---------------------------------------------------------------- lookups */

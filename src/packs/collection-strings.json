@@ -86,5 +86,413 @@
   "license": "CC0 1.0",
   "credit": "Growlybass by Karoryfer Samples (Karoryfer Lecolds)",
   "url": "https://github.com/sfzinstruments/karoryfer.growlybass"
+ },
+ "piano": {
+  "folder": "piano",
+  "layers": {
+   "f": {
+    "22": "f/As0.mp3",
+    "26": "f/D1.mp3",
+    "30": "f/Fs1.mp3",
+    "34": "f/As1.mp3",
+    "38": "f/D2.mp3",
+    "42": "f/Fs2.mp3",
+    "46": "f/As2.mp3",
+    "50": "f/D3.mp3",
+    "54": "f/Fs3.mp3",
+    "58": "f/As3.mp3",
+    "62": "f/D4.mp3",
+    "66": "f/Fs4.mp3",
+    "70": "f/As4.mp3",
+    "74": "f/D5.mp3",
+    "78": "f/Fs5.mp3",
+    "82": "f/As5.mp3",
+    "86": "f/D6.mp3",
+    "90": "f/Fs6.mp3",
+    "94": "f/As6.mp3",
+    "98": "f/D7.mp3",
+    "102": "f/Fs7.mp3",
+    "104": "f/Gs7.mp3"
+   },
+   "mf": {
+    "22": "mf/As0.mp3",
+    "26": "mf/D1.mp3",
+    "30": "mf/Fs1.mp3",
+    "34": "mf/As1.mp3",
+    "38": "mf/D2.mp3",
+    "42": "mf/Fs2.mp3",
+    "46": "mf/As2.mp3",
+    "50": "mf/D3.mp3",
+    "54": "mf/Fs3.mp3",
+    "58": "mf/As3.mp3",
+    "62": "mf/D4.mp3",
+    "66": "mf/Fs4.mp3",
+    "70": "mf/As4.mp3",
+    "74": "mf/D5.mp3",
+    "78": "mf/Fs5.mp3",
+    "82": "mf/As5.mp3",
+    "86": "mf/D6.mp3",
+    "90": "mf/Fs6.mp3",
+    "94": "mf/As6.mp3",
+    "98": "mf/D7.mp3",
+    "102": "mf/Fs7.mp3",
+    "104": "mf/Gs7.mp3"
+   }
+  },
+  "release": 0.35,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Steinway B grand piano from the Versilian Community Sample Library",
+  "url": "https://github.com/sgossner/VCSL"
+ },
+ "violin": {
+  "folder": "violin",
+  "layers": {
+   "f": {
+    "55": "f/G3.mp3",
+    "57": "f/A3.mp3",
+    "60": "f/C4.mp3",
+    "64": "f/E4.mp3",
+    "67": "f/G4.mp3",
+    "69": "f/A4.mp3",
+    "72": "f/C5.mp3",
+    "76": "f/E5.mp3",
+    "79": "f/G5.mp3",
+    "81": "f/A5.mp3",
+    "84": "f/C6.mp3",
+    "88": "f/E6.mp3",
+    "91": "f/G6.mp3",
+    "93": "f/A6.mp3",
+    "96": "f/C7.mp3"
+   },
+   "mf": {
+    "55": "mf/G3.mp3",
+    "57": "mf/A3.mp3",
+    "60": "mf/C4.mp3",
+    "64": "mf/E4.mp3",
+    "67": "mf/G4.mp3",
+    "69": "mf/A4.mp3",
+    "72": "mf/C5.mp3",
+    "76": "mf/E5.mp3",
+    "79": "mf/G5.mp3",
+    "81": "mf/A5.mp3",
+    "84": "mf/C6.mp3",
+    "88": "mf/E6.mp3",
+    "91": "mf/G6.mp3",
+    "93": "mf/A6.mp3",
+    "96": "mf/C7.mp3"
+   }
+  },
+  "release": 0.3,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Solo violin from VSCO 2 Community Edition",
+  "url": "https://github.com/sgossner/VSCO-2-CE"
+ },
+ "strings": {
+  "folder": "strings",
+  "layers": {
+   "f": {
+    "36": "f/C2.mp3",
+    "40": "f/E2.mp3",
+    "43": "f/G2.mp3",
+    "47": "f/B2.mp3",
+    "50": "f/D3.mp3",
+    "53": "f/F3.mp3",
+    "55": "f/G3.mp3",
+    "57": "f/A3.mp3",
+    "59": "f/B3.mp3",
+    "62": "f/D4.mp3",
+    "66": "f/Fs4.mp3",
+    "69": "f/A4.mp3",
+    "72": "f/C5.mp3",
+    "76": "f/E5.mp3",
+    "79": "f/G5.mp3",
+    "83": "f/B5.mp3",
+    "86": "f/D6.mp3"
+   },
+   "mf": {
+    "36": "mf/C2.mp3",
+    "40": "mf/E2.mp3",
+    "43": "mf/G2.mp3",
+    "47": "mf/B2.mp3",
+    "50": "mf/D3.mp3",
+    "53": "mf/F3.mp3",
+    "55": "mf/G3.mp3",
+    "57": "mf/A3.mp3",
+    "59": "mf/B3.mp3",
+    "62": "mf/D4.mp3",
+    "66": "mf/Fs4.mp3",
+    "69": "mf/A4.mp3",
+    "72": "mf/C5.mp3",
+    "76": "mf/E5.mp3",
+    "79": "mf/G5.mp3",
+    "83": "mf/B5.mp3",
+    "86": "mf/D6.mp3"
+   }
+  },
+  "release": 0.45,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Violin and cello sections from VSCO 2 Community Edition",
+  "url": "https://github.com/sgossner/VSCO-2-CE"
+ },
+ "cello": {
+  "folder": "cello",
+  "layers": {
+   "f": {
+    "36": "f/C2.mp3",
+    "40": "f/E2.mp3",
+    "43": "f/G2.mp3",
+    "47": "f/B2.mp3",
+    "50": "f/D3.mp3",
+    "53": "f/F3.mp3",
+    "57": "f/A3.mp3",
+    "60": "f/C4.mp3",
+    "64": "f/E4.mp3",
+    "67": "f/G4.mp3",
+    "71": "f/B4.mp3",
+    "74": "f/D5.mp3",
+    "77": "f/F5.mp3"
+   },
+   "mf": {
+    "36": "mf/C2.mp3",
+    "40": "mf/E2.mp3",
+    "43": "mf/G2.mp3",
+    "47": "mf/B2.mp3",
+    "50": "mf/D3.mp3",
+    "53": "mf/F3.mp3",
+    "57": "mf/A3.mp3",
+    "60": "mf/C4.mp3",
+    "64": "mf/E4.mp3",
+    "67": "mf/G4.mp3",
+    "71": "mf/B4.mp3",
+    "74": "mf/D5.mp3",
+    "77": "mf/F5.mp3"
+   }
+  },
+  "release": 0.4,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Cello section from VSCO 2 Community Edition",
+  "url": "https://github.com/sgossner/VSCO-2-CE"
+ },
+ "upright": {
+  "folder": "upright",
+  "layers": {
+   "f": {
+    "28": "f/E1.mp3",
+    "30": "f/Fs1.mp3",
+    "31": "f/G1.mp3",
+    "34": "f/As1.mp3",
+    "36": "f/C2.mp3",
+    "40": "f/E2.mp3"
+   },
+   "mf": {
+    "28": "mf/E1.mp3",
+    "30": "mf/Fs1.mp3",
+    "31": "mf/G1.mp3",
+    "34": "mf/As1.mp3",
+    "36": "mf/C2.mp3",
+    "38": "mf/D2.mp3",
+    "40": "mf/E2.mp3",
+    "42": "mf/Fs2.mp3",
+    "44": "mf/Gs2.mp3",
+    "45": "mf/A2.mp3",
+    "49": "mf/Cs3.mp3",
+    "52": "mf/E3.mp3",
+    "56": "mf/Gs3.mp3",
+    "59": "mf/B3.mp3"
+   }
+  },
+  "release": 0.08,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Solo contrabass (pizzicato) from VSCO 2 Community Edition",
+  "url": "https://github.com/sgossner/VSCO-2-CE"
+ },
+ "flute": {
+  "folder": "flute",
+  "layers": {
+   "mf": {
+    "60": "mf/C4.mp3",
+    "64": "mf/E4.mp3",
+    "69": "mf/A4.mp3",
+    "72": "mf/C5.mp3",
+    "76": "mf/E5.mp3",
+    "81": "mf/A5.mp3",
+    "84": "mf/C6.mp3",
+    "88": "mf/E6.mp3",
+    "93": "mf/A6.mp3",
+    "96": "mf/C7.mp3"
+   }
+  },
+  "release": 0.25,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Flute from VSCO 2 Community Edition",
+  "url": "https://github.com/sgossner/VSCO-2-CE"
+ },
+ "trumpet": {
+  "folder": "trumpet",
+  "layers": {
+   "f": {
+    "53": "f/F3.mp3",
+    "57": "f/A3.mp3",
+    "60": "f/C4.mp3",
+    "63": "f/Ds4.mp3",
+    "67": "f/G4.mp3",
+    "70": "f/As4.mp3",
+    "74": "f/D5.mp3",
+    "77": "f/F5.mp3",
+    "81": "f/A5.mp3",
+    "84": "f/C6.mp3"
+   },
+   "mf": {
+    "53": "mf/F3.mp3",
+    "57": "mf/A3.mp3",
+    "60": "mf/C4.mp3",
+    "63": "mf/Ds4.mp3",
+    "67": "mf/G4.mp3",
+    "70": "mf/As4.mp3",
+    "74": "mf/D5.mp3",
+    "77": "mf/F5.mp3",
+    "81": "mf/A5.mp3",
+    "84": "mf/C6.mp3"
+   }
+  },
+  "release": 0.22,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Trumpet from VSCO 2 Community Edition",
+  "url": "https://github.com/sgossner/VSCO-2-CE"
+ },
+ "trumpetMute": {
+  "folder": "trumpetMute",
+  "layers": {
+   "f": {
+    "58": "f/As3.mp3",
+    "60": "f/C4.mp3",
+    "62": "f/D4.mp3",
+    "67": "f/G4.mp3",
+    "70": "f/As4.mp3",
+    "74": "f/D5.mp3",
+    "77": "f/F5.mp3",
+    "81": "f/A5.mp3"
+   },
+   "mf": {
+    "58": "mf/As3.mp3",
+    "60": "mf/C4.mp3",
+    "62": "mf/D4.mp3",
+    "67": "mf/G4.mp3",
+    "70": "mf/As4.mp3",
+    "74": "mf/D5.mp3",
+    "77": "mf/F5.mp3",
+    "81": "mf/A5.mp3"
+   }
+  },
+  "release": 0.22,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Trumpet with straight mute from VSCO 2 Community Edition",
+  "url": "https://github.com/sgossner/VSCO-2-CE"
+ },
+ "horns": {
+  "folder": "horns",
+  "layers": {
+   "f": {
+    "36": "f/C2.mp3",
+    "39": "f/Ds2.mp3",
+    "43": "f/G2.mp3",
+    "46": "f/As2.mp3",
+    "50": "f/D3.mp3",
+    "53": "f/F3.mp3",
+    "57": "f/A3.mp3",
+    "60": "f/C4.mp3"
+   },
+   "mf": {
+    "33": "mf/A1.mp3",
+    "36": "mf/C2.mp3",
+    "39": "mf/Ds2.mp3",
+    "43": "mf/G2.mp3",
+    "46": "mf/As2.mp3",
+    "50": "mf/D3.mp3",
+    "53": "mf/F3.mp3",
+    "57": "mf/A3.mp3",
+    "60": "mf/C4.mp3",
+    "74": "mf/D5.mp3",
+    "77": "mf/F5.mp3"
+   }
+  },
+  "release": 0.3,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "French horn from VSCO 2 Community Edition",
+  "url": "https://github.com/sgossner/VSCO-2-CE"
+ },
+ "sax": {
+  "folder": "sax",
+  "layers": {
+   "mf": {
+    "46": "mf/As2.mp3",
+    "48": "mf/C3.mp3",
+    "50": "mf/D3.mp3",
+    "52": "mf/E3.mp3",
+    "54": "mf/Fs3.mp3",
+    "58": "mf/As3.mp3",
+    "60": "mf/C4.mp3",
+    "62": "mf/D4.mp3",
+    "64": "mf/E4.mp3",
+    "66": "mf/Fs4.mp3",
+    "70": "mf/As4.mp3",
+    "72": "mf/C5.mp3",
+    "74": "mf/D5.mp3",
+    "76": "mf/E5.mp3",
+    "79": "mf/G5.mp3",
+    "80": "mf/Gs5.mp3",
+    "82": "mf/As5.mp3",
+    "84": "mf/C6.mp3",
+    "86": "mf/D6.mp3"
+   }
+  },
+  "release": 0.2,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Tenor saxophone from the Versilian Community Sample Library",
+  "url": "https://github.com/sgossner/VCSL"
+ },
+ "vibes": {
+  "folder": "vibes",
+  "layers": {
+   "f": {
+    "53": "f/F3.mp3",
+    "57": "f/A3.mp3",
+    "60": "f/C4.mp3",
+    "64": "f/E4.mp3",
+    "67": "f/G4.mp3",
+    "71": "f/B4.mp3",
+    "74": "f/D5.mp3",
+    "77": "f/F5.mp3",
+    "81": "f/A5.mp3",
+    "84": "f/C6.mp3",
+    "88": "f/E6.mp3"
+   },
+   "mf": {
+    "53": "mf/F3.mp3",
+    "57": "mf/A3.mp3",
+    "67": "mf/G4.mp3",
+    "71": "mf/B4.mp3",
+    "74": "mf/D5.mp3",
+    "77": "mf/F5.mp3",
+    "81": "mf/A5.mp3",
+    "84": "mf/C6.mp3",
+    "88": "mf/E6.mp3"
+   }
+  },
+  "release": 0.5,
+  "split": 0.85,
+  "license": "CC0 1.0",
+  "credit": "Vibraphone (soft mallets) from the Versilian Community Sample Library",
+  "url": "https://github.com/sgossner/VCSL"
  }
 }

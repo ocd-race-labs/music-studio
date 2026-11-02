@@ -414,7 +414,7 @@ export default function SoundStudio({ song, selectedId, playing, alone, starred,
         <h2 className="display ss-title">{draft.soundName}</h2>
         <span className="small muted">{t('basedOn', lang, { name: nameOf(draft.base, lang) })}</span>
       </>) : (<>
-        <span className="lbl">{entry ? `${GENRES.find((g) => g.id === entry.genre)?.title[lang]} · ${GROUPS.find((g) => g.id === entry.group)?.title[lang]}` : t('instrumentsCore', lang)}</span>
+        <span className="lbl">{entry ? `${GENRES.find((g) => g.id === entry.genre)?.title[lang]} · ${GROUPS.find((g) => g.id === entry.group)?.title[lang]}` : t(findByKey(draft.base)?.manifest.type === 'sampler' ? 'coreRecorded' : 'coreSynth', lang)}</span>
         <h2 className="display ss-title">{nameOf(draft.base, lang)}</h2>
         {entry ? (<>
           <span className="small muted">{entry.era[lang]}</span>
@@ -586,7 +586,7 @@ export default function SoundStudio({ song, selectedId, playing, alone, starred,
               <div className="es-cards">
                 {starred.filter((s) => s.role === r).map((s) => (
                   <div key={`${s.key}-${s.sound?.id ?? ''}`} className="es-kitcard">
-                    {card(`k:${s.key}:${s.sound?.id ?? ''}`, kitName(s), s.sound ? t('mySounds', lang) : entryOf(s.key)?.era[lang] ?? t('instrumentsCore', lang),
+                    {card(`k:${s.key}:${s.sound?.id ?? ''}`, kitName(s), s.sound ? t('mySounds', lang) : entryOf(s.key)?.era[lang] ?? t(findByKey(s.key)?.manifest.type === 'sampler' ? 'coreRecorded' : 'coreSynth', lang),
                       (listen) => (s.sound ? loadSound({ id: s.sound.id, name: s.sound.name, base: s.key, chain: s.sound.chain }, listen) : loadCatalog(s.key, listen)),
                       { inst: s.key, loaded: s.sound ? draft.soundId === s.sound.id : draft.base === s.key && !draft.soundId })}
                     <button type="button" className="btn icon ghost es-unstar" onClick={() => onUnstar(s)} aria-label={t('unstar', lang, { name: kitName(s) })} title={t('unstar', lang, { name: kitName(s) })}><Icon name="close" size={16} /></button>

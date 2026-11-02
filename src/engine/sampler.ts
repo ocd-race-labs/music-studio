@@ -1,6 +1,7 @@
-// Recorded melodic instruments for the Colección (electric guitar and bass recorded direct, no amp): every few
-// semitones a real note, played at the nearest sample's speed for the notes between. The amp, cabinet and the
-// rest of the sound come from the instrument's studio chain.
+// Recorded melodic instruments: every few semitones a real note, played at the nearest sample's speed for the notes
+// between. The Colección's electric guitar and bass (recorded direct, no amp) get their amp and cabinet from the
+// instrument's chain; the acoustic instruments (piano, strings, winds, brass, vibraphone, upright bass) are real
+// recordings from CC0 libraries, heard as they were played.
 
 import * as Tone from 'tone';
 import { cachedBuffer, loadBuffer } from './sampled';
@@ -11,6 +12,10 @@ export interface SamplerSpec {
   folder: string;
   /** By layer (mf softer, f harder): MIDI note of each recording -> file. */
   layers: Record<string, Record<string, string>>;
+  /** How long a note takes to fade once let go (seconds). */
+  release?: number;
+  /** The velocity from which the louder layer (f) plays; default 0.6. */
+  split?: number;
   license?: string;
   credit?: string;
 }
@@ -55,7 +60,7 @@ export function createSampler(spec: SamplerSpec, opts: { mono?: boolean; release
     output: out,
     play(midi, dur, time, vel, a4) {
       if (disposed) return;
-      const layer = vel >= 0.6 && spec.layers.f ? 'f' : spec.layers.mf ? 'mf' : Object.keys(spec.layers)[0];
+      const layer = vel >= (spec.split ?? 0.6) && spec.layers.f ? 'f' : spec.layers.mf ? 'mf' : Object.keys(spec.layers)[0];
       const notes = sorted[layer];
       if (!notes?.length) return;
       const sampleNote = nearest(notes, midi);
