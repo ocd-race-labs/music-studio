@@ -106,6 +106,11 @@ a{color:inherit}
 .ctl{position:absolute;right:10px;top:10px;display:grid;gap:6px}
 .ctl button{width:36px;height:36px;border-radius:11px;background:rgba(237,237,242,.07);border:1px solid var(--line);display:grid;place-items:center;padding:0;cursor:pointer;font-size:18px;line-height:1}
 .hive-title{position:absolute;left:10px;top:10px;max-width:calc(100% - 64px);font:400 11px var(--mono);color:var(--ink);pointer-events:none;background:rgba(7,7,10,.82);border:1px solid var(--line);border-radius:999px;padding:5px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hive-move{position:absolute;right:10px;bottom:10px;z-index:4;display:flex;align-items:center;gap:2px;background:rgba(7,7,10,.82);border:1px solid var(--line);border-radius:999px;padding:3px}
+.hive-move span{font:400 10px var(--mono);color:var(--dim);padding:0 6px 0 8px}
+.hive-move button{border:0;background:transparent;color:#A3A3AD;border-radius:999px;padding:5px 10px;font-size:12px;cursor:pointer}
+.hive-move button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+@media (max-width:440px){.hive-move span{display:none}}
 .hive-zoom{position:absolute;left:12px;bottom:10px;font:400 11px var(--mono);color:var(--dim);pointer-events:none}
 
 /* Vecinas */
@@ -268,6 +273,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <svg id="sv" viewBox="-190 -190 380 380" role="img" aria-label="Panal de radios ordenado por afinidad"><g id="world"><g id="mesh"></g><g id="ether"></g><g id="cells"></g><g id="whyG"></g></g></svg>
       <div class="hive-title" id="hTitle"></div>
       <div class="hive-zoom" id="hZoom">1.0×</div>
+      <div class="hive-move" id="hMove" role="group" aria-label="Movimiento de la constelación"><span>Movimiento</span><button data-k="fijo">Fijo</button><button data-k="suave">Suave</button><button data-k="vivo">Vivo</button></div>
       <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="rl" aria-label="Girar a la izquierda">↺</button><button id="rr" aria-label="Girar a la derecha">↻</button><button id="zh" aria-label="Volver al centro">⌂</button></div>
       <div class="legend" id="legend" aria-label="Familias"></div>
       <div class="card" id="card" hidden role="dialog" aria-label="Ficha de radio"></div>
@@ -521,8 +527,8 @@ const filtering=()=>FAV||SEL.fam.size||SEL.lang.size||SEL.reg.size||query;
 const matchExcept=(s,key)=>(key==="fav"||!FAV||favs.has(s.n))&&(key==="fam"||!SEL.fam.size||SEL.fam.has(s.g))&&(key==="lang"||!SEL.lang.size||SEL.lang.has(s.lang))&&(key==="reg"||!SEL.reg.size||SEL.reg.has(s.reg))&&
   (!query||qn([s.n,s.sh,s.cc,s.reg,LANG[s.lang],FAM[s.g][0],...s.tags].join(" ")).includes(qn(query)));
 const HAS={fam:(s,k)=>s.g===k,lang:(s,k)=>s.lang===k,reg:(s,k)=>s.reg===k};
-const FTABS=[["fam","Contenido"],["lang","Idioma"],["reg","Región"],["move","Vista"]];
-let ftab=store.get("dial-ftab","fam");if(!FTABS.some(t=>t[0]===ftab))ftab="fam";
+const FTABS=[["fam","Contenido"],["lang","Idioma"],["reg","Región"]];
+let ftab=store.get("dial-ftab","fam");if(ftab==="move")ftab="fam";if(!FTABS.some(t=>t[0]===ftab))ftab="fam";
 function optsOf(key){return key==="fam"?[...SECT.map(k=>[k,FAM[k][0],FAM[k][2]])]:key==="lang"?Object.entries(LANG).map(([k,v])=>[k,v]):key==="reg"?REGIONS.map(r=>[r,r]):[["fijo","Fijo"],["suave","Suave"],["vivo","Vivo"]]}
 function renderFilters(){
   const tabs=$("ftabs");tabs.innerHTML="";
@@ -541,7 +547,7 @@ function renderFilters(){
     box.appendChild(b)});
   const m=S.filter(match).length,act=(FAV?1:0)+SEL.fam.size+SEL.lang.size+SEL.reg.size+(query?1:0);
   const desc=(FAV?["Favoritas"]:[]).concat([...SEL.fam].map(k=>FAM[k][0])).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
-  $("fsumT").textContent=act?`${m} de ${S.length} radios · ${desc.join(" + ")}`:`${S.length} radios · vista ${MOVE}`;
+  $("fsumT").textContent=act?`${m} de ${S.length} radios · ${desc.join(" + ")}`:`${S.length} radios`;
   $("fclr").hidden=!act;
 }
 $("fclr").onclick=()=>{FAV=false;store.set("dial-f-fav",false);Object.values(SEL).forEach(x=>x.clear());["fam","lang","reg"].forEach(k=>store.set("dial-f-"+k,[]));query="";$("rq").value="";if(MOVE==="vivo")F=null;layout()};
@@ -605,7 +611,9 @@ function layout(){
     b.onclick=()=>pick(o.s);nbs.appendChild(b)});
   S.forEach(s=>s.el.querySelector(".sel").setAttribute("opacity",s===F?1:0));
   renderFilters();
+  document.querySelectorAll("#hMove button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===MOVE));
 }
+document.querySelectorAll("#hMove button").forEach(b=>b.onclick=()=>{MOVE=b.dataset.k;store.set("dial-move",MOVE);layout._k=null;if(MOVE!=="fijo")resetView();layout()});
 /* ---------- Leyenda de familias: rótulos fijos en pantalla que apuntan a su sector ----------
    No giran ni crecen con el zoom: se ubican junto al borde de su nube o, si está fuera de vista, en el borde del mapa en su dirección. */
 const LEG=SW8.map(o=>{const b=document.createElement("button");b.className="lg";b.style.setProperty("--lc",FAM[o.k][2]);
@@ -616,7 +624,7 @@ const LEG=SW8.map(o=>{const b=document.createElement("button");b.className="lg";
   $("legend").appendChild(b);return{o,b,w:0,h:0}});
 function placeLegend(){
   const W=sv.clientWidth,H=sv.clientHeight;if(!W)return;const k=W/380;
-  const L=6,T=40,Rr=W-52,B=H-24,cx=(px+190)*k,cy=(py+190)*k;
+  const L=6,T=40,Rr=W-52,B=H-50,cx=(px+190)*k,cy=(py+190)*k;
   const mini=z>1.6;
   const pos=LEG.map(g=>{if(g.mini!==mini){g.mini=mini;g.b.classList.toggle("min",mini);g.w=0}if(!g.w){g.w=g.b.offsetWidth;g.h=g.b.offsetHeight}
     g.b.setAttribute("aria-pressed",SEL.fam.has(g.o.k));
@@ -629,7 +637,7 @@ function placeLegend(){
       x=ccx+dx*t;y=ccy+dy*t}
     // ancla según dirección, para que el rótulo quede del lado de afuera
     return{g,x:x-g.w*(1-dx)/2,y:y-g.h*(1-dy)/2}});
-  const clamp=p=>{p.x=Math.max(4,Math.min(W-p.g.w-48,p.x));p.y=Math.max(36,Math.min(H-p.g.h-4,p.y))};
+  const clamp=p=>{p.x=Math.max(4,Math.min(W-p.g.w-48,p.x));p.y=Math.max(36,Math.min(H-p.g.h-46,p.y))};
   for(let it=0;it<24;it++){pos.forEach(clamp);for(let i=0;i<pos.length;i++)for(let j=i+1;j<pos.length;j++){const A=pos[i],Bq=pos[j];
     const ox=Math.min(A.x+A.g.w,Bq.x+Bq.g.w)-Math.max(A.x,Bq.x),oy=Math.min(A.y+A.g.h,Bq.y+Bq.g.h)-Math.max(A.y,Bq.y);
     if(ox>0&&oy>0){if(oy<ox){const s=(A.y<Bq.y?-1:1)*(oy/2+1);A.y+=s;Bq.y-=s}else{const s=(A.x<Bq.x?-1:1)*(ox/2+1);A.x+=s;Bq.x-=s}}}}
@@ -647,9 +655,10 @@ function whyLink(o){const p=o.p||{},out=[];
 // Movimiento: el sistema gira lento y cada radio oscila en su órbita; Fijo y "reducir movimiento" lo detienen
 function draw(t,force){
   const dt=Math.min(64,t-(lastT||t));lastT=t;
-  const spin = MOVE==="fijo"||RM ? 0 : (MOVE==="vivo"?.000045:.000022);
+  // Solo Vivo gira y oscila; Suave queda quieto salvo al reacomodarse cuando eliges una radio
+  const spin = MOVE==="vivo"&&!RM ? .000045 : 0;
   rot+=dt*spin+dt*vrot;vrot*=Math.pow(.94,dt/16);if(Math.abs(vrot)<1e-6)vrot=0;
-  const wob = MOVE==="fijo"||RM ? 0 : (MOVE==="vivo"?.035:.02);
+  const wob = MOVE==="vivo"&&!RM ? .035 : 0;
   sunsG.setAttribute("transform",`rotate(${(rot*180/Math.PI).toFixed(2)})`);
   ORB.forEach((p,s)=>{const a=p.a+rot+Math.sin(t*.0006+p.w)*wob/(p.r/80),r=p.r+Math.sin(t*.0009+p.w*2)*(wob?1.6:0);
     const tx=r*Math.cos(a),ty=r*Math.sin(a);
@@ -928,7 +937,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02x";
+const APP_VERSION="2026-11-02y";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
