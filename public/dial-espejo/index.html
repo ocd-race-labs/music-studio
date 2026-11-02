@@ -119,6 +119,27 @@ a{color:inherit}
 .hl a{font-size:14px;text-decoration:none}
 .hl .t{font:400 11px var(--mono);color:var(--dim)}
 .note{color:var(--muted);font-size:14px;background:var(--panel);border:1px dashed var(--line);border-radius:14px;padding:14px;margin:0}
+.concept{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.concept>summary{list-style:none;cursor:pointer;padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.concept>summary::-webkit-details-marker{display:none}
+.concept .cl{font-size:16px;font-weight:600;letter-spacing:-.01em;min-width:0}
+.concept .cl::before{content:"+";display:inline-block;width:16px;color:var(--muted);font-weight:400}
+.concept[open] .cl::before{content:"−"}
+.concept .cn{font:500 12px var(--mono);background:var(--ink);color:var(--bg);border-radius:999px;padding:2px 9px}
+.concept .cm{grid-column:1/-1;font:400 11px var(--mono);color:var(--muted);padding-left:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.concept .cb{display:grid;gap:8px;padding:0 8px 8px}
+.concept .story{background:var(--panel-2)}
+.others{font:500 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:6px 2px 0}
+.thive{background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:10px;display:grid;gap:10px}
+.thive svg{width:100%;height:auto;display:block;touch-action:manipulation}
+.thive .hx{cursor:pointer}
+.thive .hx text{font:600 10.5px var(--sans);fill:#07070A;pointer-events:none}
+.thive .hx .s{font:500 8px var(--mono);fill:rgba(7,7,10,.7)}
+.thive .lead{font:400 11px var(--mono);color:var(--muted);margin:2px 4px}
+.ted{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ted input,.ted select{font-size:15px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);min-width:0}
+.ted input{flex:1 1 160px}
+.sbtn[disabled]{opacity:.35}
 .pinbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pinbar select{font-size:14px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel)}
 footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
@@ -144,6 +165,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   <div class="fgrp"><div class="h">Contenido</div><div class="chips" id="f_fam"></div></div>
   <div class="fgrp"><div class="h">Idioma</div><div class="chips" id="f_lang"></div></div>
   <div class="fgrp"><div class="h">Región</div><div class="chips" id="f_reg"></div></div>
+  <div class="fgrp"><div class="h">Movimiento del panal</div><div class="chips" id="f_move"><button class="chip" data-k="fijo">Fijo</button><button class="chip" data-k="suave">Suave</button><button class="chip" data-k="vivo">Vivo</button></div></div>
   <div class="radio-grid">
     <div class="hive">
       <svg id="sv" viewBox="-190 -190 380 380" role="img" aria-label="Panal de radios ordenado por afinidad"><g id="world"><g id="mesh"></g><g id="ether"></g><g id="cells"></g></g></svg>
@@ -338,46 +360,75 @@ function chipRow(id,items,key){
   const box=$(id);box.innerHTML="";
   items.forEach(([k,label,col])=>{const b=document.createElement("button");b.className="chip";b.setAttribute("aria-pressed",SEL[key].has(k));
     b.innerHTML=(col?`<span class="sw" style="background:${col}"></span>`:"")+esc(label);
-    b.onclick=()=>{SEL[key].has(k)?SEL[key].delete(k):SEL[key].add(k);b.setAttribute("aria-pressed",SEL[key].has(k));store.set("dial-f-"+key,[...SEL[key]]);F=null;resetView();layout()};
+    b.onclick=()=>{SEL[key].has(k)?SEL[key].delete(k):SEL[key].add(k);b.setAttribute("aria-pressed",SEL[key].has(k));store.set("dial-f-"+key,[...SEL[key]]);if(MOVE==="vivo"){F=null;resetView()}layout()};
     box.appendChild(b)});
 }
 chipRow("f_fam",[["fav","Favoritas",null],...Object.entries(FAM).map(([k,v])=>[k,v[0],v[1]])],"fam");
 chipRow("f_lang",Object.entries(LANG).map(([k,v])=>[k,v]),"lang");
 chipRow("f_reg",REGIONS.map(r=>[r,r]),"reg");
-$("rq").addEventListener("input",e=>{query=e.target.value.trim();F=null;layout()});
+$("rq").addEventListener("input",e=>{query=e.target.value.trim();if(MOVE==="vivo")F=null;layout()});
 $("rq").addEventListener("keydown",e=>{if(e.key==="Enter"){const m=S.filter(match);if(m.length){e.target.blur();pick(m[0])}}});
 
-/* ---------- Disposición por afinidad ---------- */
+/* ---------- Disposición: Fijo · Suave · Vivo ----------
+   Fijo: nada se mueve; filtros y selección solo iluminan.
+   Suave: los filtros solo iluminan; elegir una radio la pone al centro con sus afines alrededor.
+   Vivo: filtros y selección reorganizan todo el panal. */
 let F=null;
+let MOVE=store.get("dial-move","suave"); if(!["fijo","suave","vivo"].includes(MOVE)) MOVE="suave";
+// Orden base estable: se calcula una vez (afinidad con Chile) y se guarda; las radios nuevas se agregan al final
+function baseOrder(){
+  let saved=store.get("dial-base-order",null);
+  const names=S.map(s=>s.n);
+  if(!saved){const prof=profileOf(S.filter(s=>s.cc==="CL"));saved=S.map(s=>({n:s.n,v:sim(prof,s).v})).sort((a,b)=>b.v-a.v).map(x=>x.n);store.set("dial-base-order",saved)}
+  const order=saved.filter(n=>names.includes(n)).concat(names.filter(n=>!saved.includes(n)));
+  return order.map(n=>S.find(s=>s.n===n));
+}
+const BASE=baseOrder();
 function layout(){
   const matches=S.filter(match);
   const center=F||(filtering()?profileOf(matches):null)||youProfile();
-  const ranked=S.filter(s=>s!==F).map(s=>({s,...sim(center,s),m:match(s)})).sort((a,b)=>(b.m-a.m)||((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v));
+  const scored=S.map(s=>({s,...sim(center,s),m:match(s)}));
+  const by=new Map(scored.map(o=>[o.s,o]));
+  const recenter = MOVE==="vivo" || (MOVE==="suave" && F);
   const ord=cells.slice(1);
-  core.style.opacity=F?0:1;
-  if(F){F.el.style.transform="translate(0px,0px) scale(1.3)";F.el.style.opacity=1}
-  ranked.forEach((o,k)=>{const c=ord[k];o.s.x=c.x;o.s.y=c.y;o.s.v=o.v;o.s.el.style.transform=`translate(${c.x.toFixed(1)}px,${c.y.toFixed(1)}px)`;
-    const base=filtering()&&!o.m?.13:(.42+.58*Math.max(0,Math.min(1,(o.v-.2)/.7)));o.s.el.style.opacity=(o.s.dead?Math.min(base,.25):base).toFixed(2)});
+  let placed;
+  if(recenter){
+    const ranked=scored.filter(o=>o.s!==F).sort((a,b)=>(MOVE==="vivo"?(b.m-a.m):0)||((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v));
+    placed=ranked.map(o=>o.s);
+  }else placed=BASE;
+  core.style.opacity=(recenter&&F)?0:1;
+  if(recenter&&F){F.el.style.transform="translate(0px,0px) scale(1.3)";F.el.style.opacity=1}
+  placed.forEach((s,k)=>{const c=ord[k];s.x=c.x;s.y=c.y;s.v=by.get(s).v;
+    s.el.style.transform=`translate(${c.x.toFixed(1)}px,${c.y.toFixed(1)}px)`+(s===F&&!recenter?" scale(1.15)":"")});
+  S.forEach(s=>{if(recenter&&s===F)return;const o=by.get(s);
+    let op=filtering()?(o.m?1:.13):(F?(.42+.58*Math.max(0,Math.min(1,(o.v-.2)/.7))):.92);
+    if(s===F)op=1;if(s.dead)op=Math.min(op,.25);s.el.style.opacity=op.toFixed(2)});
   $("coreT").textContent=filtering()?String(matches.length):"tú";
+  // Éter: desde la radio elegida (o desde ti) hacia sus 6 más afines visibles, estén donde estén
   eth.innerHTML="";
-  ranked.filter(o=>o.m&&!o.s.dead).slice(0,6).forEach(o=>{const l=document.createElementNS(NS,"line");l.setAttribute("x1",0);l.setAttribute("y1",0);l.setAttribute("x2",o.s.x.toFixed(1));l.setAttribute("y2",o.s.y.toFixed(1));
+  const ox=F?F.x||0:0, oy=F?F.y||0:0;
+  scored.filter(o=>o.s!==F&&o.m&&!o.s.dead).sort((a,b)=>b.v-a.v).slice(0,6).forEach(o=>{const l=document.createElementNS(NS,"line");
+    l.setAttribute("x1",(recenter&&F?0:ox).toFixed(1));l.setAttribute("y1",(recenter&&F?0:oy).toFixed(1));l.setAttribute("x2",o.s.x.toFixed(1));l.setAttribute("y2",o.s.y.toFixed(1));
     l.setAttribute("stroke",FAM[(F||center).g][2]);l.setAttribute("stroke-opacity",(.3+.6*o.v).toFixed(2));l.setAttribute("stroke-width","1.3");l.setAttribute("class","eth");eth.appendChild(l)});
   const desc=[...SEL.fam].map(k=>k==="fav"?"Favoritas":FAM[k][0]).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
-  $("hTitle").textContent=F?`${F.n}${desc.length?" · "+desc.join(" + "):""}`:desc.length?`${matches.length} radios · ${desc.join(" + ")}`:"Tú al centro · ordenado por afinidad";
+  $("hTitle").textContent=F?`${F.n}${desc.length?" · "+desc.join(" + "):""}`:desc.length?`${matches.length} radios · ${desc.join(" + ")}`:(MOVE==="vivo"?"Tú al centro · ordenado por afinidad":"Panal estable · las afines se iluminan");
   $("nbTitle").textContent=F?`Más afines a ${F.n}`:desc.length?"Coincidencias, de más a menos afín":"Más afines a ti";
   const nbs=$("nbs");nbs.innerHTML="";
-  const list=ranked.filter(o=>!filtering()||o.m).slice(0,10);
+  const list=scored.filter(o=>o.s!==F&&(!filtering()||o.m)).sort((a,b)=>((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v)).slice(0,10);
   if(!list.length){nbs.innerHTML='<p class="note">Ninguna radio cumple todos los filtros. Quita uno para ampliar.</p>'}
   list.forEach(o=>{const b=document.createElement("button");b.className="nb"+(o.s.dead?" dead":"");
     const why=o.s.dead?"sin señal por ahora":(o.shared.slice(0,2).map(t=>t.replace("-"," ")).join(", ")||FAM[o.s.g][0]);
     b.innerHTML=`<span class="sq" style="background:${FAM[o.s.g][2]}"></span><span style="min-width:0"><div class="n">${flag(o.s.cc)} ${esc(o.s.n)}</div><div class="w">${esc(LANG[o.s.lang])} · ${esc(why)}</div></span><span class="p">${Math.round(o.v*100)}%</span>`;
     b.onclick=()=>pick(o.s);nbs.appendChild(b)});
   S.forEach(s=>s.el.querySelector(".sel").setAttribute("opacity",s===F?1:0));
+  document.querySelectorAll("#f_move .chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===MOVE));
 }
 function pick(s){
   if(F===s && current===s){toggle();return}
-  F=s;resetView();layout();play(s);
+  F=s;if(MOVE!=="fijo")resetView();layout();play(s);
 }
+
+document.querySelectorAll("#f_move .chip").forEach(b=>b.onclick=()=>{MOVE=b.dataset.k;store.set("dial-move",MOVE);if(MOVE!=="fijo")resetView();layout()});
 
 /* ---------- Zoom y gestos ---------- */
 let z=1,px=0,py=0,moved=false;const world=$("world"),sv=$("sv");
@@ -522,13 +573,13 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 
 /* ---------- Arranque ---------- */
 resetView();layout();
-(window.requestIdleCallback||setTimeout)(()=>healthCheck(),1500);
+setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 
 </script>
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02i";
+const APP_VERSION="2026-11-02j";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -677,6 +728,63 @@ function chips(){
     b.setAttribute("aria-pressed",k===scope); b.addEventListener("click",()=>{ scope=k; store.set("dial-news-scope",k); loadNews(); }); s.appendChild(b); });
 }
 
+/* ---- Conceptos: agrupa titulares que hablan de lo mismo ----
+   Extrae los términos clave de cada titular (nombres propios pesan doble, se ignoran las palabras vacías
+   y las del tema que ya buscaste), une las historias que comparten suficiente peso y nombra cada grupo
+   por los términos que más se repiten dentro de él. Todo ocurre en el teléfono, sin costo. */
+const SW=new Set(("a al ante bajo con contra de del desde durante e el en entre esta este esto estos estas hacia hasta la las le les lo los mas más me mi muy ni no o os para pero por porque que qué se segun según ser si sí sin sobre su sus tambien también tras tu un una uno unos unas y ya es son fue han ha hay como cómo cuando donde dónde quien quién cual cuál tras luego tras dice dicen dijo afirma asegura tras nuevo nueva nuevos nuevas años año hoy ayer mañana semana mes tras sera será podria podría puede pueden hace tras tiene tienen tener the of and to in on for with from by at is are new after over its into how why what video fotos minuto vivo directo última ultima últimas hora horas chile chileno chilena tras").split(" "));
+const fold=w=>w.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+function keyTerms(title,skip){
+  const t=String(title).replace(/\s[-–|]\s[^-–|]+$/,"");           // quita " - Medio" del final
+  const out=new Map();
+  t.split(/[\s,.;:¿?¡!"“”'‘’()\[\]«»]+/).forEach((raw,i)=>{
+    if(!raw)return; const f=fold(raw).replace(/[^a-z0-9]/g,"");
+    if(f.length<3||SW.has(f)||skip.has(f)||/^\d{1,2}$/.test(f))return;
+    const k=f.length>5?f.slice(0,f.length-(/(es|s)$/.test(f)?(f.endsWith("es")?2:1):0)):f; // plural simple
+    const proper=i>0&&/^[A-ZÁÉÍÓÚÑ0-9]/.test(raw)||/^[A-Z0-9]{2,}$/.test(raw);
+    const w=proper?2:1; const prev=out.get(k);
+    if(!prev||prev.w<w) out.set(k,{w,shown:raw.replace(/[^\p{L}\p{N}-]/gu,"")});
+  });
+  return out;
+}
+function concepts(items,topic){
+  const skip=new Set(fold(topic||"").split(/\s+/).map(w=>w.replace(/[^a-z0-9]/g,"")).filter(Boolean));
+  const T=items.map(x=>{const m=keyTerms(x.title,skip);(x.related||[]).slice(0,4).forEach(r=>keyTerms(r.title,skip).forEach((v,k)=>{if(!m.has(k))m.set(k,{...v,w:v.w*.5})}));return m});
+  // Rareza: un término que aparece en casi todos los titulares no distingue
+  const df=new Map(); T.forEach(m=>m.forEach((_,k)=>df.set(k,(df.get(k)||0)+1)));
+  const N=items.length, idf=k=>Math.log(1+N/(df.get(k)||1));
+  const par=items.map((_,i)=>i), find=i=>par[i]===i?i:(par[i]=find(par[i]));
+  for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
+    let sc=0,proper=0; T[i].forEach((v,k)=>{const u=T[j].get(k);if(u&&df.get(k)<N*.6){sc+=Math.min(v.w,u.w)*idf(k);if(v.w>=2&&u.w>=2)proper++}});
+    if(sc>=3.2||(proper>=1&&sc>=2.2)) par[find(i)]=find(j);
+  }
+  const g=new Map(); items.forEach((x,i)=>{const r=find(i);if(!g.has(r))g.set(r,[]);g.get(r).push(i)});
+  const groups=[],loose=[];
+  g.forEach(ix=>{
+    if(ix.length<2){loose.push(items[ix[0]]);return}
+    const tally=new Map(); ix.forEach(i=>T[i].forEach((v,k)=>{if(v.w<1)return;const o=tally.get(k)||{n:0,w:0,shown:v.shown};o.n++;o.w=Math.max(o.w,v.w);if(v.w>=2)o.shown=v.shown;tally.set(k,o)}));
+    const top=[...tally.entries()].filter(([,o])=>o.n>=2).sort((a,b)=>(b[1].n*b[1].w)-(a[1].n*a[1].w));
+    const pr=top.filter(([,o])=>o.w>=2); const pick=(pr.length>=2?pr:top).slice(0,3).map(([,o])=>o.shown);
+    const label=pick.length?pick.map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" · "):"Misma historia";
+    const its=ix.map(i=>items[i]).sort((a,b)=>(b.published_at||"").localeCompare(a.published_at||""));
+    groups.push({label,items:its,latest:its[0].published_at});
+  });
+  groups.sort((a,b)=>(b.items.length-a.items.length)||(b.latest||"").localeCompare(a.latest||""));
+  return {groups,loose};
+}
+function groupedHTML(items,topic){
+  const {groups,loose}=concepts(items,topic); let n=0;
+  const card=x=>storyCard(x,n++);
+  const gh=groups.map((c,gi)=>{
+    const ccs=[...new Set(c.items.map(x=>outletCC(x.source_url||"")).filter(Boolean))];
+    const nNew=c.items.filter(x=>x.isNew).length;
+    return `<details class="concept"${gi===0?" open":""}><summary><span class="cl">${esc(c.label)}</span><span class="cn">${c.items.length}</span>
+      <span class="cm">${nNew?`${nNew} nueva${nNew>1?"s":""} · `:""}${ccs.slice(0,6).map(flag).join(" ")} · ${esc(ago(c.latest))}</span></summary>
+      <div class="cb">${c.items.map(card).join("")}</div></details>`;
+  }).join("");
+  return gh+(loose.length?(groups.length?'<p class="others">Otras historias</p>':"")+loose.map(card).join(""):"");
+}
+
 function storyCard(x,i){
   const rel=(x.related||[]).filter(r=>r.source!==x.source);
   const cov=rel.length?`<details class="cov"><summary>Cobertura en ${rel.length} medio${rel.length>1?"s":""} más</summary>${rel.map(r=>`<div class="hl"><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a><span class="t">${esc(r.source)}</span></div>`).join("")}</details>`:"";
@@ -685,23 +793,24 @@ function storyCard(x,i){
     <div class="meta-row">${x.isNew?'<span class="pill new">Nuevo</span>':""}<span>${x.scope==="nacional"?"Nacional":"Internacional"}</span><span>${cc?`<span aria-label="${esc(cc)}">${flag(cc)}</span> `:""}${esc(x.source)}</span><span>${esc(fmtTime(x.published_at))} · ${esc(ago(x.published_at))}</span></div>
     <h3><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a></h3>${cov}</article>`;
 }
-function block(title,meta,items,newCount,extraBtns){
+function block(title,meta,items,newCount,extraBtns,topic){
   const w=document.createElement("section"); w.className="topic";
   const status = !items.length ? "" : newCount ? `${newCount} nueva${newCount>1?"s":""} desde tu última visita` : "Sin novedades desde tu última visita";
   w.innerHTML=`<div class="topic-head"><div><h2>${esc(title)}</h2><p class="meta">${esc([meta,status].filter(Boolean).join(" · "))}</p></div><div class="tbtns">${extraBtns||""}</div></div>`+
-    (items.length?items.slice(0,12).map((x,i)=>storyCard(x,i)).join(""):'<p class="note">No hay noticias de los últimos días con este alcance.</p>');
+    (items.length?groupedHTML(items.slice(0,24),topic):'<p class="note">No hay noticias de los últimos días con este alcance.</p>');
   return w;
 }
 
 async function loadNews(){
   const tok=++loadTok; chips();
   const b=$("nbody"); b.innerHTML='<p class="note">Buscando noticias…</p>';
-  try{ topics=await api("dial_topics?select=*&pinned=eq.true&order=requested_at.desc"); }catch(e){ topics=[]; }
+  try{ topics=await api("dial_topics?select=*&pinned=eq.true&order=sort_order.asc.nullslast,requested_at.asc"); }catch(e){ topics=[]; }
   if(tok!==loadTok) return;
   b.innerHTML=""; $("newsStamp").textContent=`Actualizado ${fmtTime(new Date().toISOString())}`;
   if(explore){ renderExplore(b); }
   if(sec==="mis"){
     if(!topics.length && !explore){ b.insertAdjacentHTML("beforeend",'<p class="note">Aún no tienes temas fijados. Escribe un tema arriba, por ejemplo “precio del cobre” o “Boeing 777X”, y toca Fijar tema. Cada vez que entres verás sus noticias y qué es nuevo.</p>'); return; }
+    if(topics.length) b.appendChild(topicHive());
     for(const t of topics){
       const slot=document.createElement("div"); slot.innerHTML='<p class="note">Cargando '+esc(t.topic)+'…</p>'; b.appendChild(slot);
       topicInto(slot,t);
@@ -716,12 +825,56 @@ async function loadNews(){
   }catch(e){ slot.innerHTML='<p class="note">No se pudieron traer noticias ahora. Revisa tu conexión y vuelve a abrir la sección.</p>'; }
   topics.filter(t=>t.section===sec).forEach(t=>{ const s2=document.createElement("div"); b.appendChild(s2); topicInto(s2,t); });
 }
+/* ---- Panal de Mis temas: solo visualización y edición; el orden lo decides tú ---- */
+const SCOL={politica:"#5B7BFF",economia:"#F2B544",deportes_extremos:"#FF9F5A",nba:"#FF5C7A",nfl:"#E8577A",tecnologia:"#4FD9F0",ia:"#B98CFF",educacion:"#8FA3FF",salud:"#2FD3A0",ciencias:"#7FE3C4",aviacion:"#9FD0FF",cultura:"#F7A8D0"};
+let tSel=null, tEdit=false;
+function spiral(n){const dirs=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];const out=[[0,0]];
+  for(let r=1;out.length<n;r++){let q=-r,s=r;for(let d=0;d<6;d++)for(let k=0;k<r;k++){if(out.length<n)out.push([q,s]);q+=dirs[d][0];s+=dirs[d][1]}}return out}
+function wrapLbl(t){const w=t.split(/\s+/);const L=[""];w.forEach(x=>{const cur=L[L.length-1];if((cur+" "+x).trim().length<=11||!cur)L[L.length-1]=(cur+" "+x).trim();else L.push(x)});
+  return L.slice(0,3).map((l,i,a)=>i===2&&a.length<L.length?l.slice(0,9)+"…":l.length>12?l.slice(0,11)+"…":l)}
+function topicHive(){
+  const box=document.createElement("section"); box.className="thive";
+  const R=38, ax=spiral(topics.length).map(([q,r])=>({x:R*Math.sqrt(3)*(q+r/2),y:R*1.5*r}));
+  const xs=ax.map(p=>p.x),ys=ax.map(p=>p.y),pad=R+4;
+  const minx=Math.min(...xs)-pad,maxx=Math.max(...xs)+pad,miny=Math.min(...ys)-pad,maxy=Math.max(...ys)+pad;
+  const hexP=r=>[0,1,2,3,4,5].map(i=>{const a=Math.PI/180*(60*i-90);return `${(r*Math.cos(a)).toFixed(1)},${(r*Math.sin(a)).toFixed(1)}`}).join(" ");
+  const cells=topics.map((t,i)=>{const p=ax[i],c=SCOL[t.section]||"#8B8B96",sel=tSel===t.id;const L=wrapLbl(t.topic);
+    return `<g class="hx" data-id="${esc(t.id)}" transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)})" opacity="${tSel&&!sel?.45:1}">
+      <polygon points="${hexP(R-2)}" fill="${c}" stroke="${sel?"#EDEDF2":"none"}" stroke-width="3"/>
+      ${L.map((l,k)=>`<text text-anchor="middle" y="${(k-(L.length-1)/2)*12+(-3)}">${esc(l)}</text>`).join("")}
+      <text class="s" text-anchor="middle" y="${(L.length-1)*6+14}">${String(i+1).padStart(2,"0")} ${esc((LABEL[t.section]||"").slice(0,8).toUpperCase())}</text></g>`}).join("");
+  const t=topics.find(x=>x.id===tSel), idx=topics.indexOf(t);
+  box.innerHTML=`<p class="lead">${t?`${String(idx+1).padStart(2,"0")} · ${esc(t.topic)} · ${esc(LABEL[t.section])}`:"Mis temas · toca un hexágono para ordenarlo o editarlo"}</p>
+    <svg viewBox="${minx.toFixed(0)} ${miny.toFixed(0)} ${(maxx-minx).toFixed(0)} ${(maxy-miny).toFixed(0)}" style="max-height:${Math.min(420,(maxy-miny)*1.15).toFixed(0)}px">${cells}</svg>
+    ${t?(tEdit?`<div class="ted"><input id="teT" value="${esc(t.topic)}" maxlength="80" aria-label="Tema"><select id="teS" aria-label="Sección">${SECTIONS.map(([k,l])=>`<option value="${k}"${k===t.section?" selected":""}>${l}</option>`).join("")}</select>
+        <button class="sbtn pri" data-a="save">Guardar</button><button class="sbtn" data-a="cancel">Cancelar</button><span class="tmsg" style="color:var(--muted);font-size:13px"></span></div>`
+      :`<div class="ted"><button class="sbtn" data-a="up"${idx===0?" disabled":""}>← Antes</button><button class="sbtn" data-a="down"${idx===topics.length-1?" disabled":""}>Después →</button>
+        <button class="sbtn" data-a="go">Ver noticias</button><button class="sbtn" data-a="edit">Editar</button><button class="sbtn" data-a="del">Quitar</button><span class="tmsg" style="color:var(--muted);font-size:13px"></span></div>`):""}`;
+  box.querySelectorAll(".hx").forEach(g=>g.addEventListener("click",()=>{tSel=tSel===g.dataset.id?null:g.dataset.id;tEdit=false;box.replaceWith(topicHive())}));
+  const msg=x=>{const m=box.querySelector(".tmsg");if(m)m.textContent=x};
+  const on=(a,f)=>{const el=box.querySelector(`[data-a="${a}"]`);if(el)el.addEventListener("click",f)};
+  async function move(d){const j=idx+d;if(j<0||j>=topics.length)return;const a=topics[idx],b2=topics[j];
+    // normaliza el orden completo para que no haya empates ni vacíos, y luego intercambia
+    topics.forEach((x,k)=>x._o=k+1);[a._o,b2._o]=[b2._o,a._o];
+    try{await Promise.all(topics.filter(x=>x.sort_order!==x._o).map(x=>api("dial_topics?id=eq."+x.id,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify({sort_order:x._o})})));
+      topics.forEach(x=>x.sort_order=x._o);loadNews()}catch(_){msg("No se pudo mover")}}
+  on("up",()=>move(-1)); on("down",()=>move(1));
+  on("go",()=>{const el=$("tp-"+t.id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})});
+  on("edit",()=>{tEdit=true;box.replaceWith(topicHive())});
+  on("cancel",()=>{tEdit=false;box.replaceWith(topicHive())});
+  on("save",async()=>{const topic=box.querySelector("#teT").value.trim(),section=box.querySelector("#teS").value;
+    if(topic.length<2){msg("Escribe al menos 2 letras");return}
+    try{await api("dial_topics?id=eq."+t.id,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify({topic,section})});tEdit=false;loadNews()}
+    catch(e){msg(e.status===409?"Ya tienes ese tema en esa sección":"No se pudo guardar")}});
+  on("del",async e=>{if(e.target.dataset.c!=="1"){e.target.dataset.c="1";e.target.textContent="¿Quitar? Toca otra vez";return}
+    try{await api("dial_topics?id=eq."+t.id,{method:"DELETE"});tSel=null;loadNews()}catch(_){msg("No se pudo quitar")}});
+  return box;
+}
 async function topicInto(slot,t){
   try{
     const [tn,ti]=topicQueries(t.topic,t.section); const items=await gather(tn,ti,3,t.topic);
     const n=markNew("topic-"+t.id+"-"+scope,items);
-    const w=block(t.topic,LABEL[t.section],items,n,'<button class="sbtn" data-a="del">Quitar</button>');
-    w.querySelector('[data-a="del"]').addEventListener("click",async e=>{ e.target.disabled=true; try{ await api("dial_topics?id=eq."+t.id,{method:"DELETE"}); loadNews(); }catch(_){ e.target.disabled=false; e.target.textContent="No se pudo quitar"; } });
+    const w=block(t.topic,LABEL[t.section],items,n,'',t.topic); w.id="tp-"+t.id;
     slot.replaceWith(w);
   }catch(e){ slot.innerHTML=`<p class="note">No se pudieron traer noticias de ${esc(t.topic)} ahora.</p>`; }
 }
@@ -735,13 +888,13 @@ async function renderExplore(b){
   ex.querySelector("#pinBtn").addEventListener("click",async e=>{
     const section = sec==="mis" ? ex.querySelector("#pinSec").value : sec;
     e.target.disabled=true;
-    try{ await api("dial_topics",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({section,topic:explore})});
+    try{ await api("dial_topics",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({section,topic:explore,sort_order:Math.max(0,...topics.map(t=>t.sort_order||0))+1})});
       $("pinMsg").textContent=`Fijado en ${LABEL[section]}.`;
     }catch(err){ $("pinMsg").textContent = err.status===409 ? "Ese tema ya está fijado en esa sección." : "No se pudo fijar. Inténtalo de nuevo."; e.target.disabled=false; }
   });
   try{
     const [en,ei]=topicQueries(explore,sec==="mis"?"":sec); const items=await gather(en,ei,3,explore);
-    ex.querySelector(".exres").innerHTML = items.length ? items.slice(0,12).map((x,i)=>storyCard(x,i)).join("") : '<p class="note">No hay noticias de los últimos días para este tema.</p>';
+    ex.querySelector(".exres").innerHTML = items.length ? groupedHTML(items.slice(0,24),explore) : '<p class="note">No hay noticias de los últimos días para este tema.</p>';
   }catch(e){ ex.querySelector(".exres").innerHTML='<p class="note">No se pudieron traer noticias ahora.</p>'; }
 }
 
