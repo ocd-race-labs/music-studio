@@ -122,6 +122,13 @@ a{color:inherit}
 .pinbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pinbar select{font-size:14px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel)}
 footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
+/* Carrusel de texto en la banda: solo se mueve lo que no cabe */
+.mq{overflow:hidden;white-space:nowrap;text-overflow:clip}
+.mq .tr{display:inline-flex;will-change:transform}
+.mq .gap{padding:0 18px;opacity:.5}
+.mq.run .tr{animation:mq var(--d,10s) linear infinite}
+@keyframes mq{0%,14%{transform:translateX(0)}100%{transform:translateX(var(--x,0))}}
+@media (prefers-reduced-motion: reduce){.mq.run .tr{animation:none}.mq{text-overflow:ellipsis}}
 @media (min-width:760px){.radio-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start}}
 @media (prefers-reduced-motion: reduce){.hx{transition:none}.eth,.eq i{animation:none}}
 </style>
@@ -164,9 +171,9 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   <div class="band" id="band">
     <div class="art" id="art"></div>
     <div style="min-width:0">
-      <div class="b-t" id="bT"></div>
-      <div class="b-a" id="bA"></div>
-      <div class="b-m" id="bM"></div>
+      <div class="b-t mq" id="bT"></div>
+      <div class="b-a mq" id="bA"></div>
+      <div class="b-m mq" id="bM"></div>
     </div>
     <div class="b-btns">
       <button class="ib" id="bFav" aria-label="Favorita">☆</button>
@@ -431,6 +438,17 @@ async function healthCheck(){
 }
 
 /* ---------- Reproductor y banda inferior ---------- */
+function mset(id,txt){const el=$(id);txt=String(txt??"");if(el._t===txt)return;el._t=txt;
+  el.classList.remove("run");el.innerHTML=`<span class="tr"><span>${esc(txt)}</span></span>`;
+  requestAnimationFrame(()=>fitMq(el));setTimeout(()=>fitMq(el),150)}
+function fitMq(el){const tr=el.firstChild;if(!tr)return;const txt=el._t;const first=tr.firstChild;
+  if(first.offsetWidth>el.clientWidth+2){
+    if(tr.children.length<3)tr.innerHTML=`<span>${esc(txt)}</span><span class="gap">•</span><span>${esc(txt)}</span>`;
+    const shift=tr.children[2].offsetLeft-tr.children[0].offsetLeft;
+    el.style.setProperty("--x",-shift+"px");el.style.setProperty("--d",(shift/28/0.86+.5).toFixed(1)+"s");el.classList.add("run");
+  }else{if(tr.children.length>1)tr.innerHTML=`<span>${esc(txt)}</span>`;el.classList.remove("run")}}
+const refitMq=()=>["bT","bA","bM"].forEach(id=>{const el=$(id);if(el._t!=null)fitMq(el)});
+window.addEventListener("resize",refitMq);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(refitMq);
 let current=null,playToken=0,curList=[],curIdx=0,statusTxt="";
 function setBand(s){
   $("player").hidden=false;const c=FAM[s.g][2];const band=$("band");band.style.background=c;band.style.color="#07070A";
@@ -440,7 +458,7 @@ function setBand(s){
 function setStatus(t){statusTxt=t;renderMeta()}
 function renderMeta(){if(!current)return;const s=current;
   const sig=curList[curIdx];const parts=[`${flag(s.cc)} ${s.n}`,s.f?s.f.toFixed(1)+" FM":"",statusTxt,sig&&sig.bitrate?sig.bitrate+" kbps":""].filter(Boolean);
-  $("bM").textContent=parts.join(" · ")}
+  mset("bM",parts.join(" · "))}
 function setBtn(playing){$("bPP").textContent=playing?"❚❚":"▶";$("bPP").setAttribute("aria-label",playing?"Pausar":"Reproducir");
   if(!np.art) $("art").innerHTML=playing?'<span class="eq"><i></i><i></i><i></i></span>':'<span style="font-size:20px">♪</span>'}
 function tryUrl(url,token){return new Promise((res,rej)=>{
@@ -449,7 +467,7 @@ function tryUrl(url,token){return new Promise((res,rej)=>{
   audio.addEventListener("playing",on);audio.addEventListener("error",off);audio.src=url;const p=audio.play();if(p)p.catch(()=>{if(token===playToken)done(false)})})}
 async function play(s){
   const token=++playToken;current=s;curList=[];curIdx=0;npReset(s);setBand(s);
-  $("bT").textContent=s.n;$("bA").textContent=FAM[s.g][0]+" · "+LANG[s.lang];setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
+  mset("bT",s.n);mset("bA",FAM[s.g][0]+" · "+LANG[s.lang]);setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
   if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:FAM[s.g][0],album:"Dial Espejo",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
   let list=[];try{list=await candidates(s)}catch(e){if(token===playToken){setStatus("sin conexión al directorio");setBtn(false)}return}
   for(let attempt=0;attempt<2;attempt++){
@@ -458,7 +476,7 @@ async function play(s){
         if(s.dead){s.dead=false;layout()}fetch(API[0]+"/json/url/"+c.uuid).catch(()=>{});return}catch(e){}}
     if(attempt)break;try{list=await candidates(s,true)}catch(e){break}
   }
-  if(token===playToken){audio.removeAttribute("src");audio.load();setStatus("sin señal ahora");setBtn(false);$("bT").textContent=s.n;$("bA").textContent="Esta radio no respondió. Prueba su web ↗";s.dead=true;layout()}
+  if(token===playToken){audio.removeAttribute("src");audio.load();setStatus("sin señal ahora");setBtn(false);mset("bT",s.n);mset("bA","Esta radio no respondió. Prueba su web ↗");s.dead=true;layout()}
 }
 function toggle(){if(!current)return;if(!audio.paused){audio.pause();return}
   if(audio.src&&statusTxt!=="sin señal ahora"){audio.load();setStatus("sintonizando…");audio.play().catch(()=>play(current))}else play(current)}
@@ -492,9 +510,9 @@ async function npPoll(){
 }
 function npShow(s,j){
   const song=j&&j.song,artist=j&&j.artist,raw=j&&j.raw;
-  if(song&&artist){$("bT").textContent=song;$("bA").textContent=[artist,j.album,j.year].filter(Boolean).join(" · ")}
-  else if(raw){$("bT").textContent=raw;$("bA").textContent="En antena · "+s.n}
-  else{$("bT").textContent=s.n;$("bA").textContent=(j&&j.stream_description)||(FAM[s.g][0]+" · "+LANG[s.lang])}
+  if(song&&artist){mset("bT",song);mset("bA",[artist,j.album,j.year].filter(Boolean).join(" · "))}
+  else if(raw){mset("bT",raw);mset("bA","En antena · "+s.n)}
+  else{mset("bT",s.n);mset("bA",(j&&j.stream_description)||(FAM[s.g][0]+" · "+LANG[s.lang]))}
   if(j&&j.artwork){np.art=true;$("art").innerHTML=`<img src="${esc(j.artwork)}" alt="Carátula de ${esc(song||"")}">`}else{np.art=false;setBtn(!audio.paused)}
   const line=song&&artist?`${artist} · ${song}`:(raw||"");
   if(line!==np.last&&"mediaSession" in navigator){np.last=line;try{navigator.mediaSession.metadata=new MediaMetadata({title:song||raw||s.n,artist:artist||s.n,album:s.n,
@@ -510,7 +528,7 @@ resetView();layout();
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02h";
+const APP_VERSION="2026-11-02i";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
