@@ -132,7 +132,11 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
 .sbtn{font:600 13px var(--body);border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 12px;border-radius:999px;cursor:pointer}
 .sbtn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .note{color:var(--muted);font-size:14px;background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:12px 14px}
-.hl{display:grid;gap:2px;padding:10px 0;border-bottom:1px solid var(--line)}
+.hl{display:grid;gap:2px;padding:8px 0;border-top:1px solid var(--line)}
+.story h3 a{color:var(--ink);text-decoration:none}
+.pill.new{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+.cov{display:grid}
+.cov>summary{cursor:pointer;font-size:13px;color:var(--muted);padding:4px 0}
 .hl a{color:var(--ink);font-weight:600;text-decoration:none}
 .hl .t{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
 .pinbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -190,7 +194,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
   <header>
     <div>
       <h1>Noticias</h1>
-      <p class="sub">Resúmenes ejecutivos por tema, con fuentes y hora de actualización. Se actualizan a las 7:40, 13:40 y 19:40 de Santiago.</p>
+      <p class="sub">Las historias del momento agrupadas con la cobertura de cada medio, actualizadas al entrar.</p>
     </div>
     <div class="clock" id="newsStamp"></div>
   </header>
@@ -203,7 +207,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <div class="chips" id="nscope" role="group" aria-label="Alcance"></div>
   </div>
   <div id="nbody" style="display:grid;gap:22px"></div>
-  <footer>Los resúmenes son redacción propia a partir de las fuentes citadas en cada historia; los titulares instantáneos vienen de Google News. Abre la fuente para leer el texto original.</footer>
+  <footer>Titulares y cobertura de Google News, con el medio original y su hora. Toca un titular para leer la nota en su fuente.</footer>
 </div>
 
 <div class="player" id="player" hidden>
@@ -540,14 +544,28 @@ tick(); setInterval(tick,30000);
 </script>
 
 <script>
-/* ===================== Dial Espejo · navegación y Noticias ===================== */
+/* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
+const APP_VERSION="2026-11-02e";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---- Actualización automática: si hay una versión nueva publicada, recarga una vez ---- */
+async function checkVersion(){
+  try{
+    const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text();
+    const m=t.match(/APP_VERSION="([^"]+)"/);
+    if(m && m[1]!==APP_VERSION){
+      if(store.get("dial-reloaded-for","")!==m[1]){ store.set("dial-reloaded-for",m[1]); location.replace(location.pathname+"?v="+m[1]+location.hash); }
+    }
+  }catch(e){}
+}
+checkVersion();
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkVersion(); });
 
 /* ---- Pestañas del banner (agregar aquí futuras secciones) ---- */
 const VIEWS=[{code:"radio",label:"Radio"},{code:"noticias",label:"Noticias"}];
@@ -556,7 +574,7 @@ function show(code){
   VIEWS.forEach(v=>{ const el=$("view-"+(v.code==="noticias"?"news":v.code)); if(el) el.hidden = v.code!==code; });
   [...$("tabs").children].forEach(b=>b.setAttribute("aria-selected",b.dataset.v===code));
   store.set("dial-view",code);
-  if(code==="noticias" && !loaded) loadNews();
+  if(code==="noticias") loadNews();
   window.scrollTo(0,0);
 }
 VIEWS.forEach(v=>{ const b=document.createElement("button"); b.className="tab"; b.role="tab"; b.dataset.v=v.code; b.textContent=v.label;
@@ -566,22 +584,58 @@ window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
 /* ---- Noticias ---- */
 const SECTIONS=[["politica","Política"],["economia","Economía"],["deportes_extremos","Deportes extremos"],["nba","NBA"],["nfl","NFL"],["tecnologia","Tecnología"],["ia","IA"],["educacion","Educación"],["salud","Salud"],["ciencias","Ciencias"],["aviacion","Aviación"],["cultura","Cultura"]];
 const LABEL=Object.fromEntries(SECTIONS);
+// Búsquedas por sección: [nacional, internacional]; null = no aplica
+const Q={
+  politica:["política Chile gobierno OR congreso","política internacional"],
+  economia:["economía Chile","economía mundial mercados"],
+  deportes_extremos:["Chile downhill OR enduro OR surf OR escalada OR \"deportes extremos\"","downhill mountain bike OR enduro MTB OR \"Red Bull\" OR surf olas OR escalada"],
+  nba:[null,"NBA"],
+  nfl:[null,"NFL"],
+  tecnologia:["tecnología Chile","tecnología"],
+  ia:["inteligencia artificial Chile","inteligencia artificial"],
+  educacion:["educación Chile","educación"],
+  salud:["salud Chile Minsal OR hospitales","salud OMS OR medicina"],
+  ciencias:["ciencia Chile","ciencia descubrimiento OR NASA OR investigación"],
+  aviacion:["aviación Chile LATAM OR JetSMART OR DGAC OR aeropuerto","aviación aerolíneas OR Boeing OR Airbus"],
+  cultura:["cultura Chile","cultura cine OR música OR libros"]
+};
 let sec=store.get("dial-news-sec","mis"); if(sec!=="mis" && !LABEL[sec]) sec="mis";
 let scope=store.get("dial-news-scope","todo");
-let topics=[], stories=[], loaded=false, explore=null;
+let topics=[], explore=null, loadTok=0;
 
-const fmtTime=iso=>{ if(!iso) return ""; const d=new Date(iso);
-  return d.toLocaleString("es-CL",{timeZone:"America/Santiago",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); };
-const ago=iso=>{ const m=Math.round((Date.now()-new Date(iso))/60000); if(m<60) return `hace ${m} min`; const h=Math.round(m/60); return h<48?`hace ${h} h`:`hace ${Math.round(h/24)} días`; };
+const fmtTime=iso=>iso?new Date(iso).toLocaleString("es-CL",{timeZone:"America/Santiago",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
+const ago=iso=>{ if(!iso) return ""; const m=Math.max(1,Math.round((Date.now()-new Date(iso))/60000)); if(m<60) return `hace ${m} min`; const h=Math.round(m/60); return h<48?`hace ${h} h`:`hace ${Math.round(h/24)} días`; };
+const norm=t=>String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]/g,"").split(" ").filter(w=>w.length>3).slice(0,7).join(" ");
 
 async function api(path,opt={}){
   const r=await fetch(SB+"/rest/v1/"+path,{...opt,headers:{...H,"Content-Type":"application/json",...(opt.headers||{})}});
   if(!r.ok){ const e=new Error("http "+r.status); e.status=r.status; throw e; }
   return r.status===204?null:r.json();
 }
-async function headlines(q,sc){
-  const r=await fetch(`${SB}/functions/v1/dial-headlines?q=${encodeURIComponent(q)}&scope=${sc==="nacional"?"nacional":"internacional"}`,{headers:H});
-  const j=await r.json(); if(!r.ok) throw new Error(j.error||"error"); return j;
+async function fetchNews(q,days){
+  const r=await fetch(`${SB}/functions/v1/dial-headlines?q=${encodeURIComponent(q)}&days=${days||2}`,{headers:H});
+  const j=await r.json(); if(!r.ok) throw new Error(j.error||"error"); return j.items||[];
+}
+// Trae y une nacional + internacional, sin duplicar la misma historia
+async function gather(qn,qi,days){
+  const jobs=[];
+  if(qn && scope!=="internacional") jobs.push(fetchNews(qn,days).then(a=>a.map(x=>({...x,scope:"nacional"}))));
+  if(qi && scope!=="nacional") jobs.push(fetchNews(qi,days).then(a=>a.map(x=>({...x,scope:"internacional"}))));
+  const res=await Promise.allSettled(jobs);
+  if(res.length && res.every(r=>r.status==="rejected")) throw new Error("sin conexión");
+  const seen=new Set(), out=[];
+  res.flatMap(r=>r.status==="fulfilled"?r.value:[]).sort((a,b)=>(b.published_at||"").localeCompare(a.published_at||""))
+    .forEach(x=>{ const k=norm(x.title); if(!seen.has(k)){ seen.add(k); out.push(x); } });
+  return out;
+}
+
+/* "Nuevo": lo que no habías visto en tu visita anterior a esa sección o tema */
+function markNew(key,items){
+  const prev=new Set(store.get("dial-seen-"+key,[]));
+  const first=!prev.size;
+  items.forEach(x=>x.isNew=!first && !prev.has(norm(x.title)));
+  store.set("dial-seen-"+key,[...new Set([...items.map(x=>norm(x.title)),...prev])].slice(0,400));
+  return items.filter(x=>x.isNew).length;
 }
 
 function chips(){
@@ -590,87 +644,78 @@ function chips(){
     b.setAttribute("aria-pressed",k===sec); b.addEventListener("click",()=>{ sec=k; store.set("dial-news-sec",k); explore=null; $("nq").value=""; loadNews(); }); c.appendChild(b); });
   const s=$("nscope"); s.innerHTML="";
   [["todo","Todo"],["nacional","Nacional"],["internacional","Internacional"]].forEach(([k,l])=>{ const b=document.createElement("button"); b.className="chip"; b.textContent=l;
-    b.setAttribute("aria-pressed",k===scope); b.addEventListener("click",()=>{ scope=k; store.set("dial-news-scope",k); chips(); render(); }); s.appendChild(b); });
+    b.setAttribute("aria-pressed",k===scope); b.addEventListener("click",()=>{ scope=k; store.set("dial-news-scope",k); loadNews(); }); s.appendChild(b); });
+}
+
+function storyCard(x){
+  const rel=(x.related||[]).filter(r=>r.source!==x.source);
+  const cov=rel.length?`<details class="cov"><summary>Cobertura en ${rel.length} medio${rel.length>1?"s":""} más</summary>${rel.map(r=>`<div class="hl"><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a><span class="t">${esc(r.source)}</span></div>`).join("")}</details>`:"";
+  return `<article class="story">
+    <div class="meta-row">${x.isNew?'<span class="pill new">Nuevo</span>':""}<span class="pill ${x.scope==="nacional"?"nac":""}">${x.scope==="nacional"?"Nacional":"Internacional"}</span><span>${esc(x.source)} · ${esc(fmtTime(x.published_at))} · ${esc(ago(x.published_at))}</span></div>
+    <h3><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a></h3>${cov}</article>`;
+}
+function block(title,meta,items,newCount,extraBtns){
+  const w=document.createElement("section"); w.className="topic";
+  const status = !items.length ? "" : newCount ? `${newCount} nueva${newCount>1?"s":""} desde tu última visita` : "Sin novedades desde tu última visita";
+  w.innerHTML=`<div class="topic-head"><div><h2>${esc(title)}</h2><p class="meta">${esc([meta,status].filter(Boolean).join(" · "))}</p></div><div class="tbtns">${extraBtns||""}</div></div>`+
+    (items.length?items.slice(0,12).map(storyCard).join(""):'<p class="note">No hay noticias de los últimos días con este alcance.</p>');
+  return w;
 }
 
 async function loadNews(){
-  loaded=true; chips();
-  $("nbody").innerHTML='<p class="note">Cargando noticias…</p>';
-  try{
-    topics=await api("dial_topics?select=*&pinned=eq.true&order=requested_at.desc");
-    let q;
-    if(sec==="mis"){ const ids=topics.map(t=>t.id); q = ids.length ? `dial_stories?select=*&topic_id=in.(${ids.join(",")})&order=rank.asc,updated_at.desc` : null; }
-    else q=`dial_stories?select=*&section=eq.${sec}&order=rank.asc,updated_at.desc&limit=60`;
-    stories = q ? await api(q) : [];
-    const last=stories.reduce((m,s)=>s.updated_at>m?s.updated_at:m,"");
-    $("newsStamp").textContent = last ? `Actualizado ${fmtTime(last)}` : "";
-  }catch(e){ $("nbody").innerHTML='<p class="note">No se pudo conectar a las noticias. Revisa tu conexión y vuelve a abrir la sección.</p>'; return; }
-  render();
-}
-
-function storyCard(s){
-  const src=(s.sources||[]).map(x=>`<div><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name||x.url)}</a>${x.published_at?` <span class="t">· ${esc(fmtTime(x.published_at))}</span>`:""}</div>`).join("");
-  const kp=(s.key_points||[]).length?`<ul>${s.key_points.map(k=>`<li>${esc(k)}</li>`).join("")}</ul>`:"";
-  const paras=String(s.summary||"").split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join("");
-  return `<article class="story">
-    <div class="meta-row"><span class="pill ${s.scope==="nacional"?"nac":""}">${s.scope==="nacional"?"Nacional":"Internacional"}</span><span>${esc(LABEL[s.section]||"")}</span><span>Actualizado ${esc(fmtTime(s.updated_at))} · ${esc(ago(s.updated_at))}</span></div>
-    <h3>${esc(s.headline)}</h3>${paras}${kp}
-    <div class="srcs"><span class="t">FUENTES</span>${src}</div></article>`;
-}
-const byScope=list=>scope==="todo"?list:list.filter(s=>s.scope===scope);
-
-function topicBlock(t){
-  const st=byScope(stories.filter(s=>s.topic_id===t.id));
-  const wrap=document.createElement("section"); wrap.className="topic";
-  wrap.innerHTML=`<div class="topic-head"><div><h2>${esc(t.topic)}</h2><p class="meta">${esc(LABEL[t.section])}${t.last_refreshed_at?` · revisado ${esc(fmtTime(t.last_refreshed_at))}`:""}</p></div>
-    <div class="tbtns"><button class="sbtn" data-a="hl">Titulares ahora</button><button class="sbtn" data-a="del">Quitar</button></div></div>
-    ${st.length?st.map(storyCard).join(""):`<p class="note">${t.last_refreshed_at?"No hubo novedades con este alcance en la última revisión.":"El resumen ejecutivo llega en la próxima actualización. Mientras tanto puedes ver los titulares ahora."}</p>`}
-    <div class="hlbox"></div>`;
-  wrap.querySelector('[data-a="del"]').addEventListener("click",async e=>{ e.target.disabled=true; try{ await api("dial_topics?id=eq."+t.id,{method:"DELETE"}); loadNews(); }catch(_){ e.target.disabled=false; e.target.textContent="No se pudo quitar"; } });
-  wrap.querySelector('[data-a="hl"]').addEventListener("click",e=>hlInto(wrap.querySelector(".hlbox"),t.topic,e.target));
-  return wrap;
-}
-async function hlInto(box,q,btn){
-  if(btn){ btn.disabled=true; btn.textContent="Buscando…"; }
-  try{
-    const j=await headlines(q,scope==="nacional"?"nacional":"internacional");
-    box.innerHTML = j.items.length ? `<p class="meta">Titulares de Google News · ${esc(fmtTime(j.fetched_at))}</p>`+j.items.map(i=>`<div class="hl"><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a><span class="t">${esc(i.source)} · ${esc(fmtTime(i.published_at))}</span></div>`).join("") : '<p class="note">No hay titulares de los últimos 3 días para este tema.</p>';
-  }catch(e){ box.innerHTML='<p class="note">No se pudieron traer titulares ahora. Inténtalo en un momento.</p>'; }
-  if(btn){ btn.disabled=false; btn.textContent="Titulares ahora"; }
-}
-
-function render(){
-  const b=$("nbody"); b.innerHTML="";
-  if(explore){
-    const sel = sec==="mis" ? `<select id="pinSec" aria-label="Sección">${SECTIONS.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select>` : "";
-    const ex=document.createElement("section"); ex.className="topic";
-    ex.innerHTML=`<div class="topic-head"><div><h2>${esc(explore)}</h2><p class="meta">Exploración</p></div></div>
-      <div class="pinbar">${sel}<button class="sbtn pri" id="pinBtn">Fijar tema${sec!=="mis"?" en "+esc(LABEL[sec]):""}</button><span class="t" id="pinMsg" style="color:var(--muted);font-size:13px"></span></div>
-      <div class="hlbox"><p class="note">Buscando titulares…</p></div>`;
-    b.appendChild(ex);
-    hlInto(ex.querySelector(".hlbox"),explore,null);
-    ex.querySelector("#pinBtn").addEventListener("click",async e=>{
-      const section = sec==="mis" ? ex.querySelector("#pinSec").value : sec;
-      e.target.disabled=true;
-      try{ await api("dial_topics",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({section,topic:explore})});
-        $("pinMsg").textContent=`Fijado en ${LABEL[section]}. El resumen ejecutivo llega en la próxima actualización.`; topics=await api("dial_topics?select=*&pinned=eq.true&order=requested_at.desc");
-      }catch(err){ $("pinMsg").textContent = err.status===409 ? "Ese tema ya está fijado en esa sección." : "No se pudo fijar. Inténtalo de nuevo."; e.target.disabled=false; }
-    });
-  }
+  const tok=++loadTok; chips();
+  const b=$("nbody"); b.innerHTML='<p class="note">Buscando noticias…</p>';
+  try{ topics=await api("dial_topics?select=*&pinned=eq.true&order=requested_at.desc"); }catch(e){ topics=[]; }
+  if(tok!==loadTok) return;
+  b.innerHTML=""; $("newsStamp").textContent=`Actualizado ${fmtTime(new Date().toISOString())}`;
+  if(explore){ renderExplore(b); }
   if(sec==="mis"){
-    if(!topics.length && !explore){ b.insertAdjacentHTML("beforeend",'<p class="note">Aún no tienes temas fijados. Escribe un tema arriba, por ejemplo “precio del cobre” o “Boeing 777X”, y toca Fijar tema. Cada actualización te traerá su resumen ejecutivo.</p>'); return; }
-    topics.forEach(t=>b.appendChild(topicBlock(t)));
+    if(!topics.length && !explore){ b.insertAdjacentHTML("beforeend",'<p class="note">Aún no tienes temas fijados. Escribe un tema arriba, por ejemplo “precio del cobre” o “Boeing 777X”, y toca Fijar tema. Cada vez que entres verás sus noticias y qué es nuevo.</p>'); return; }
+    for(const t of topics){
+      const slot=document.createElement("div"); slot.innerHTML='<p class="note">Cargando '+esc(t.topic)+'…</p>'; b.appendChild(slot);
+      topicInto(slot,t);
+    }
     return;
   }
-  const overview=byScope(stories.filter(s=>!s.topic_id));
-  const sh=document.createElement("section"); sh.className="topic";
-  sh.innerHTML=`<div class="topic-head"><h2>${esc(LABEL[sec])}</h2></div>`+(overview.length?overview.map(storyCard).join(""):`<p class="note">${stories.length?"No hay historias con este alcance.":"Las historias de esta sección llegan en la próxima actualización (7:40, 13:40 o 19:40)."}</p>`);
-  b.appendChild(sh);
-  topics.filter(t=>t.section===sec).forEach(t=>b.appendChild(topicBlock(t)));
+  const slot=document.createElement("div"); slot.innerHTML='<p class="note">Cargando '+esc(LABEL[sec])+'…</p>'; b.appendChild(slot);
+  try{
+    const [qn,qi]=Q[sec]; const items=await gather(qn,qi,2); if(tok!==loadTok) return;
+    const n=markNew("sec-"+sec+"-"+scope,items);
+    slot.replaceWith(block(LABEL[sec],items.length?`${items.length} historias`:"",items,n));
+  }catch(e){ slot.innerHTML='<p class="note">No se pudieron traer noticias ahora. Revisa tu conexión y vuelve a abrir la sección.</p>'; }
+  topics.filter(t=>t.section===sec).forEach(t=>{ const s2=document.createElement("div"); b.appendChild(s2); topicInto(s2,t); });
+}
+async function topicInto(slot,t){
+  try{
+    const items=await gather(t.topic+" Chile",t.topic,3);
+    const n=markNew("topic-"+t.id+"-"+scope,items);
+    const w=block(t.topic,LABEL[t.section],items,n,'<button class="sbtn" data-a="del">Quitar</button>');
+    w.querySelector('[data-a="del"]').addEventListener("click",async e=>{ e.target.disabled=true; try{ await api("dial_topics?id=eq."+t.id,{method:"DELETE"}); loadNews(); }catch(_){ e.target.disabled=false; e.target.textContent="No se pudo quitar"; } });
+    slot.replaceWith(w);
+  }catch(e){ slot.innerHTML=`<p class="note">No se pudieron traer noticias de ${esc(t.topic)} ahora.</p>`; }
+}
+async function renderExplore(b){
+  const sel = sec==="mis" ? `<select id="pinSec" aria-label="Sección">${SECTIONS.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select>` : "";
+  const ex=document.createElement("section"); ex.className="topic";
+  ex.innerHTML=`<div class="topic-head"><div><h2>${esc(explore)}</h2><p class="meta">Exploración</p></div></div>
+    <div class="pinbar">${sel}<button class="sbtn pri" id="pinBtn">Fijar tema${sec!=="mis"?" en "+esc(LABEL[sec]):""}</button><span id="pinMsg" style="color:var(--muted);font-size:13px"></span></div>
+    <div class="exres"><p class="note">Buscando…</p></div>`;
+  b.prepend(ex);
+  ex.querySelector("#pinBtn").addEventListener("click",async e=>{
+    const section = sec==="mis" ? ex.querySelector("#pinSec").value : sec;
+    e.target.disabled=true;
+    try{ await api("dial_topics",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({section,topic:explore})});
+      $("pinMsg").textContent=`Fijado en ${LABEL[section]}.`;
+    }catch(err){ $("pinMsg").textContent = err.status===409 ? "Ese tema ya está fijado en esa sección." : "No se pudo fijar. Inténtalo de nuevo."; e.target.disabled=false; }
+  });
+  try{
+    const items=await gather(explore+" Chile",explore,3);
+    ex.querySelector(".exres").innerHTML = items.length ? items.slice(0,12).map(storyCard).join("") : '<p class="note">No hay noticias de los últimos días para este tema.</p>';
+  }catch(e){ ex.querySelector(".exres").innerHTML='<p class="note">No se pudieron traer noticias ahora.</p>'; }
 }
 
-$("nq").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const v=e.target.value.trim(); if(v.length>=2){ explore=v; render(); e.target.blur(); } } });
-$("nq").addEventListener("input",e=>{ if(!e.target.value.trim() && explore){ explore=null; render(); } });
+$("nq").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const v=e.target.value.trim(); if(v.length>=2){ explore=v; e.target.blur(); loadNews(); } } });
+$("nq").addEventListener("input",e=>{ if(!e.target.value.trim() && explore){ explore=null; loadNews(); } });
 
 show(location.hash ? location.hash.slice(1) : store.get("dial-view","radio"));
 })();
