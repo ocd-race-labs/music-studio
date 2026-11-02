@@ -60,9 +60,10 @@ a{color:inherit}
 /* Panal */
 .hive{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:22px;overflow:hidden}
 .hive svg{display:block;width:100%;height:auto;touch-action:none;-webkit-user-select:none;user-select:none}
-.hx{transition:transform .9s cubic-bezier(.22,.8,.2,1),opacity .5s;cursor:pointer}
+.hx{transition:opacity .5s;cursor:pointer}
 @keyframes flow{to{stroke-dashoffset:-24}}
 .eth{stroke-dasharray:2 5;animation:flow 2.2s linear infinite}
+.why{font:500 5.2px "Geist Mono",ui-monospace,monospace;fill:#EDEDF2;paint-order:stroke;stroke:#07070A;stroke-width:2.4px;stroke-linejoin:round;pointer-events:none}
 .ctl{position:absolute;right:10px;top:10px;display:grid;gap:6px}
 .ctl button{width:36px;height:36px;border-radius:11px;background:rgba(237,237,242,.07);border:1px solid var(--line);display:grid;place-items:center;padding:0;cursor:pointer;font-size:18px;line-height:1}
 .hive-title{position:absolute;left:10px;top:10px;max-width:calc(100% - 64px);font:400 11px var(--mono);color:var(--ink);pointer-events:none;background:rgba(7,7,10,.82);border:1px solid var(--line);border-radius:999px;padding:5px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -166,14 +167,14 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   <div class="fgrp"><div class="h">Movimiento del panal</div><div class="chips" id="f_move"><button class="chip" data-k="fijo">Fijo</button><button class="chip" data-k="suave">Suave</button><button class="chip" data-k="vivo">Vivo</button></div></div>
   <div class="radio-grid">
     <div class="hive">
-      <svg id="sv" viewBox="-190 -190 380 380" role="img" aria-label="Panal de radios ordenado por afinidad"><g id="world"><g id="mesh"></g><g id="ether"></g><g id="cells"></g></g></svg>
+      <svg id="sv" viewBox="-190 -190 380 380" role="img" aria-label="Panal de radios ordenado por afinidad"><g id="world"><g id="mesh"></g><g id="ether"></g><g id="cells"></g><g id="whyG"></g></g></svg>
       <div class="hive-title" id="hTitle"></div>
       <div class="hive-zoom" id="hZoom">1.0×</div>
       <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="zh" aria-label="Limpiar filtros y volver al centro">⌂</button></div>
     </div>
     <div><div class="nbh" id="nbTitle"></div><div id="nbs"></div></div>
   </div>
-  <footer>Pellizca para acercar, arrastra para moverte y toca una radio para escucharla: el panal se ordena a su alrededor por afinidad. Las señales vienen del directorio abierto Radio Browser; las que hoy no responden quedan atenuadas.</footer>
+  <footer>Pellizca para acercar, arrastra para moverte y toca una radio para escucharla: queda al centro y las demás orbitan a su alrededor; mientras más cerca, más afín. Cada estilo ocupa siempre su sector y lo envuelve una nube con lo que agrupa a esas radios; las líneas dicen qué conecta a las más afines con la que suena. Las señales vienen del directorio abierto Radio Browser; las que hoy no responden quedan atenuadas.</footer>
 </div>
 
 <div class="wrap" id="view-news" hidden>
@@ -333,7 +334,35 @@ const R=19,SQ=Math.sqrt(3),toPx=(q,r)=>[R*SQ*(q+r/2),R*1.5*r];
 const hexPts=r=>[...Array(6)].map((_,k)=>{const t=rad(60*k-30);return(r*Math.cos(t)).toFixed(2)+","+(r*Math.sin(t)).toFixed(2)}).join(" ");
 const cells=[];for(let q=-15;q<=15;q++)for(let r=-15;r<=15;r++){const[x,y]=toPx(q,r);const d=Math.hypot(x,y);if(d<280)cells.push({x,y,d,a:Math.atan2(y,x)})}
 cells.sort((a,b)=>a.d-b.d||a.a-b.a);
-(function(){const mesh=$("mesh");cells.forEach(c=>{const p=document.createElementNS(NS,"polygon");p.setAttribute("points",hexPts(R-.5));p.setAttribute("transform",`translate(${c.x.toFixed(1)},${c.y.toFixed(1)})`);p.setAttribute("fill","none");p.setAttribute("stroke","rgba(237,237,242,.05)");p.setAttribute("stroke-width",".6");mesh.appendChild(p)})})();
+/* ---------- Constelación: distancia = afinidad (órbitas), dirección = familia (sectores) ---------- */
+const SECT=["news","culture","classic","jazz","ecl","rock","pop","latin"];   // vecinos de estilo quedan contiguos
+const RMIN=36,RMAX=176;
+const rOf=v=>RMIN+Math.max(0,Math.min(1,(.92-v)/.6))*(RMAX-RMIN);
+const RINGS=[.85,.7,.55,.4];
+// Cada familia ocupa un sector proporcional a cuántas radios tiene, así las noticias (muchas) no invaden a las demás
+const SW8=(()=>{const n=SECT.map(k=>Math.max(3,S.filter(s=>s.g===k).length)),T=n.reduce((a,b)=>a+b,0);let acc=-Math.PI/2;
+  return SECT.map((k,i)=>{const w=n[i]/T*Math.PI*2,o={k,a0:acc,mid:acc+w/2,w};acc+=w;return o})})();
+const orbitsG=document.createElementNS(NS,"g"),sunsG=document.createElementNS(NS,"g"),cloudsG=document.createElementNS(NS,"g");
+// Lo que agrupa a cada familia: sus etiquetas más repetidas y sus idiomas (se muestra bajo su punto de color)
+const FAMWHY=Object.fromEntries(Object.keys(FAM).map(k=>{const m=S.filter(s=>s.g===k),c={};m.forEach(s=>s.tags.forEach(t=>c[t]=(c[t]||0)+1));
+  const tags=Object.entries(c).sort((a,b)=>b[1]-a[1]).map(x=>x[0].replace("-"," ")).filter(t=>!FAM[k][0].toLowerCase().includes(t)).slice(0,2);
+  const ln=[...new Set(m.map(s=>s.lang))].length;return[k,[tags.join(" · "),`${m.length} radios · ${ln} idioma${ln>1?"s":""}`]]}));
+// Nubes: un círculo por radio dentro de un grupo semitransparente; al traslaparse forman una mancha uniforme por familia
+const CLOUD={};Object.keys(FAM).forEach(k=>{const g=document.createElementNS(NS,"g");g.setAttribute("fill",FAM[k][2]);g.setAttribute("opacity",".085");cloudsG.appendChild(g);CLOUD[k]=g});
+S.forEach(s=>{const c=document.createElementNS(NS,"circle");c.setAttribute("r","0");CLOUD[s.g].appendChild(c);s.cl=c});
+(function(){const mesh=$("mesh");
+  RINGS.forEach(v=>{const c=document.createElementNS(NS,"circle");c.setAttribute("r",rOf(v).toFixed(1));c.setAttribute("fill","none");c.setAttribute("stroke","rgba(237,237,242,.08)");c.setAttribute("stroke-width",".6");c.setAttribute("stroke-dasharray","1.5 4");mesh.appendChild(c);
+    const t=document.createElementNS(NS,"text");t.setAttribute("x","0");t.setAttribute("y",(-rOf(v)-2).toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("font-size","5.5");t.setAttribute("font-family","Geist Mono, ui-monospace, monospace");t.setAttribute("fill","rgba(237,237,242,.32)");t.textContent=Math.round(v*100)+"%";mesh.appendChild(t)});
+  SW8.forEach(({k,a0,mid})=>{const a=mid;const g=document.createElementNS(NS,"g");
+    const l=document.createElementNS(NS,"line");const b=a0;l.setAttribute("x1",(RMIN*Math.cos(b)).toFixed(1));l.setAttribute("y1",(RMIN*Math.sin(b)).toFixed(1));l.setAttribute("x2",(RMAX*1.06*Math.cos(b)).toFixed(1));l.setAttribute("y2",(RMAX*1.06*Math.sin(b)).toFixed(1));l.setAttribute("stroke","rgba(237,237,242,.04)");l.setAttribute("stroke-width",".6");g.appendChild(l);
+    const d=document.createElementNS(NS,"circle");d.setAttribute("cx",(RMAX*.97*Math.cos(a)).toFixed(1));d.setAttribute("cy",(RMAX*.97*Math.sin(a)).toFixed(1));d.setAttribute("r","3");d.setAttribute("fill",FAM[k][2]);g.appendChild(d);
+    const t=document.createElementNS(NS,"text");t.setAttribute("x",(RMAX*.97*Math.cos(a)).toFixed(1));t.setAttribute("y",(RMAX*.97*Math.sin(a)+9).toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("font-size","5.5");t.setAttribute("font-family","Geist Mono, ui-monospace, monospace");t.setAttribute("fill",FAM[k][2]);t.textContent=FAM[k][0];t.setAttribute("font-weight","600");t.setAttribute("class","why");t.style.fill=FAM[k][2];t.style.fontSize="5.8px";g.appendChild(t);
+    const w=document.createElementNS(NS,"text");w.setAttribute("text-anchor","middle");w.setAttribute("font-size","4.6");w.setAttribute("font-family","Geist Mono, ui-monospace, monospace");w.setAttribute("fill","rgba(237,237,242,.6)");w.setAttribute("class","why");w.style.fontSize="4.6px";
+    FAMWHY[k].forEach((line,j)=>{const ts=document.createElementNS(NS,"tspan");ts.setAttribute("x",t.getAttribute("x"));ts.setAttribute("y",(+t.getAttribute("y")+6.5+j*5.6).toFixed(1));ts.textContent=line;w.appendChild(ts)});g.appendChild(w);
+    sunsG.appendChild(g)});
+  mesh.appendChild(sunsG);
+  mesh.appendChild(cloudsG);
+})();
 const cellsG=$("cells"),eth=$("ether");
 const core=document.createElementNS(NS,"g");core.setAttribute("class","hx");
 core.innerHTML=`<polygon points="${hexPts(R-3)}" fill="#EDEDF2" stroke="#EDEDF2" stroke-width="3" stroke-linejoin="round"/><text id="coreT" x="0" y="3" text-anchor="middle" font-size="8" font-family="Geist Mono, ui-monospace, monospace" fill="#07070A">tú</text>`;
@@ -373,43 +402,47 @@ $("rq").addEventListener("keydown",e=>{if(e.key==="Enter"){const m=S.filter(matc
    Vivo: filtros y selección reorganizan todo el panal. */
 let F=null;
 let MOVE=store.get("dial-move","suave"); if(!["fijo","suave","vivo"].includes(MOVE)) MOVE="suave";
-// Orden base estable: se calcula una vez (afinidad con Chile) y se guarda; las radios nuevas se agregan al final
-function baseOrder(){
-  let saved=store.get("dial-base-order",null);
-  const names=S.map(s=>s.n);
-  if(!saved){const prof=profileOf(S.filter(s=>s.cc==="CL"));saved=S.map(s=>({n:s.n,v:sim(prof,s).v})).sort((a,b)=>b.v-a.v).map(x=>x.n);store.set("dial-base-order",saved)}
-  const order=saved.filter(n=>names.includes(n)).concat(names.filter(n=>!saved.includes(n)));
-  return order.map(n=>S.find(s=>s.n===n));
+// Centro estable para Fijo y para Suave sin selección: tu perfil base (Chile), no tus favoritas
+const BASEPROF=profileOf(S.filter(s=>s.cc==="CL"));
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Calcula la posición polar de cada radio: radio = afinidad, ángulo = sector de su familia; luego separa las que chocan
+function constellation(center,except){
+  const pts=S.filter(s=>s!==except).map(s=>{const v=sim(center,s).v;return{s,v,sc:.5+.52*Math.max(0,Math.min(1,(v-.35)/.55))}});
+  SW8.forEach(({k,mid,w})=>{const mem=pts.filter(p=>p.s.g===k).sort((a,b)=>b.v-a.v);const base=mid,span=w*.85;
+    mem.forEach((p,j)=>{const off=((j%2?1:-1)*Math.ceil(j/2))/Math.max(1,mem.length)*span;p.r=rOf(p.v);p.a=base+off;p.x=p.r*Math.cos(p.a);p.y=p.r*Math.sin(p.a)})});
+  for(let it=0;it<60;it++){
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const A=pts[i],B=pts[j];let dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy)||.01;const need=R*SQ*.5*(A.sc+B.sc)*.98;
+      if(d<need){const f=(need-d)/2;dx/=d;dy/=d;A.x-=dx*f;A.y-=dy*f;B.x+=dx*f;B.y+=dy*f}}
+    pts.forEach(p=>{const r=Math.hypot(p.x,p.y)||1,tr=rOf(p.v),k=.12*(tr-r)/r;p.x+=p.x*k;p.y+=p.y*k;
+      const sw=SW8.find(o=>o.k===p.s.g);let da=Math.atan2(p.y,p.x)-sw.mid;da=Math.atan2(Math.sin(da),Math.cos(da));const lim=sw.w*.5;
+      if(Math.abs(da)>lim){const na=sw.mid+Math.sign(da)*(lim+(Math.abs(da)-lim)*.7),rr0=Math.hypot(p.x,p.y);p.x=rr0*Math.cos(na);p.y=rr0*Math.sin(na)}const rr=Math.hypot(p.x,p.y);const rmin=except?RMIN+12:RMIN;if(rr<rmin){p.x*=rmin/rr;p.y*=rmin/rr}})}
+  pts.forEach(p=>{p.r=Math.hypot(p.x,p.y);p.a=Math.atan2(p.y,p.x);p.w=Math.random()*6.28});
+  return pts;
 }
-const BASE=baseOrder();
+let ORB=new Map(),centerSt=null,rot=0,lastT=0;
 function layout(){
   const matches=S.filter(match);
-  const center=F||(filtering()?profileOf(matches):null)||youProfile();
-  const scored=S.map(s=>({s,...sim(center,s),m:match(s)}));
-  const by=new Map(scored.map(o=>[o.s,o]));
   const recenter = MOVE==="vivo" || (MOVE==="suave" && F);
-  const ord=cells.slice(1);
-  let placed;
-  if(recenter){
-    const ranked=scored.filter(o=>o.s!==F).sort((a,b)=>(MOVE==="vivo"?(b.m-a.m):0)||((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v));
-    placed=ranked.map(o=>o.s);
-  }else placed=BASE;
-  core.style.opacity=(recenter&&F)?0:1;
-  if(recenter&&F){F.el.style.transform="translate(0px,0px) scale(1.3)";F.el.style.opacity=1}
-  placed.forEach((s,k)=>{const c=ord[k];s.x=c.x;s.y=c.y;s.v=by.get(s).v;
-    s.el.style.transform=`translate(${c.x.toFixed(1)}px,${c.y.toFixed(1)}px)`+(s===F&&!recenter?" scale(1.15)":"")});
-  S.forEach(s=>{if(recenter&&s===F)return;const o=by.get(s);
+  const center = MOVE==="fijo" ? BASEPROF : (F&&recenter ? F : (MOVE==="vivo"&&filtering()?profileOf(matches):null)||(MOVE==="vivo"?youProfile():BASEPROF));
+  const key=(recenter&&F?F.n:"")+"|"+MOVE+"|"+(MOVE==="vivo"?[...SEL.fam,...SEL.lang,...SEL.reg,query].join(","):"");
+  if(key!==layout._k){layout._k=key;centerSt=recenter&&F?F:null;if(centerSt)cellsG.appendChild(centerSt.el);ORB=new Map(constellation(center,centerSt).map(p=>[p.s,p]))}
+  const scored=S.map(s=>({s,...sim(F||center,s),m:match(s)}));
+  const by=new Map(scored.map(o=>[o.s,o]));
+  core.style.opacity=centerSt?0:1;
+  S.forEach(s=>{const o=by.get(s);s.v=o.v;
     let op=filtering()?(o.m?1:.13):(F?(.42+.58*Math.max(0,Math.min(1,(o.v-.2)/.7))):.92);
     if(s===F)op=1;if(s.dead)op=Math.min(op,.25);s.el.style.opacity=op.toFixed(2)});
-  $("coreT").textContent=filtering()?String(matches.length):"tú";
-  // Éter: desde la radio elegida (o desde ti) hacia sus 6 más afines visibles, estén donde estén
-  eth.innerHTML="";
-  const ox=F?F.x||0:0, oy=F?F.y||0:0;
+  // Éter: líneas desde la radio elegida (o desde el centro) a sus 6 más afines; se redibujan en cada cuadro
+  eth.innerHTML="";$("whyG").innerHTML="";ethL=[];
+  const src=F||current||null;
   scored.filter(o=>o.s!==F&&o.m&&!o.s.dead).sort((a,b)=>b.v-a.v).slice(0,6).forEach(o=>{const l=document.createElementNS(NS,"line");
-    l.setAttribute("x1",(recenter&&F?0:ox).toFixed(1));l.setAttribute("y1",(recenter&&F?0:oy).toFixed(1));l.setAttribute("x2",o.s.x.toFixed(1));l.setAttribute("y2",o.s.y.toFixed(1));
-    l.setAttribute("stroke",FAM[(F||center).g][2]);l.setAttribute("stroke-opacity",(.3+.6*o.v).toFixed(2));l.setAttribute("stroke-width","1.3");l.setAttribute("class","eth");eth.appendChild(l)});
+    l.setAttribute("stroke",FAM[(F||{g:center.g}).g][2]);l.setAttribute("stroke-opacity",(.3+.6*o.v).toFixed(2));l.setAttribute("stroke-width","1.1");l.setAttribute("class","eth");eth.appendChild(l);
+    let tx=null;if(src&&ethL.length<4){tx=document.createElementNS(NS,"text");tx.setAttribute("class","why");tx.setAttribute("text-anchor","middle");tx.textContent=`${whyLink(o)} · ${Math.round(o.v*100)}%`;$("whyG").appendChild(tx)}
+    ethL.push([l,o.s,tx])});
+  draw(performance.now(),true);
+  $("coreT").textContent=filtering()?String(matches.length):"tú";
   const desc=[...SEL.fam].map(k=>k==="fav"?"Favoritas":FAM[k][0]).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
-  $("hTitle").textContent=F?`${F.n}${desc.length?" · "+desc.join(" + "):""}`:desc.length?`${matches.length} radios · ${desc.join(" + ")}`:(MOVE==="vivo"?"Tú al centro · ordenado por afinidad":"Panal estable · las afines se iluminan");
+  $("hTitle").textContent=F?`${F.n}${desc.length?" · "+desc.join(" + "):""}`:desc.length?`${matches.length} radios · ${desc.join(" + ")}`:(MOVE==="vivo"?"Tú al centro · órbitas por afinidad":"Constelación estable · las afines se iluminan");
   $("nbTitle").textContent=F?`Más afines a ${F.n}`:desc.length?"Coincidencias, de más a menos afín":"Más afines a ti";
   const nbs=$("nbs");nbs.innerHTML="";
   const list=scored.filter(o=>o.s!==F&&(!filtering()||o.m)).sort((a,b)=>((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v)).slice(0,10);
@@ -421,6 +454,38 @@ function layout(){
   S.forEach(s=>s.el.querySelector(".sel").setAttribute("opacity",s===F?1:0));
   document.querySelectorAll("#f_move .chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===MOVE));
 }
+let ethL=[];
+// Por qué una radio se conecta con la que suena: lo que más aporta a su afinidad, en palabras
+function whyLink(o){const p=o.p||{},out=[];
+  if(o.shared&&o.shared.length)out.push(o.shared.slice(0,2).map(t=>t.replace("-"," ")).join(", "));
+  if(p.idioma===1)out.push(LANG[o.s.lang].toLowerCase());
+  if(out.length<2&&p.formato>.85)out.push(o.s.talk>.6?"mucha conversación":"casi solo música");
+  if(out.length<2&&p.lugar>.6)out.push("cerca");
+  if(out.length<2&&p.energia>.9)out.push("misma energía");
+  return out.slice(0,2).join(" · ")||FAM[o.s.g][0].toLowerCase()}
+// Movimiento: el sistema gira lento y cada radio oscila en su órbita; Fijo y "reducir movimiento" lo detienen
+function draw(t,force){
+  const dt=Math.min(64,t-(lastT||t));lastT=t;
+  const spin = MOVE==="fijo"||RM ? 0 : (MOVE==="vivo"?.000045:.000022);
+  rot+=dt*spin;
+  const wob = MOVE==="fijo"||RM ? 0 : (MOVE==="vivo"?.035:.02);
+  sunsG.setAttribute("transform",`rotate(${(rot*180/Math.PI).toFixed(2)})`);
+  ORB.forEach((p,s)=>{const a=p.a+rot+Math.sin(t*.0006+p.w)*wob/(p.r/80),r=p.r+Math.sin(t*.0009+p.w*2)*(wob?1.6:0);
+    const tx=r*Math.cos(a),ty=r*Math.sin(a);
+    if(force&&s.x==null){s.x=tx;s.y=ty}
+    s.x+=(tx-s.x)*.08;s.y+=(ty-s.y)*.08;
+    s.el.setAttribute("transform",`translate(${s.x.toFixed(1)},${s.y.toFixed(1)}) scale(${(p.sc*(s===F?1.15:1)).toFixed(2)})`);
+    s.cl.setAttribute("cx",s.x.toFixed(1));s.cl.setAttribute("cy",s.y.toFixed(1));s.cl.setAttribute("r",(R*p.sc*1.45).toFixed(1))});
+  if(centerSt)centerSt.cl.setAttribute("r","0");
+  if(centerSt){const c=centerSt;if(c.x==null){c.x=0;c.y=0}c.x+=(0-c.x)*.1;c.y+=(0-c.y)*.1;c.el.setAttribute("transform",`translate(${c.x.toFixed(1)},${c.y.toFixed(1)}) scale(1.35)`)}
+  const o=F&&!centerSt?F:null;
+  const placed=[];
+  ethL.forEach(([l,s,tx])=>{const x1=o?o.x:0,y1=o?o.y:0;l.setAttribute("x1",x1.toFixed(1));l.setAttribute("y1",y1.toFixed(1));l.setAttribute("x2",s.x.toFixed(1));l.setAttribute("y2",s.y.toFixed(1));
+    if(tx){const sc=(ORB.get(s)||{sc:1}).sc,lx=s.x,ly=s.y-R*sc-1.5;
+      const hit=placed.some(q=>Math.abs(q[0]-lx)<42&&Math.abs(q[1]-ly)<6.5);tx.style.opacity=hit?0:1;if(!hit)placed.push([lx,ly]);
+      tx.setAttribute("x",lx.toFixed(1));tx.setAttribute("y",ly.toFixed(1))}});
+}
+(function loop(t){if(!$("view-radio").hidden&&document.visibilityState==="visible")draw(t);requestAnimationFrame(loop)})(performance.now());
 function pick(s){
   if(F===s && current===s){toggle();return}
   F=s;if(MOVE!=="fijo")resetView();layout();play(s);
@@ -431,7 +496,7 @@ document.querySelectorAll("#f_move .chip").forEach(b=>b.onclick=()=>{MOVE=b.data
 /* ---------- Zoom y gestos ---------- */
 let z=1,px=0,py=0,moved=false;const world=$("world"),sv=$("sv");
 function apply(){z=Math.max(.5,Math.min(5,z));world.setAttribute("transform",`translate(${px.toFixed(1)},${py.toFixed(1)}) scale(${z.toFixed(3)})`);$("hZoom").textContent=z.toFixed(1)+"×"}
-const Z0=1.35;
+const Z0=.95;
 function resetView(){z=Z0;px=0;py=0;apply()}
 const toSvg=(cx,cy)=>{const r=sv.getBoundingClientRect();return[(cx-r.left)/r.width*380-190,(cy-r.top)/r.height*380-190]};
 function zoomAt(f,cx,cy){const nz=Math.max(.5,Math.min(5,z*f));px=cx-(cx-px)*(nz/z);py=cy-(cy-py)*(nz/z);z=nz;apply()}
@@ -581,7 +646,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02m";
+const APP_VERSION="2026-11-02n";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
