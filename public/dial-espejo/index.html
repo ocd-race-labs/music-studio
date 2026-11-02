@@ -81,6 +81,8 @@ a{color:inherit}
 .lg{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;background:rgba(7,7,10,.8);border:1px solid color-mix(in srgb,var(--lc) 55%,transparent);border-radius:9px;padding:3px 7px 3px 6px;display:grid;gap:0;max-width:112px;text-align:left;will-change:transform}
 .lg b em{font:400 9px var(--mono);font-style:normal;opacity:.7}
 .lg.min span{display:none}
+#lbl{font:600 13px var(--sans)}#lbl[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.hive.nolbl .legend,.hive.nolbl #whyG,.hive.nolbl .ring-lbl{display:none}
 .lg b{font:600 10px var(--sans);color:var(--lc);display:flex;align-items:center;gap:5px;white-space:nowrap}
 .lg b i{width:7px;height:7px;border-radius:2px;background:var(--lc);flex:none;box-shadow:0 0 8px var(--lc)}
 .lg span{font:400 8px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -279,7 +281,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <div class="hive-title" id="hTitle"></div>
       <div class="hive-zoom" id="hZoom">1.0×</div>
       <div class="hive-move" id="hMove" role="group" aria-label="Movimiento de la constelación"><span>Movimiento</span><button data-k="fijo">Fijo</button><button data-k="suave">Suave</button><button data-k="vivo">Vivo</button></div>
-      <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="rl" aria-label="Girar a la izquierda">↺</button><button id="rr" aria-label="Girar a la derecha">↻</button><button id="zh" aria-label="Volver al centro">⌂</button></div>
+      <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="rl" aria-label="Girar a la izquierda">↺</button><button id="rr" aria-label="Girar a la derecha">↻</button><button id="zh" aria-label="Volver al centro">⌂</button><button id="lbl" aria-label="Mostrar u ocultar rótulos" aria-pressed="true">Aa</button></div>
       <div class="legend" id="legend" aria-label="Familias"></div>
       <div class="card" id="card" hidden role="dialog" aria-label="Ficha de radio"></div>
     </div>
@@ -549,7 +551,7 @@ const CLOUD={};Object.keys(FAM).forEach(k=>{const g=document.createElementNS(NS,
 S.forEach(s=>{const c=document.createElementNS(NS,"circle");c.setAttribute("r","0");CLOUD[s.g].appendChild(c);s.cl=c});
 (function(){const mesh=$("mesh");
   RINGS.forEach(v=>{const c=document.createElementNS(NS,"circle");c.setAttribute("r",rOf(v).toFixed(1));c.setAttribute("fill","none");c.setAttribute("stroke","rgba(237,237,242,.08)");c.setAttribute("stroke-width",".6");c.setAttribute("stroke-dasharray","1.5 4");mesh.appendChild(c);
-    const t=document.createElementNS(NS,"text");t.setAttribute("x","0");t.setAttribute("y",(-rOf(v)-2).toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("font-size","5.5");t.setAttribute("font-family","Geist Mono, ui-monospace, monospace");t.setAttribute("fill","rgba(237,237,242,.32)");t.textContent=Math.round(v*100)+"%";mesh.appendChild(t);LBL.push([t,5.5,0])});
+    const t=document.createElementNS(NS,"text");t.setAttribute("x","0");t.setAttribute("y",(-rOf(v)-2).toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("font-size","5.5");t.setAttribute("font-family","Geist Mono, ui-monospace, monospace");t.setAttribute("fill","rgba(237,237,242,.32)");t.textContent=Math.round(v*100)+"%";t.setAttribute("class","ring-lbl");mesh.appendChild(t);LBL.push([t,5.5,0])});
   SW8.forEach(({k,a0,mid})=>{const a=mid;const g=document.createElementNS(NS,"g");
     const l=document.createElementNS(NS,"line");const b=a0;l.setAttribute("x1",(RMIN*Math.cos(b)).toFixed(1));l.setAttribute("y1",(RMIN*Math.sin(b)).toFixed(1));l.setAttribute("x2",(RMAX*1.06*Math.cos(b)).toFixed(1));l.setAttribute("y2",(RMAX*1.06*Math.sin(b)).toFixed(1));l.setAttribute("stroke","rgba(237,237,242,.04)");l.setAttribute("stroke-width",".6");g.appendChild(l);
     sunsG.appendChild(g)});
@@ -673,7 +675,7 @@ document.querySelectorAll("#hMove button").forEach(b=>b.onclick=()=>{MOVE=b.data
    No giran ni crecen con el zoom: se ubican junto al borde de su nube o, si está fuera de vista, en el borde del mapa en su dirección. */
 const LEG=SW8.map(o=>{const b=document.createElement("button");b.className="lg";b.style.setProperty("--lc",FAM[o.k][2]);
   const n=S.filter(s=>s.g===o.k).length;
-  b.innerHTML=`<b><i></i>${esc(FAM[o.k][0])}<em>${n}</em></b><span>${esc(FAMWHY[o.k][0])}</span>`;b.title=FAMWHY[o.k].join(" · ");
+  b.innerHTML=`<b><i></i>${esc(FAM[o.k][0])}<em>${n}</em></b>`;b.title=FAMWHY[o.k].join(" · ");
   b.setAttribute("aria-label","Filtrar "+FAM[o.k][0]);
   b.onclick=()=>{SEL.fam.has(o.k)?SEL.fam.delete(o.k):SEL.fam.add(o.k);store.set("dial-f-fam",[...SEL.fam]);if(MOVE==="vivo"){F=null;resetView()}layout()};
   $("legend").appendChild(b);return{o,b,w:0,h:0}});
@@ -807,7 +809,11 @@ window.addEventListener("mouseup",e=>{if(md&&!moved&&e.target.closest&&e.target.
 sv.addEventListener("wheel",e=>{e.preventDefault();if(e.shiftKey){vrot+=(e.deltaY>0?1:-1)*.0012;return}zoomAt(e.deltaY<0?1.15:1/1.15,...toSvg(e.clientX,e.clientY))},{passive:false});
 $("zi").onclick=()=>zoomAt(1.4,0,0);$("zo").onclick=()=>zoomAt(1/1.4,0,0);
 $("zh").onclick=()=>{F=null;closeCard();rot=0;vrot=0;resetView();layout()};
-$("rl").onclick=()=>{vrot-=.0032};$("rr").onclick=()=>{vrot+=.0032};
+$("rl").onclick=()=>{vrot-=.0032};
+// Rótulos: se pueden apagar para ver solo las radios; la preferencia se recuerda
+let LBLON=store.get("dial-labels",true);
+function applyLbl(){$("sv").closest(".hive").classList.toggle("nolbl",!LBLON);$("lbl").setAttribute("aria-pressed",LBLON)}
+$("lbl").onclick=()=>{LBLON=!LBLON;store.set("dial-labels",LBLON);applyLbl()};applyLbl();$("rr").onclick=()=>{vrot+=.0032};
 
 /* ---------- Señales (Radio Browser) ---------- */
 const API=["https://de1.api.radio-browser.info","https://nl1.api.radio-browser.info","https://fi1.api.radio-browser.info","https://de2.api.radio-browser.info"];
@@ -1004,7 +1010,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02zb";
+const APP_VERSION="2026-11-02zc";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
