@@ -43,25 +43,6 @@ h1 span{color:var(--amber)}
 .clock{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 
 /* Dial */
-.dial{background:var(--dial);color:var(--dial-ink);border-radius:14px;padding:14px 0 10px;min-width:0;overflow:hidden;position:relative}
-.dial-head{display:flex;justify-content:space-between;gap:8px;padding:0 18px 4px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
-.dial-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none}
-.dial-scroll::-webkit-scrollbar{display:none}
-.band{position:relative;min-width:1180px;height:200px;margin:0 24px}
-.scale{position:absolute;left:0;right:0;top:96px;height:1px;background:color-mix(in srgb,var(--dial-ink) 45%,transparent)}
-.tick{position:absolute;top:88px;width:1px;height:16px;background:color-mix(in srgb,var(--dial-ink) 55%,transparent)}
-.tick.minor{top:92px;height:8px;opacity:.5}
-.tlabel{position:absolute;top:108px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;opacity:.7}
-.mk{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;padding:0;color:var(--dial-ink);font:500 12.5px var(--body);white-space:nowrap;cursor:pointer}
-.mk .pin{width:2px;background:var(--dial-glow);opacity:.5}
-.mk .nm{padding:6px 8px;border-radius:5px;background:color-mix(in srgb,var(--dial-ink) 8%,transparent)}
-.mk.on .nm,.mk:focus-visible .nm{background:var(--dial-glow);color:#1B1206}
-.mk.on .pin{opacity:1;box-shadow:0 0 8px var(--dial-glow)}
-.mk:focus-visible{outline:none}
-.mk.up{bottom:102px}
-.mk.down{top:96px;flex-direction:column-reverse}
-.needle{position:absolute;top:72px;width:2px;height:46px;background:var(--live);box-shadow:0 0 10px var(--live);transition:left .5s cubic-bezier(.3,.7,.2,1);pointer-events:none}
-.dial::after{content:"";position:absolute;right:0;top:34px;bottom:10px;width:28px;background:linear-gradient(90deg,transparent,var(--dial));pointer-events:none}
 
 /* Controles */
 .controls{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:var(--bg);display:grid;gap:10px;
@@ -111,7 +92,21 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
 .pl-alt:disabled{opacity:.5}
 .pl-web{flex:none;color:var(--dial-ink);font-size:13px;text-decoration:underline;opacity:.85;padding:8px 2px}
 @media (min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}}
-@media (max-width:640px){.dial{margin-inline:calc(-1 * var(--gut-l)) calc(-1 * var(--gut-r));border-radius:0}.grid{grid-template-columns:1fr}}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+/* Sonando ahora */
+.np{background:var(--dial);color:var(--dial-ink);border-radius:14px;padding:16px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+.np-art{width:112px;height:112px;border-radius:10px;object-fit:cover;background:color-mix(in srgb,var(--dial-ink) 10%,transparent);display:grid;place-items:center;font-size:40px;color:var(--dial-glow)}
+.np-body{min-width:0;display:grid;gap:3px}
+.np-eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.np-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--live)}
+.np-song{font-family:var(--display);font-weight:800;font-size:clamp(26px,6vw,36px);line-height:1;text-transform:uppercase;overflow-wrap:anywhere}
+.np-artist{font-size:17px;font-weight:600;color:var(--dial-glow);overflow-wrap:anywhere}
+.np-extra,.np-sig{font-size:13px;opacity:.85;overflow-wrap:anywhere}
+.np-sig{font-family:var(--mono);font-size:11.5px;opacity:.65}
+.np a{color:var(--dial-ink);font-size:13px;text-underline-offset:2px;justify-self:start;margin-top:4px}
+.pl-np{font-size:12.5px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:640px){.np{margin-inline:calc(-1 * var(--gut-l)) calc(-1 * var(--gut-r));border-radius:0;padding:14px var(--gut-r) 14px var(--gut-l)}.np-art{width:84px;height:84px}}
+
 /* Barra superior y Noticias */
 .topbar{background:var(--dial);color:var(--dial-ink);margin-inline:calc(-1 * var(--gut-l)) calc(-1 * var(--gut-r))}
 .topbar-in{max-width:1120px;margin:0 auto;padding:10px var(--gut-r) 10px var(--gut-l);display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -142,7 +137,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
 .hl .t{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
 .pinbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pinbar select{font:inherit;font-size:15px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
-@media (prefers-reduced-motion: reduce){.needle{transition:none}.eq i,.pl-st.wait .dot{animation:none}}
+@media (prefers-reduced-motion: reduce){.eq i,.pl-st.wait .dot{animation:none}}
 </style>
 </head>
 <body>
@@ -161,10 +156,18 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <div class="clock" id="clock"></div>
   </header>
 
-  <div class="dial" aria-label="Dial FM de Santiago">
-    <div class="dial-head"><span>FM · Santiago</span><span>88 — 108 MHz</span></div>
-    <div class="dial-scroll" id="dialScroll"><div class="band" id="band"><div class="scale"></div><div class="needle" id="needle"></div></div></div>
-  </div>
+  <section class="np" id="np" aria-live="polite" hidden>
+    <div class="np-art" id="npPh" aria-hidden="true">♪</div>
+    <img class="np-art" id="npArt" alt="" hidden>
+    <div class="np-body">
+      <div class="np-eyebrow"><span class="dot"></span><span>Sonando ahora</span><span>·</span><span id="npStation"></span></div>
+      <div class="np-song" id="npSong"></div>
+      <div class="np-artist" id="npArtist"></div>
+      <div class="np-extra" id="npExtra"></div>
+      <div class="np-sig" id="npSig"></div>
+      <a id="npLink" target="_blank" rel="noopener" hidden>Ver en Apple Music</a>
+    </div>
+  </section>
 
   <div class="controls">
     <label class="search" for="q">
@@ -207,6 +210,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
   <button class="pl-btn" id="plBtn" aria-label="Pausar">❚❚</button>
   <div class="pl-txt">
     <div class="pl-name" id="plName"></div>
+    <div class="pl-np" id="plNp" hidden></div>
     <div class="pl-st" id="plSt"><span class="dot"></span><span id="plStTxt"></span></div>
   </div>
   <button class="pl-alt" id="plAlt" hidden>Otra señal</button>
@@ -302,11 +306,11 @@ function rank(list,s){
     .filter(x=>x.url_resolved && (!re || re.test(x.name)))
     .map(x=>({x,score:(x.url_resolved.startsWith("https")?1000:0)+(x.lastcheckok?500:0)+Math.min(x.votes||0,400)+(x.bitrate>=64?20:0)}))
     .sort((a,b)=>b.score-a.score)
-    .map(o=>({url:o.x.url_resolved,uuid:o.x.stationuuid}));
+    .map(o=>({url:o.x.url_resolved,uuid:o.x.stationuuid,codec:o.x.codec||"",bitrate:o.x.bitrate||0,hls:!!o.x.hls,tags:(o.x.tags||"").split(",").map(t=>t.trim()).filter(Boolean).slice(0,4),homepage:o.x.homepage||""}));
 }
 async function candidates(s){
   if(s.direct) return [{url:s.direct,uuid:s.uuid}];
-  const key="dial-src2-"+s.n, c=store.get(key,null);
+  const key="dial-src3-"+s.n, c=store.get(key,null);
   if(c && Date.now()-c.t<7*864e5 && c.list?.length) return withPref(s,c.list);
   const qs=`/json/stations/search?name=${encodeURIComponent(s.q)}${s.cc?"&countrycode="+s.cc:""}&hidebroken=true&order=votes&reverse=true&limit=25`;
   const seen=new Set();
@@ -319,7 +323,7 @@ function withPref(s,list){
   const i=list.findIndex(x=>x.url===pref.url);
   return i>0 ? [list[i],...list.slice(0,i),...list.slice(i+1)] : i===0 ? list : [pref,...list];
 }
-function forget(s){try{localStorage.removeItem("dial-src2-"+s.n)}catch(e){}}
+function forget(s){try{localStorage.removeItem("dial-src3-"+s.n)}catch(e){}}
 
 /* ---------- Reproductor ---------- */
 let playToken=0, curList=[], curIdx=0;
@@ -346,7 +350,7 @@ async function play(s){
   const token=++playToken; current=s;
   $("player").hidden=false; $("plName").textContent=s.n; $("plWeb").href=s.u||"#"; $("plWeb").hidden=!s.u;
   curList=[]; curIdx=0; showAlt();
-  setStatus("Sintonizando…","wait"); setBtn(true); paint(); moveNeedle(s);
+  setStatus("Sintonizando…","wait"); setBtn(true); paint(); npReset(s);
   if("mediaSession" in navigator){ try{ navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:s.t||"",album:"Dial Espejo",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]}) }catch(e){} }
   let list=[];
   try{ list=await candidates(s) }catch(e){ if(token===playToken){ setStatus("Sin conexión al directorio","off"); setBtn(false);} return; }
@@ -355,7 +359,7 @@ async function play(s){
       if(token!==playToken) return;
       try{ await tryUrl(c.url,token); if(token!==playToken) return;
         curList=list; curIdx=i; showAlt();
-        setStatus(liveLabel(),"live"); setBtn(true); paint();
+        setStatus(liveLabel(),"live"); setBtn(true); paint(); npStart(s,c);
         fetch(API[0]+"/json/url/"+c.uuid).catch(()=>{});
         return;
       }catch(e){}
@@ -363,7 +367,7 @@ async function play(s){
     if(s.direct || attempt) break;
     forget(s); try{ list=await candidates(s) }catch(e){ break; }
   }
-  if(token===playToken){ audio.removeAttribute("src"); audio.load(); setStatus("Sin señal","off"); setBtn(false); paint(); }
+  if(token===playToken){ audio.removeAttribute("src"); audio.load(); setStatus("Sin señal","off"); setBtn(false); paint(); npStop(); $("npSong").textContent="Sin señal"; }
 }
 audio.addEventListener("pause",()=>{ if(current){ setBtn(false); if($("plStTxt").textContent.startsWith("En vivo")) setStatus("En pausa","off"); paint(); }});
 audio.addEventListener("playing",()=>{ if(current){ setBtn(true); setStatus(liveLabel(),"live"); paint(); }});
@@ -382,7 +386,7 @@ async function nextSignal(){
     setStatus(`Probando señal ${i+1} de ${n}…`,"wait");
     try{ await tryUrl(curList[i].url,token); if(token!==playToken) return;
       curIdx=i; store.set("dial-pref-"+s.n,curList[i]);
-      setStatus(liveLabel(),"live"); btn.disabled=false; paint(); return;
+      setStatus(liveLabel(),"live"); btn.disabled=false; paint(); npStart(s,curList[i]); return;
     }catch(e){ if(token!==playToken) return; }
   }
   btn.disabled=false; setStatus("No hay otra señal disponible","off"); setBtn(false); paint();
@@ -400,27 +404,60 @@ if("mediaSession" in navigator){
   }catch(e){}
 }
 
-/* ---------- Dial ---------- */
-const band=$("band"), needle=$("needle");
-const pos=f=>((f-88)/20*100)+"%";
-for(let i=0;i<=40;i++){ const f=88+i*.5, major=i%4===0;
-  const t=document.createElement("div"); t.className="tick"+(major?"":" minor"); t.style.left=pos(f); band.appendChild(t);
-  if(major){const l=document.createElement("div"); l.className="tlabel"; l.textContent=f; l.style.left=pos(f); band.appendChild(l);} }
-const heights=[18,44,70];
-S.filter(s=>s.f).sort((a,b)=>a.f-b.f).forEach((s,i)=>{
-  const b=document.createElement("button"); const up=i%2===0, lvl=Math.floor(i/2)%3;
-  b.className="mk "+(up?"up":"down"); b.style.left=pos(s.f); b.dataset.mk=S.indexOf(s);
-  b.innerHTML=`<span class="nm">${esc(s.n)}</span><span class="pin" style="height:${heights[lvl]}px"></span>`;
-  b.setAttribute("aria-label",`Escuchar ${s.n}, ${s.f.toFixed(1)} FM`);
-  b.addEventListener("click",()=>play(s)); band.appendChild(b);
-});
-function moveNeedle(s){
-  if(!s.f) return; needle.style.left=pos(s.f);
-  const sc=$("dialScroll"); const x=band.offsetLeft+band.offsetWidth*(s.f-88)/20 - sc.clientWidth/2;
-  sc.scrollTo({left:x,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+/* ---------- Sonando ahora ---------- */
+const NP_FN="https://yfjaznujnvkqgdlbnviu.supabase.co/functions/v1/dial-nowplaying";
+const NP_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
+let npTimer=null, npSrc=null, npStation=null, npLast="";
+function npReset(s){
+  npStop(); npStation=s; npSrc=null; npLast="";
+  $("np").hidden=false; $("npStation").textContent=s.n;
+  $("npSong").textContent="Sintonizando…"; $("npArtist").textContent=""; $("npExtra").textContent=s.t?s.t:""; $("npSig").textContent="";
+  $("npArt").hidden=true; $("npPh").hidden=false; $("npLink").hidden=true; $("plNp").hidden=true;
 }
-needle.style.left=pos(93.3);
-requestAnimationFrame(()=>{ const sc=$("dialScroll"); sc.scrollLeft=band.offsetLeft+band.offsetWidth*(93.3-88)/20-sc.clientWidth/2; });
+function npStop(){ clearTimeout(npTimer); npTimer=null; }
+function npSig(c){
+  if(!c) return "";
+  return [c.codec, c.bitrate?c.bitrate+" kbps":"", ...(c.tags||[])].filter(Boolean).join(" · ");
+}
+function npStart(s,c){ npStation=s; npSrc=c; $("npSig").textContent=npSig(c); npPoll(); }
+async function npPoll(){
+  clearTimeout(npTimer);
+  if(!npSrc || !current || current!==npStation) return;
+  const s=npStation, c=npSrc;
+  if(c.hls || /\.m3u8(\?|$)/i.test(c.url)){ npShow(s,null); return; }
+  try{
+    const r=await fetch(NP_FN+"?url="+encodeURIComponent(c.url),{headers:{apikey:NP_KEY,Authorization:"Bearer "+NP_KEY}});
+    const j=await r.json(); if(current===s) npShow(s,j);
+  }catch(e){ if(current===s) npShow(s,null); }
+  if(current===s && !audio.paused && document.visibilityState==="visible") npTimer=setTimeout(npPoll,25000);
+}
+function npShow(s,j){
+  const song=j&&j.song, artist=j&&j.artist, raw=j&&j.raw;
+  if(song && artist){
+    $("npSong").textContent=song; $("npArtist").textContent=artist;
+    $("npExtra").textContent=[j.album, j.year, j.genre].filter(Boolean).join(" · ");
+  } else if(raw){
+    // Sin "artista - canción": suele ser el programa o un aviso de la emisora
+    $("npSong").textContent=raw; $("npArtist").textContent="En antena";
+    $("npExtra").textContent=[j.stream_description, j.stream_genre].filter(Boolean).join(" · ") || (s.t||"");
+  } else {
+    $("npSong").textContent=s.n; $("npArtist").textContent="En vivo";
+    $("npExtra").textContent=(j&&j.stream_description) || "Esta señal no informa qué está sonando." ;
+  }
+  if(j && j.artwork){ $("npArt").src=j.artwork; $("npArt").alt=`Carátula de ${song||""}`; $("npArt").hidden=false; $("npPh").hidden=true; }
+  else { $("npArt").hidden=true; $("npPh").hidden=false; }
+  if(j && j.link){ $("npLink").href=j.link; $("npLink").hidden=false; } else $("npLink").hidden=true;
+  const line = song&&artist ? `${artist} · ${song}` : (raw||"");
+  $("plNp").textContent=line; $("plNp").hidden=!line;
+  if(line!==npLast && "mediaSession" in navigator){
+    npLast=line;
+    try{ navigator.mediaSession.metadata=new MediaMetadata({title:song||raw||s.n,artist:artist||s.n,album:s.n,
+      artwork:[{src:(j&&j.artwork)||"icon-512.png",sizes:j&&j.artwork?"300x300":"512x512",type:j&&j.artwork?"image/jpeg":"image/png"}]}); }catch(e){}
+  }
+}
+audio.addEventListener("playing",()=>{ if(npSrc && current===npStation && !npTimer) npPoll(); });
+audio.addEventListener("pause",npStop);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && !audio.paused) npPoll(); });
 
 /* ---------- Listas ---------- */
 const chips=$("chips");
@@ -460,14 +497,13 @@ function render(){
   REGIONS.forEach(r=>{
     const items=list.filter(s=>s.r===r); if(!items.length) return;
     const sec=document.createElement("section");
-    sec.innerHTML=`<h2>${r}</h2><p class="meta">${items.length} emisora${items.length>1?"s":""}${r==="Chile"?" · por dial":""}</p>`;
+    sec.innerHTML=`<h2>${r}</h2><p class="meta">${items.length} emisora${items.length>1?"s":""}${r==="Chile"?" · por frecuencia":""}</p>`;
     const g=document.createElement("div"); g.className="grid"; items.forEach(s=>g.appendChild(card(s,S.indexOf(s))));
     sec.appendChild(g); box.appendChild(sec);
   });
   $("worldBox").hidden = q.length<2;
   $("worldBtn").textContent=`Buscar “${q}” en todas las radios del mundo`;
   renderWorld();
-  document.querySelectorAll(".mk").forEach(m=>m.classList.toggle("on",S[+m.dataset.mk]===current));
 }
 function paint(){ render(); }
 
