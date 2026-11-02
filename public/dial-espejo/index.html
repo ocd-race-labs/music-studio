@@ -71,6 +71,16 @@ a{color:inherit}
 .card{position:absolute;z-index:5;width:min(236px,calc(100% - 20px));background:rgba(9,9,14,.74);-webkit-backdrop-filter:blur(12px) saturate(1.3);backdrop-filter:blur(12px) saturate(1.3);
   border:1px solid var(--cc,#5B7BFF);border-radius:14px;padding:10px 10px 9px;box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 0 22px -4px var(--cc,#5B7BFF);color:var(--ink);display:grid;gap:5px;pointer-events:auto}
 .card[hidden]{display:none}
+.card{grid-template-columns:minmax(0,1fr);overflow:hidden;max-width:calc(100% - 16px)}
+.card>*{min-width:0}.card .cn,.card .cm,.card .cw{overflow-wrap:anywhere}
+.legend{position:absolute;inset:0;pointer-events:none;z-index:3}
+.lg{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;background:rgba(7,7,10,.8);border:1px solid color-mix(in srgb,var(--lc) 55%,transparent);border-radius:9px;padding:3px 7px 3px 6px;display:grid;gap:0;max-width:112px;text-align:left;will-change:transform}
+.lg b em{font:400 9px var(--mono);font-style:normal;opacity:.7}
+.lg.min span{display:none}
+.lg b{font:600 10px var(--sans);color:var(--lc);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.lg b i{width:7px;height:7px;border-radius:2px;background:var(--lc);flex:none;box-shadow:0 0 8px var(--lc)}
+.lg span{font:400 8px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lg[aria-pressed="true"]{background:var(--lc)}.lg[aria-pressed="true"] b,.lg[aria-pressed="true"] span{color:#07070A}.lg[aria-pressed="true"] b i{background:#07070A}
 .card .ch{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
 .card .cn{font-size:14.5px;font-weight:600;letter-spacing:-.01em;line-height:1.2;text-shadow:0 0 12px var(--cc)}
 .card .cx{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0 2px;cursor:pointer}
@@ -79,7 +89,7 @@ a{color:inherit}
 .card .bars{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:3px 6px;align-items:center;font:400 9px var(--mono);color:var(--dim)}
 .card .bar{height:3px;border-radius:2px;background:rgba(237,237,242,.1);overflow:hidden}.card .bar i{display:block;height:100%;background:var(--cc)}
 .card .cb{display:flex;gap:5px}
-.card .cb button{border:1px solid rgba(237,237,242,.18);background:rgba(237,237,242,.05);border-radius:999px;padding:6px 9px;font-size:12px;cursor:pointer;white-space:nowrap}.card .cb .go{flex:1}
+.card .cb button{border:1px solid rgba(237,237,242,.18);background:rgba(237,237,242,.05);border-radius:999px;padding:6px 8px;font-size:11.5px;cursor:pointer;white-space:nowrap;flex:none;min-width:30px}.card .cb .go{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .card .cb .go{background:var(--cc);color:#07070A;border-color:var(--cc);font-weight:600;box-shadow:0 0 14px -2px var(--cc)}
 
 /* Panal */
@@ -197,6 +207,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <div class="hive-title" id="hTitle"></div>
       <div class="hive-zoom" id="hZoom">1.0×</div>
       <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="rl" aria-label="Girar a la izquierda">↺</button><button id="rr" aria-label="Girar a la derecha">↻</button><button id="zh" aria-label="Volver al centro">⌂</button></div>
+      <div class="legend" id="legend" aria-label="Familias"></div>
       <div class="card" id="card" hidden role="dialog" aria-label="Ficha de radio"></div>
     </div>
     <div><div class="nbh" id="nbTitle"></div><div id="nbs"></div></div>
@@ -380,15 +391,9 @@ const CLOUD={};Object.keys(FAM).forEach(k=>{const g=document.createElementNS(NS,
 S.forEach(s=>{const c=document.createElementNS(NS,"circle");c.setAttribute("r","0");CLOUD[s.g].appendChild(c);s.cl=c});
 (function(){const mesh=$("mesh");
   RINGS.forEach(v=>{const c=document.createElementNS(NS,"circle");c.setAttribute("r",rOf(v).toFixed(1));c.setAttribute("fill","none");c.setAttribute("stroke","rgba(237,237,242,.08)");c.setAttribute("stroke-width",".6");c.setAttribute("stroke-dasharray","1.5 4");mesh.appendChild(c);
-    const t=document.createElementNS(NS,"text");t.setAttribute("x","0");t.setAttribute("y",(-rOf(v)-2).toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("font-size","5.5");t.setAttribute("font-family","Geist Mono, ui-monospace, monospace");t.setAttribute("fill","rgba(237,237,242,.32)");t.textContent=Math.round(v*100)+"%";mesh.appendChild(t)});
+    const t=document.createElementNS(NS,"text");t.setAttribute("x","0");t.setAttribute("y",(-rOf(v)-2).toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("font-size","5.5");t.setAttribute("font-family","Geist Mono, ui-monospace, monospace");t.setAttribute("fill","rgba(237,237,242,.32)");t.textContent=Math.round(v*100)+"%";mesh.appendChild(t);LBL.push([t,5.5,0])});
   SW8.forEach(({k,a0,mid})=>{const a=mid;const g=document.createElementNS(NS,"g");
     const l=document.createElementNS(NS,"line");const b=a0;l.setAttribute("x1",(RMIN*Math.cos(b)).toFixed(1));l.setAttribute("y1",(RMIN*Math.sin(b)).toFixed(1));l.setAttribute("x2",(RMAX*1.06*Math.cos(b)).toFixed(1));l.setAttribute("y2",(RMAX*1.06*Math.sin(b)).toFixed(1));l.setAttribute("stroke","rgba(237,237,242,.04)");l.setAttribute("stroke-width",".6");g.appendChild(l);
-    const d=document.createElementNS(NS,"circle");d.setAttribute("cx",(RMAX*.97*Math.cos(a)).toFixed(1));d.setAttribute("cy",(RMAX*.97*Math.sin(a)).toFixed(1));d.setAttribute("r","3");d.setAttribute("fill",FAM[k][2]);g.appendChild(d);
-    const t=document.createElementNS(NS,"text");t.setAttribute("x",(RMAX*.97*Math.cos(a)).toFixed(1));t.setAttribute("y",(RMAX*.97*Math.sin(a)+9).toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("font-size","5.5");t.setAttribute("font-family","Geist Mono, ui-monospace, monospace");t.setAttribute("fill",FAM[k][2]);t.textContent=FAM[k][0];t.setAttribute("font-weight","600");t.setAttribute("class","why");t.style.fill=FAM[k][2];t.style.fontSize="5.8px";g.appendChild(t);
-    const w=document.createElementNS(NS,"text");w.setAttribute("text-anchor","middle");w.setAttribute("font-size","4.6");w.setAttribute("font-family","Geist Mono, ui-monospace, monospace");w.setAttribute("fill","rgba(237,237,242,.6)");w.setAttribute("class","why");w.style.fontSize="4.6px";
-    w.setAttribute("x",t.getAttribute("x"));w.setAttribute("y",t.getAttribute("y"));
-    FAMWHY[k].forEach((line,j)=>{const ts=document.createElementNS(NS,"tspan");ts.setAttribute("x",t.getAttribute("x"));ts.setAttribute("dy",j?"1.2em":"1.5em");ts.textContent=line;w.appendChild(ts)});g.appendChild(w);
-    LBL.push([t,5.8,2.4],[w,4.6,2.2]);
     sunsG.appendChild(g)});
   mesh.appendChild(sunsG);
   mesh.appendChild(cloudsG);
@@ -499,6 +504,35 @@ function layout(){
   S.forEach(s=>s.el.querySelector(".sel").setAttribute("opacity",s===F?1:0));
   renderFilters();
 }
+/* ---------- Leyenda de familias: rótulos fijos en pantalla que apuntan a su sector ----------
+   No giran ni crecen con el zoom: se ubican junto al borde de su nube o, si está fuera de vista, en el borde del mapa en su dirección. */
+const LEG=SW8.map(o=>{const b=document.createElement("button");b.className="lg";b.style.setProperty("--lc",FAM[o.k][2]);
+  const n=S.filter(s=>s.g===o.k).length;
+  b.innerHTML=`<b><i></i>${esc(FAM[o.k][0])}<em>${n}</em></b><span>${esc(FAMWHY[o.k][0])}</span>`;b.title=FAMWHY[o.k].join(" · ");
+  b.setAttribute("aria-label","Filtrar "+FAM[o.k][0]);
+  b.onclick=()=>{SEL.fam.has(o.k)?SEL.fam.delete(o.k):SEL.fam.add(o.k);store.set("dial-f-fam",[...SEL.fam]);if(MOVE==="vivo"){F=null;resetView()}layout()};
+  $("legend").appendChild(b);return{o,b,w:0,h:0}});
+function placeLegend(){
+  const W=sv.clientWidth,H=sv.clientHeight;if(!W)return;const k=W/380;
+  const L=6,T=40,Rr=W-52,B=H-24,cx=(px+190)*k,cy=(py+190)*k;
+  const mini=z>1.6;
+  const pos=LEG.map(g=>{if(g.mini!==mini){g.mini=mini;g.b.classList.toggle("min",mini);g.w=0}if(!g.w){g.w=g.b.offsetWidth;g.h=g.b.offsetHeight}
+    g.b.setAttribute("aria-pressed",SEL.fam.has(g.o.k));
+    const a=g.o.mid+rot,dx=Math.cos(a),dy=Math.sin(a);
+    // punto ideal: justo fuera del borde exterior de su nube
+    let x=cx+dx*(RMAX*1.02*z*k),y=cy+dy*(RMAX*1.02*z*k);
+    const ccx=Math.max(L,Math.min(Rr,cx)),ccy=Math.max(T,Math.min(B,cy));
+    if(x<L||x>Rr||y<T||y>B){ // fuera de vista: rayo desde el centro visible hasta el borde
+      let t=1e9;if(dx>0)t=Math.min(t,(Rr-ccx)/dx);if(dx<0)t=Math.min(t,(L-ccx)/dx);if(dy>0)t=Math.min(t,(B-ccy)/dy);if(dy<0)t=Math.min(t,(T-ccy)/dy);
+      x=ccx+dx*t;y=ccy+dy*t}
+    // ancla según dirección, para que el rótulo quede del lado de afuera
+    return{g,x:x-g.w*(1-dx)/2,y:y-g.h*(1-dy)/2}});
+  const clamp=p=>{p.x=Math.max(4,Math.min(W-p.g.w-48,p.x));p.y=Math.max(36,Math.min(H-p.g.h-4,p.y))};
+  for(let it=0;it<24;it++){pos.forEach(clamp);for(let i=0;i<pos.length;i++)for(let j=i+1;j<pos.length;j++){const A=pos[i],Bq=pos[j];
+    const ox=Math.min(A.x+A.g.w,Bq.x+Bq.g.w)-Math.max(A.x,Bq.x),oy=Math.min(A.y+A.g.h,Bq.y+Bq.g.h)-Math.max(A.y,Bq.y);
+    if(ox>0&&oy>0){if(oy<ox){const s=(A.y<Bq.y?-1:1)*(oy/2+1);A.y+=s;Bq.y-=s}else{const s=(A.x<Bq.x?-1:1)*(ox/2+1);A.x+=s;Bq.x-=s}}}}
+  pos.forEach(p=>{clamp(p);p.g.b.style.transform=`translate(${p.x.toFixed(0)}px,${p.y.toFixed(0)}px)`});
+}
 let ethL=[];
 // Por qué una radio se conecta con la que suena: lo que más aporta a su afinidad, en palabras
 function whyLink(o){const p=o.p||{},out=[];
@@ -530,7 +564,7 @@ function draw(t,force){
       const hit=placed.some(q=>Math.abs(q[0]-lx)<42*LK&&Math.abs(q[1]-ly)<6.5*LK);tx.style.opacity=hit?0:1;if(!hit)placed.push([lx,ly]);
       tx.setAttribute("x",lx.toFixed(1));tx.setAttribute("y",ly.toFixed(1))}});
 }
-requestAnimationFrame(function loop(t){if(!$("view-radio").hidden&&document.visibilityState==="visible"){draw(t);if(cardS)placeCard()}requestAnimationFrame(loop)});
+requestAnimationFrame(function loop(t){if(!$("view-radio").hidden&&document.visibilityState==="visible"){draw(t);placeLegend();if(cardS)placeCard()}requestAnimationFrame(loop)});
 function pick(s){
   if(F===s && current===s){toggle();return}
   F=s;if(MOVE!=="fijo")resetView();layout();play(s);
@@ -560,6 +594,7 @@ function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProper
 function closeCard(){cardS=null;$("card").hidden=true}
 // Ubica la ficha arriba, abajo o a un costado del hexágono, donde quepa; la sigue mientras orbita
 function placeCard(){if(!cardS)return;const c=$("card"),hv=c.parentElement.getBoundingClientRect(),r=cardS.el.getBoundingClientRect();
+  const want=Math.round(Math.min(250,hv.width-16))+"px";if(c.style.width!==want)c.style.width=want;
   const cw=c.offsetWidth,ch=c.offsetHeight,m=8,cx=r.left+r.width/2-hv.left,top=r.top-hv.top,bot=r.bottom-hv.top;
   let x=cx-cw/2,y;
   if(top-ch-m>=m)y=top-ch-m;else if(bot+ch+m<=hv.height-m)y=bot+m;
@@ -573,7 +608,7 @@ function apply(){z=Math.max(.5,Math.min(6,z));world.setAttribute("transform",`tr
   const k=Math.min(1.15,Math.max(.22,Z0/z));LK=k;
   LBL.forEach(([el,fs,sw])=>{el.style.fontSize=(fs*k).toFixed(2)+"px";el.style.strokeWidth=(sw*k).toFixed(2)+"px"});
   document.querySelectorAll("#whyG text").forEach(el=>{el.style.fontSize=(5.2*k).toFixed(2)+"px";el.style.strokeWidth=(2.4*k).toFixed(2)+"px"});
-  sunsG.querySelectorAll("circle").forEach(c=>c.setAttribute("r",(3*k).toFixed(2)))}
+}
 let LK=1;
 const Z0=.95;
 function resetView(){z=Z0;px=0;py=0;apply()}
@@ -736,7 +771,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02o";
+const APP_VERSION="2026-11-02p";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
