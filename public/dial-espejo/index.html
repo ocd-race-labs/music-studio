@@ -107,6 +107,8 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
 .pl-st .dot{width:7px;height:7px;border-radius:50%;background:var(--live)}
 .pl-st.wait .dot{animation:blink 1s infinite}
 @keyframes blink{50%{opacity:.2}}
+.pl-alt{flex:none;font:600 13px var(--body);color:var(--dial-ink);background:transparent;border:1px solid color-mix(in srgb,var(--dial-ink) 45%,transparent);border-radius:999px;padding:9px 12px;cursor:pointer}
+.pl-alt:disabled{opacity:.5}
 .pl-web{flex:none;color:var(--dial-ink);font-size:13px;text-decoration:underline;opacity:.85;padding:8px 2px}
 @media (min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}}
 @media (max-width:640px){.dial{margin-inline:calc(-1 * var(--gut-l)) calc(-1 * var(--gut-r));border-radius:0}.grid{grid-template-columns:1fr}}
@@ -151,6 +153,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <div class="pl-name" id="plName"></div>
     <div class="pl-st" id="plSt"><span class="dot"></span><span id="plStTxt"></span></div>
   </div>
+  <button class="pl-alt" id="plAlt" hidden>Otra señal</button>
   <a class="pl-web" id="plWeb" target="_blank" rel="noopener">Web</a>
 </div>
 <audio id="audio" preload="none" playsinline></audio>
@@ -247,17 +250,25 @@ function rank(list,s){
 }
 async function candidates(s){
   if(s.direct) return [{url:s.direct,uuid:s.uuid}];
-  const key="dial-src-"+s.n, c=store.get(key,null);
-  if(c && Date.now()-c.t<7*864e5 && c.list?.length) return c.list;
+  const key="dial-src2-"+s.n, c=store.get(key,null);
+  if(c && Date.now()-c.t<7*864e5 && c.list?.length) return withPref(s,c.list);
   const qs=`/json/stations/search?name=${encodeURIComponent(s.q)}${s.cc?"&countrycode="+s.cc:""}&hidebroken=true&order=votes&reverse=true&limit=25`;
-  const list=rank(await api(qs),s).slice(0,4);
+  const seen=new Set();
+  const list=rank(await api(qs),s).filter(x=>!seen.has(x.url)&&seen.add(x.url)).slice(0,8);
   if(list.length) store.set(key,{t:Date.now(),list});
-  return list;
+  return withPref(s,list);
 }
-function forget(s){try{localStorage.removeItem("dial-src-"+s.n)}catch(e){}}
+function withPref(s,list){
+  const pref=store.get("dial-pref-"+s.n,null); if(!pref) return list;
+  const i=list.findIndex(x=>x.url===pref.url);
+  return i>0 ? [list[i],...list.slice(0,i),...list.slice(i+1)] : i===0 ? list : [pref,...list];
+}
+function forget(s){try{localStorage.removeItem("dial-src2-"+s.n)}catch(e){}}
 
 /* ---------- Reproductor ---------- */
-let playToken=0;
+let playToken=0, curList=[], curIdx=0;
+function liveLabel(){ return curList.length>1 ? `En vivo · señal ${curIdx+1} de ${curList.length}` : "En vivo"; }
+function showAlt(){ $("plAlt").hidden = !(curList.length>1); }
 function setStatus(txt,mode){
   $("plStTxt").textContent=txt;
   $("plSt").className="pl-st"+(mode==="wait"?" wait":"");
@@ -278,15 +289,17 @@ async function play(s){
   if(current===s && $("plStTxt").textContent!=="Sin señal"){ toggle(); return; }
   const token=++playToken; current=s;
   $("player").hidden=false; $("plName").textContent=s.n; $("plWeb").href=s.u||"#"; $("plWeb").hidden=!s.u;
+  curList=[]; curIdx=0; showAlt();
   setStatus("Sintonizando…","wait"); setBtn(true); paint(); moveNeedle(s);
   if("mediaSession" in navigator){ try{ navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:s.t||"",album:"Dial Espejo",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]}) }catch(e){} }
   let list=[];
   try{ list=await candidates(s) }catch(e){ if(token===playToken){ setStatus("Sin conexión al directorio","off"); setBtn(false);} return; }
   for(let attempt=0; attempt<2; attempt++){
-    for(const c of list){
+    for(const [i,c] of list.entries()){
       if(token!==playToken) return;
       try{ await tryUrl(c.url,token); if(token!==playToken) return;
-        setStatus("En vivo","live"); setBtn(true); paint();
+        curList=list; curIdx=i; showAlt();
+        setStatus(liveLabel(),"live"); setBtn(true); paint();
         fetch(API[0]+"/json/url/"+c.uuid).catch(()=>{});
         return;
       }catch(e){}
@@ -296,14 +309,29 @@ async function play(s){
   }
   if(token===playToken){ audio.removeAttribute("src"); audio.load(); setStatus("Sin señal","off"); setBtn(false); paint(); }
 }
-audio.addEventListener("pause",()=>{ if(current){ setBtn(false); if($("plStTxt").textContent==="En vivo") setStatus("En pausa","off"); paint(); }});
-audio.addEventListener("playing",()=>{ if(current){ setBtn(true); setStatus("En vivo","live"); paint(); }});
+audio.addEventListener("pause",()=>{ if(current){ setBtn(false); if($("plStTxt").textContent.startsWith("En vivo")) setStatus("En pausa","off"); paint(); }});
+audio.addEventListener("playing",()=>{ if(current){ setBtn(true); setStatus(liveLabel(),"live"); paint(); }});
 audio.addEventListener("waiting",()=>{ if(current && !audio.paused) setStatus("Cargando…","wait"); });
 function toggle(){ if(!current) return;
   if(!audio.paused){ audio.pause(); return; }
   if(audio.src && $("plStTxt").textContent!=="Sin señal"){ audio.load(); setStatus("Sintonizando…","wait"); audio.play().catch(()=>{ const s=current; current=null; play(s); }); }
   else { const s=current; current=null; play(s); } }
 $("plBtn").addEventListener("click",toggle);
+async function nextSignal(){
+  if(!current || curList.length<2) return;
+  const s=current, token=++playToken, n=curList.length, btn=$("plAlt");
+  btn.disabled=true; setBtn(true);
+  for(let k=1;k<n;k++){
+    const i=(curIdx+k)%n;
+    setStatus(`Probando señal ${i+1} de ${n}…`,"wait");
+    try{ await tryUrl(curList[i].url,token); if(token!==playToken) return;
+      curIdx=i; store.set("dial-pref-"+s.n,curList[i]);
+      setStatus(liveLabel(),"live"); btn.disabled=false; paint(); return;
+    }catch(e){ if(token!==playToken) return; }
+  }
+  btn.disabled=false; setStatus("No hay otra señal disponible","off"); setBtn(false); paint();
+}
+$("plAlt").addEventListener("click",nextSignal);
 function bySid(i){ return i>=WORLD_BASE ? worldList[i-WORLD_BASE] : S[i]; }
 function visible(){ return [...document.querySelectorAll("[data-sid]")].map(el=>bySid(+el.dataset.sid)).filter(Boolean); }
 function step(d){ const v=visible(); if(!v.length) return; const i=v.indexOf(current); play(v[(i+d+v.length)%v.length]); }
