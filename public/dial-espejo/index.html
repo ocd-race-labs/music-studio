@@ -148,9 +148,6 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .mq{overflow:hidden;white-space:nowrap;text-overflow:clip}
 .mq .tr{display:inline-flex;will-change:transform}
 .mq .gap{padding:0 18px;opacity:.5}
-.mq.run .tr{animation:mq var(--d,10s) linear infinite}
-@keyframes mq{0%,14%{transform:translateX(0)}100%{transform:translateX(var(--x,0))}}
-@media (prefers-reduced-motion: reduce){.mq.run .tr{animation:none}.mq{text-overflow:ellipsis}}
 @media (min-width:760px){.radio-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start}}
 @media (prefers-reduced-motion: reduce){.hx{transition:none}.eth,.eq i{animation:none}}
 </style>
@@ -491,14 +488,18 @@ async function healthCheck(){
 
 /* ---------- Reproductor y banda inferior ---------- */
 function mset(id,txt){const el=$(id);txt=String(txt??"");if(el._t===txt)return;el._t=txt;
-  el.classList.remove("run");el.innerHTML=`<span class="tr"><span>${esc(txt)}</span></span>`;
+  if(el._a){el._a.cancel();el._a=null}el.classList.remove("run");el.innerHTML=`<span class="tr"><span>${esc(txt)}</span></span>`;
   requestAnimationFrame(()=>fitMq(el));setTimeout(()=>fitMq(el),150)}
 function fitMq(el){const tr=el.firstChild;if(!tr)return;const txt=el._t;const first=tr.firstChild;
   if(first.offsetWidth>el.clientWidth+2){
     if(tr.children.length<3)tr.innerHTML=`<span>${esc(txt)}</span><span class="gap">•</span><span>${esc(txt)}</span>`;
     const shift=tr.children[2].offsetLeft-tr.children[0].offsetLeft;
-    el.style.setProperty("--x",-shift+"px");el.style.setProperty("--d",(shift/28/0.86+.5).toFixed(1)+"s");el.classList.add("run");
-  }else{if(tr.children.length>1)tr.innerHTML=`<span>${esc(txt)}</span>`;el.classList.remove("run")}}
+    // Web Animations en vez de keyframes con variables: Safari en iPhone no siempre recalcula var() dentro de @keyframes
+    if(el._a&&el._shift===shift&&el._a.playState==="running")return;
+    if(el._a)el._a.cancel();el._shift=shift;el.classList.add("run");
+    const ms=Math.max(4000,shift/28/0.86*1000+500);
+    el._a=tr.animate([{transform:"translateX(0)",offset:0},{transform:"translateX(0)",offset:Math.min(.3,1500/ms)},{transform:`translateX(${-shift}px)`,offset:1}],{duration:ms,iterations:Infinity,easing:"linear"});
+  }else{if(el._a){el._a.cancel();el._a=null}if(tr.children.length>1)tr.innerHTML=`<span>${esc(txt)}</span>`;el.classList.remove("run")}}
 const refitMq=()=>["bT","bA","bM"].forEach(id=>{const el=$(id);if(el._t!=null)fitMq(el)});
 window.addEventListener("resize",refitMq);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(refitMq);
 let current=null,playToken=0,curList=[],curIdx=0,statusTxt="";
@@ -580,7 +581,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02l";
+const APP_VERSION="2026-11-02m";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
