@@ -345,11 +345,11 @@ const audio=$("audio");
 /* ---------- Catálogo y perfiles ----------
    nombre|corto|país|familia|idioma|habla(0-1)|energía(0-1)|audiencia(1-5)|FM Santiago|etiquetas|búsqueda|patrón|web */
 const FAM={news:["Noticias","var(--news)","#5B7BFF",1920],culture:["Cultura","var(--culture)","#8FA3FF",1930],classic:["Clásica","var(--classic)","#F2B544",1700],jazz:["Jazz","var(--jazz)","#2FD3A0",1915],
-  rock:["Rock e indie","var(--rock)","#FF5C7A",1955],elec:["Electrónica","#E85CFF","#E85CFF",1990],folk:["Folklore y raíces","#9BCB6A","#9BCB6A",1900],pop:["Pop","var(--pop)","#B98CFF",1960],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
-const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán",it:"Italiano",nl:"Neerlandés",ar:"Árabe",ja:"Japonés",ko:"Coreano",hi:"Hindi"};
-const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía"};
+  rock:["Rock e indie","var(--rock)","#FF5C7A",1955],elec:["Electrónica","#E85CFF","#E85CFF",1990],metal:["Metal","#B9C3D6","#B9C3D6",1980],folk:["Folklore y raíces","#9BCB6A","#9BCB6A",1900],pop:["Pop","var(--pop)","#B98CFF",1960],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
+const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán",it:"Italiano",nl:"Neerlandés",ar:"Árabe",ja:"Japonés",ko:"Coreano",hi:"Hindi",pl:"Polaco"};
+const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía",PL:"Europa",AE:"Asia"};
 const REGIONS=["Chile","Latinoamérica","Norteamérica","Europa","Asia","África","Oceanía"];
-const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35],NZ:[-41.29,174.78]};
+const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35],NZ:[-41.29,174.78],PL:[52.23,21.01],AE:[25.2,55.27]};
 const RAW=`Radio Cooperativa|Coop|CL|news|es|.95|.4|4|93.3|noticias actualidad política|Cooperativa||https://www.cooperativa.cl
 Radio Bío-Bío|BíoBío|CL|news|es|.95|.4|4|99.7|noticias actualidad regional|Bio|b[ií]o.?b[ií]o|https://www.biobiochile.cl
 ADN Radio|ADN|CL|news|es|.9|.5|3|91.7|noticias deportes actualidad|ADN||https://www.adnradio.cl
@@ -447,11 +447,11 @@ SomaFM Indie Pop Rocks|Soma IP|US|rock|en|.02|.65|2||indie pop alternativo|Indie
 SomaFM Secret Agent|Soma SA|US|ecl|en|.02|.4|2||lounge downtempo ecléctica|Secret Agent||https://somafm.com/secretagent/
 Radio Paradise Mellow|RP Mel|US|ecl|en|.02|.3|2||ecléctica acústica adulto|Radio Paradise Mellow|mellow|https://radioparadise.com
 Double J|Double J|AU|rock|en|.25|.6|3||indie rock adulto pública|Double J||https://www.abc.net.au/listen/doublej
-Kerrang! Radio|Kerrang|GB|rock|en|.15|.9|2||metal hard-rock rock alternativo|Kerrang|kerrang|https://www.kerrangradio.co.uk
+Kerrang! Radio|Kerrang|GB|metal|en|.15|.9|2||metal hard-rock rock alternativo|Kerrang|kerrang|https://www.kerrangradio.co.uk
 ROCK ANTENNE|RockAnt|DE|rock|de|.2|.8|3||rock hard-rock rock-clásico|ROCK ANTENNE|^rock antenne$|https://www.rockantenne.de
-ROCK ANTENNE Heavy Metal|RA Metal|DE|rock|de|.05|.95|2||metal heavy-metal hard-rock|ROCK ANTENNE Heavy Metal|heavy metal|https://www.rockantenne.de
+ROCK ANTENNE Heavy Metal|RA Metal|DE|metal|de|.05|.95|2||metal heavy-metal hard-rock|ROCK ANTENNE Heavy Metal|heavy metal|https://www.rockantenne.de
 RADIO BOB!|BOB!|DE|rock|de|.2|.8|3||rock hard-rock metal|RADIO BOB|^radio bob!?$|https://www.radiobob.de
-SomaFM Metal Detector|Soma MD|US|rock|en|.02|.95|1||metal heavy-metal|Metal Detector||https://somafm.com/metal/
+SomaFM Metal Detector|Soma MD|US|metal|en|.02|.95|1||metal heavy-metal|Metal Detector||https://somafm.com/metal/
 Venice Classic Radio|Venice|IT|classic|it|.02|.2|2||clásica barroco ópera|Venice Classic||https://www.veniceclassicradio.eu
 WFMT|WFMT|US|classic|en|.15|.2|3||clásica ópera pública|WFMT||https://www.wfmt.com
 KUSC|KUSC|US|classic|en|.15|.2|3||clásica pública|KUSC||https://www.kusc.org
@@ -476,7 +476,12 @@ RNZ National|RNZ|NZ|news|en|.9|.35|3||noticias cultura pública|RNZ National|nat
 Radio Nacional Argentina|RNA|AR|news|es|.9|.4|4||noticias cultura pública|Radio Nacional Argentina|| am 870)?|https://www.radionacional.com.ar
 Bloomberg Radio|Bloomb|US|news|en|.95|.45|3||noticias economía mercados|Bloomberg|bloomberg|https://www.bloomberg.com/audio
 Radio Nacional de Colombia|RNC|CO|news|es|.85|.4|3||noticias cultura pública|Radio Nacional de Colombia||https://www.radionacional.co
-ABC NewsRadio|ABC News|AU|news|en|.98|.4|3||noticias actualidad pública|ABC NewsRadio|news|https://www.abc.net.au/listen/newsradio`;
+ABC NewsRadio|ABC News|AU|news|en|.98|.4|3||noticias actualidad pública|ABC NewsRadio|news|https://www.abc.net.au/listen/newsradio
+Antyradio|Antyradio|PL|metal|pl|.2|.85|4||metal rock hard-rock|Antyradio|^antyradio$|https://www.antyradio.pl
+Megarock Radio|Megarock|US|metal|en|.05|.9|2||metal hard-rock rock-clásico|Megarock|megarock|https://megarockradio.net
+Radio Heavy Metal|R Heavy|FR|metal|en|.02|.95|1||heavy-metal metal|Radio Heavy Metal|^radio heavy metal$|https://www.radioheavymetal.fr
+Exclusively Iron Maiden|Maiden|AE|metal|en|.02|.9|2||heavy-metal metal iron-maiden|Exclusively Iron Maiden|^exclusively iron maiden$|https://exclusive.radio
+Epic Rock Radio|Epic Rock|DE|metal|en|.05|.85|1||metal épico hard-rock|Epic Rock Radio||https://www.epicrockradio.com`;
 const S=RAW.trim().split("\n").map((l,i)=>{const a=l.split("|");return{i,n:a[0],sh:a[1],cc:a[2],g:a[3],lang:a[4],talk:+a[5],en:+a[6],l:+a[7],f:a[8]?+a[8]:null,tags:new Set(a[9].split(" ")),q:a[10],re:a[11]||null,u:a[12],ll:LL[a[2]],reg:REGION_OF[a[2]]}});
 
 /* ---------- Capa analítica: afinidad entre radios ---------- */
@@ -506,7 +511,7 @@ const hexPts=r=>[...Array(6)].map((_,k)=>{const t=rad(60*k-30);return(r*Math.cos
 const cells=[];for(let q=-15;q<=15;q++)for(let r=-15;r<=15;r++){const[x,y]=toPx(q,r);const d=Math.hypot(x,y);if(d<280)cells.push({x,y,d,a:Math.atan2(y,x)})}
 cells.sort((a,b)=>a.d-b.d||a.a-b.a);
 /* ---------- Constelación: distancia = afinidad (órbitas), dirección = familia (sectores) ---------- */
-const SECT=["news","culture","classic","folk","jazz","ecl","elec","rock","pop","latin"];   // vecinos de estilo quedan contiguos
+const SECT=["news","culture","classic","folk","jazz","ecl","elec","metal","rock","pop","latin"];   // vecinos de estilo quedan contiguos
 const RMIN=36,RMAX=176;
 const rOf=v=>RMIN+Math.max(0,Math.min(1,(.92-v)/.6))*(RMAX-RMIN);
 const RINGS=[.85,.7,.55,.4];
@@ -713,7 +718,7 @@ function pick(s){
 
 
 /* ---------- Ficha de radio: al tocar un hexágono, resumen y opción de escuchar ---------- */
-const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia",CH:"Suiza",BE:"Bélgica",NZ:"Nueva Zelanda"};
+const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia",CH:"Suiza",BE:"Bélgica",NZ:"Nueva Zelanda",PL:"Polonia",AE:"Emiratos Árabes"};
 let cardS=null;
 function stationDesc(s){return[FAM[s.g][0],[...s.tags].slice(0,3).map(t=>t.replace("-"," ")).join(", "),CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM Santiago":""].filter(Boolean).join(" · ")}
 function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProperty("--cc",col);
@@ -967,7 +972,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02z";
+const APP_VERSION="2026-11-02za";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
