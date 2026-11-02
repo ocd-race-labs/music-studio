@@ -510,7 +510,7 @@ resetView();layout();
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02g";
+const APP_VERSION="2026-11-02h";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -598,14 +598,45 @@ async function fetchNews(q,days){
   const j=await r.json(); if(!r.ok) throw new Error(j.error||"error"); return j.items||[];
 }
 // Trae y une nacional + internacional, sin duplicar la misma historia
-async function gather(qn,qi,days){
+// Contexto que aporta la sección a un tema: "Hormuz" en Política busca gobierno y diplomacia; en Economía, petróleo y mercados
+const CTX={politica:"(gobierno OR política OR sanciones OR diplomacia OR elecciones OR congreso)",
+  economia:"(economía OR mercados OR precios OR petróleo OR comercio OR inflación OR bolsa)",
+  deportes_extremos:"(downhill OR enduro OR surf OR escalada OR \"Red Bull\" OR competencia)",
+  nba:"(NBA OR básquetbol)",nfl:"(NFL OR fútbol americano)",
+  tecnologia:"(tecnología OR empresa OR lanzamiento OR software OR dispositivo)",
+  ia:"(\"inteligencia artificial\" OR IA OR modelo OR algoritmo)",
+  educacion:"(educación OR colegios OR universidad OR estudiantes)",
+  salud:"(salud OR hospital OR pacientes OR médicos OR enfermedad)",
+  ciencias:"(ciencia OR investigación OR estudio OR científicos)",
+  aviacion:"(aviación OR aerolínea OR avión OR aeropuerto OR vuelo OR aeronave)",
+  cultura:"(cultura OR cine OR música OR libro OR arte OR festival)"};
+const quoted=t=>/\s/.test(t.trim())?`"${t.trim()}"`:t.trim();
+function topicQueries(topic,section){const ctx=CTX[section]||"";const q=quoted(topic);return[`${q} Chile ${ctx}`.trim(),`${q} ${ctx}`.trim()]}
+// Una historia es pertinente si su titular (o el de su cobertura) contiene las palabras del tema
+const words=t=>norm(t).split(" ").filter(Boolean);
+function relevant(x,topic){const need=String(topic).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean);
+  const STOP=new Set(["de","del","la","el","los","las","en","y","e","a","al","un","una","por","para","con","the","of","and"]);
+  const content=need.filter(w=>!STOP.has(w)); need.length=0; need.push(...(content.length?content:[]));
+  if(!need.length) return true;
+  const hay=[x.title,...(x.related||[]).map(r=>r.title)].join(" ").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  const hw=hay.replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(Boolean);
+  const hit=w=>hw.some(h=>h.startsWith(w)||(w.length>=4&&lev(w,h.slice(0,w.length+1))<=(w.length>5?2:1)));
+  const n=need.filter(hit).length;
+  return n>=Math.ceil(need.length/2)&&need.some(w=>(w.length>=4||need.length===1)&&hit(w));}
+function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;const d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);for(let j=1;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]}
+async function gather(qn,qi,days,topic){
   const jobs=[];
-  if(qn && scope!=="internacional") jobs.push(fetchNews(qn,days).then(a=>a.map(x=>({...x,scope:"nacional"}))));
-  if(qi && scope!=="nacional") jobs.push(fetchNews(qi,days).then(a=>a.map(x=>({...x,scope:"internacional"}))));
+  if(qn && scope!=="internacional") jobs.push(fetchNews(qn,days));
+  if(qi) jobs.push(fetchNews(qi,days));
   const res=await Promise.allSettled(jobs);
   if(res.length && res.every(r=>r.status==="rejected")) throw new Error("sin conexión");
   const seen=new Set(), out=[];
-  res.flatMap(r=>r.status==="fulfilled"?r.value:[]).sort((a,b)=>(b.published_at||"").localeCompare(a.published_at||""))
+  res.flatMap(r=>r.status==="fulfilled"?r.value:[])
+    .map(x=>({...x,scope:(outletCC(x.source_url||"")==="CL"||/\bchile(no|na|nos|nas)?\b/i.test(x.title))?"nacional":"internacional"}))
+    .filter(x=>scope==="todo"||x.scope===scope)
+    .filter(x=>!topic||relevant(x,topic))
+    .sort((a,b)=>(b.published_at||"").localeCompare(a.published_at||""))
     .forEach(x=>{ const k=norm(x.title); if(!seen.has(k)){ seen.add(k); out.push(x); } });
   return out;
 }
@@ -669,7 +700,7 @@ async function loadNews(){
 }
 async function topicInto(slot,t){
   try{
-    const items=await gather(t.topic+" Chile",t.topic,3);
+    const [tn,ti]=topicQueries(t.topic,t.section); const items=await gather(tn,ti,3,t.topic);
     const n=markNew("topic-"+t.id+"-"+scope,items);
     const w=block(t.topic,LABEL[t.section],items,n,'<button class="sbtn" data-a="del">Quitar</button>');
     w.querySelector('[data-a="del"]').addEventListener("click",async e=>{ e.target.disabled=true; try{ await api("dial_topics?id=eq."+t.id,{method:"DELETE"}); loadNews(); }catch(_){ e.target.disabled=false; e.target.textContent="No se pudo quitar"; } });
@@ -691,7 +722,7 @@ async function renderExplore(b){
     }catch(err){ $("pinMsg").textContent = err.status===409 ? "Ese tema ya está fijado en esa sección." : "No se pudo fijar. Inténtalo de nuevo."; e.target.disabled=false; }
   });
   try{
-    const items=await gather(explore+" Chile",explore,3);
+    const [en,ei]=topicQueries(explore,sec==="mis"?"":sec); const items=await gather(en,ei,3,explore);
     ex.querySelector(".exres").innerHTML = items.length ? items.slice(0,12).map((x,i)=>storyCard(x,i)).join("") : '<p class="note">No hay noticias de los últimos días para este tema.</p>';
   }catch(e){ ex.querySelector(".exres").innerHTML='<p class="note">No se pudieron traer noticias ahora.</p>'; }
 }
