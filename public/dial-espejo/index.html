@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dial Espejo</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dial Espejo">
+<meta name="theme-color" content="#1F3236">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-512.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#EDEFEA; --panel:#F8F9F5; --ink:#1B2A2C; --muted:#5E6E6E; --line:#CDD3CC;
+  --amber:#C26A0A; --dial:#1F3236; --dial-ink:#E9D9B8; --dial-glow:#FFB547; --live:#D9412A;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+  --gut-l:max(16px, env(safe-area-inset-left, 0px));
+  --gut-r:max(16px, env(safe-area-inset-right, 0px));
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111A1C; --panel:#182427; --ink:#E6EAE4; --muted:#93A3A1; --line:#2A3A3D;
+  --amber:#FFB547; --dial:#0B1214; --dial-ink:#D9C9A6; --live:#FF6A50; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-top:env(safe-area-inset-top, 0px);padding-left:var(--gut-l);padding-right:var(--gut-r);-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:20;background:var(--bg)}
+[hidden]{display:none!important}
+.wrap{max-width:1120px;margin:0 auto;padding-block:20px 140px;display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+.wrap>*{min-width:0}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(42px,7vw,64px);line-height:.9;margin:0;text-transform:uppercase}
+h1 span{color:var(--amber)}
+.sub{color:var(--muted);margin:6px 0 0;max-width:52ch;font-size:14px}
+.clock{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* Dial */
+.dial{background:var(--dial);color:var(--dial-ink);border-radius:14px;padding:14px 0 10px;min-width:0;overflow:hidden;position:relative}
+.dial-head{display:flex;justify-content:space-between;gap:8px;padding:0 18px 4px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.dial-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none}
+.dial-scroll::-webkit-scrollbar{display:none}
+.band{position:relative;min-width:1180px;height:200px;margin:0 24px}
+.scale{position:absolute;left:0;right:0;top:96px;height:1px;background:color-mix(in srgb,var(--dial-ink) 45%,transparent)}
+.tick{position:absolute;top:88px;width:1px;height:16px;background:color-mix(in srgb,var(--dial-ink) 55%,transparent)}
+.tick.minor{top:92px;height:8px;opacity:.5}
+.tlabel{position:absolute;top:108px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;opacity:.7}
+.mk{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;padding:0;color:var(--dial-ink);font:500 12.5px var(--body);white-space:nowrap;cursor:pointer}
+.mk .pin{width:2px;background:var(--dial-glow);opacity:.5}
+.mk .nm{padding:6px 8px;border-radius:5px;background:color-mix(in srgb,var(--dial-ink) 8%,transparent)}
+.mk.on .nm,.mk:focus-visible .nm{background:var(--dial-glow);color:#1B1206}
+.mk.on .pin{opacity:1;box-shadow:0 0 8px var(--dial-glow)}
+.mk:focus-visible{outline:none}
+.mk.up{bottom:102px}
+.mk.down{top:96px;flex-direction:column-reverse}
+.needle{position:absolute;top:72px;width:2px;height:46px;background:var(--live);box-shadow:0 0 10px var(--live);transition:left .5s cubic-bezier(.3,.7,.2,1);pointer-events:none}
+.dial::after{content:"";position:absolute;right:0;top:34px;bottom:10px;width:28px;background:linear-gradient(90deg,transparent,var(--dial));pointer-events:none}
+
+/* Controles */
+.controls{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:var(--bg);display:grid;gap:10px;
+  margin-inline:calc(-1 * var(--gut-l)) calc(-1 * var(--gut-r));padding:10px var(--gut-r) 10px var(--gut-l);border-bottom:1px solid var(--line)}
+.search{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0 14px}
+.search input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:16px;padding:12px 0;outline:none}
+.search:focus-within{border-color:var(--amber)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;font:500 14px var(--body);border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 16px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* Listas */
+section h2{font-family:var(--display);font-weight:600;font-size:26px;text-transform:uppercase;letter-spacing:.02em;margin:0 0 2px}
+section .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 4px 4px 0;min-height:62px;min-width:0}
+.card.on{border-color:var(--amber);box-shadow:inset 3px 0 0 var(--amber)}
+.play{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:12px;border:0;background:none;color:inherit;font:inherit;text-align:left;padding:8px 0 8px 14px;cursor:pointer;min-width:0;grid-column:1 / 3}
+.freq{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--amber);min-width:46px;font-weight:500;display:flex;align-items:center;gap:4px}
+.info{min-width:0}
+.name{font-weight:600;font-size:16px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:12px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav{border:0;background:transparent;color:var(--muted);font-size:20px;cursor:pointer;width:44px;height:44px;border-radius:8px;line-height:1}
+.fav[aria-pressed="true"]{color:var(--amber)}
+.eq{display:inline-flex;gap:2px;align-items:flex-end;height:12px}
+.eq i{width:3px;background:var(--amber);animation:eq 1s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:-.35s}.eq i:nth-child(3){animation-delay:-.7s}
+@keyframes eq{0%,100%{height:3px}50%{height:12px}}
+.empty{color:var(--muted);padding:8px 0}
+.more{font:600 15px var(--body);border:1px solid var(--amber);color:var(--amber);background:transparent;border-radius:10px;padding:12px 16px;cursor:pointer;width:100%}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+
+/* Reproductor */
+.player{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--dial);color:var(--dial-ink);
+  padding:10px var(--gut-r) calc(10px + env(safe-area-inset-bottom, 0px)) var(--gut-l);display:flex;align-items:center;gap:12px;
+  box-shadow:0 -6px 24px rgba(0,0,0,.18)}
+.pl-btn{flex:none;width:52px;height:52px;border-radius:50%;border:0;background:var(--dial-glow);color:#1B1206;font-size:20px;cursor:pointer;display:grid;place-items:center}
+.pl-txt{flex:1;min-width:0}
+.pl-name{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-st{font-family:var(--mono);font-size:12px;opacity:.8;display:flex;align-items:center;gap:6px}
+.pl-st .dot{width:7px;height:7px;border-radius:50%;background:var(--live)}
+.pl-st.wait .dot{animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.pl-web{flex:none;color:var(--dial-ink);font-size:13px;text-decoration:underline;opacity:.85;padding:8px 2px}
+@media (min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}}
+@media (max-width:640px){.dial{margin-inline:calc(-1 * var(--gut-l)) calc(-1 * var(--gut-r));border-radius:0}.grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion: reduce){.needle{transition:none}.eq i,.pl-st.wait .dot{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Dial <span>Espejo</span></h1>
+      <p class="sub">Radios de Chile y el mundo. Toca una emisora y suena aquí mismo.</p>
+    </div>
+    <div class="clock" id="clock"></div>
+  </header>
+
+  <div class="dial" aria-label="Dial FM de Santiago">
+    <div class="dial-head"><span>FM · Santiago</span><span>88 — 108 MHz</span></div>
+    <div class="dial-scroll" id="dialScroll"><div class="band" id="band"><div class="scale"></div><div class="needle" id="needle"></div></div></div>
+  </div>
+
+  <div class="controls">
+    <label class="search" for="q">
+      <span aria-hidden="true" style="color:var(--muted)">⌕</span>
+      <input id="q" type="search" placeholder="Buscar emisora, país o estilo" autocomplete="off" enterkeyhint="search">
+    </label>
+    <div class="chips" id="chips" role="group" aria-label="Filtrar"></div>
+  </div>
+
+  <div id="sections" style="display:grid;gap:28px"></div>
+  <div id="worldBox" hidden>
+    <button class="more" id="worldBtn">Buscar en todas las radios del mundo</button>
+    <div id="worldRes" style="margin-top:12px"></div>
+  </div>
+
+  <footer>Las señales se obtienen del directorio abierto Radio Browser. Si una emisora no carga, el reproductor ofrece abrir su web oficial. Las estrellas guardan favoritas en este teléfono.</footer>
+</div>
+
+<div class="player" id="player" hidden>
+  <button class="pl-btn" id="plBtn" aria-label="Pausar">❚❚</button>
+  <div class="pl-txt">
+    <div class="pl-name" id="plName"></div>
+    <div class="pl-st" id="plSt"><span class="dot"></span><span id="plStTxt"></span></div>
+  </div>
+  <a class="pl-web" id="plWeb" target="_blank" rel="noopener">Web</a>
+</div>
+<audio id="audio" preload="none" playsinline></audio>
+
+<script>
+// n: nombre · f: dial FM Santiago · r: región · p: país · c: tipo · t: descripción · u: web
+// q: término de búsqueda en Radio Browser · cc: país ISO · re: patrón que debe tener el nombre encontrado
+const S = [
+ {n:"Radio Imagina",f:88.1,r:"Chile",c:"Música",t:"Baladas y pop",u:"https://www.imagina.cl",q:"Imagina",cc:"CL"},
+ {n:"Radio Concierto",f:88.5,r:"Chile",c:"Música",t:"Pop y rock en inglés",u:"https://www.concierto.cl",q:"Concierto",cc:"CL"},
+ {n:"Radio Futuro",f:88.9,r:"Chile",c:"Música",t:"Rock clásico",u:"https://www.futuro.cl",q:"Futuro",cc:"CL"},
+ {n:"Radio Duna",f:89.7,r:"Chile",c:"Noticias",t:"Noticias y conversación",u:"https://www.duna.cl",q:"Duna",cc:"CL"},
+ {n:"Radio Pudahuel",f:90.5,r:"Chile",c:"Música",t:"Romántica y popular",u:"https://www.pudahuel.cl",q:"Pudahuel",cc:"CL"},
+ {n:"ADN Radio",f:91.7,r:"Chile",c:"Noticias",t:"Noticias y deportes",u:"https://www.adnradio.cl",q:"ADN",cc:"CL"},
+ {n:"Radio Agricultura",f:92.1,r:"Chile",c:"Noticias",t:"Noticias y deportes",u:"https://www.radioagricultura.cl",q:"Agricultura",cc:"CL"},
+ {n:"Radio Cooperativa",f:93.3,r:"Chile",c:"Noticias",t:"Noticias",u:"https://www.cooperativa.cl",q:"Cooperativa",cc:"CL"},
+ {n:"Rock & Pop",f:94.1,r:"Chile",c:"Música",t:"Rock y alternativo",u:"https://www.rockandpop.cl",q:"Rock",cc:"CL",re:"rock.{0,5}pop"},
+ {n:"Radio Beethoven",f:96.5,r:"Chile",c:"Cultura",t:"Música clásica",u:"https://www.beethovenfm.cl",q:"Beethoven",cc:"CL"},
+ {n:"Radio Zero",f:97.7,r:"Chile",c:"Música",t:"Rock y pop alternativo",u:"https://www.radiozero.cl",q:"Zero",cc:"CL"},
+ {n:"Radio Carolina",f:99.3,r:"Chile",c:"Música",t:"Éxitos juveniles",u:"https://www.carolina.cl",q:"Carolina",cc:"CL"},
+ {n:"Radio Bío-Bío",f:99.7,r:"Chile",c:"Noticias",t:"Noticias",u:"https://www.biobiochile.cl",q:"Bio",cc:"CL",re:"b[ií]o.?b[ií]o"},
+ {n:"Radio Infinita",f:100.1,r:"Chile",c:"Música",t:"Jazz, clásicos y conversación",u:"https://www.infinita.cl",q:"Infinita",cc:"CL"},
+ {n:"Radio Pauta",f:100.5,r:"Chile",c:"Noticias",t:"Noticias y economía",u:"https://www.pauta.cl",q:"Pauta",cc:"CL"},
+ {n:"Radio Corazón",f:101.3,r:"Chile",c:"Música",t:"Romántica y tropical",u:"https://www.corazon.cl",q:"Coraz",cc:"CL"},
+ {n:"Los 40 Chile",f:101.7,r:"Chile",c:"Música",t:"Éxitos actuales",u:"https://los40.cl",q:"40",cc:"CL",re:"los ?40"},
+ {n:"Radio U. de Chile",f:102.5,r:"Chile",c:"Cultura",t:"Noticias y cultura",u:"https://radio.uchile.cl",q:"Universidad de Chile",cc:"CL"},
+ {n:"T13 Radio",f:103.3,r:"Chile",c:"Noticias",t:"Noticias",u:"https://www.t13.cl/radio",q:"13",cc:"CL",re:"t(ele)? ?13"},
+ {n:"Radio Romántica",f:104.1,r:"Chile",c:"Música",t:"Baladas",u:"https://www.romantica.cl",q:"Rom",cc:"CL",re:"rom[aá]ntica"},
+ {n:"Sonar FM",f:105.3,r:"Chile",c:"Música",t:"Rock alternativo",u:"https://www.sonarfm.cl",q:"Sonar",cc:"CL"},
+
+ {n:"Radio Mitre",r:"Latinoamérica",p:"Argentina",c:"Noticias",t:"Buenos Aires",u:"https://radiomitre.cienradios.com",q:"Mitre",cc:"AR"},
+ {n:"Radio Continental",r:"Latinoamérica",p:"Argentina",c:"Noticias",t:"Buenos Aires",u:"https://www.continental.com.ar",q:"Continental",cc:"AR"},
+ {n:"Radio Nacional",r:"Latinoamérica",p:"Argentina",c:"Cultura",t:"Emisora pública",u:"https://www.radionacional.com.ar",q:"Nacional",cc:"AR"},
+ {n:"W Radio",r:"Latinoamérica",p:"México",c:"Noticias",t:"Ciudad de México",u:"https://wradio.com.mx",q:"W Radio",cc:"MX"},
+ {n:"Radio Fórmula",r:"Latinoamérica",p:"México",c:"Noticias",t:"Ciudad de México",u:"https://www.radioformula.com.mx",q:"rmula",cc:"MX",re:"f[oó]rmula"},
+ {n:"Caracol Radio",r:"Latinoamérica",p:"Colombia",c:"Noticias",t:"Bogotá",u:"https://caracol.com.co",q:"Caracol",cc:"CO"},
+ {n:"RPP",r:"Latinoamérica",p:"Perú",c:"Noticias",t:"Lima",u:"https://rpp.pe",q:"RPP",cc:"PE"},
+
+ {n:"BBC Radio 4",r:"Europa",p:"Reino Unido",c:"Noticias",t:"Noticias y conversación",u:"https://www.bbc.co.uk/sounds/play/live:bbc_radio_fourfm",q:"BBC Radio 4",cc:"GB"},
+ {n:"BBC World Service",r:"Europa",p:"Reino Unido",c:"Noticias",t:"Noticias internacionales",u:"https://www.bbc.co.uk/sounds/play/live:bbc_world_service",q:"BBC World Service",cc:"GB"},
+ {n:"BBC Radio 6 Music",r:"Europa",p:"Reino Unido",c:"Música",t:"Alternativo",u:"https://www.bbc.co.uk/sounds/play/live:bbc_6music",q:"6 Music",cc:"GB"},
+ {n:"Classic FM",r:"Europa",p:"Reino Unido",c:"Cultura",t:"Música clásica",u:"https://www.classicfm.com",q:"Classic FM",cc:"GB"},
+ {n:"NTS Radio",r:"Europa",p:"Reino Unido",c:"Música",t:"Electrónica y underground",u:"https://www.nts.live",q:"NTS",cc:"GB"},
+ {n:"Cadena SER",r:"Europa",p:"España",c:"Noticias",t:"Madrid",u:"https://cadenaser.com",q:"Cadena SER",cc:"ES"},
+ {n:"RNE",r:"Europa",p:"España",c:"Noticias",t:"Radio Nacional de España",u:"https://www.rtve.es/play/radio/",q:"Radio Nacional",cc:"ES"},
+ {n:"Los 40",r:"Europa",p:"España",c:"Música",t:"Éxitos actuales",u:"https://los40.com",q:"40",cc:"ES",re:"los ?40"},
+ {n:"FIP",r:"Europa",p:"Francia",c:"Música",t:"Ecléctica, sin locución",u:"https://www.radiofrance.fr/fip",q:"FIP",cc:"FR"},
+ {n:"France Inter",r:"Europa",p:"Francia",c:"Noticias",t:"Noticias y cultura",u:"https://www.radiofrance.fr/franceinter",q:"France Inter",cc:"FR"},
+ {n:"RFI en español",r:"Europa",p:"Francia",c:"Noticias",t:"Noticias internacionales",u:"https://www.rfi.fr/es/",q:"RFI",cc:"FR",re:"espa"},
+ {n:"TSF Jazz",r:"Europa",p:"Francia",c:"Música",t:"Jazz",u:"https://www.tsfjazz.com",q:"TSF Jazz",cc:"FR"},
+ {n:"Deutschlandfunk",r:"Europa",p:"Alemania",c:"Noticias",t:"Noticias en alemán",u:"https://www.deutschlandfunk.de",q:"Deutschlandfunk",cc:"DE"},
+
+ {n:"NPR News",r:"Norteamérica",p:"EE. UU.",c:"Noticias",t:"Radio pública",u:"https://www.npr.org",q:"NPR",cc:"US"},
+ {n:"WNYC",r:"Norteamérica",p:"EE. UU.",c:"Noticias",t:"Nueva York",u:"https://www.wnyc.org",q:"WNYC",cc:"US"},
+ {n:"KEXP",r:"Norteamérica",p:"EE. UU.",c:"Música",t:"Seattle, indie y sesiones en vivo",u:"https://www.kexp.org",q:"KEXP",cc:"US"},
+ {n:"KCRW",r:"Norteamérica",p:"EE. UU.",c:"Música",t:"Los Ángeles, ecléctica",u:"https://www.kcrw.com",q:"KCRW",cc:"US"},
+ {n:"Radio Paradise",r:"Norteamérica",p:"EE. UU.",c:"Música",t:"Ecléctica, sin avisos",u:"https://radioparadise.com",q:"Radio Paradise",cc:"US"},
+ {n:"SomaFM Groove Salad",r:"Norteamérica",p:"EE. UU.",c:"Música",t:"Ambient y downtempo",u:"https://somafm.com",q:"Groove Salad",cc:"US"},
+];
+const REGIONS=["Chile","Latinoamérica","Europa","Norteamérica"];
+const CATS=["Todas","Favoritas","Noticias","Música","Cultura"];
+const API=["https://de1.api.radio-browser.info","https://nl1.api.radio-browser.info","https://fi1.api.radio-browser.info","https://de2.api.radio-browser.info"];
+
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+             set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let favs=new Set(store.get("dial-favs",[]));
+let cat=store.get("dial-cat","Todas"); if(!CATS.includes(cat)) cat="Todas";
+let q="", current=null, worldList=[];
+const WORLD_BASE=10000;
+const $=id=>document.getElementById(id);
+const audio=$("audio");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+
+/* ---------- Directorio ---------- */
+async function api(path){
+  let last;
+  for(const base of API){
+    try{
+      const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),7000);
+      const r=await fetch(base+path,{signal:ctl.signal}); clearTimeout(t);
+      if(r.ok) return await r.json();
+    }catch(e){last=e}
+  }
+  throw last||new Error("api");
+}
+function rank(list,s){
+  const re=s.re?new RegExp(s.re,"i"):null;
+  return list
+    .filter(x=>x.url_resolved && (!re || re.test(x.name)))
+    .map(x=>({x,score:(x.url_resolved.startsWith("https")?1000:0)+(x.lastcheckok?500:0)+Math.min(x.votes||0,400)+(x.bitrate>=64?20:0)}))
+    .sort((a,b)=>b.score-a.score)
+    .map(o=>({url:o.x.url_resolved,uuid:o.x.stationuuid}));
+}
+async function candidates(s){
+  if(s.direct) return [{url:s.direct,uuid:s.uuid}];
+  const key="dial-src-"+s.n, c=store.get(key,null);
+  if(c && Date.now()-c.t<7*864e5 && c.list?.length) return c.list;
+  const qs=`/json/stations/search?name=${encodeURIComponent(s.q)}${s.cc?"&countrycode="+s.cc:""}&hidebroken=true&order=votes&reverse=true&limit=25`;
+  const list=rank(await api(qs),s).slice(0,4);
+  if(list.length) store.set(key,{t:Date.now(),list});
+  return list;
+}
+function forget(s){try{localStorage.removeItem("dial-src-"+s.n)}catch(e){}}
+
+/* ---------- Reproductor ---------- */
+let playToken=0;
+function setStatus(txt,mode){
+  $("plStTxt").textContent=txt;
+  $("plSt").className="pl-st"+(mode==="wait"?" wait":"");
+  $("plSt").querySelector(".dot").style.visibility=mode==="off"?"hidden":"visible";
+}
+function setBtn(playing){ $("plBtn").textContent=playing?"❚❚":"▶"; $("plBtn").setAttribute("aria-label",playing?"Pausar":"Reproducir"); }
+function tryUrl(url,token){
+  return new Promise((res,rej)=>{
+    const done=(ok)=>{audio.removeEventListener("playing",on);audio.removeEventListener("error",off);clearTimeout(t);ok?res():rej()};
+    const on=()=>done(true), off=()=>done(false);
+    const t=setTimeout(()=>done(false),12000);
+    audio.addEventListener("playing",on); audio.addEventListener("error",off);
+    audio.src=url;
+    const p=audio.play(); if(p) p.catch(()=>{ if(token===playToken) done(false) });
+  });
+}
+async function play(s){
+  if(current===s && $("plStTxt").textContent!=="Sin señal"){ toggle(); return; }
+  const token=++playToken; current=s;
+  $("player").hidden=false; $("plName").textContent=s.n; $("plWeb").href=s.u||"#"; $("plWeb").hidden=!s.u;
+  setStatus("Sintonizando…","wait"); setBtn(true); paint(); moveNeedle(s);
+  if("mediaSession" in navigator){ try{ navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:s.t||"",album:"Dial Espejo",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]}) }catch(e){} }
+  let list=[];
+  try{ list=await candidates(s) }catch(e){ if(token===playToken){ setStatus("Sin conexión al directorio","off"); setBtn(false);} return; }
+  for(let attempt=0; attempt<2; attempt++){
+    for(const c of list){
+      if(token!==playToken) return;
+      try{ await tryUrl(c.url,token); if(token!==playToken) return;
+        setStatus("En vivo","live"); setBtn(true); paint();
+        fetch(API[0]+"/json/url/"+c.uuid).catch(()=>{});
+        return;
+      }catch(e){}
+    }
+    if(s.direct || attempt) break;
+    forget(s); try{ list=await candidates(s) }catch(e){ break; }
+  }
+  if(token===playToken){ audio.removeAttribute("src"); audio.load(); setStatus("Sin señal","off"); setBtn(false); paint(); }
+}
+audio.addEventListener("pause",()=>{ if(current){ setBtn(false); if($("plStTxt").textContent==="En vivo") setStatus("En pausa","off"); paint(); }});
+audio.addEventListener("playing",()=>{ if(current){ setBtn(true); setStatus("En vivo","live"); paint(); }});
+audio.addEventListener("waiting",()=>{ if(current && !audio.paused) setStatus("Cargando…","wait"); });
+function toggle(){ if(!current) return;
+  if(!audio.paused){ audio.pause(); return; }
+  if(audio.src && $("plStTxt").textContent!=="Sin señal"){ audio.load(); setStatus("Sintonizando…","wait"); audio.play().catch(()=>{ const s=current; current=null; play(s); }); }
+  else { const s=current; current=null; play(s); } }
+$("plBtn").addEventListener("click",toggle);
+function bySid(i){ return i>=WORLD_BASE ? worldList[i-WORLD_BASE] : S[i]; }
+function visible(){ return [...document.querySelectorAll("[data-sid]")].map(el=>bySid(+el.dataset.sid)).filter(Boolean); }
+function step(d){ const v=visible(); if(!v.length) return; const i=v.indexOf(current); play(v[(i+d+v.length)%v.length]); }
+if("mediaSession" in navigator){
+  try{
+    navigator.mediaSession.setActionHandler("play",()=>{ if(audio.paused) toggle(); });
+    navigator.mediaSession.setActionHandler("pause",()=>audio.pause());
+    navigator.mediaSession.setActionHandler("nexttrack",()=>step(1));
+    navigator.mediaSession.setActionHandler("previoustrack",()=>step(-1));
+  }catch(e){}
+}
+
+/* ---------- Dial ---------- */
+const band=$("band"), needle=$("needle");
+const pos=f=>((f-88)/20*100)+"%";
+for(let i=0;i<=40;i++){ const f=88+i*.5, major=i%4===0;
+  const t=document.createElement("div"); t.className="tick"+(major?"":" minor"); t.style.left=pos(f); band.appendChild(t);
+  if(major){const l=document.createElement("div"); l.className="tlabel"; l.textContent=f; l.style.left=pos(f); band.appendChild(l);} }
+const heights=[18,44,70];
+S.filter(s=>s.f).sort((a,b)=>a.f-b.f).forEach((s,i)=>{
+  const b=document.createElement("button"); const up=i%2===0, lvl=Math.floor(i/2)%3;
+  b.className="mk "+(up?"up":"down"); b.style.left=pos(s.f); b.dataset.mk=S.indexOf(s);
+  b.innerHTML=`<span class="nm">${esc(s.n)}</span><span class="pin" style="height:${heights[lvl]}px"></span>`;
+  b.setAttribute("aria-label",`Escuchar ${s.n}, ${s.f.toFixed(1)} FM`);
+  b.addEventListener("click",()=>play(s)); band.appendChild(b);
+});
+function moveNeedle(s){
+  if(!s.f) return; needle.style.left=pos(s.f);
+  const sc=$("dialScroll"); const x=band.offsetLeft+band.offsetWidth*(s.f-88)/20 - sc.clientWidth/2;
+  sc.scrollTo({left:x,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+}
+needle.style.left=pos(93.3);
+requestAnimationFrame(()=>{ const sc=$("dialScroll"); sc.scrollLeft=band.offsetLeft+band.offsetWidth*(93.3-88)/20-sc.clientWidth/2; });
+
+/* ---------- Listas ---------- */
+const chips=$("chips");
+CATS.forEach(c=>{const b=document.createElement("button"); b.className="chip"; b.textContent=c;
+  b.addEventListener("click",()=>{cat=c; store.set("dial-cat",c); render()}); chips.appendChild(b)});
+$("q").addEventListener("input",e=>{q=e.target.value.trim(); worldList=[]; $("worldRes").innerHTML=""; render()});
+
+function card(s,sid){
+  const d=document.createElement("div"); d.className="card"+(current===s?" on":"");
+  const live=current===s && !audio.paused;
+  const where=s.p? s.p+" · "+s.t : s.t;
+  d.innerHTML=`<button class="play" data-sid="${sid}" aria-label="Escuchar ${esc(s.n)}">
+      <span class="freq">${live?'<span class="eq"><i></i><i></i><i></i></span>':(s.f? s.f.toFixed(1): esc(s.badge||"web"))}</span>
+      <span class="info"><span class="name">${esc(s.n)}</span><span class="tag">${esc(where||"")}</span></span>
+    </button>
+    ${s.world?"":`<button class="fav" aria-label="Favorita: ${esc(s.n)}" aria-pressed="${favs.has(s.n)}">${favs.has(s.n)?"★":"☆"}</button>`}`;
+  d.querySelector(".play").addEventListener("click",()=>play(s));
+  const fv=d.querySelector(".fav");
+  if(fv) fv.addEventListener("click",()=>{ favs.has(s.n)?favs.delete(s.n):favs.add(s.n); store.set("dial-favs",[...favs]); render() });
+  return d;
+}
+function render(){
+  [...chips.children].forEach(b=>b.setAttribute("aria-pressed",b.textContent===cat));
+  const box=$("sections"); box.innerHTML="";
+  const nq=norm(q);
+  const list=S.filter(s=>{
+    if(cat==="Favoritas" && !favs.has(s.n)) return false;
+    if(cat!=="Todas" && cat!=="Favoritas" && s.c!==cat) return false;
+    if(nq && !norm([s.n,s.t,s.p||"",s.r,s.c].join(" ")).includes(nq)) return false;
+    return true;
+  });
+  if(!list.length){
+    const p=document.createElement("p"); p.className="empty";
+    p.textContent= cat==="Favoritas"&&!favs.size&&!q ? "Aún no tienes favoritas. Toca la estrella de cualquier emisora para guardarla aquí." : "Ninguna emisora de la lista coincide.";
+    box.appendChild(p);
+  }
+  REGIONS.forEach(r=>{
+    const items=list.filter(s=>s.r===r); if(!items.length) return;
+    const sec=document.createElement("section");
+    sec.innerHTML=`<h2>${r}</h2><p class="meta">${items.length} emisora${items.length>1?"s":""}${r==="Chile"?" · por dial":""}</p>`;
+    const g=document.createElement("div"); g.className="grid"; items.forEach(s=>g.appendChild(card(s,S.indexOf(s))));
+    sec.appendChild(g); box.appendChild(sec);
+  });
+  $("worldBox").hidden = q.length<2;
+  $("worldBtn").textContent=`Buscar “${q}” en todas las radios del mundo`;
+  renderWorld();
+  document.querySelectorAll(".mk").forEach(m=>m.classList.toggle("on",S[+m.dataset.mk]===current));
+}
+function paint(){ render(); }
+
+/* ---------- Búsqueda mundial ---------- */
+function renderWorld(){
+  const box=$("worldRes"); box.innerHTML="";
+  if(!worldList.length) return;
+  const g=document.createElement("div"); g.className="grid";
+  worldList.forEach((s,i)=>g.appendChild(card(s,WORLD_BASE+i)));
+  box.appendChild(g);
+}
+$("worldBtn").addEventListener("click",async()=>{
+  const b=$("worldBtn"); b.textContent="Buscando…"; b.disabled=true;
+  try{
+    const r=await api(`/json/stations/search?name=${encodeURIComponent(q)}&hidebroken=true&order=votes&reverse=true&limit=30`);
+    const seen=new Set();
+    worldList=r.filter(x=>x.url_resolved && !seen.has(x.name.trim().toLowerCase()) && seen.add(x.name.trim().toLowerCase()))
+      .sort((a,b)=>(b.url_resolved.startsWith("https"))-(a.url_resolved.startsWith("https")))
+      .slice(0,20)
+      .map(x=>({n:x.name.trim(),t:[x.state,x.tags&&x.tags.split(",").slice(0,2).join(", ")].filter(Boolean).join(" · "),p:x.country,badge:x.countrycode||"web",u:x.homepage||"",direct:x.url_resolved,uuid:x.stationuuid,world:true}));
+    if(!worldList.length) $("worldRes").innerHTML='<p class="empty">No se encontraron radios con ese nombre.</p>';
+  }catch(e){ $("worldRes").innerHTML='<p class="empty">No se pudo conectar al directorio. Revisa tu conexión e inténtalo de nuevo.</p>'; }
+  b.disabled=false; render();
+});
+
+render();
+
+/* ---------- Reloj ---------- */
+function tick(){
+  const f=tz=>new Date().toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit",timeZone:tz});
+  $("clock").textContent=`Santiago ${f("America/Santiago")} · Madrid ${f("Europe/Madrid")} · Londres ${f("Europe/London")}`;
+}
+tick(); setInterval(tick,30000);
+</script>
+</body>
+</html>
