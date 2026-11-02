@@ -345,11 +345,11 @@ const audio=$("audio");
 /* ---------- Catálogo y perfiles ----------
    nombre|corto|país|familia|idioma|habla(0-1)|energía(0-1)|audiencia(1-5)|FM Santiago|etiquetas|búsqueda|patrón|web */
 const FAM={news:["Noticias","var(--news)","#5B7BFF",1920],culture:["Cultura","var(--culture)","#8FA3FF",1930],classic:["Clásica","var(--classic)","#F2B544",1700],jazz:["Jazz","var(--jazz)","#2FD3A0",1915],
-  rock:["Rock e indie","var(--rock)","#FF5C7A",1955],pop:["Pop","var(--pop)","#B98CFF",1960],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
+  rock:["Rock e indie","var(--rock)","#FF5C7A",1955],elec:["Electrónica","#E85CFF","#E85CFF",1990],folk:["Folklore y raíces","#9BCB6A","#9BCB6A",1900],pop:["Pop","var(--pop)","#B98CFF",1960],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
 const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán",it:"Italiano",nl:"Neerlandés",ar:"Árabe",ja:"Japonés",ko:"Coreano",hi:"Hindi"};
-const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",AU:"Oceanía",CH:"Europa",BE:"Europa"};
+const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía"};
 const REGIONS=["Chile","Latinoamérica","Norteamérica","Europa","Asia","África","Oceanía"];
-const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35]};
+const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35],NZ:[-41.29,174.78]};
 const RAW=`Radio Cooperativa|Coop|CL|news|es|.95|.4|4|93.3|noticias actualidad política|Cooperativa||https://www.cooperativa.cl
 Radio Bío-Bío|BíoBío|CL|news|es|.95|.4|4|99.7|noticias actualidad regional|Bio|b[ií]o.?b[ií]o|https://www.biobiochile.cl
 ADN Radio|ADN|CL|news|es|.9|.5|3|91.7|noticias deportes actualidad|ADN||https://www.adnradio.cl
@@ -415,7 +415,7 @@ WQXR|WQXR|US|classic|en|.1|.2|3||clásica ópera|WQXR||https://www.wqxr.org
 KEXP|KEXP|US|rock|en|.15|.7|3||indie alternativo rock pública|KEXP||https://www.kexp.org
 KCRW|KCRW|US|ecl|en|.3|.6|3||ecléctica indie electrónica pública|KCRW||https://www.kcrw.com
 Radio Paradise|RParad|US|ecl|en|.02|.5|3||ecléctica rock indie world|Radio Paradise|main mix|https://radioparadise.com
-SomaFM Groove Salad|Soma|US|ecl|en|.02|.3|2||electrónica ambient downtempo|Groove Salad||https://somafm.com
+SomaFM Groove Salad|Soma|US|elec|en|.02|.3|2||electrónica ambient downtempo|Groove Salad||https://somafm.com
 CBC Radio One|CBC 1|CA|news|en|.95|.35|4||noticias cultura pública|CBC Radio One|radio one|https://www.cbc.ca/listen/live-radio
 CBC Music|CBC M|CA|pop|en|.25|.6|3||pop indie pública|CBC Music||https://www.cbc.ca/listen/live-radio
 ICI Première|ICI 1|CA|news|fr|.95|.35|3||noticias cultura pública|Première|premi|https://ici.radio-canada.ca/ohdio
@@ -446,7 +446,37 @@ WFMU|WFMU|US|ecl|en|.3|.6|2||ecléctica underground indie|WFMU||https://wfmu.org
 SomaFM Indie Pop Rocks|Soma IP|US|rock|en|.02|.65|2||indie pop alternativo|Indie Pop Rocks||https://somafm.com/indiepop/
 SomaFM Secret Agent|Soma SA|US|ecl|en|.02|.4|2||lounge downtempo ecléctica|Secret Agent||https://somafm.com/secretagent/
 Radio Paradise Mellow|RP Mel|US|ecl|en|.02|.3|2||ecléctica acústica adulto|Radio Paradise Mellow|mellow|https://radioparadise.com
-Double J|Double J|AU|rock|en|.25|.6|3||indie rock adulto pública|Double J||https://www.abc.net.au/listen/doublej`;
+Double J|Double J|AU|rock|en|.25|.6|3||indie rock adulto pública|Double J||https://www.abc.net.au/listen/doublej
+Kerrang! Radio|Kerrang|GB|rock|en|.15|.9|2||metal hard-rock rock alternativo|Kerrang|kerrang|https://www.kerrangradio.co.uk
+ROCK ANTENNE|RockAnt|DE|rock|de|.2|.8|3||rock hard-rock rock-clásico|ROCK ANTENNE|^rock antenne$|https://www.rockantenne.de
+ROCK ANTENNE Heavy Metal|RA Metal|DE|rock|de|.05|.95|2||metal heavy-metal hard-rock|ROCK ANTENNE Heavy Metal|heavy metal|https://www.rockantenne.de
+RADIO BOB!|BOB!|DE|rock|de|.2|.8|3||rock hard-rock metal|RADIO BOB|^radio bob!?$|https://www.radiobob.de
+SomaFM Metal Detector|Soma MD|US|rock|en|.02|.95|1||metal heavy-metal|Metal Detector||https://somafm.com/metal/
+Venice Classic Radio|Venice|IT|classic|it|.02|.2|2||clásica barroco ópera|Venice Classic||https://www.veniceclassicradio.eu
+WFMT|WFMT|US|classic|en|.15|.2|3||clásica ópera pública|WFMT||https://www.wfmt.com
+KUSC|KUSC|US|classic|en|.15|.2|3||clásica pública|KUSC||https://www.kusc.org
+Radio Clásica|R Clás|ES|classic|es|.15|.2|3||clásica ópera pública|Radio Clasica|cl[aá]sica|https://www.rtve.es/play/radio/
+BR-Klassik|BR Klass|DE|classic|de|.15|.2|3||clásica ópera pública|BR-Klassik|klassik|https://www.br-klassik.de
+Radio Nacional Folklórica|Folklórica|AR|folk|es|.3|.4|2||folklore música-argentina pública|Nacional Folkl|folkl|https://www.radionacional.com.ar
+Folk Alley|FolkAlly|US|folk|en|.05|.35|2||folk americana acústica raíces|Folk Alley||https://www.folkalley.com
+WWOZ|WWOZ|US|folk|en|.2|.6|2||jazz blues raíces new-orleans|WWOZ||https://www.wwoz.org
+SomaFM Boot Liquor|Soma BL|US|folk|en|.02|.4|1||americana country raíces|Boot Liquor||https://somafm.com/bootliquor/
+SomaFM Folk Forward|Soma FF|US|folk|en|.02|.35|1||folk indie acústica|Folk Forward||https://somafm.com/folkfwd/
+FIP Reggae|FIP Rg|FR|folk|fr|.02|.55|2||reggae raíces pública|FIP Reggae||https://www.radiofrance.fr/fip/radio-reggae
+FIP Monde|FIP Mo|FR|folk|fr|.02|.5|2||world raíces pública|FIP Musiques du monde|monde|https://www.radiofrance.fr/fip/radio-monde
+FIP Electro|FIP El|FR|elec|fr|.02|.7|2||electrónica pública|FIP Electro||https://www.radiofrance.fr/fip/radio-electro
+SomaFM Beat Blender|Soma BB|US|elec|en|.02|.6|2||electrónica house downtempo|Beat Blender||https://somafm.com/beatblender/
+SomaFM Space Station|Soma SS|US|elec|en|.02|.5|2||electrónica ambient espacial|Space Station||https://somafm.com/spacestation/
+sunshine live|Sunshine|DE|elec|de|.15|.9|3||electrónica techno dance|sunshine live|^sunshine live$|https://www.sunshine-live.de
+Ibiza Global Radio|Ibiza GR|ES|elec|en|.05|.75|2||electrónica house deep-house|Ibiza Global|^ibiza global radio$|https://www.ibizaglobalradio.com
+franceinfo|frinfo|FR|news|fr|.98|.45|5||noticias actualidad pública|franceinfo|^france ?info$|https://www.francetvinfo.fr
+LBC|LBC|GB|news|en|.98|.5|4||noticias conversación actualidad|LBC|^lbc$|https://www.lbc.co.uk
+Times Radio|Times|GB|news|en|.95|.4|3||noticias actualidad|Times Radio||https://www.thetimes.co.uk/radio
+RNZ National|RNZ|NZ|news|en|.9|.35|3||noticias cultura pública|RNZ National|national|https://www.rnz.co.nz
+Radio Nacional Argentina|RNA|AR|news|es|.9|.4|4||noticias cultura pública|Radio Nacional Argentina|| am 870)?|https://www.radionacional.com.ar
+Bloomberg Radio|Bloomb|US|news|en|.95|.45|3||noticias economía mercados|Bloomberg|bloomberg|https://www.bloomberg.com/audio
+Radio Nacional de Colombia|RNC|CO|news|es|.85|.4|3||noticias cultura pública|Radio Nacional de Colombia||https://www.radionacional.co
+ABC NewsRadio|ABC News|AU|news|en|.98|.4|3||noticias actualidad pública|ABC NewsRadio|news|https://www.abc.net.au/listen/newsradio`;
 const S=RAW.trim().split("\n").map((l,i)=>{const a=l.split("|");return{i,n:a[0],sh:a[1],cc:a[2],g:a[3],lang:a[4],talk:+a[5],en:+a[6],l:+a[7],f:a[8]?+a[8]:null,tags:new Set(a[9].split(" ")),q:a[10],re:a[11]||null,u:a[12],ll:LL[a[2]],reg:REGION_OF[a[2]]}});
 
 /* ---------- Capa analítica: afinidad entre radios ---------- */
@@ -476,7 +506,7 @@ const hexPts=r=>[...Array(6)].map((_,k)=>{const t=rad(60*k-30);return(r*Math.cos
 const cells=[];for(let q=-15;q<=15;q++)for(let r=-15;r<=15;r++){const[x,y]=toPx(q,r);const d=Math.hypot(x,y);if(d<280)cells.push({x,y,d,a:Math.atan2(y,x)})}
 cells.sort((a,b)=>a.d-b.d||a.a-b.a);
 /* ---------- Constelación: distancia = afinidad (órbitas), dirección = familia (sectores) ---------- */
-const SECT=["news","culture","classic","jazz","ecl","rock","pop","latin"];   // vecinos de estilo quedan contiguos
+const SECT=["news","culture","classic","folk","jazz","ecl","elec","rock","pop","latin"];   // vecinos de estilo quedan contiguos
 const RMIN=36,RMAX=176;
 const rOf=v=>RMIN+Math.max(0,Math.min(1,(.92-v)/.6))*(RMAX-RMIN);
 const RINGS=[.85,.7,.55,.4];
@@ -683,7 +713,7 @@ function pick(s){
 
 
 /* ---------- Ficha de radio: al tocar un hexágono, resumen y opción de escuchar ---------- */
-const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia",CH:"Suiza",BE:"Bélgica"};
+const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia",CH:"Suiza",BE:"Bélgica",NZ:"Nueva Zelanda"};
 let cardS=null;
 function stationDesc(s){return[FAM[s.g][0],[...s.tags].slice(0,3).map(t=>t.replace("-"," ")).join(", "),CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM Santiago":""].filter(Boolean).join(" · ")}
 function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProperty("--cc",col);
@@ -849,7 +879,7 @@ const SBKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
 const np={timer:null,src:null,station:null,last:"",art:false};
 // Radios que publican su lista al aire: se consultan directo (más fiable que el metadato de la señal)
 const NPSRC={"triple j":"abc:triplej","ABC Classic":"abc:classic","Double J":"abc:doublej","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","Radio Paradise Mellow":"rp:1","KCRW":"kcrw",
-  "FIP":"rf:7","FIP Rock":"rf:64","FIP Jazz":"rf:65","France Inter":"rf:1","BBC Radio 1":"bbc:bbc_radio_one","BBC Radio 2":"bbc:bbc_radio_two","BBC 6 Music":"bbc:bbc_6music","BBC Radio 3":"bbc:bbc_radio_three"};
+  "FIP":"rf:7","FIP Rock":"rf:64","FIP Jazz":"rf:65","FIP Reggae":"rf:71","FIP Monde":"rf:69","FIP Electro":"rf:74","France Inter":"rf:1","BBC Radio 1":"bbc:bbc_radio_one","BBC Radio 2":"bbc:bbc_radio_two","BBC 6 Music":"bbc:bbc_6music","BBC Radio 3":"bbc:bbc_radio_three"};
 function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;np.cur=null;$("art").innerHTML='<span class="eq"><i></i><i></i><i></i></span>'}
 function npStop(){clearTimeout(np.timer);np.timer=null}
 function npStart(s,c){np.station=s;np.src=c;npPoll()}
@@ -937,7 +967,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02y";
+const APP_VERSION="2026-11-02z";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
