@@ -580,7 +580,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02k";
+const APP_VERSION="2026-11-02l";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -790,13 +790,13 @@ function concepts(items,topic){
   groups.sort((a,b)=>(rank(a)-rank(b))||(b.items.length-a.items.length)||(b.latest||"").localeCompare(a.latest||""));
   return {groups,loose:[]};
 }
-function groupedHTML(items,topic){
+function groupedHTML(items,topic,collapsed){
   const {groups,loose}=concepts(items,topic); let n=0;
   const card=x=>storyCard(x,n++);
   const gh=groups.map((c,gi)=>{
     const ccs=[...new Set(c.items.map(x=>outletCC(x.source_url||"")).filter(Boolean))];
     const nNew=c.items.filter(x=>x.isNew).length;
-    return `<details class="concept"${gi===0?" open":""}><summary><span class="cl${c.kind==="ambito"?" amb":""}">${esc(c.label)}</span><span class="cn">${c.items.length}</span>
+    return `<details class="concept"${gi===0&&!collapsed?" open":""}><summary><span class="cl${c.kind==="ambito"?" amb":""}">${esc(c.label)}</span><span class="cn">${c.items.length}</span>
       <span class="cm">${nNew?`${nNew} nueva${nNew>1?"s":""} · `:""}${ccs.slice(0,6).map(flag).join(" ")} · ${esc(ago(c.latest))}</span></summary>
       <div class="cb">${c.items.map(card).join("")}</div></details>`;
   }).join("");
@@ -815,7 +815,7 @@ function block(title,meta,items,newCount,extraBtns,topic){
   const w=document.createElement("section"); w.className="topic";
   const status = !items.length ? "" : newCount ? `${newCount} nueva${newCount>1?"s":""} desde tu última visita` : "Sin novedades desde tu última visita";
   w.innerHTML=`<div class="topic-head"><div><h2>${esc(title)}</h2><p class="meta">${esc([meta,status].filter(Boolean).join(" · "))}</p></div><div class="tbtns">${extraBtns||""}</div></div>`+
-    (items.length?groupedHTML(items.slice(0,24),topic):'<p class="note">No hay noticias de los últimos días con este alcance.</p>');
+    (items.length?groupedHTML(items.slice(0,24),topic,!!topic):'<p class="note">No hay noticias de los últimos días con este alcance.</p>');
   return w;
 }
 
