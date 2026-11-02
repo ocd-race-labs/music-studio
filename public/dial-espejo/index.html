@@ -114,6 +114,38 @@ a{color:inherit}
 .dead{opacity:.45}
 
 /* Banda inferior: lo que suena */
+.band{cursor:pointer}
+.np{position:fixed;inset:0;z-index:40;background:#07070A;color:var(--ink);overflow:hidden;animation:npUp .32s cubic-bezier(.2,.8,.2,1)}
+.np[hidden]{display:none}
+@keyframes npUp{from{transform:translateY(100%)}to{transform:none}}
+.np-bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(40px) saturate(1.4);opacity:.55;transform:scale(1.1)}
+.np-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,7,10,.35),rgba(7,7,10,.85) 70%,#07070A)}
+.np-in{position:relative;height:100%;overflow-y:auto;display:grid;align-content:start;gap:16px;max-width:520px;margin:0 auto;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.np-top{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center}
+.np-x{width:40px;height:40px;border-radius:12px;border:0;background:rgba(237,237,242,.08);font-size:22px;line-height:1;cursor:pointer}
+.np-st{font:400 11px var(--mono);color:var(--muted);text-align:center;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-cover{width:min(78vw,340px,44vh);height:min(78vw,340px,44vh);justify-self:center;border-radius:22px;overflow:hidden;background:#111116;box-shadow:0 24px 60px -18px var(--npc,#5B7BFF);display:grid;place-items:center}
+.np-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.np-cover svg{width:72%;height:auto}
+.np-meta{display:grid;gap:4px;min-width:0}
+.np-song{font-size:24px;font-weight:600;letter-spacing:-.015em;line-height:1.2;overflow-wrap:anywhere}
+.np-artist{font-size:17px;color:var(--npc,#EDEDF2);line-height:1.3;overflow-wrap:anywhere}
+.np-album{font:400 12px var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.np-links{display:flex;gap:8px;flex-wrap:wrap}
+.np-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;font-size:13.5px;font-weight:600;text-decoration:none;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.06)}
+.np-links a i{width:16px;height:16px;border-radius:50%;display:inline-block;flex:none}
+.np-links .sp i{background:#1DB954}.np-links .yt i{background:#FF0033;border-radius:4px}.np-links .am i{background:linear-gradient(135deg,#FA57C1,#FC3C44)}
+.np-ctl{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.np-b{width:48px;height:48px;border-radius:16px;border:1px solid rgba(237,237,242,.14);background:rgba(237,237,242,.06);display:grid;place-items:center;font-size:19px;cursor:pointer;text-decoration:none}
+.np-pp{width:72px;height:72px;border-radius:24px;border:0;background:var(--npc,#EDEDF2);color:#07070A;font-size:24px;display:grid;place-items:center;cursor:pointer;box-shadow:0 0 30px -6px var(--npc)}
+.np-info{display:grid;gap:10px;background:rgba(17,17,22,.7);border:1px solid var(--line);border-radius:18px;padding:14px}
+.np-info .k{font:400 10.5px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.np-info .v{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.np-info .row{display:grid;gap:3px}
+.np-af{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+.np-af button{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.05);border-radius:999px;padding:7px 11px;font-size:13px;cursor:pointer}
+.np-af i{width:8px;height:8px;border-radius:2px}.np-af em{font:400 10.5px var(--mono);font-style:normal;color:var(--muted)}
 .player{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 var(--gut-r) calc(10px + env(safe-area-inset-bottom, 0px)) var(--gut-l)}
 .band{max-width:1100px;margin:0 auto;border-radius:20px;background:var(--panel-2);color:var(--ink);display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px;transition:background .5s,color .5s}
 .art{width:52px;height:52px;border-radius:13px;background:rgba(0,0,0,.85);display:grid;place-items:center;overflow:hidden}
@@ -226,6 +258,27 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   <footer>Titulares y cobertura de Google News en español, con el medio original y su hora.</footer>
 </div>
 
+<div class="np" id="npSheet" hidden role="dialog" aria-modal="true" aria-label="Sonando ahora">
+  <div class="np-bg" id="npBg"></div>
+  <div class="np-in">
+    <div class="np-top"><button class="np-x" id="npClose" aria-label="Cerrar">⌄</button><span class="np-st" id="npSt"></span><span style="width:40px"></span></div>
+    <div class="np-cover" id="npCover"></div>
+    <div class="np-meta">
+      <div class="np-song" id="npSong"></div>
+      <div class="np-artist" id="npArtist"></div>
+      <div class="np-album" id="npAlbum"></div>
+    </div>
+    <div class="np-links" id="npLinks"></div>
+    <div class="np-ctl">
+      <button class="np-b" id="npFav" aria-label="Favorita">☆</button>
+      <button class="np-b" id="npAlt" aria-label="Probar otra señal">⇄</button>
+      <button class="np-pp" id="npPP" aria-label="Pausar">❚❚</button>
+      <a class="np-b" id="npWeb" target="_blank" rel="noopener" aria-label="Web de la radio">↗</a>
+      <button class="np-b" id="npNext" aria-label="Siguiente radio afín">⏭</button>
+    </div>
+    <div class="np-info" id="npInfo"></div>
+  </div>
+</div>
 <div class="player" id="player" hidden>
   <div class="band" id="band">
     <div class="art" id="art"></div>
@@ -708,7 +761,7 @@ function setBand(s){
   $("bPP").style.color=c;$("art").style.color=c;
   $("bFav").textContent=favs.has(s.n)?"★":"☆";$("bWeb").href=s.u||"#";$("bWeb").hidden=!s.u;
 }
-function setStatus(t){statusTxt=t;renderMeta()}
+function setStatus(t){statusTxt=t;renderMeta();if(typeof renderSheet==="function"&&!$("npSheet").hidden)renderSheet()}
 function renderMeta(){if(!current)return;const s=current;
   const sig=curList[curIdx];const parts=[`${flag(s.cc)} ${s.n}`,s.f?s.f.toFixed(1)+" FM":"",statusTxt,sig&&sig.bitrate?sig.bitrate+" kbps":""].filter(Boolean);
   mset("bM",parts.join(" · "))}
@@ -753,7 +806,7 @@ const np={timer:null,src:null,station:null,last:"",art:false};
 // Radios que publican su lista al aire: se consultan directo (más fiable que el metadato de la señal)
 const NPSRC={"triple j":"abc:triplej","ABC Classic":"abc:classic","Double J":"abc:doublej","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","Radio Paradise Mellow":"rp:1","KCRW":"kcrw",
   "FIP":"rf:7","FIP Rock":"rf:64","FIP Jazz":"rf:65","France Inter":"rf:1","BBC Radio 1":"bbc:bbc_radio_one","BBC Radio 2":"bbc:bbc_radio_two","BBC 6 Music":"bbc:bbc_6music","BBC Radio 3":"bbc:bbc_radio_three"};
-function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;$("art").innerHTML='<span class="eq"><i></i><i></i><i></i></span>'}
+function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;np.cur=null;$("art").innerHTML='<span class="eq"><i></i><i></i><i></i></span>'}
 function npStop(){clearTimeout(np.timer);np.timer=null}
 function npStart(s,c){np.station=s;np.src=c;npPoll()}
 async function npPoll(){
@@ -766,7 +819,7 @@ async function npPoll(){
   }
   if(current===s&&!audio.paused&&document.visibilityState==="visible")np.timer=setTimeout(npPoll,25000);
 }
-function npShow(s,j){
+function npShow(s,j){np.cur=j;if(!npSheet.hidden)setTimeout(renderSheet,0);
   const song=j&&j.song,artist=j&&j.artist,raw=j&&j.raw;
   const prog=j&&j.program,pdesc=j&&j.program_desc;
   if(raw&&!artist){const f=x=>String(x||"").toLowerCase().replace(/[^a-z0-9]/g,"");const r0=f(raw);if(r0.includes(f(s.sh))||f(s.n).includes(r0)||r0.includes(f(s.n).slice(0,8)))return npShow(s,{...j,raw:null})}
@@ -781,6 +834,59 @@ function npShow(s,j){
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&!audio.paused)npPoll()});
 
+/* ---------- Pantalla "sonando ahora": se abre al tocar la banda inferior ---------- */
+function hexArt(s){const c=FAM[s.g][2];const R2=14,SQ3=Math.sqrt(3);let g="";const d=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];const cells=[[0,0,0]];
+  for(let k=1;k<=2;k++){let q=-k,r=k;for(let t=0;t<6;t++)for(let j=0;j<k;j++){cells.push([q,r,k]);q+=d[t][0];r+=d[t][1]}}
+  cells.forEach(([q,r,k])=>{const x=R2*SQ3*(q+r/2),y=R2*1.5*r;g+=`<polygon points="${[0,1,2,3,4,5].map(i=>{const a=Math.PI/180*(60*i-90);return(x+R2*1.01*Math.cos(a)).toFixed(1)+","+(y+R2*1.01*Math.sin(a)).toFixed(1)}).join(" ")}" fill="${k?c:"#EDEDF2"}" fill-opacity="${[1,.75,.35][k]}"/>`});
+  return `<svg viewBox="-80 -80 160 160" aria-hidden="true">${g}</svg>`}
+const npSheet=$("npSheet");
+function npQuery(){const j=np.cur||{};return{song:j.song||null,artist:j.artist||null,raw:j.raw||null}}
+function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.cur||{},col=FAM[s.g][2];
+  npSheet.style.setProperty("--npc",col);
+  const song=j.song&&j.artist?j.song:(j.program||j.raw||s.n);
+  const artist=j.song&&j.artist?j.artist:(j.program?(j.program_desc||s.n):(j.raw?s.n:stationDesc(s)));
+  $("npSt").textContent=`${flag(s.cc)} ${s.n}${s.f?" · "+s.f.toFixed(1)+" FM":""} · ${statusTxt||""}`;
+  $("npSong").textContent=song;$("npArtist").textContent=artist;
+  $("npAlbum").textContent=j.song&&j.artist?[j.album,j.year,j.genre].filter(Boolean).join(" · "):"";
+  const cover=$("npCover");const art=j.artwork||null;
+  if(cover._a!==art){cover._a=art;cover.innerHTML=art?`<img src="${esc(art)}" alt="Carátula">`:hexArt(s)}
+  $("npBg").style.backgroundImage=art?`url("${art.replace(/"/g,"%22")}")`:`radial-gradient(circle at 50% 30%,${col},transparent 60%)`;
+  // Enlaces: canción si se conoce; si no, el artista o el texto en antena; si no hay nada, la radio
+  const q=j.artist&&j.song?`${j.artist} ${j.song}`:(j.raw||j.artist||null);
+  const L=$("npLinks");
+  if(q){const e=encodeURIComponent(q);
+    L.innerHTML=`<a class="sp" href="https://open.spotify.com/search/${e}" target="_blank" rel="noopener"><i></i>Spotify</a>`+
+      `<a class="yt" href="https://www.youtube.com/results?search_query=${e}" target="_blank" rel="noopener"><i></i>YouTube</a>`+
+      (j.artist?`<a class="yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(j.artist)}" target="_blank" rel="noopener"><i></i>Artista</a>`:"")+
+      (j.link?`<a class="am" href="${esc(j.link)}" target="_blank" rel="noopener"><i></i>Apple Music</a>`:"")}
+  else L.innerHTML=`<a class="yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(s.n+" radio en vivo")}" target="_blank" rel="noopener"><i></i>${esc(s.n)} en YouTube</a>`;
+  const playing=!audio.paused;$("npPP").textContent=playing?"❚❚":"▶";$("npPP").setAttribute("aria-label",playing?"Pausar":"Reproducir");
+  $("npFav").textContent=favs.has(s.n)?"★":"☆";$("npWeb").href=s.u||"#";$("npWeb").hidden=!s.u;$("npAlt").disabled=curList.length<2;
+  const rows=[];
+  if(j.program)rows.push(["Programa",j.program+(j.program_desc?" · "+j.program_desc:"")]);
+  rows.push(["Radio",[FAM[s.g][0],LANG[s.lang],CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM Santiago":""].filter(Boolean).join(" · ")]);
+  rows.push(["Estilo",[...s.tags].map(t=>t.replace("-"," ")).join(" · ")]);
+  if(j.stream_description&&j.stream_description!==s.n)rows.push(["Sobre la señal",j.stream_description]);
+  const sig=curList[curIdx];if(sig)rows.push(["Señal",[sig.codec,sig.bitrate?sig.bitrate+" kbps":"",curList.length>1?`${curIdx+1} de ${curList.length}`:""].filter(Boolean).join(" · ")]);
+  const af=S.filter(x=>x!==s&&!x.dead).map(x=>({x,v:sim(s,x).v})).sort((a,b)=>b.v-a.v).slice(0,3);
+  $("npInfo").innerHTML=rows.map(([k,v])=>`<div class="row"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join("")+
+    `<div class="row"><div class="k">Si te gusta, prueba</div><div class="np-af">${af.map(o=>`<button data-n="${esc(o.x.n)}"><i style="background:${FAM[o.x.g][2]}"></i>${flag(o.x.cc)} ${esc(o.x.n)} <em>${Math.round(o.v*100)}%</em></button>`).join("")}</div></div>`;
+  $("npInfo").querySelectorAll(".np-af button").forEach(b=>b.onclick=()=>{const x=S.find(t=>t.n===b.dataset.n);if(x){F=x;layout();play(x);setTimeout(renderSheet,60)}});
+}
+function openSheet(){if(!current)return;npSheet.hidden=false;document.body.style.overflow="hidden";renderSheet()}
+function closeSheet(){npSheet.hidden=true;document.body.style.overflow=""}
+$("band").addEventListener("click",e=>{if(e.target.closest("button,a"))return;openSheet()});
+$("npClose").onclick=closeSheet;
+$("npPP").onclick=()=>{toggle();setTimeout(renderSheet,50)};
+$("npFav").onclick=()=>{$("bFav").click();renderSheet()};
+$("npAlt").onclick=()=>$("bAlt").click();
+$("npNext").onclick=()=>{if(!current)return;const af=S.filter(x=>x!==current&&!x.dead).map(x=>({x,v:sim(current,x).v})).sort((a,b)=>b.v-a.v);if(af[0]){F=af[0].x;layout();play(af[0].x);setTimeout(renderSheet,60)}};
+// Deslizar hacia abajo para cerrar
+(function(){let y0=null;npSheet.addEventListener("touchstart",e=>{const sc=npSheet.querySelector(".np-in");y0=sc.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
+  npSheet.addEventListener("touchmove",e=>{if(y0==null)return;const dy=e.touches[0].clientY-y0;if(dy>0)npSheet.style.transform=`translateY(${dy*.6}px)`},{passive:true});
+  npSheet.addEventListener("touchend",e=>{if(y0==null)return;const dy=e.changedTouches[0].clientY-y0;npSheet.style.transform="";y0=null;if(dy>110)closeSheet()})})();
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!npSheet.hidden)closeSheet()});
+
 /* ---------- Arranque ---------- */
 resetView();layout();
 setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
@@ -789,7 +895,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02s";
+const APP_VERSION="2026-11-02t";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
