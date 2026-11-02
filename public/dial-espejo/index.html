@@ -132,7 +132,10 @@ a{color:inherit}
 .np-song{font-size:24px;font-weight:600;letter-spacing:-.015em;line-height:1.2;overflow-wrap:anywhere}
 .np-artist{font-size:17px;color:var(--npc,#EDEDF2);line-height:1.3;overflow-wrap:anywhere}
 .np-album{font:400 12px var(--mono);color:var(--muted);overflow-wrap:anywhere}
-.np-links{display:flex;gap:8px;flex-wrap:wrap}
+.np-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.np-col{display:grid;gap:7px;align-content:start;min-width:0}
+.np-k{font:400 10.5px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.np-col a{justify-content:flex-start}
 .np-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;font-size:13.5px;font-weight:600;text-decoration:none;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.06)}
 .np-links a i{width:16px;height:16px;border-radius:50%;display:inline-block;flex:none}
 .np-links .sp i{background:#1DB954}.np-links .yt i{background:#FF0033;border-radius:4px}.np-links .am i{background:linear-gradient(135deg,#FA57C1,#FC3C44)}
@@ -143,9 +146,6 @@ a{color:inherit}
 .np-info .k{font:400 10.5px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
 .np-info .v{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
 .np-info .row{display:grid;gap:3px}
-.np-af{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
-.np-af button{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.05);border-radius:999px;padding:7px 11px;font-size:13px;cursor:pointer}
-.np-af i{width:8px;height:8px;border-radius:2px}.np-af em{font:400 10.5px var(--mono);font-style:normal;color:var(--muted)}
 .player{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 var(--gut-r) calc(10px + env(safe-area-inset-bottom, 0px)) var(--gut-l)}
 .band{max-width:1100px;margin:0 auto;border-radius:20px;background:var(--panel-2);color:var(--ink);display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px;transition:background .5s,color .5s}
 .art{width:52px;height:52px;border-radius:13px;background:rgba(0,0,0,.85);display:grid;place-items:center;overflow:hidden}
@@ -854,12 +854,13 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   // Enlaces: canción si se conoce; si no, el artista o el texto en antena; si no hay nada, la radio
   const q=j.artist&&j.song?`${j.artist} ${j.song}`:(j.raw||j.artist||null);
   const L=$("npLinks");
-  if(q){const e=encodeURIComponent(q);
-    L.innerHTML=`<a class="sp" href="https://open.spotify.com/search/${e}" target="_blank" rel="noopener"><i></i>Spotify</a>`+
-      `<a class="yt" href="https://www.youtube.com/results?search_query=${e}" target="_blank" rel="noopener"><i></i>YouTube</a>`+
-      (j.artist?`<a class="yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(j.artist)}" target="_blank" rel="noopener"><i></i>Artista</a>`:"")+
-      (j.link?`<a class="am" href="${esc(j.link)}" target="_blank" rel="noopener"><i></i>Apple Music</a>`:"")}
-  else L.innerHTML=`<a class="yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(s.n+" radio en vivo")}" target="_blank" rel="noopener"><i></i>${esc(s.n)} en YouTube</a>`;
+  // Dos columnas: la canción a la izquierda y el artista a la derecha, cada uno con Spotify y YouTube
+  const sp=(t,k)=>`<a class="sp" href="https://open.spotify.com/search/${encodeURIComponent(t)}${k?"/"+k:""}" target="_blank" rel="noopener"><i></i>Spotify</a>`;
+  const yt=t=>`<a class="yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(t)}" target="_blank" rel="noopener"><i></i>YouTube</a>`;
+  if(q){const songQ=j.artist&&j.song?`${j.artist} ${j.song}`:q;
+    L.innerHTML=`<div class="np-col"><div class="np-k">Canción</div>${sp(songQ,"tracks")}${yt(songQ)}</div>`+
+      (j.artist?`<div class="np-col"><div class="np-k">Artista</div>${sp(j.artist,"artists")}${yt(j.artist)}</div>`:"")}
+  else L.innerHTML=`<div class="np-col"><div class="np-k">Radio</div>${yt(s.n+" radio en vivo")}</div>`;
   const playing=!audio.paused;$("npPP").textContent=playing?"❚❚":"▶";$("npPP").setAttribute("aria-label",playing?"Pausar":"Reproducir");
   $("npFav").textContent=favs.has(s.n)?"★":"☆";$("npWeb").href=s.u||"#";$("npWeb").hidden=!s.u;$("npAlt").disabled=curList.length<2;
   const rows=[];
@@ -868,10 +869,7 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   rows.push(["Estilo",[...s.tags].map(t=>t.replace("-"," ")).join(" · ")]);
   if(j.stream_description&&j.stream_description!==s.n)rows.push(["Sobre la señal",j.stream_description]);
   const sig=curList[curIdx];if(sig)rows.push(["Señal",[sig.codec,sig.bitrate?sig.bitrate+" kbps":"",curList.length>1?`${curIdx+1} de ${curList.length}`:""].filter(Boolean).join(" · ")]);
-  const af=S.filter(x=>x!==s&&!x.dead).map(x=>({x,v:sim(s,x).v})).sort((a,b)=>b.v-a.v).slice(0,3);
-  $("npInfo").innerHTML=rows.map(([k,v])=>`<div class="row"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join("")+
-    `<div class="row"><div class="k">Si te gusta, prueba</div><div class="np-af">${af.map(o=>`<button data-n="${esc(o.x.n)}"><i style="background:${FAM[o.x.g][2]}"></i>${flag(o.x.cc)} ${esc(o.x.n)} <em>${Math.round(o.v*100)}%</em></button>`).join("")}</div></div>`;
-  $("npInfo").querySelectorAll(".np-af button").forEach(b=>b.onclick=()=>{const x=S.find(t=>t.n===b.dataset.n);if(x){F=x;layout();play(x);setTimeout(renderSheet,60)}});
+  $("npInfo").innerHTML=rows.map(([k,v])=>`<div class="row"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join("");
 }
 function openSheet(){if(!current)return;npSheet.hidden=false;document.body.style.overflow="hidden";renderSheet()}
 function closeSheet(){npSheet.hidden=true;document.body.style.overflow=""}
@@ -895,7 +893,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02t";
+const APP_VERSION="2026-11-02u";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
