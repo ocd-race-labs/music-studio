@@ -61,6 +61,10 @@ a{color:inherit}
 .ftabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px}
 .ftab{flex:1;border:0;background:transparent;color:#A3A3AD;border-radius:10px;padding:8px 4px;font-size:13px;cursor:pointer;display:inline-flex;justify-content:center;align-items:center;gap:6px}
 .ftab[aria-selected="true"]{background:var(--panel-2);color:var(--ink)}
+.ftab.fav{flex:none;padding-inline:12px;border:1px solid transparent}
+.ftab.fav[aria-pressed="true"]{background:#F2B544;color:#07070A;font-weight:600}
+.ftab.fav .c{font:400 10px var(--mono);opacity:.65;margin-left:2px}
+@media (max-width:440px){.ftabs{gap:2px;padding:3px}.ftab{font-size:12.5px;padding:8px 2px;gap:4px}.ftab.fav{padding-inline:8px}.ftab .n{padding:1px 5px}.ftab.fav .c{display:none}}
 .ftab .n{font:500 10px var(--mono);background:var(--ink);color:var(--bg);border-radius:999px;padding:1px 6px}
 .chip .c{font:400 10px var(--mono);opacity:.6}
 .chip.zero{opacity:.32}
@@ -506,20 +510,25 @@ S.forEach(s=>{
 
 /* ---------- Filtros ---------- */
 const SEL={fam:new Set(store.get("dial-f-fam",[])),lang:new Set(store.get("dial-f-lang",[])),reg:new Set(store.get("dial-f-reg",[]))};
+// Favoritas es un filtro propio (se combina con los demás), no una opción de Contenido
+let FAV=store.get("dial-f-fav",false)||SEL.fam.has("fav");if(SEL.fam.delete("fav"))store.set("dial-f-fam",[...SEL.fam]);
 let query="";
 const qn=t=>String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-const match=s=>(!SEL.fam.size||SEL.fam.has(s.g)||(SEL.fam.has("fav")&&favs.has(s.n)))&&(!SEL.lang.size||SEL.lang.has(s.lang))&&(!SEL.reg.size||SEL.reg.has(s.reg))&&
+const match=s=>(!FAV||favs.has(s.n))&&(!SEL.fam.size||SEL.fam.has(s.g))&&(!SEL.lang.size||SEL.lang.has(s.lang))&&(!SEL.reg.size||SEL.reg.has(s.reg))&&
   (!query||qn([s.n,s.sh,s.cc,s.reg,LANG[s.lang],FAM[s.g][0],...s.tags].join(" ")).includes(qn(query)));
-const filtering=()=>SEL.fam.size||SEL.lang.size||SEL.reg.size||query;
+const filtering=()=>FAV||SEL.fam.size||SEL.lang.size||SEL.reg.size||query;
 // Facetas: cada opción muestra cuántas radios quedarían, considerando los otros filtros activos
-const matchExcept=(s,key)=>(key==="fam"||!SEL.fam.size||SEL.fam.has(s.g)||(SEL.fam.has("fav")&&favs.has(s.n)))&&(key==="lang"||!SEL.lang.size||SEL.lang.has(s.lang))&&(key==="reg"||!SEL.reg.size||SEL.reg.has(s.reg))&&
+const matchExcept=(s,key)=>(key==="fav"||!FAV||favs.has(s.n))&&(key==="fam"||!SEL.fam.size||SEL.fam.has(s.g))&&(key==="lang"||!SEL.lang.size||SEL.lang.has(s.lang))&&(key==="reg"||!SEL.reg.size||SEL.reg.has(s.reg))&&
   (!query||qn([s.n,s.sh,s.cc,s.reg,LANG[s.lang],FAM[s.g][0],...s.tags].join(" ")).includes(qn(query)));
-const HAS={fam:(s,k)=>k==="fav"?favs.has(s.n):s.g===k,lang:(s,k)=>s.lang===k,reg:(s,k)=>s.reg===k};
+const HAS={fam:(s,k)=>s.g===k,lang:(s,k)=>s.lang===k,reg:(s,k)=>s.reg===k};
 const FTABS=[["fam","Contenido"],["lang","Idioma"],["reg","Región"],["move","Vista"]];
 let ftab=store.get("dial-ftab","fam");if(!FTABS.some(t=>t[0]===ftab))ftab="fam";
-function optsOf(key){return key==="fam"?[["fav","★ Favoritas",null],...SECT.map(k=>[k,FAM[k][0],FAM[k][2]])]:key==="lang"?Object.entries(LANG).map(([k,v])=>[k,v]):key==="reg"?REGIONS.map(r=>[r,r]):[["fijo","Fijo"],["suave","Suave"],["vivo","Vivo"]]}
+function optsOf(key){return key==="fam"?[...SECT.map(k=>[k,FAM[k][0],FAM[k][2]])]:key==="lang"?Object.entries(LANG).map(([k,v])=>[k,v]):key==="reg"?REGIONS.map(r=>[r,r]):[["fijo","Fijo"],["suave","Suave"],["vivo","Vivo"]]}
 function renderFilters(){
   const tabs=$("ftabs");tabs.innerHTML="";
+  const fv=document.createElement("button");fv.className="ftab fav";fv.setAttribute("aria-pressed",FAV);fv.setAttribute("aria-label","Solo favoritas");
+  const nf=S.filter(s=>matchExcept(s,"fav")&&favs.has(s.n)).length;
+  fv.innerHTML=`${FAV?"★":"☆"} Favoritas<span class="c">${nf}</span>`;fv.onclick=()=>{FAV=!FAV;store.set("dial-f-fav",FAV);if(MOVE==="vivo"){F=null;resetView()}layout()};tabs.appendChild(fv);
   FTABS.forEach(([k,l])=>{const b=document.createElement("button");b.className="ftab";b.role="tab";b.setAttribute("aria-selected",k===ftab);
     const n=k==="move"?0:SEL[k].size;b.innerHTML=esc(l)+(n?`<span class="n">${n}</span>`:"");b.onclick=()=>{ftab=k;store.set("dial-ftab",k);renderFilters()};tabs.appendChild(b)});
   const box=$("fchips");box.innerHTML="";
@@ -530,12 +539,12 @@ function renderFilters(){
     b.innerHTML=(col?`<span class="sw" style="background:${col}"></span>`:"")+esc(label)+`<span class="c">${cnt}</span>`;
     b.onclick=()=>{SEL[ftab].has(k)?SEL[ftab].delete(k):SEL[ftab].add(k);store.set("dial-f-"+ftab,[...SEL[ftab]]);if(MOVE==="vivo"){F=null;resetView()}layout()};
     box.appendChild(b)});
-  const m=S.filter(match).length,act=SEL.fam.size+SEL.lang.size+SEL.reg.size+(query?1:0);
-  const desc=[...SEL.fam].map(k=>k==="fav"?"Favoritas":FAM[k][0]).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
+  const m=S.filter(match).length,act=(FAV?1:0)+SEL.fam.size+SEL.lang.size+SEL.reg.size+(query?1:0);
+  const desc=(FAV?["Favoritas"]:[]).concat([...SEL.fam].map(k=>FAM[k][0])).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
   $("fsumT").textContent=act?`${m} de ${S.length} radios · ${desc.join(" + ")}`:`${S.length} radios · vista ${MOVE}`;
   $("fclr").hidden=!act;
 }
-$("fclr").onclick=()=>{Object.values(SEL).forEach(x=>x.clear());["fam","lang","reg"].forEach(k=>store.set("dial-f-"+k,[]));query="";$("rq").value="";if(MOVE==="vivo")F=null;layout()};
+$("fclr").onclick=()=>{FAV=false;store.set("dial-f-fav",false);Object.values(SEL).forEach(x=>x.clear());["fam","lang","reg"].forEach(k=>store.set("dial-f-"+k,[]));query="";$("rq").value="";if(MOVE==="vivo")F=null;layout()};
 $("rq").addEventListener("input",e=>{query=e.target.value.trim();if(MOVE==="vivo")F=null;layout()});
 $("rq").addEventListener("keydown",e=>{if(e.key==="Enter"){const m=S.filter(match);if(m.length){e.target.blur();pick(m[0])}}});
 
@@ -584,7 +593,7 @@ function layout(){
     ethL.push([l,o.s,tx])});
   draw(performance.now(),true);
   $("coreT").textContent=filtering()?String(matches.length):"tú";
-  const desc=[...SEL.fam].map(k=>k==="fav"?"Favoritas":FAM[k][0]).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
+  const desc=(FAV?["Favoritas"]:[]).concat([...SEL.fam].map(k=>FAM[k][0])).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
   $("hTitle").textContent=F?`${F.n}${desc.length?" · "+desc.join(" + "):""}`:desc.length?`${matches.length} radios · ${desc.join(" + ")}`:(MOVE==="vivo"?"Tú al centro · órbitas por afinidad":"Constelación estable · las afines se iluminan");
   $("nbTitle").textContent=F?`Más afines a ${F.n}`:desc.length?"Coincidencias, de más a menos afín":"Más afines a ti";
   const nbs=$("nbs");nbs.innerHTML="";
@@ -813,7 +822,7 @@ async function play(s){
 function toggle(){if(!current)return;if(!audio.paused){audio.pause();return}
   if(audio.src&&statusTxt!=="sin señal ahora"){audio.load();setStatus("sintonizando…");audio.play().catch(()=>play(current))}else play(current)}
 $("bPP").onclick=toggle;
-$("bFav").onclick=()=>{if(!current)return;favs.has(current.n)?favs.delete(current.n):favs.add(current.n);store.set("dial-favs",[...favs]);$("bFav").textContent=favs.has(current.n)?"★":"☆";if(!F)layout()};
+$("bFav").onclick=()=>{if(!current)return;favs.has(current.n)?favs.delete(current.n):favs.add(current.n);store.set("dial-favs",[...favs]);$("bFav").textContent=favs.has(current.n)?"★":"☆";if(!F)layout();else renderFilters()};
 $("bAlt").onclick=async()=>{if(!current||curList.length<2)return;const s=current,token=++playToken,n=curList.length;$("bAlt").disabled=true;
   for(let k=1;k<n;k++){const i=(curIdx+k)%n;setStatus(`probando señal ${i+1} de ${n}…`);
     try{await tryUrl(curList[i].url,token);if(token!==playToken)return;curIdx=i;store.set("dial-pref-"+s.n,curList[i]);setStatus("en vivo · señal "+(i+1)+" de "+n);$("bAlt").disabled=false;npStart(s,curList[i]);return}catch(e){if(token!==playToken)return}}
@@ -919,7 +928,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02w";
+const APP_VERSION="2026-11-02x";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
