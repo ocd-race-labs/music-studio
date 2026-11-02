@@ -217,6 +217,32 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .mq .tr{display:inline-flex;will-change:transform}
 .mq .gap{padding:0 18px;opacity:.5}
 @media (min-width:760px){.radio-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start}}
+/* Computador: más ancho, constelación fija a la altura de la ventana, filtros sin carrusel, noticias a dos columnas */
+@media (min-width:1024px){
+  .topbar,.wrap,.band{max-width:1380px}
+  /* Radio: constelación grande a la izquierda; búsqueda, filtros y afines en una columna a la derecha */
+  #view-radio{grid-template-columns:minmax(0,1fr) 380px;column-gap:28px;align-items:start}
+  #view-radio>.search{grid-column:2;grid-row:1}
+  #view-radio>.fbar{grid-column:2;grid-row:2}
+  #view-radio .radio-grid{display:contents}
+  #view-radio .radio-grid>.hive{grid-column:1;grid-row:1/span 4;position:sticky;top:12px;width:min(100%,calc(100vh - 170px));justify-self:center}
+  #view-radio .radio-grid>div:last-child{grid-column:2;grid-row:3}
+  #view-radio>footer{grid-column:1/-1}
+  .chips{flex-wrap:wrap;overflow:visible;margin-inline:0;padding-inline:0}
+  .concept .cb{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #nbody>.topic>.story{display:grid}
+  .card{width:280px}
+}
+/* Pantalla "sonando ahora" en computador: carátula a la izquierda, información a la derecha */
+@media (min-width:900px){
+  .np-in{max-width:1120px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:56px;row-gap:18px;align-content:center;min-height:100%}
+  .np-top{grid-column:1/-1}
+  .np-cover{grid-column:1;grid-row:2/span 4;width:min(44vw,64vh,540px);height:min(44vw,64vh,540px);align-self:center;border-radius:28px}
+  .np-meta,.np-links,.np-ctl,.np-info{grid-column:2}
+  .np-song{font-size:36px}.np-artist{font-size:22px}.np-album{font-size:13px}
+  .np-ctl{justify-content:flex-start;gap:14px}
+  .np-x{width:44px;height:44px}
+}
 @media (prefers-reduced-motion: reduce){.hx{transition:none}.eth,.eq i{animation:none}}
 </style>
 </head>
@@ -893,7 +919,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02u";
+const APP_VERSION="2026-11-02w";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
