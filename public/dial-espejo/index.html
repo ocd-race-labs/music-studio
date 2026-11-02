@@ -57,6 +57,31 @@ a{color:inherit}
 .chip .sw{width:8px;height:8px;border-radius:2px}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 
+.fbar{display:grid;gap:8px}
+.ftabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px}
+.ftab{flex:1;border:0;background:transparent;color:#A3A3AD;border-radius:10px;padding:8px 4px;font-size:13px;cursor:pointer;display:inline-flex;justify-content:center;align-items:center;gap:6px}
+.ftab[aria-selected="true"]{background:var(--panel-2);color:var(--ink)}
+.ftab .n{font:500 10px var(--mono);background:var(--ink);color:var(--bg);border-radius:999px;padding:1px 6px}
+.chip .c{font:400 10px var(--mono);opacity:.6}
+.chip.zero{opacity:.32}
+.fsum{display:flex;align-items:center;justify-content:space-between;gap:10px;font:400 11px var(--mono);color:var(--muted);min-height:22px}
+.fsum span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fsum button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 10px;font:400 11px var(--mono);cursor:pointer;flex:none}
+/* Ficha de radio sobre la constelación */
+.card{position:absolute;z-index:5;width:min(236px,calc(100% - 20px));background:rgba(9,9,14,.74);-webkit-backdrop-filter:blur(12px) saturate(1.3);backdrop-filter:blur(12px) saturate(1.3);
+  border:1px solid var(--cc,#5B7BFF);border-radius:14px;padding:10px 10px 9px;box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 0 22px -4px var(--cc,#5B7BFF);color:var(--ink);display:grid;gap:5px;pointer-events:auto}
+.card[hidden]{display:none}
+.card .ch{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+.card .cn{font-size:14.5px;font-weight:600;letter-spacing:-.01em;line-height:1.2;text-shadow:0 0 12px var(--cc)}
+.card .cx{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0 2px;cursor:pointer}
+.card .cm{font:400 9.5px var(--mono);color:var(--muted);line-height:1.45}
+.card .cw{font:400 10px var(--mono);color:var(--cc);line-height:1.45}
+.card .bars{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:3px 6px;align-items:center;font:400 9px var(--mono);color:var(--dim)}
+.card .bar{height:3px;border-radius:2px;background:rgba(237,237,242,.1);overflow:hidden}.card .bar i{display:block;height:100%;background:var(--cc)}
+.card .cb{display:flex;gap:5px}
+.card .cb button{border:1px solid rgba(237,237,242,.18);background:rgba(237,237,242,.05);border-radius:999px;padding:6px 9px;font-size:12px;cursor:pointer;white-space:nowrap}.card .cb .go{flex:1}
+.card .cb .go{background:var(--cc);color:#07070A;border-color:var(--cc);font-weight:600;box-shadow:0 0 14px -2px var(--cc)}
+
 /* Panal */
 .hive{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:22px;overflow:hidden}
 .hive svg{display:block;width:100%;height:auto;touch-action:none;-webkit-user-select:none;user-select:none}
@@ -161,20 +186,22 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 
 <div class="wrap" id="view-radio">
   <label class="search" for="rq"><span aria-hidden="true" style="color:var(--dim)">⌕</span><input id="rq" type="search" placeholder="Buscar radio, ciudad o estilo" autocomplete="off" enterkeyhint="search"></label>
-  <div class="fgrp"><div class="h">Contenido</div><div class="chips" id="f_fam"></div></div>
-  <div class="fgrp"><div class="h">Idioma</div><div class="chips" id="f_lang"></div></div>
-  <div class="fgrp"><div class="h">Región</div><div class="chips" id="f_reg"></div></div>
-  <div class="fgrp"><div class="h">Movimiento del panal</div><div class="chips" id="f_move"><button class="chip" data-k="fijo">Fijo</button><button class="chip" data-k="suave">Suave</button><button class="chip" data-k="vivo">Vivo</button></div></div>
+  <div class="fbar">
+    <div class="ftabs" id="ftabs" role="tablist" aria-label="Filtros"></div>
+    <div class="chips" id="fchips" role="group"></div>
+    <div class="fsum"><span id="fsumT"></span><button id="fclr" hidden>Limpiar</button></div>
+  </div>
   <div class="radio-grid">
     <div class="hive">
       <svg id="sv" viewBox="-190 -190 380 380" role="img" aria-label="Panal de radios ordenado por afinidad"><g id="world"><g id="mesh"></g><g id="ether"></g><g id="cells"></g><g id="whyG"></g></g></svg>
       <div class="hive-title" id="hTitle"></div>
       <div class="hive-zoom" id="hZoom">1.0×</div>
-      <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="zh" aria-label="Limpiar filtros y volver al centro">⌂</button></div>
+      <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="rl" aria-label="Girar a la izquierda">↺</button><button id="rr" aria-label="Girar a la derecha">↻</button><button id="zh" aria-label="Volver al centro">⌂</button></div>
+      <div class="card" id="card" hidden role="dialog" aria-label="Ficha de radio"></div>
     </div>
     <div><div class="nbh" id="nbTitle"></div><div id="nbs"></div></div>
   </div>
-  <footer>Pellizca para acercar, arrastra para moverte y toca una radio para escucharla: queda al centro y las demás orbitan a su alrededor; mientras más cerca, más afín. Cada estilo ocupa siempre su sector y lo envuelve una nube con lo que agrupa a esas radios; las líneas dicen qué conecta a las más afines con la que suena. Las señales vienen del directorio abierto Radio Browser; las que hoy no responden quedan atenuadas.</footer>
+  <footer>Pellizca para acercar, gira con dos dedos (o con ↺ ↻), arrastra para moverte y toca una radio para ver su ficha y escucharla: queda al centro y las demás orbitan a su alrededor; mientras más cerca, más afín. Cada estilo ocupa siempre su sector y lo envuelve una nube con lo que agrupa a esas radios; las líneas dicen qué conecta a las más afines con la que suena. Las señales vienen del directorio abierto Radio Browser; las que hoy no responden quedan atenuadas.</footer>
 </div>
 
 <div class="wrap" id="view-news" hidden>
@@ -342,6 +369,7 @@ const RINGS=[.85,.7,.55,.4];
 // Cada familia ocupa un sector proporcional a cuántas radios tiene, así las noticias (muchas) no invaden a las demás
 const SW8=(()=>{const n=SECT.map(k=>Math.max(3,S.filter(s=>s.g===k).length)),T=n.reduce((a,b)=>a+b,0);let acc=-Math.PI/2;
   return SECT.map((k,i)=>{const w=n[i]/T*Math.PI*2,o={k,a0:acc,mid:acc+w/2,w};acc+=w;return o})})();
+const LBL=[];   // textos que mantienen su tamaño en pantalla al hacer zoom
 const orbitsG=document.createElementNS(NS,"g"),sunsG=document.createElementNS(NS,"g"),cloudsG=document.createElementNS(NS,"g");
 // Lo que agrupa a cada familia: sus etiquetas más repetidas y sus idiomas (se muestra bajo su punto de color)
 const FAMWHY=Object.fromEntries(Object.keys(FAM).map(k=>{const m=S.filter(s=>s.g===k),c={};m.forEach(s=>s.tags.forEach(t=>c[t]=(c[t]||0)+1));
@@ -358,7 +386,9 @@ S.forEach(s=>{const c=document.createElementNS(NS,"circle");c.setAttribute("r","
     const d=document.createElementNS(NS,"circle");d.setAttribute("cx",(RMAX*.97*Math.cos(a)).toFixed(1));d.setAttribute("cy",(RMAX*.97*Math.sin(a)).toFixed(1));d.setAttribute("r","3");d.setAttribute("fill",FAM[k][2]);g.appendChild(d);
     const t=document.createElementNS(NS,"text");t.setAttribute("x",(RMAX*.97*Math.cos(a)).toFixed(1));t.setAttribute("y",(RMAX*.97*Math.sin(a)+9).toFixed(1));t.setAttribute("text-anchor","middle");t.setAttribute("font-size","5.5");t.setAttribute("font-family","Geist Mono, ui-monospace, monospace");t.setAttribute("fill",FAM[k][2]);t.textContent=FAM[k][0];t.setAttribute("font-weight","600");t.setAttribute("class","why");t.style.fill=FAM[k][2];t.style.fontSize="5.8px";g.appendChild(t);
     const w=document.createElementNS(NS,"text");w.setAttribute("text-anchor","middle");w.setAttribute("font-size","4.6");w.setAttribute("font-family","Geist Mono, ui-monospace, monospace");w.setAttribute("fill","rgba(237,237,242,.6)");w.setAttribute("class","why");w.style.fontSize="4.6px";
-    FAMWHY[k].forEach((line,j)=>{const ts=document.createElementNS(NS,"tspan");ts.setAttribute("x",t.getAttribute("x"));ts.setAttribute("y",(+t.getAttribute("y")+6.5+j*5.6).toFixed(1));ts.textContent=line;w.appendChild(ts)});g.appendChild(w);
+    w.setAttribute("x",t.getAttribute("x"));w.setAttribute("y",t.getAttribute("y"));
+    FAMWHY[k].forEach((line,j)=>{const ts=document.createElementNS(NS,"tspan");ts.setAttribute("x",t.getAttribute("x"));ts.setAttribute("dy",j?"1.2em":"1.5em");ts.textContent=line;w.appendChild(ts)});g.appendChild(w);
+    LBL.push([t,5.8,2.4],[w,4.6,2.2]);
     sunsG.appendChild(g)});
   mesh.appendChild(sunsG);
   mesh.appendChild(cloudsG);
@@ -383,16 +413,31 @@ const qn=t=>String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 const match=s=>(!SEL.fam.size||SEL.fam.has(s.g)||(SEL.fam.has("fav")&&favs.has(s.n)))&&(!SEL.lang.size||SEL.lang.has(s.lang))&&(!SEL.reg.size||SEL.reg.has(s.reg))&&
   (!query||qn([s.n,s.sh,s.cc,s.reg,LANG[s.lang],FAM[s.g][0],...s.tags].join(" ")).includes(qn(query)));
 const filtering=()=>SEL.fam.size||SEL.lang.size||SEL.reg.size||query;
-function chipRow(id,items,key){
-  const box=$(id);box.innerHTML="";
-  items.forEach(([k,label,col])=>{const b=document.createElement("button");b.className="chip";b.setAttribute("aria-pressed",SEL[key].has(k));
-    b.innerHTML=(col?`<span class="sw" style="background:${col}"></span>`:"")+esc(label);
-    b.onclick=()=>{SEL[key].has(k)?SEL[key].delete(k):SEL[key].add(k);b.setAttribute("aria-pressed",SEL[key].has(k));store.set("dial-f-"+key,[...SEL[key]]);if(MOVE==="vivo"){F=null;resetView()}layout()};
+// Facetas: cada opción muestra cuántas radios quedarían, considerando los otros filtros activos
+const matchExcept=(s,key)=>(key==="fam"||!SEL.fam.size||SEL.fam.has(s.g)||(SEL.fam.has("fav")&&favs.has(s.n)))&&(key==="lang"||!SEL.lang.size||SEL.lang.has(s.lang))&&(key==="reg"||!SEL.reg.size||SEL.reg.has(s.reg))&&
+  (!query||qn([s.n,s.sh,s.cc,s.reg,LANG[s.lang],FAM[s.g][0],...s.tags].join(" ")).includes(qn(query)));
+const HAS={fam:(s,k)=>k==="fav"?favs.has(s.n):s.g===k,lang:(s,k)=>s.lang===k,reg:(s,k)=>s.reg===k};
+const FTABS=[["fam","Contenido"],["lang","Idioma"],["reg","Región"],["move","Vista"]];
+let ftab=store.get("dial-ftab","fam");if(!FTABS.some(t=>t[0]===ftab))ftab="fam";
+function optsOf(key){return key==="fam"?[["fav","★ Favoritas",null],...SECT.map(k=>[k,FAM[k][0],FAM[k][2]])]:key==="lang"?Object.entries(LANG).map(([k,v])=>[k,v]):key==="reg"?REGIONS.map(r=>[r,r]):[["fijo","Fijo"],["suave","Suave"],["vivo","Vivo"]]}
+function renderFilters(){
+  const tabs=$("ftabs");tabs.innerHTML="";
+  FTABS.forEach(([k,l])=>{const b=document.createElement("button");b.className="ftab";b.role="tab";b.setAttribute("aria-selected",k===ftab);
+    const n=k==="move"?0:SEL[k].size;b.innerHTML=esc(l)+(n?`<span class="n">${n}</span>`:"");b.onclick=()=>{ftab=k;store.set("dial-ftab",k);renderFilters()};tabs.appendChild(b)});
+  const box=$("fchips");box.innerHTML="";
+  optsOf(ftab).forEach(([k,label,col])=>{const b=document.createElement("button");b.className="chip";
+    if(ftab==="move"){b.setAttribute("aria-pressed",MOVE===k);b.textContent=label;b.onclick=()=>{MOVE=k;store.set("dial-move",MOVE);layout._k=null;if(MOVE!=="fijo")resetView();layout()};box.appendChild(b);return}
+    const on=SEL[ftab].has(k),cnt=S.filter(s=>matchExcept(s,ftab)&&HAS[ftab](s,k)).length;
+    if(!cnt&&!on)b.classList.add("zero");b.setAttribute("aria-pressed",on);
+    b.innerHTML=(col?`<span class="sw" style="background:${col}"></span>`:"")+esc(label)+`<span class="c">${cnt}</span>`;
+    b.onclick=()=>{SEL[ftab].has(k)?SEL[ftab].delete(k):SEL[ftab].add(k);store.set("dial-f-"+ftab,[...SEL[ftab]]);if(MOVE==="vivo"){F=null;resetView()}layout()};
     box.appendChild(b)});
+  const m=S.filter(match).length,act=SEL.fam.size+SEL.lang.size+SEL.reg.size+(query?1:0);
+  const desc=[...SEL.fam].map(k=>k==="fav"?"Favoritas":FAM[k][0]).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
+  $("fsumT").textContent=act?`${m} de ${S.length} radios · ${desc.join(" + ")}`:`${S.length} radios · vista ${MOVE}`;
+  $("fclr").hidden=!act;
 }
-chipRow("f_fam",[["fav","Favoritas",null],...Object.entries(FAM).map(([k,v])=>[k,v[0],v[1]])],"fam");
-chipRow("f_lang",Object.entries(LANG).map(([k,v])=>[k,v]),"lang");
-chipRow("f_reg",REGIONS.map(r=>[r,r]),"reg");
+$("fclr").onclick=()=>{Object.values(SEL).forEach(x=>x.clear());["fam","lang","reg"].forEach(k=>store.set("dial-f-"+k,[]));query="";$("rq").value="";if(MOVE==="vivo")F=null;layout()};
 $("rq").addEventListener("input",e=>{query=e.target.value.trim();if(MOVE==="vivo")F=null;layout()});
 $("rq").addEventListener("keydown",e=>{if(e.key==="Enter"){const m=S.filter(match);if(m.length){e.target.blur();pick(m[0])}}});
 
@@ -419,7 +464,7 @@ function constellation(center,except){
   pts.forEach(p=>{p.r=Math.hypot(p.x,p.y);p.a=Math.atan2(p.y,p.x);p.w=Math.random()*6.28});
   return pts;
 }
-let ORB=new Map(),centerSt=null,rot=0,lastT=0;
+let ORB=new Map(),centerSt=null,rot=0,lastT=0,vrot=0;
 function layout(){
   const matches=S.filter(match);
   const recenter = MOVE==="vivo" || (MOVE==="suave" && F);
@@ -437,7 +482,7 @@ function layout(){
   const src=F||current||null;
   scored.filter(o=>o.s!==F&&o.m&&!o.s.dead).sort((a,b)=>b.v-a.v).slice(0,6).forEach(o=>{const l=document.createElementNS(NS,"line");
     l.setAttribute("stroke",FAM[(F||{g:center.g}).g][2]);l.setAttribute("stroke-opacity",(.3+.6*o.v).toFixed(2));l.setAttribute("stroke-width","1.1");l.setAttribute("class","eth");eth.appendChild(l);
-    let tx=null;if(src&&ethL.length<4){tx=document.createElementNS(NS,"text");tx.setAttribute("class","why");tx.setAttribute("text-anchor","middle");tx.textContent=`${whyLink(o)} · ${Math.round(o.v*100)}%`;$("whyG").appendChild(tx)}
+    let tx=null;if(src&&ethL.length<4){tx=document.createElementNS(NS,"text");tx.setAttribute("class","why");tx.setAttribute("text-anchor","middle");tx.textContent=`${whyLink(o)} · ${Math.round(o.v*100)}%`;tx.style.fontSize=(5.2*LK).toFixed(2)+"px";tx.style.strokeWidth=(2.4*LK).toFixed(2)+"px";$("whyG").appendChild(tx)}
     ethL.push([l,o.s,tx])});
   draw(performance.now(),true);
   $("coreT").textContent=filtering()?String(matches.length):"tú";
@@ -452,7 +497,7 @@ function layout(){
     b.innerHTML=`<span class="sq" style="background:${FAM[o.s.g][2]}"></span><span style="min-width:0"><div class="n">${flag(o.s.cc)} ${esc(o.s.n)}</div><div class="w">${esc(LANG[o.s.lang])} · ${esc(why)}</div></span><span class="p">${Math.round(o.v*100)}%</span>`;
     b.onclick=()=>pick(o.s);nbs.appendChild(b)});
   S.forEach(s=>s.el.querySelector(".sel").setAttribute("opacity",s===F?1:0));
-  document.querySelectorAll("#f_move .chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===MOVE));
+  renderFilters();
 }
 let ethL=[];
 // Por qué una radio se conecta con la que suena: lo que más aporta a su afinidad, en palabras
@@ -467,7 +512,7 @@ function whyLink(o){const p=o.p||{},out=[];
 function draw(t,force){
   const dt=Math.min(64,t-(lastT||t));lastT=t;
   const spin = MOVE==="fijo"||RM ? 0 : (MOVE==="vivo"?.000045:.000022);
-  rot+=dt*spin;
+  rot+=dt*spin+dt*vrot;vrot*=Math.pow(.94,dt/16);if(Math.abs(vrot)<1e-6)vrot=0;
   const wob = MOVE==="fijo"||RM ? 0 : (MOVE==="vivo"?.035:.02);
   sunsG.setAttribute("transform",`rotate(${(rot*180/Math.PI).toFixed(2)})`);
   ORB.forEach((p,s)=>{const a=p.a+rot+Math.sin(t*.0006+p.w)*wob/(p.r/80),r=p.r+Math.sin(t*.0009+p.w*2)*(wob?1.6:0);
@@ -482,20 +527,54 @@ function draw(t,force){
   const placed=[];
   ethL.forEach(([l,s,tx])=>{const x1=o?o.x:0,y1=o?o.y:0;l.setAttribute("x1",x1.toFixed(1));l.setAttribute("y1",y1.toFixed(1));l.setAttribute("x2",s.x.toFixed(1));l.setAttribute("y2",s.y.toFixed(1));
     if(tx){const sc=(ORB.get(s)||{sc:1}).sc,lx=s.x,ly=s.y-R*sc-1.5;
-      const hit=placed.some(q=>Math.abs(q[0]-lx)<42&&Math.abs(q[1]-ly)<6.5);tx.style.opacity=hit?0:1;if(!hit)placed.push([lx,ly]);
+      const hit=placed.some(q=>Math.abs(q[0]-lx)<42*LK&&Math.abs(q[1]-ly)<6.5*LK);tx.style.opacity=hit?0:1;if(!hit)placed.push([lx,ly]);
       tx.setAttribute("x",lx.toFixed(1));tx.setAttribute("y",ly.toFixed(1))}});
 }
-(function loop(t){if(!$("view-radio").hidden&&document.visibilityState==="visible")draw(t);requestAnimationFrame(loop)})(performance.now());
+requestAnimationFrame(function loop(t){if(!$("view-radio").hidden&&document.visibilityState==="visible"){draw(t);if(cardS)placeCard()}requestAnimationFrame(loop)});
 function pick(s){
   if(F===s && current===s){toggle();return}
   F=s;if(MOVE!=="fijo")resetView();layout();play(s);
 }
 
-document.querySelectorAll("#f_move .chip").forEach(b=>b.onclick=()=>{MOVE=b.dataset.k;store.set("dial-move",MOVE);if(MOVE!=="fijo")resetView();layout()});
+
+/* ---------- Ficha de radio: al tocar un hexágono, resumen y opción de escuchar ---------- */
+const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia"};
+let cardS=null;
+function stationDesc(s){return[FAM[s.g][0],[...s.tags].slice(0,3).map(t=>t.replace("-"," ")).join(", "),CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM Santiago":""].filter(Boolean).join(" · ")}
+function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProperty("--cc",col);
+  const ref=current&&current!==s?current:(F&&F!==s?F:null);const o=ref?{s,...sim(ref,s)}:null;
+  const playing=current===s&&!audio.paused;
+  c.innerHTML=`<div class="ch"><div><div class="cn">${flag(s.cc)} ${esc(s.n)}</div><div class="cm">${esc([FAM[s.g][0],LANG[s.lang],CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM":"",["","local","regional","nacional","grande","global"][s.l]].filter(Boolean).join(" · "))}</div></div><button class="cx" aria-label="Cerrar">✕</button></div>
+    <div class="cm">${esc([...s.tags].slice(0,4).map(t=>t.replace("-"," ")).join(" · "))}${s.dead?" · sin señal ahora":""}</div>
+    ${o?`<div class="cw">${Math.round(o.v*100)}% afín a ${esc(ref.n)} · ${esc(whyLink(o))}</div>`:""}
+    <div class="bars"><span>Habla</span><span class="bar"><i style="width:${Math.round(s.talk*100)}%"></i></span><span>Energía</span><span class="bar"><i style="width:${Math.round(s.en*100)}%"></i></span></div>
+    <div class="cb"><button class="go">${playing?"❚❚ Pausar":"▶ Escuchar"}</button><button data-a="c" aria-label="Ver sus afines">◎ Afines</button><button data-a="f" aria-label="Favorita">${favs.has(s.n)?"★":"☆"}</button>${s.u?`<button data-a="w" aria-label="Sitio web">↗</button>`:""}</div>`;
+  c.hidden=false;
+  c.querySelector(".cx").onclick=closeCard;
+  c.querySelector(".go").onclick=()=>{closeCard();pick(s)};
+  c.querySelector('[data-a="c"]').onclick=()=>{F=s;closeCard();if(MOVE!=="fijo")resetView();layout()};
+  c.querySelector('[data-a="f"]').onclick=e=>{favs.has(s.n)?favs.delete(s.n):favs.add(s.n);store.set("dial-favs",[...favs]);e.target.textContent=favs.has(s.n)?"★":"☆";if(current===s)$("bFav").textContent=e.target.textContent;renderFilters()};
+  const w=c.querySelector('[data-a="w"]');if(w)w.onclick=()=>window.open(s.u,"_blank","noopener");
+  placeCard();
+}
+function closeCard(){cardS=null;$("card").hidden=true}
+// Ubica la ficha arriba, abajo o a un costado del hexágono, donde quepa; la sigue mientras orbita
+function placeCard(){if(!cardS)return;const c=$("card"),hv=c.parentElement.getBoundingClientRect(),r=cardS.el.getBoundingClientRect();
+  const cw=c.offsetWidth,ch=c.offsetHeight,m=8,cx=r.left+r.width/2-hv.left,top=r.top-hv.top,bot=r.bottom-hv.top;
+  let x=cx-cw/2,y;
+  if(top-ch-m>=m)y=top-ch-m;else if(bot+ch+m<=hv.height-m)y=bot+m;
+  else{y=Math.max(m,Math.min(hv.height-ch-m,(top+bot)/2-ch/2));x=cx+r.width/2+m+cw<=hv.width-m?cx+r.width/2+m:cx-r.width/2-m-cw}
+  x=Math.max(m,Math.min(hv.width-cw-m,x));c.style.left=x.toFixed(0)+"px";c.style.top=y.toFixed(0)+"px"}
 
 /* ---------- Zoom y gestos ---------- */
 let z=1,px=0,py=0,moved=false;const world=$("world"),sv=$("sv");
-function apply(){z=Math.max(.5,Math.min(5,z));world.setAttribute("transform",`translate(${px.toFixed(1)},${py.toFixed(1)}) scale(${z.toFixed(3)})`);$("hZoom").textContent=z.toFixed(1)+"×"}
+function apply(){z=Math.max(.5,Math.min(6,z));world.setAttribute("transform",`translate(${px.toFixed(1)},${py.toFixed(1)}) scale(${z.toFixed(3)})`);$("hZoom").textContent=z.toFixed(1)+"×";
+  // Los rótulos no crecen con el zoom: así no tapan las radios al acercarse
+  const k=Math.min(1.15,Math.max(.22,Z0/z));LK=k;
+  LBL.forEach(([el,fs,sw])=>{el.style.fontSize=(fs*k).toFixed(2)+"px";el.style.strokeWidth=(sw*k).toFixed(2)+"px"});
+  document.querySelectorAll("#whyG text").forEach(el=>{el.style.fontSize=(5.2*k).toFixed(2)+"px";el.style.strokeWidth=(2.4*k).toFixed(2)+"px"});
+  sunsG.querySelectorAll("circle").forEach(c=>c.setAttribute("r",(3*k).toFixed(2)))}
+let LK=1;
 const Z0=.95;
 function resetView(){z=Z0;px=0;py=0;apply()}
 const toSvg=(cx,cy)=>{const r=sv.getBoundingClientRect();return[(cx-r.left)/r.width*380-190,(cy-r.top)/r.height*380-190]};
@@ -503,26 +582,31 @@ function zoomAt(f,cx,cy){const nz=Math.max(.5,Math.min(5,z*f));px=cx-(cx-px)*(nz
 const hexAt=(cx,cy)=>{const el=document.elementFromPoint(cx,cy);const g=el&&el.closest&&el.closest(".hx");return g&&g.dataset.i!=null?S[+g.dataset.i]:null};
 let t0=null,lastTap=0,tapTimer=null;
 sv.addEventListener("touchstart",e=>{e.preventDefault();const ts=[...e.touches].map(t=>toSvg(t.clientX,t.clientY));
-  if(ts.length>=2){moved=true;const d=Math.hypot(ts[0][0]-ts[1][0],ts[0][1]-ts[1][1]);t0={mode:"pinch",d,z,px,py,mid:[(ts[0][0]+ts[1][0])/2,(ts[0][1]+ts[1][1])/2]}}
+  if(ts.length>=2){moved=true;const d=Math.hypot(ts[0][0]-ts[1][0],ts[0][1]-ts[1][1]);t0={mode:"pinch",d,z,px,py,mid:[(ts[0][0]+ts[1][0])/2,(ts[0][1]+ts[1][1])/2],ang:Math.atan2(ts[1][1]-ts[0][1],ts[1][0]-ts[0][0]),rot,lt:performance.now(),la:0}}
   else{moved=false;t0={mode:"pan",p:ts[0],px,py}}},{passive:false});
 sv.addEventListener("touchmove",e=>{e.preventDefault();if(!t0)return;const ts=[...e.touches].map(t=>toSvg(t.clientX,t.clientY));
   if(t0.mode==="pinch"&&ts.length>=2){const d=Math.hypot(ts[0][0]-ts[1][0],ts[0][1]-ts[1][1]);const mid=[(ts[0][0]+ts[1][0])/2,(ts[0][1]+ts[1][1])/2];
-    const nz=Math.max(.5,Math.min(5,t0.z*d/t0.d));const wx=(t0.mid[0]-t0.px)/t0.z,wy=(t0.mid[1]-t0.py)/t0.z;z=nz;px=mid[0]-wx*nz;py=mid[1]-wy*nz;apply()}
+    const nz=Math.max(.5,Math.min(6,t0.z*d/t0.d));const wx=(t0.mid[0]-t0.px)/t0.z,wy=(t0.mid[1]-t0.py)/t0.z;z=nz;px=mid[0]-wx*nz;py=mid[1]-wy*nz;apply();
+    // Girar con dos dedos: el universo completo rota alrededor de su centro
+    let da=Math.atan2(ts[1][1]-ts[0][1],ts[1][0]-ts[0][0])-t0.ang;da=Math.atan2(Math.sin(da),Math.cos(da));
+    const now=performance.now(),target=t0.rot+da;vrot=(target-rot)/Math.max(16,now-t0.lt)*.6;t0.lt=now;rot=target}
   else if(t0.mode==="pan"&&ts.length===1){const dx=ts[0][0]-t0.p[0],dy=ts[0][1]-t0.p[1];if(Math.abs(dx)+Math.abs(dy)>5)moved=true;if(moved){px=t0.px+dx;py=t0.py+dy;apply()}}},{passive:false});
 sv.addEventListener("touchend",e=>{e.preventDefault();
+  if(t0&&t0.mode==="pinch"&&e.touches.length<2&&Math.abs(vrot)>.004)vrot=Math.sign(vrot)*.004;
   if(e.touches.length===1){const p=toSvg(e.touches[0].clientX,e.touches[0].clientY);t0={mode:"pan",p,px,py};return}
   if(!moved&&e.changedTouches.length===1){const t=e.changedTouches[0],now=Date.now();
     if(now-lastTap<300){clearTimeout(tapTimer);zoomAt(1.8,...toSvg(t.clientX,t.clientY));lastTap=0}
-    else{lastTap=now;const s=hexAt(t.clientX,t.clientY);if(s){clearTimeout(tapTimer);tapTimer=setTimeout(()=>pick(s),260)}}}
+    else{lastTap=now;const s=hexAt(t.clientX,t.clientY);clearTimeout(tapTimer);tapTimer=setTimeout(()=>s?openCard(s):closeCard(),260)}}
   t0=null},{passive:false});
 ["gesturestart","gesturechange","gestureend"].forEach(ev=>sv.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 let md=null;
 sv.addEventListener("mousedown",e=>{md={p:toSvg(e.clientX,e.clientY),px,py};moved=false});
 window.addEventListener("mousemove",e=>{if(!md)return;const p=toSvg(e.clientX,e.clientY),dx=p[0]-md.p[0],dy=p[1]-md.p[1];if(Math.abs(dx)+Math.abs(dy)>5)moved=true;if(moved){px=md.px+dx;py=md.py+dy;apply()}});
-window.addEventListener("mouseup",e=>{if(md&&!moved){const s=hexAt(e.clientX,e.clientY);if(s)pick(s)}md=null});
-sv.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.deltaY<0?1.15:1/1.15,...toSvg(e.clientX,e.clientY))},{passive:false});
+window.addEventListener("mouseup",e=>{if(md&&!moved&&e.target.closest&&e.target.closest("#sv")){const s=hexAt(e.clientX,e.clientY);s?openCard(s):closeCard()}md=null});
+sv.addEventListener("wheel",e=>{e.preventDefault();if(e.shiftKey){vrot+=(e.deltaY>0?1:-1)*.0012;return}zoomAt(e.deltaY<0?1.15:1/1.15,...toSvg(e.clientX,e.clientY))},{passive:false});
 $("zi").onclick=()=>zoomAt(1.4,0,0);$("zo").onclick=()=>zoomAt(1/1.4,0,0);
-$("zh").onclick=()=>{F=null;Object.values(SEL).forEach(x=>x.clear());["fam","lang","reg"].forEach(k=>store.set("dial-f-"+k,[]));query="";$("rq").value="";document.querySelectorAll("#view-radio .chip").forEach(b=>b.setAttribute("aria-pressed","false"));resetView();layout()};
+$("zh").onclick=()=>{F=null;closeCard();rot=0;vrot=0;resetView();layout()};
+$("rl").onclick=()=>{vrot-=.0032};$("rr").onclick=()=>{vrot+=.0032};
 
 /* ---------- Señales (Radio Browser) ---------- */
 const API=["https://de1.api.radio-browser.info","https://nl1.api.radio-browser.info","https://fi1.api.radio-browser.info","https://de2.api.radio-browser.info"];
@@ -585,7 +669,7 @@ function tryUrl(url,token){return new Promise((res,rej)=>{
   audio.addEventListener("playing",on);audio.addEventListener("error",off);audio.src=url;const p=audio.play();if(p)p.catch(()=>{if(token===playToken)done(false)})})}
 async function play(s){
   const token=++playToken;current=s;curList=[];curIdx=0;npReset(s);setBand(s);
-  mset("bT",s.n);mset("bA",FAM[s.g][0]+" · "+LANG[s.lang]);setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
+  mset("bT",s.n);mset("bA",stationDesc(s));setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
   if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:FAM[s.g][0],album:"Dial Espejo",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
   let list=[];try{list=await candidates(s)}catch(e){if(token===playToken){setStatus("sin conexión al directorio");setBtn(false)}return}
   for(let attempt=0;attempt<2;attempt++){
@@ -615,25 +699,31 @@ if("mediaSession" in navigator){try{navigator.mediaSession.setActionHandler("pla
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SBKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const np={timer:null,src:null,station:null,last:"",art:false};
+// Radios que publican su lista al aire: se consultan directo (más fiable que el metadato de la señal)
+const NPSRC={"triple j":"abc:triplej","ABC Classic":"abc:classic","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","KCRW":"kcrw"};
 function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;$("art").innerHTML='<span class="eq"><i></i><i></i><i></i></span>'}
 function npStop(){clearTimeout(np.timer);np.timer=null}
 function npStart(s,c){np.station=s;np.src=c;npPoll()}
 async function npPoll(){
   clearTimeout(np.timer);np.timer=null;
   if(!np.src||current!==np.station)return;const s=np.station,c=np.src;
-  if(!(c.hls||/\.m3u8(\?|$)/i.test(c.url))){
-    try{const r=await fetch(SB+"/functions/v1/dial-nowplaying?url="+encodeURIComponent(c.url),{headers:{apikey:SBKEY,Authorization:"Bearer "+SBKEY}});const j=await r.json();if(current===s)npShow(s,j)}catch(e){}
+  const hls=c.hls||/\.m3u8(\?|$)/i.test(c.url),src=NPSRC[s.n]||"";
+  if(!hls||src){
+    const q=[src?"src="+encodeURIComponent(src):"",hls?"":"url="+encodeURIComponent(c.url)].filter(Boolean).join("&");
+    try{const r=await fetch(SB+"/functions/v1/dial-nowplaying?"+q,{headers:{apikey:SBKEY,Authorization:"Bearer "+SBKEY}});const j=await r.json();if(current===s)npShow(s,j)}catch(e){}
   }
   if(current===s&&!audio.paused&&document.visibilityState==="visible")np.timer=setTimeout(npPoll,25000);
 }
 function npShow(s,j){
   const song=j&&j.song,artist=j&&j.artist,raw=j&&j.raw;
-  if(song&&artist){mset("bT",song);mset("bA",[artist,j.album,j.year].filter(Boolean).join(" · "))}
-  else if(raw){mset("bT",raw);mset("bA","En antena · "+s.n)}
-  else{mset("bT",s.n);mset("bA",(j&&j.stream_description)||(FAM[s.g][0]+" · "+LANG[s.lang]))}
+  const prog=j&&j.program,pdesc=j&&j.program_desc;
+  if(song&&artist){mset("bT",song);mset("bA",[artist,j.album,j.year,prog?"en "+prog:""].filter(Boolean).join(" · "))}
+  else if(prog){mset("bT",prog);mset("bA",pdesc||stationDesc(s))}
+  else if(raw){mset("bT",raw);mset("bA",stationDesc(s))}
+  else{mset("bT",s.n);mset("bA",[j&&j.stream_description&&j.stream_description!==s.n?j.stream_description:"",stationDesc(s)].filter(Boolean).join(" · "))}
   if(j&&j.artwork){np.art=true;$("art").innerHTML=`<img src="${esc(j.artwork)}" alt="Carátula de ${esc(song||"")}">`}else{np.art=false;setBtn(!audio.paused)}
-  const line=song&&artist?`${artist} · ${song}`:(raw||"");
-  if(line!==np.last&&"mediaSession" in navigator){np.last=line;try{navigator.mediaSession.metadata=new MediaMetadata({title:song||raw||s.n,artist:artist||s.n,album:s.n,
+  const line=song&&artist?`${artist} · ${song}`:(raw||prog||"");
+  if(line!==np.last&&"mediaSession" in navigator){np.last=line;try{navigator.mediaSession.metadata=new MediaMetadata({title:song||prog||raw||s.n,artist:artist||s.n,album:s.n,
     artwork:[{src:(j&&j.artwork)||"icon-512.png",sizes:j&&j.artwork?"300x300":"512x512",type:j&&j.artwork?"image/jpeg":"image/png"}]})}catch(e){}}
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&!audio.paused)npPoll()});
@@ -646,7 +736,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02n";
+const APP_VERSION="2026-11-02o";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
