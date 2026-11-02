@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dial Espejo">
 <meta name="theme-color" content="#07070A">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-hex-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="alternate icon" href="icon-hex-512.png">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
@@ -705,7 +705,7 @@ function tryUrl(url,token){return new Promise((res,rej)=>{
 async function play(s){
   const token=++playToken;current=s;curList=[];curIdx=0;npReset(s);setBand(s);
   mset("bT",s.n);mset("bA",stationDesc(s));setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
-  if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:FAM[s.g][0],album:"Dial Espejo",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
+  if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:FAM[s.g][0],album:"Dial Espejo",artwork:[{src:"icon-hex-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
   let list=[];try{list=await candidates(s)}catch(e){if(token===playToken){setStatus("sin conexión al directorio");setBtn(false)}return}
   for(let attempt=0;attempt<2;attempt++){
     for(const[i,c]of list.entries()){if(token!==playToken)return;
@@ -759,7 +759,7 @@ function npShow(s,j){
   if(j&&j.artwork){np.art=true;$("art").innerHTML=`<img src="${esc(j.artwork)}" alt="Carátula de ${esc(song||"")}">`}else{np.art=false;setBtn(!audio.paused)}
   const line=song&&artist?`${artist} · ${song}`:(raw||prog||"");
   if(line!==np.last&&"mediaSession" in navigator){np.last=line;try{navigator.mediaSession.metadata=new MediaMetadata({title:song||prog||raw||s.n,artist:artist||s.n,album:s.n,
-    artwork:[{src:(j&&j.artwork)||"icon-512.png",sizes:j&&j.artwork?"300x300":"512x512",type:j&&j.artwork?"image/jpeg":"image/png"}]})}catch(e){}}
+    artwork:[{src:(j&&j.artwork)||"icon-hex-512.png",sizes:j&&j.artwork?"300x300":"512x512",type:j&&j.artwork?"image/jpeg":"image/png"}]})}catch(e){}}
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&!audio.paused)npPoll()});
 
@@ -771,7 +771,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02p";
+const APP_VERSION="2026-11-02q";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
