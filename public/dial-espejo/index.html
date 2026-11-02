@@ -258,9 +258,9 @@ const audio=$("audio");
 const FAM={news:["Noticias","var(--news)","#5B7BFF",1920],culture:["Cultura","var(--culture)","#8FA3FF",1930],classic:["Clásica","var(--classic)","#F2B544",1700],jazz:["Jazz","var(--jazz)","#2FD3A0",1915],
   rock:["Rock e indie","var(--rock)","#FF5C7A",1955],pop:["Pop","var(--pop)","#B98CFF",1960],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
 const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán",it:"Italiano",nl:"Neerlandés",ar:"Árabe",ja:"Japonés",ko:"Coreano",hi:"Hindi"};
-const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",AU:"Oceanía"};
+const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",AU:"Oceanía",CH:"Europa",BE:"Europa"};
 const REGIONS=["Chile","Latinoamérica","Norteamérica","Europa","Asia","África","Oceanía"];
-const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],AU:[-33.87,151.21]};
+const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35]};
 const RAW=`Radio Cooperativa|Coop|CL|news|es|.95|.4|4|93.3|noticias actualidad política|Cooperativa||https://www.cooperativa.cl
 Radio Bío-Bío|BíoBío|CL|news|es|.95|.4|4|99.7|noticias actualidad regional|Bio|b[ií]o.?b[ií]o|https://www.biobiochile.cl
 ADN Radio|ADN|CL|news|es|.9|.5|3|91.7|noticias deportes actualidad|ADN||https://www.adnradio.cl
@@ -305,14 +305,14 @@ BBC World Service|BBC WS|GB|news|en|.95|.35|5||noticias internacional pública|B
 BBC Radio 4|BBC R4|GB|news|en|.95|.35|5||noticias cultura pública|BBC Radio 4||https://www.bbc.co.uk/sounds/play/live:bbc_radio_fourfm
 BBC Radio 3|BBC R3|GB|classic|en|.2|.2|3||clásica jazz pública|BBC Radio 3||https://www.bbc.co.uk/sounds/play/live:bbc_radio_three
 BBC 6 Music|6 Music|GB|rock|en|.25|.7|4||alternativo indie rock electrónica pública|6 Music||https://www.bbc.co.uk/sounds/play/live:bbc_6music
-Classic FM|ClasFM|GB|classic|en|.1|.2|4||clásica ópera|Classic FM||https://www.classicfm.com
+Classic FM|ClasFM|GB|classic|en|.1|.2|4||clásica ópera|Classic FM|^classic fm( uk| hd)?$|https://www.classicfm.com
 Jazz FM UK|JazzUK|GB|jazz|en|.2|.4|2||jazz soul|Jazz FM||https://www.jazzfm.com
 NTS Radio|NTS|GB|ecl|en|.1|.7|3||electrónica underground ecléctica indie|NTS||https://www.nts.live
 RTÉ Radio 1|RTÉ 1|IE|news|en|.85|.35|3||noticias cultura pública|Radio 1|rt[eé]|https://www.rte.ie/radio/radio1/
-RFI Monde|RFI|FR|news|fr|.95|.4|4||noticias internacional pública|RFI||https://www.rfi.fr
+RFI Monde|RFI|FR|news|fr|.95|.4|4||noticias internacional pública|RFI|^rfi monde$|https://www.rfi.fr
 Monte Carlo Doualiya|MCD|FR|news|ar|.85|.4|3||noticias internacional|Doualiya||https://www.mc-doualiya.com
 France Inter|Inter|FR|culture|fr|.85|.35|4||noticias cultura pública|France Inter||https://www.radiofrance.fr/franceinter
-FIP|FIP|FR|ecl|fr|.05|.5|3||ecléctica jazz world indie pública|FIP||https://www.radiofrance.fr/fip
+FIP|FIP|FR|ecl|fr|.05|.5|3||ecléctica jazz world indie pública|FIP|^fip( \\(no pub\\))?$|https://www.radiofrance.fr/fip
 TSF Jazz|TSF|FR|jazz|fr|.1|.4|2||jazz soul|TSF Jazz||https://www.tsfjazz.com
 Radio Nova|Nova|FR|ecl|fr|.2|.7|3||ecléctica electrónica world|Radio Nova||https://www.nova.fr
 Deutschlandfunk|DLF|DE|news|de|.95|.3|4||noticias cultura pública|Deutschlandfunk|^deutschlandfunk$|https://www.deutschlandfunk.de
@@ -327,7 +327,7 @@ WNYC|WNYC|US|news|en|.9|.35|4||noticias cultura pública|WNYC||https://www.wnyc.
 WQXR|WQXR|US|classic|en|.1|.2|3||clásica ópera|WQXR||https://www.wqxr.org
 KEXP|KEXP|US|rock|en|.15|.7|3||indie alternativo rock pública|KEXP||https://www.kexp.org
 KCRW|KCRW|US|ecl|en|.3|.6|3||ecléctica indie electrónica pública|KCRW||https://www.kcrw.com
-Radio Paradise|RParad|US|ecl|en|.02|.5|3||ecléctica rock indie world|Radio Paradise||https://radioparadise.com
+Radio Paradise|RParad|US|ecl|en|.02|.5|3||ecléctica rock indie world|Radio Paradise|main mix|https://radioparadise.com
 SomaFM Groove Salad|Soma|US|ecl|en|.02|.3|2||electrónica ambient downtempo|Groove Salad||https://somafm.com
 CBC Radio One|CBC 1|CA|news|en|.95|.35|4||noticias cultura pública|CBC Radio One|radio one|https://www.cbc.ca/listen/live-radio
 CBC Music|CBC M|CA|pop|en|.25|.6|3||pop indie pública|CBC Music||https://www.cbc.ca/listen/live-radio
@@ -343,7 +343,26 @@ Radio Mirchi|Mirchi|IN|pop|hi|.3|.8|4||pop bollywood éxitos|Mirchi||https://www
 SAfm|SAfm|ZA|news|en|.9|.4|3||noticias actualidad pública|SAfm||https://www.sabc.co.za
 5FM|5FM|ZA|pop|en|.2|.8|3||pop éxitos juvenil|5FM||https://www.5fm.co.za
 triple j|triple j|AU|rock|en|.25|.75|4||indie alternativo rock juvenil pública|triple j||https://www.abc.net.au/triplej
-ABC Classic|ABC Cl|AU|classic|en|.1|.2|3||clásica ópera pública|ABC Classic||https://www.abc.net.au/listen/classic`;
+ABC Classic|ABC Cl|AU|classic|en|.1|.2|3||clásica ópera pública|ABC Classic||https://www.abc.net.au/listen/classic
+FM Dos|FM Dos|CL|pop|es|.15|.55|3|98.5|pop baladas adulto éxitos|FM Dos|fm ?dos|https://www.fmdos.cl
+Play FM|Play|CL|pop|es|.15|.6|2|100.9|pop adulto éxitos 90s|Play FM|play|https://www.playfm.cl
+Aspen 102.3|Aspen|AR|pop|es|.2|.45|3||pop 80s 90s clásicos adulto|Aspen||https://aspen.cienradios.com
+BBC Radio 1|BBC R1|GB|pop|en|.25|.85|5||pop éxitos electrónica juvenil pública|BBC Radio 1|radio 1$|https://www.bbc.co.uk/sounds/play/live:bbc_radio_one
+BBC Radio 2|BBC R2|GB|pop|en|.35|.55|5||pop adulto éxitos pública|BBC Radio 2|^bbc radio 2|https://www.bbc.co.uk/sounds/play/live:bbc_radio_two
+Absolute Radio|Absol|GB|rock|en|.2|.7|3||rock-clásico rock indie|Absolute Radio|^absolute radio$|https://absoluteradio.co.uk
+FIP Jazz|FIP Jz|FR|jazz|fr|.02|.4|2||jazz pública ecléctica|FIP Jazz||https://www.radiofrance.fr/fip/radio-jazz
+FIP Rock|FIP Rk|FR|rock|fr|.02|.7|2||rock indie pública|FIP Rock||https://www.radiofrance.fr/fip/radio-rock
+1LIVE|1LIVE|DE|pop|de|.25|.8|4||pop éxitos juvenil pública|1LIVE|^1live$|https://www1.wdr.de/radio/1live
+Studio Brussel|StuBru|BE|rock|nl|.2|.75|3||indie alternativo rock pública|Studio Brussel|^studio brussel$|https://stubru.be
+Radio Swiss Jazz|Swiss Jz|CH|jazz|en|.02|.35|2||jazz soul pública|Radio Swiss Jazz||https://www.radioswissjazz.ch
+Radio Swiss Classic|Swiss Cl|CH|classic|de|.02|.2|2||clásica pública|Radio Swiss Classic|^radio swiss classic( german)?$|https://www.radioswissclassic.ch
+Couleur 3|Coul3|CH|ecl|fr|.3|.7|2||indie electrónica alternativo pública|Couleur 3||https://www.rts.ch/couleur3
+Jazz24|Jazz24|US|jazz|en|.05|.4|3||jazz standards pública|Jazz24||https://www.jazz24.org
+WFMU|WFMU|US|ecl|en|.3|.6|2||ecléctica underground indie|WFMU||https://wfmu.org
+SomaFM Indie Pop Rocks|Soma IP|US|rock|en|.02|.65|2||indie pop alternativo|Indie Pop Rocks||https://somafm.com/indiepop/
+SomaFM Secret Agent|Soma SA|US|ecl|en|.02|.4|2||lounge downtempo ecléctica|Secret Agent||https://somafm.com/secretagent/
+Radio Paradise Mellow|RP Mel|US|ecl|en|.02|.3|2||ecléctica acústica adulto|Radio Paradise Mellow|mellow|https://radioparadise.com
+Double J|Double J|AU|rock|en|.25|.6|3||indie rock adulto pública|Double J||https://www.abc.net.au/listen/doublej`;
 const S=RAW.trim().split("\n").map((l,i)=>{const a=l.split("|");return{i,n:a[0],sh:a[1],cc:a[2],g:a[3],lang:a[4],talk:+a[5],en:+a[6],l:+a[7],f:a[8]?+a[8]:null,tags:new Set(a[9].split(" ")),q:a[10],re:a[11]||null,u:a[12],ll:LL[a[2]],reg:REGION_OF[a[2]]}});
 
 /* ---------- Capa analítica: afinidad entre radios ---------- */
@@ -572,7 +591,7 @@ function pick(s){
 
 
 /* ---------- Ficha de radio: al tocar un hexágono, resumen y opción de escuchar ---------- */
-const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia"};
+const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia",CH:"Suiza",BE:"Bélgica"};
 let cardS=null;
 function stationDesc(s){return[FAM[s.g][0],[...s.tags].slice(0,3).map(t=>t.replace("-"," ")).join(", "),CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM Santiago":""].filter(Boolean).join(" · ")}
 function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProperty("--cc",col);
@@ -661,7 +680,9 @@ async function candidates(s,force){
   store.set(SRC+s.n,{t:Date.now(),list});
   return withPref(s,list);
 }
-function withPref(s,list){const pref=store.get("dial-pref-"+s.n,null);if(!pref)return list;const i=list.findIndex(x=>x.url===pref.url);return i>0?[list[i],...list.slice(0,i),...list.slice(i+1)]:i===0?list:[pref,...list]}
+// En el iPhone una página https no puede reproducir señales http: se prueba primero la misma señal por https
+function upgrade(list){const out=[];list.forEach(c=>{if(/^http:/i.test(c.url))out.push({...c,url:c.url.replace(/^http:/i,"https:"),up:true});out.push(c)});return out}
+function withPref(s,list){list=upgrade(list);const pref=store.get("dial-pref-"+s.n,null);if(!pref)return list;const i=list.findIndex(x=>x.url===pref.url);return i>0?[list[i],...list.slice(0,i),...list.slice(i+1)]:i===0?list:[pref,...list]}
 /* Verificación en segundo plano: marca las radios sin señal en el directorio */
 async function healthCheck(){
   const queue=S.slice();let changed=false;
@@ -735,7 +756,8 @@ const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SBKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const np={timer:null,src:null,station:null,last:"",art:false};
 // Radios que publican su lista al aire: se consultan directo (más fiable que el metadato de la señal)
-const NPSRC={"triple j":"abc:triplej","ABC Classic":"abc:classic","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","KCRW":"kcrw"};
+const NPSRC={"triple j":"abc:triplej","ABC Classic":"abc:classic","Double J":"abc:doublej","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","Radio Paradise Mellow":"rp:1","KCRW":"kcrw",
+  "FIP":"rf:7","FIP Rock":"rf:64","FIP Jazz":"rf:65","France Inter":"rf:1","BBC Radio 1":"bbc:bbc_radio_one","BBC Radio 2":"bbc:bbc_radio_two","BBC 6 Music":"bbc:bbc_6music","BBC Radio 3":"bbc:bbc_radio_three"};
 function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;$("art").innerHTML='<span class="eq"><i></i><i></i><i></i></span>'}
 function npStop(){clearTimeout(np.timer);np.timer=null}
 function npStart(s,c){np.station=s;np.src=c;npPoll()}
@@ -752,6 +774,7 @@ async function npPoll(){
 function npShow(s,j){
   const song=j&&j.song,artist=j&&j.artist,raw=j&&j.raw;
   const prog=j&&j.program,pdesc=j&&j.program_desc;
+  if(raw&&!artist){const f=x=>String(x||"").toLowerCase().replace(/[^a-z0-9]/g,"");const r0=f(raw);if(r0.includes(f(s.sh))||f(s.n).includes(r0)||r0.includes(f(s.n).slice(0,8)))return npShow(s,{...j,raw:null})}
   if(song&&artist){mset("bT",song);mset("bA",[artist,j.album,j.year,prog?"en "+prog:""].filter(Boolean).join(" · "))}
   else if(prog){mset("bT",prog);mset("bA",pdesc||stationDesc(s))}
   else if(raw){mset("bT",raw);mset("bA",stationDesc(s))}
@@ -771,7 +794,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02q";
+const APP_VERSION="2026-11-02r";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
