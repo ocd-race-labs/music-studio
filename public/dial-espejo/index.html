@@ -125,6 +125,7 @@ a{color:inherit}
 .concept .cl{font-size:16px;font-weight:600;letter-spacing:-.01em;min-width:0}
 .concept .cl::before{content:"+";display:inline-block;width:16px;color:var(--muted);font-weight:400}
 .concept[open] .cl::before{content:"−"}
+.concept .cl.amb{color:var(--muted);font-weight:500}
 .concept .cn{font:500 12px var(--mono);background:var(--ink);color:var(--bg);border-radius:999px;padding:2px 9px}
 .concept .cm{grid-column:1/-1;font:400 11px var(--mono);color:var(--muted);padding-left:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .concept .cb{display:grid;gap:8px;padding:0 8px 8px}
@@ -579,7 +580,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02j";
+const APP_VERSION="2026-11-02k";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -747,6 +748,15 @@ function keyTerms(title,skip){
   });
   return out;
 }
+const AMB=[
+ ["Política y gobierno",/ (gobierno|president|ministr|congres|senad|diputad|eleccion|electoral|candidat|partido|boric|kast|matthei|trump|casa blanca|parlament|canciller|diplomac|sancion|alcald|gobernador|constituc|ley |proyecto de ley|oposicion|oficialismo)/g],
+ ["Economía y mercados",/ (econom|mercad|bolsa|dolar|peso|inflacion|ipc|banco central|tasa|pib|crecimiento|exportac|importac|arancel|comercio|cobre|petrole|precio|empresa|inversion|accion|ventas|empleo|desempleo|sueldo|impuesto|fiscal|deuda)/g],
+ ["Seguridad y justicia",/ (policia|carabiner|fiscal|tribunal|juez|corte|delito|crimen|homicid|robo|detenid|asesin|narco|carcel|condena|investigacion penal|disparo|ataque|terroris|militar|ejercito|guerra|bombarde|misil|conflicto)/g],
+ ["Deportes",/ (futbol|partido|gol|liga|torneo|campeonat|copa|seleccion|entrenador|jugador|tenis|nba|nfl|olimpi|mundial|colo colo|universidad de chile|deport|carrera|surf|escalada|downhill|enduro|ciclis)/g],
+ ["Tecnología e IA",/ (tecnolog|inteligencia artificial| ia |openai|google|apple|microsoft|meta|nvidia|chip|software|app|aplicacion|ciber|hacker|datos|internet|smartphone|iphone|robot|algoritm|startup|digital)/g],
+ ["Salud y ciencia",/ (salud|hospital|medic|paciente|enfermedad|virus|vacuna|cancer|minsal|oms|tratamiento|estudio|cientific|investigador|nasa|espacio|planeta|universo|descubr|clima|sismo|terremoto|incendio|lluvia|temperatura|ambient)/g],
+ ["Cultura y sociedad",/ (cultura|cine|pelicula|serie|musica|concierto|festival|libro|arte|museo|actor|actriz|cantante|teatro|premio|educacion|colegio|universidad|estudiante|profesor|iglesia|papa )/g],
+ ["Transporte y aviación",/ (aerolinea|avion|aeropuerto|vuelo|aviacion|boeing|airbus|latam|jetsmart|sky airline|metro|transporte|autopista|carretera|transito|tren|puerto)/g]];
 function concepts(items,topic){
   const skip=new Set(fold(topic||"").split(/\s+/).map(w=>w.replace(/[^a-z0-9]/g,"")).filter(Boolean));
   const T=items.map(x=>{const m=keyTerms(x.title,skip);(x.related||[]).slice(0,4).forEach(r=>keyTerms(r.title,skip).forEach((v,k)=>{if(!m.has(k))m.set(k,{...v,w:v.w*.5})}));return m});
@@ -769,8 +779,16 @@ function concepts(items,topic){
     const its=ix.map(i=>items[i]).sort((a,b)=>(b.published_at||"").localeCompare(a.published_at||""));
     groups.push({label,items:its,latest:its[0].published_at});
   });
-  groups.sort((a,b)=>(b.items.length-a.items.length)||(b.latest||"").localeCompare(a.latest||""));
-  return {groups,loose};
+  groups.forEach(x=>x.kind="historia");
+  // Segunda pasada: lo suelto se agrupa por ámbito temático (léxico por área); lo que no calza va a "Más titulares"
+  const amb=new Map();
+  loose.forEach(x=>{const h=" "+fold([x.title,...(x.related||[]).slice(0,2).map(r=>r.title)].join(" ")).replace(/[^a-z0-9 ]/g," ")+" ";
+    let best=null,bs=0; AMB.forEach(([name,re])=>{const m=h.match(re);const n=m?m.length:0;if(n>bs){bs=n;best=name}});
+    const k=best||"Más titulares"; if(!amb.has(k))amb.set(k,[]); amb.get(k).push(x)});
+  amb.forEach((its,label)=>{its.sort((a,b)=>(b.published_at||"").localeCompare(a.published_at||""));groups.push({label,items:its,latest:its[0].published_at,kind:"ambito"})});
+  const rank=x=>x.label==="Más titulares"?2:x.kind==="ambito"?1:0;
+  groups.sort((a,b)=>(rank(a)-rank(b))||(b.items.length-a.items.length)||(b.latest||"").localeCompare(a.latest||""));
+  return {groups,loose:[]};
 }
 function groupedHTML(items,topic){
   const {groups,loose}=concepts(items,topic); let n=0;
@@ -778,11 +796,11 @@ function groupedHTML(items,topic){
   const gh=groups.map((c,gi)=>{
     const ccs=[...new Set(c.items.map(x=>outletCC(x.source_url||"")).filter(Boolean))];
     const nNew=c.items.filter(x=>x.isNew).length;
-    return `<details class="concept"${gi===0?" open":""}><summary><span class="cl">${esc(c.label)}</span><span class="cn">${c.items.length}</span>
+    return `<details class="concept"${gi===0?" open":""}><summary><span class="cl${c.kind==="ambito"?" amb":""}">${esc(c.label)}</span><span class="cn">${c.items.length}</span>
       <span class="cm">${nNew?`${nNew} nueva${nNew>1?"s":""} · `:""}${ccs.slice(0,6).map(flag).join(" ")} · ${esc(ago(c.latest))}</span></summary>
       <div class="cb">${c.items.map(card).join("")}</div></details>`;
   }).join("");
-  return gh+(loose.length?(groups.length?'<p class="others">Otras historias</p>':"")+loose.map(card).join(""):"");
+  return gh;
 }
 
 function storyCard(x,i){
