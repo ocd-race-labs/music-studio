@@ -162,6 +162,8 @@ a{color:inherit}
 .np-info .k{font:400 10.5px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
 .np-info .v{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
 .np-info .row{display:grid;gap:3px}
+.np-ig{display:inline-flex;align-items:center;gap:8px;font-weight:600;text-decoration:none;color:var(--ink)}
+.np-ig i{width:18px;height:18px;border-radius:6px;background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fd5949 45%,#d6249f 60%,#285AEB 90%);flex:none}
 .player{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 var(--gut-r) calc(10px + env(safe-area-inset-bottom, 0px)) var(--gut-l)}
 .band{max-width:1100px;margin:0 auto;border-radius:20px;background:var(--panel-2);color:var(--ink);display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px;transition:background .5s,color .5s}
 .art{width:52px;height:52px;border-radius:13px;background:rgba(0,0,0,.85);display:grid;place-items:center;overflow:hidden}
@@ -766,13 +768,14 @@ function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProper
     <div class="cm">${esc([...s.tags].slice(0,4).map(t=>t.replace("-"," ")).join(" · "))}${s.dead?" · sin señal ahora":""}</div>
     ${o?`<div class="cw">${Math.round(o.v*100)}% afín a ${esc(ref.n)} · ${esc(whyLink(o))}</div>`:""}
     <div class="bars"><span>Habla</span><span class="bar"><i style="width:${Math.round(s.talk*100)}%"></i></span><span>Energía</span><span class="bar"><i style="width:${Math.round(s.en*100)}%"></i></span></div>
-    <div class="cb"><button class="go">${playing?"❚❚ Pausar":"▶ Escuchar"}</button><button data-a="c" aria-label="Ver sus afines">◎ Afines</button><button data-a="f" aria-label="Favorita">${favs.has(s.n)?"★":"☆"}</button>${s.u?`<button data-a="w" aria-label="Sitio web">↗</button>`:""}</div>`;
+    <div class="cb"><button class="go">${playing?"❚❚ Pausar":"▶ Escuchar"}</button><button data-a="c" aria-label="Ver sus afines">◎ Afines</button><button data-a="f" aria-label="Favorita">${favs.has(s.n)?"★":"☆"}</button>${IG[s.n]?`<button data-a="ig" aria-label="Instagram de la radio">IG</button>`:""}${s.u?`<button data-a="w" aria-label="Sitio web">↗</button>`:""}</div>`;
   c.hidden=false;
   c.querySelector(".cx").onclick=closeCard;
   c.querySelector(".go").onclick=()=>{closeCard();pick(s)};
   c.querySelector('[data-a="c"]').onclick=()=>{F=s;closeCard();if(MOVE!=="fijo")resetView();layout()};
   c.querySelector('[data-a="f"]').onclick=e=>{favs.has(s.n)?favs.delete(s.n):favs.add(s.n);saveFavs();e.target.textContent=favs.has(s.n)?"★":"☆";if(current===s)$("bFav").textContent=e.target.textContent;renderFilters()};
   const w=c.querySelector('[data-a="w"]');if(w)w.onclick=()=>window.open(s.u,"_blank","noopener");
+  const ig=c.querySelector('[data-a="ig"]');if(ig)ig.onclick=()=>window.open(igLink(s),"_blank","noopener");
   placeCard();
 }
 function closeCard(){cardS=null;$("card").hidden=true}
@@ -957,6 +960,9 @@ function npShow(s,j){np.cur=j;if(!npSheet.hidden)setTimeout(renderSheet,0);
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&!audio.paused)npPoll()});
 
+/* ---------- Instagram oficial de cada radio (verificado en su sitio web o en búsqueda) ---------- */
+const IG={/*IG_MAP*/};
+const igLink=s=>IG[s.n]?`https://www.instagram.com/${IG[s.n]}/`:null;
 /* ---------- Pantalla "sonando ahora": se abre al tocar la banda inferior ---------- */
 function hexArt(s){const c=FAM[s.g][2];const R2=14,SQ3=Math.sqrt(3);let g="";const d=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];const cells=[[0,0,0]];
   for(let k=1;k<=2;k++){let q=-k,r=k;for(let t=0;t<6;t++)for(let j=0;j<k;j++){cells.push([q,r,k]);q+=d[t][0];r+=d[t][1]}}
@@ -991,9 +997,10 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   if(j.program)rows.push(["Programa",j.program+(j.program_desc?" · "+j.program_desc:"")]);
   rows.push(["Radio",[FAM[s.g][0],LANG[s.lang],CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM Santiago":""].filter(Boolean).join(" · ")]);
   rows.push(["Estilo",[...s.tags].map(t=>t.replace("-"," ")).join(" · ")]);
+  if(IG[s.n])rows.push(["Instagram",{html:`<a class="np-ig" href="${igLink(s)}" target="_blank" rel="noopener"><i></i>@${esc(IG[s.n])}</a>`}]);
   if(j.stream_description&&j.stream_description!==s.n)rows.push(["Sobre la señal",j.stream_description]);
   const sig=curList[curIdx];if(sig)rows.push(["Señal",[sig.codec,sig.bitrate?sig.bitrate+" kbps":"",curList.length>1?`${curIdx+1} de ${curList.length}`:""].filter(Boolean).join(" · ")]);
-  $("npInfo").innerHTML=rows.map(([k,v])=>`<div class="row"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join("");
+  $("npInfo").innerHTML=rows.map(([k,v])=>`<div class="row"><div class="k">${esc(k)}</div><div class="v">${v&&v.html?v.html:esc(v)}</div></div>`).join("");
 }
 function openSheet(){if(!current)return;npSheet.hidden=false;document.body.style.overflow="hidden";renderSheet()}
 function closeSheet(){npSheet.hidden=true;document.body.style.overflow=""}
