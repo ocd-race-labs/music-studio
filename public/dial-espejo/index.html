@@ -1139,7 +1139,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03q";
+const APP_VERSION="2026-11-03r";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1579,10 +1579,11 @@ async function usSport(b,kind,tok){
   const sb=await espn(`apis/site/v2/sports/${sp}/${kind}/scoreboard`);if(tok!==sportTok)return;
   const season=sb.leagues?.[0]?.season||{};const type=season.type?.type||2;
   const phase={1:"Pretemporada",2:"Temporada regular",3:"Playoffs",4:"Fuera de temporada"}[type]||season.type?.name||"";
-  const [st,ld,recent]=await Promise.all([
+  let [st,ld,recent]=await Promise.all([
     espn(`apis/v2/sports/${sp}/${kind}/standings`,{level:3,season:season.year,seasontype:2}).catch(()=>null),
     espn(`apis/site/v3/sports/${sp}/${kind}/leaders`,{season:season.year,seasontype:type===3?3:2},true).catch(()=>null),
     daily?espnSpan(`apis/site/v2/sports/${sp}/${kind}/scoreboard`,new Date(new Date().setHours(0,0,0,0)-2*864e5),new Date()).catch(()=>sb):Promise.resolve(sb)]);
+  if(type===3&&!(ld?.leaders?.categories||[]).length)ld=await espn(`apis/site/v3/sports/${sp}/${kind}/leaders`,{season:season.year,seasontype:2},true).catch(()=>null);
   if(tok!==sportTok)return;
   let h=`<section class="sp-head"><h2>${kind.toUpperCase()} · ${esc(season.displayName||season.year||"")}</h2><span class="phase ph${type}">${esc(phase)}</span></section>`;
   // Posiciones por división (y mapa equipo → división para agrupar resultados)
