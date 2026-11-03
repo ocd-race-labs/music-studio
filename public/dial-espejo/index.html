@@ -978,11 +978,12 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   const q=j.artist&&j.song?`${j.artist} ${j.song}`:(j.raw||j.artist||null);
   const L=$("npLinks");
   // Dos columnas: la canción a la izquierda y el artista a la derecha, cada uno con Spotify y YouTube
-  const sp=(t,k)=>`<a class="sp" href="https://open.spotify.com/search/${encodeURIComponent(t)}${k?"/"+k:""}" target="_blank" rel="noopener"><i></i>Spotify</a>`;
+  // La app de Spotify toma el último tramo del enlace como texto a buscar: por eso va solo la búsqueda, sin /tracks ni /artists
+  const sp=t=>`<a class="sp" href="https://open.spotify.com/search/${encodeURIComponent(t)}" target="_blank" rel="noopener"><i></i>Spotify</a>`;
   const yt=t=>`<a class="yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(t)}" target="_blank" rel="noopener"><i></i>YouTube</a>`;
-  if(q){const songQ=j.artist&&j.song?`${j.artist} ${j.song}`:q;
-    L.innerHTML=`<div class="np-col"><div class="np-k">Canción</div>${sp(songQ,"tracks")}${yt(songQ)}</div>`+
-      (j.artist?`<div class="np-col"><div class="np-k">Artista</div>${sp(j.artist,"artists")}${yt(j.artist)}</div>`:"")}
+  if(q){const songQ=j.artist&&j.song?`${j.song} ${j.artist}`:q;
+    L.innerHTML=`<div class="np-col"><div class="np-k">Canción</div>${sp(songQ)}${yt(songQ)}</div>`+
+      (j.artist?`<div class="np-col"><div class="np-k">Artista</div>${sp(j.artist)}${yt(j.artist)}</div>`:"")}
   else L.innerHTML=`<div class="np-col"><div class="np-k">Radio</div>${yt(s.n+" radio en vivo")}</div>`;
   const playing=!audio.paused;$("npPP").textContent=playing?"❚❚":"▶";$("npPP").setAttribute("aria-label",playing?"Pausar":"Reproducir");
   $("npFav").textContent=favs.has(s.n)?"★":"☆";$("npWeb").href=s.u||"#";$("npWeb").hidden=!s.u;$("npAlt").disabled=curList.length<2;
@@ -1028,7 +1029,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02ze";
+const APP_VERSION="2026-11-03a";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
