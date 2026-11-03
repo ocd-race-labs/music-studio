@@ -1,5 +1,6 @@
 // A profile's home: four rooms on a small map. The sound studio (instruments, kits, sounds), the musician (the idea
-// and then the detail), the producer (the desk and the master), and the songs where all of it lands.
+// and then the detail), the producer (the desk and the master), and the songs where all of it lands. Below, off the
+// map, the instrument store.
 
 import type { Lang, Profile, Song } from '../domain/types';
 import { songBars } from '../domain/factory';
@@ -9,6 +10,13 @@ import { namingFor, t } from './i18n';
 import type { Mode } from './prefs';
 import { Avatar, Icon, LangToggle, ModeSwitch } from './ui';
 import type { Room } from './rooms';
+import { Art, ArtDefs } from './Store';
+import { STORE_ITEMS, WINDOWS } from './storeCatalog';
+import type { ArtId } from './storeArt';
+
+const SHOP_WALL: [ArtId, number, number][] = [
+  ['i-violin', 36, 116], ['i-guitar', 44, 122], ['i-piano', 110, 70], ['i-sax', 52, 108], ['i-eguitar', 44, 108], ['i-drums', 104, 76], ['i-synth', 112, 44], ['i-congas', 60, 76],
+];
 
 export default function Hub({ profile, song, lang, mode, stats, onLang, onToggleMode, onRoom, onProfiles, onSettings, onClassroom }: {
   profile: Profile;
@@ -97,6 +105,23 @@ export default function Hub({ profile, song, lang, mode, stats, onLang, onToggle
         <div className="hub-bus" aria-hidden="true"><span /><span /><span /></div>
         {node('songs', null, 'disc', t('roomSongs', lang), t('roomSongsBlurb', lang), [t('hubSongs', lang, { n: stats.songs })])}
       </div>
+
+      <button type="button" className="hub-store" onClick={() => onRoom('store')}>
+        <ArtDefs />
+        <span className="hub-store-wall" aria-hidden="true">
+          {SHOP_WALL.map(([id, w, h]) => <Art key={id} id={id} w={w} h={h} />)}
+        </span>
+        <span className="hub-store-text">
+          <span className="hub-node-top"><span className="hub-icon"><Icon name="store" size={26} /></span><Icon name="arrow" size={18} /></span>
+          <strong className="hub-title display">{t('roomStore', lang)}</strong>
+          <span className="hub-blurb">{t('roomStoreBlurb', lang)}</span>
+          <span className="hub-status">
+            <span>{t('hubStoreWindows', lang, { n: WINDOWS.length })}</span>
+            <span>{t('hubStoreReal', lang, { n: STORE_ITEMS.filter((x) => x.recorded).length })}</span>
+            <span>{t('hubStoreCount', lang, { n: STORE_ITEMS.length })}</span>
+          </span>
+        </span>
+      </button>
     </main>
   );
 }

@@ -5,7 +5,7 @@ import { t } from './i18n';
 import { instIcon, trackIcon } from './instIcon';
 import type { Track } from '../domain/types';
 
-type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music' | 'crate' | 'disc' | 'bulb' | 'chevronDown' | 'chevronRight' | 'panel' | 'amp' | 'list' | 'swap' | 'repeat' | 'once' | 'copy' | 'edit'
+type IconName = 'home' | 'play' | 'stop' | 'undo' | 'redo' | 'gear' | 'menu' | 'plus' | 'close' | 'upload' | 'download' | 'check' | 'mic' | 'flask' | 'arrow' | 'reset' | 'expand' | 'shrink' | 'sun' | 'moon' | 'headphones' | 'star' | 'starFill' | 'trash' | 'warning' | 'sliders' | 'back' | 'classroom' | 'chat' | 'speaker' | 'music' | 'crate' | 'disc' | 'bulb' | 'chevronDown' | 'chevronRight' | 'panel' | 'amp' | 'list' | 'swap' | 'repeat' | 'once' | 'copy' | 'edit' | 'search' | 'store'
   | 'drums' | 'drumpad' | 'conga' | 'timpani' | 'guitar' | 'acoustic' | 'bass' | 'piano' | 'organ' | 'synth' | 'lead' | 'pad' | 'sub' | 'violin' | 'trumpet' | 'sax' | 'flute' | 'choir' | 'bells' | 'knob' | 'pedal' | 'cab' | 'tape' | 'space' | 'eq';
 export type { IconName };
 
@@ -57,6 +57,8 @@ const PATHS: Record<IconName, ReactNode> = {
   swap: <><path d="M7 4L3 8l4 4" /><path d="M3 8h14" /><path d="M17 20l4-4-4-4" /><path d="M21 16H7" /></>,
   copy: <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" /></>,
   edit: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M14 6l4 4" /></>,
+  search: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></>,
+  store: <><path d="M4 10v10h16V10" /><path d="M3 10l2-6h14l2 6" /><path d="M3 10c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3" /><path d="M10 20v-5h4v5" /></>,
   // Instruments and the stages of a sound's chain: simple outlines on the same grid and stroke as the rest.
   drums: <><ellipse cx="12" cy="12.5" rx="7.5" ry="2.6"/><path d="M4.5 12.5v5.5c0 1.5 3.4 2.6 7.5 2.6s7.5-1.1 7.5-2.6v-5.5"/><path d="M8.5 15v5.4M15.5 15v5.4"/><path d="M6.5 2.5l9 7.5M17.5 2.5l-9 7.5"/></>,
   drumpad: <><rect x="3" y="3" width="18" height="18" rx="3.5"/><rect x="6.5" y="6.5" width="4.5" height="4.5" rx="1"/><rect x="13" y="6.5" width="4.5" height="4.5" rx="1" fill="currentColor"/><rect x="6.5" y="13" width="4.5" height="4.5" rx="1"/><rect x="13" y="13" width="4.5" height="4.5" rx="1"/></>,
