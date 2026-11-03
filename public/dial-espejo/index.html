@@ -403,7 +403,7 @@ BBC World Service|BBC WS|GB|news|en|.95|.35|5||noticias internacional pública|B
 BBC Radio 4|BBC R4|GB|news|en|.95|.35|5||noticias cultura pública|BBC Radio 4||https://www.bbc.co.uk/sounds/play/live:bbc_radio_fourfm
 BBC Radio 3|BBC R3|GB|classic|en|.2|.2|3||clásica jazz pública|BBC Radio 3||https://www.bbc.co.uk/sounds/play/live:bbc_radio_three
 BBC 6 Music|6 Music|GB|rock|en|.25|.7|4||alternativo indie rock electrónica pública|6 Music||https://www.bbc.co.uk/sounds/play/live:bbc_6music
-Classic FM|ClasFM|GB|classic|en|.1|.2|4||clásica ópera|Classic FM|^classic fm( uk| hd)?$|https://www.classicfm.com
+Classic FM|ClasFM|GB|classic|en|.1|.2|4||clásica ópera|Classic FM|^classic fm( uk)?( hd)?$|https://www.classicfm.com
 NTS Radio|NTS|GB|ecl|en|.1|.7|3||electrónica underground ecléctica indie|NTS||https://www.nts.live
 RTÉ Radio 1|RTÉ 1|IE|news|en|.85|.35|3||noticias cultura pública|Radio 1|rt[eé]|https://www.rte.ie/radio/radio1/
 RFI Monde|RFI|FR|news|fr|.95|.4|4||noticias internacional pública|RFI|^rfi monde$|https://www.rfi.fr
@@ -483,7 +483,7 @@ franceinfo|frinfo|FR|news|fr|.98|.45|5||noticias actualidad pública|franceinfo|
 LBC|LBC|GB|news|en|.98|.5|4||noticias conversación actualidad|LBC|^lbc$|https://www.lbc.co.uk
 Times Radio|Times|GB|news|en|.95|.4|3||noticias actualidad|Times Radio||https://www.thetimes.co.uk/radio
 RNZ National|RNZ|NZ|news|en|.9|.35|3||noticias cultura pública|RNZ National|national|https://www.rnz.co.nz
-Radio Nacional Argentina|RNA|AR|news|es|.9|.4|4||noticias cultura pública|Radio Nacional Argentina|| am 870)?|https://www.radionacional.com.ar
+Radio Nacional Argentina|RNA|AR|news|es|.9|.4|4||noticias cultura pública|Radio Nacional Argentina||https://www.radionacional.com.ar
 Bloomberg Radio|Bloomb|US|news|en|.95|.45|3||noticias economía mercados|Bloomberg|bloomberg|https://www.bloomberg.com/audio
 Radio Nacional de Colombia|RNC|CO|news|es|.85|.4|3||noticias cultura pública|Radio Nacional de Colombia||https://www.radionacional.co
 ABC NewsRadio|ABC News|AU|news|en|.98|.4|3||noticias actualidad pública|ABC NewsRadio|news|https://www.abc.net.au/listen/newsradio
@@ -1036,7 +1036,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03a";
+const APP_VERSION="2026-11-03b";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
