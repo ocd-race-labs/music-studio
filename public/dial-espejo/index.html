@@ -1113,7 +1113,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03i";
+const APP_VERSION="2026-11-03j";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1483,12 +1483,12 @@ const SPORT_TABS=[["xtreme","Xtreme"],["soccer","Soccer"],["nba","NBA"],["nfl","
 let sport=store.get("dial-sport","soccer");if(!SPORT_TABS.some(t=>t[0]===sport))sport="soccer";
 // Fútbol: continente → país (o torneos internacionales) → liga, con los códigos de liga de ESPN
 const SOC={
-  "Sudamérica":{"Chile":[["chi.1","Primera División"]],"Argentina":[["arg.1","Liga Profesional"]],"Brasil":[["bra.1","Brasileirão"]],"Colombia":[["col.1","Liga BetPlay"]],
+  "Sudamérica":{"Chile":[["chi.1","Primera División"],["chi.copa_chi","Copa Chile"]],"Argentina":[["arg.1","Liga Profesional"],["arg.2","Primera Nacional"],["arg.copa","Copa Argentina"]],"Brasil":[["bra.1","Brasileirão"],["bra.2","Série B"],["bra.copa_do_brazil","Copa do Brasil"],["bra.camp.paulista","Paulista"],["bra.camp.carioca","Carioca"],["bra.camp.mineiro","Mineiro"],["bra.camp.gaucho","Gaúcho"]],"Colombia":[["col.1","Liga BetPlay"],["col.copa","Copa Colombia"]],
     "Perú":[["per.1","Liga 1"]],"Uruguay":[["uru.1","Primera División"]],"Ecuador":[["ecu.1","LigaPro"]],"Paraguay":[["par.1","Primera División"]],
     "Internacional":[["conmebol.libertadores","Copa Libertadores"],["conmebol.sudamericana","Copa Sudamericana"],["fifa.worldq.conmebol","Eliminatorias"]]},
-  "Norteamérica":{"México":[["mex.1","Liga MX"]],"Estados Unidos":[["usa.1","MLS"]],"Internacional":[["concacaf.champions","Concacaf Champions Cup"]]},
-  "Europa":{"Inglaterra":[["eng.1","Premier League"]],"España":[["esp.1","LaLiga"]],"Italia":[["ita.1","Serie A"]],"Alemania":[["ger.1","Bundesliga"]],
-    "Francia":[["fra.1","Ligue 1"]],"Portugal":[["por.1","Primeira Liga"]],"Países Bajos":[["ned.1","Eredivisie"]],"Escocia":[["sco.1","Premiership"]],
+  "Norteamérica":{"México":[["mex.1","Liga MX"],["mex.2","Liga de Expansión"]],"Estados Unidos":[["usa.1","MLS"],["usa.open","U.S. Open Cup"]],"Internacional":[["concacaf.champions","Concacaf Champions Cup"]]},
+  "Europa":{"Inglaterra":[["eng.1","Premier League"],["eng.2","Championship"],["eng.fa","FA Cup"],["eng.league_cup","Carabao Cup"]],"España":[["esp.1","LaLiga"],["esp.2","LaLiga 2"],["esp.copa_del_rey","Copa del Rey"]],"Italia":[["ita.1","Serie A"],["ita.2","Serie B"],["ita.coppa_italia","Coppa Italia"]],"Alemania":[["ger.1","Bundesliga"],["ger.2","2. Bundesliga"],["ger.dfb_pokal","DFB-Pokal"]],
+    "Francia":[["fra.1","Ligue 1"],["fra.2","Ligue 2"],["fra.coupe_de_france","Coupe de France"]],"Portugal":[["por.1","Primeira Liga"]],"Países Bajos":[["ned.1","Eredivisie"]],"Escocia":[["sco.1","Premiership"]],
     "Internacional":[["uefa.champions","Champions League"],["uefa.europa","Europa League"],["uefa.europa.conf","Conference League"],["uefa.nations","Nations League"]]},
   "Mundo":{"Internacional":[["fifa.world","Copa del Mundo"],["fifa.cwc","Mundial de Clubes"]]}};
 let socSel=store.get("dial-soc",{c:"Sudamérica",p:"Chile",l:"chi.1"});
@@ -1579,11 +1579,14 @@ async function soccer(b,tok){b.innerHTML=`<div class="ssel" id="ssel"></div><div
       return `<div class="sp-card">${groups.length>1?`<div class="sp-ct">${esc(g.name)}</div>`:""}<div class="tw"><table class="st"><thead><tr><th>#</th><th class="l">Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead><tbody>`+
         en.map((e,i)=>`<tr${e.note?.color?` style="box-shadow:inset 3px 0 0 ${esc(e.note.color)}" title="${esc(e.note.description||"")}"`:""}><td class="sd">${esc(sv(e,"rank")||i+1)}</td><td class="l">${tlogo(e.team)}${tname(e.team)}</td><td>${esc(sv(e,"gamesPlayed"))}</td><td>${esc(sv(e,"wins"))}</td><td>${esc(sv(e,"ties"))}</td><td>${esc(sv(e,"losses"))}</td><td>${esc(sv(e,"pointsFor"))}</td><td>${esc(sv(e,"pointsAgainst"))}</td><td>${esc(sv(e,"pointDifferential"))}</td><td><b>${esc(sv(e,"points"))}</b></td></tr>`).join("")+`</tbody></table></div></div>`}).join("")+`</div>`:note("Esta competencia no tiene tabla en este momento."))+`</section>`;
   // Llaves: etapas de eliminación directa según el calendario de la competencia
-  const KO=/(round of|rd\.? of|stage|knockout|play-?off|octav|cuart|quarter|semi|final|16|liguilla|repechaje)/i,NOTKO=/(league phase|league stage|group|regular|fase de liga|apertura$|clausura$)/i;
+  const KO=/(round|rd\.? of|stage|knockout|play-?off|octav|cuart|quarter|semi|final|16|liguilla|repechaje)/i,NOTKO=/(league phase|league stage|group|regular|first round$|fase de liga|apertura$|clausura$)/i;
   const stages=(lg?.calendar||[]).flatMap(c=>c.entries||[]).filter(e=>KO.test(e.label||"")&&!NOTKO.test(e.label||"")&&new Date(e.startDate)<new Date()).slice(-6);
+  if(!stages.length&&!(lg?.calendar||[]).some(c=>c.entries?.length)){const y=new Date().getFullYear();const all=(await espnSpan(`apis/site/v2/sports/soccer/${slug}/scoreboard`,new Date(y,0,1),new Date()).catch(()=>({events:[]}))).events;
+    if(tok!==sportTok)return;const by={};all.forEach(e=>{const k=e.season?.slug||"";if(KO.test(k.replace(/-/g," "))||/final|semi|quart/.test(k))(by[k]=by[k]||[]).push(e)});
+    Object.entries(by).sort((a,b)=>a[1][0].date.localeCompare(b[1][0].date)).slice(-6).forEach(([k,ev])=>stages.push({label:k.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),startDate:ev[0].date,endDate:new Date(Date.now()+864e5).toISOString(),_ev:ev}))}
   if(stages.length){const t0=new Date(stages[0].startDate),t1=new Date(Math.min(Date.now()+60*864e5,new Date(stages[stages.length-1].endDate)));
     const all=(await espnSpan(`apis/site/v2/sports/soccer/${slug}/scoreboard`,t0,t1).catch(()=>({events:[]}))).events;
-    const res=stages.map(s=>({events:all.filter(e=>{const t=new Date(e.date);return t>=new Date(s.startDate)&&t<new Date(s.endDate)})}));
+    const res=stages.map(s=>s._ev?{events:s._ev}:({events:all.filter(e=>{const t=new Date(e.date);return t>=new Date(s.startDate)&&t<new Date(s.endDate)})}));
     if(tok!==sportTok)return;
     const html=stages.map((s,i)=>{const evs=(res[i]?.events||[]);const ties={};evs.forEach(ev=>{const c=ev.competitions?.[0];if(!c)return;const k=c.competitors.map(x=>x.team.id).sort().join("-");(ties[k]=ties[k]||[]).push(ev)});
       const rows=Object.values(ties).map(legs=>{legs.sort((a,b)=>a.date.localeCompare(b.date));const agg={},team={};legs.forEach(ev=>ev.competitions[0].competitors.forEach(x=>{team[x.team.id]=x.team;agg[x.team.id]=(agg[x.team.id]||0)+(+x.score||0)}));
