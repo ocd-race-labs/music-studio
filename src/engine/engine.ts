@@ -812,21 +812,50 @@ export class StudioEngine {
   private previews = new Map<string, Voice>();
 
   /** Hear any instrument from the catalog, even one no track uses yet: a short phrase or a short beat. */
-  previewInstrument(instrumentKey: string): void {
+  async previewInstrument(instrumentKey: string, vel = 0.8): Promise<void> {
     this.ensure();
     if (!this.master) return;
     const voice = this.previewVoice(instrumentKey);
     if (!voice) return;
+    const asked = performance.now();
+    await loadInstrument(findByKey(instrumentKey)?.manifest);
+    if (performance.now() - asked > 4000) return; // too late: the person has moved on
     const t0 = Tone.immediate() + 0.03;
     const beat = 0.18;
     if (voice.kind === 'drums') {
-      const rows = rowsOf(instrumentKey);
-      const voiceOf = (i: number) => findByKey(resolveRow(rows, STANDARD_ROWS[i]) ?? rows[i])?.manifest.voice as string;
-      [[0, 0], [3, 1], [1, 2], [3, 3], [0, 4], [5, 5], [1, 6], [7, 7]].forEach(([row, at]) => voice!.kind === 'drums' && voice!.hit(voiceOf(row), t0 + at * beat, 0.9));
+      [[0, 0], [3, 1], [1, 2], [3, 3], [0, 4], [5, 5], [1, 6], [7, 7]].forEach(([row, at]) => voice!.kind === 'drums' && voice!.hit(this.padVoice(instrumentKey, row), t0 + at * beat, Math.min(1, vel + 0.1)));
     } else {
       const root = Math.ceil(lowOf(instrumentKey) / 12) * 12;
-      [0, 4, 7, 12].forEach((iv, i) => voice!.kind === 'melodic' && voice!.play(root + iv, beat * 1.6, t0 + i * beat * 1.5, 0.8, this.song?.tuning_a4_hz ?? 440));
+      [0, 4, 7, 12].forEach((iv, i) => voice!.kind === 'melodic' && voice!.play(root + iv, beat * 1.6, t0 + i * beat * 1.5, vel, this.song?.tuning_a4_hz ?? 440));
     }
+  }
+
+  /** The voice of a kit's standard row (0 kick, 1 snare, 2 clap, 3 closed hat, …) on any kit. */
+  private padVoice(instrumentKey: string, row: number): string {
+    const rows = rowsOf(instrumentKey);
+    return findByKey(resolveRow(rows, STANDARD_ROWS[row]) ?? rows[row])?.manifest.voice as string;
+  }
+
+  /** Play one note of any catalog instrument, as from a keyboard on screen. */
+  async previewKey(instrumentKey: string, midi: number, vel = 0.8): Promise<void> {
+    this.ensure();
+    const voice = this.previewVoice(instrumentKey);
+    if (voice?.kind !== 'melodic') return;
+    const asked = performance.now();
+    await loadInstrument(findByKey(instrumentKey)?.manifest);
+    if (performance.now() - asked > 1500) return;
+    voice.play(midi, 0.9, Tone.immediate() + 0.01, vel, this.song?.tuning_a4_hz ?? 440);
+  }
+
+  /** Hit one pad of any kit: a row of the kit by its place (kick, snare, …). */
+  async previewPad(instrumentKey: string, row: number, vel = 0.9): Promise<void> {
+    this.ensure();
+    const voice = this.previewVoice(instrumentKey);
+    if (voice?.kind !== 'drums') return;
+    const asked = performance.now();
+    await loadInstrument(findByKey(instrumentKey)?.manifest);
+    if (performance.now() - asked > 1500) return;
+    voice.hit(this.padVoice(instrumentKey, row), Tone.immediate() + 0.01, vel);
   }
 
   /**

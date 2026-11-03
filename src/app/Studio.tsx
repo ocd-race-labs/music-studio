@@ -24,6 +24,7 @@ import SoundStudio from './SoundStudio';
 import BeatAssistant from './BeatAssistant';
 import IdeaWords from './IdeaWords';
 import Hub from './Hub';
+import Store from './Store';
 import IdeaStage from './IdeaStage';
 import * as SK from '../domain/sketch';
 import type { Place } from '../domain/sketch';
@@ -61,7 +62,7 @@ const readDeskView = (fallback: DeskView): DeskView => {
 const isTouch = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 const ZOOM_LABEL = { fit: 'zoomFit', two: 'zoomTwo', bar: 'zoomBar', half: 'zoomHalf' } as const;
 const ROOM_ICON = { sounds: 'amp', musician: 'music', producer: 'sliders', songs: 'disc' } as const;
-const ROOM_LABEL: Record<Exclude<Room, 'hub'>, StringKey> = { sounds: 'roomSounds', musician: 'roomMusician', producer: 'roomProducer', songs: 'roomSongs' };
+const ROOM_LABEL: Record<Exclude<Room, 'hub' | 'store'>, StringKey> = { sounds: 'roomSounds', musician: 'roomMusician', producer: 'roomProducer', songs: 'roomSongs' };
 
 const LENGTHS = [
   { steps: 1, label: '1/16' },
@@ -319,7 +320,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     }
   }, [lang, showToast]);
   // The hub does not play the song: it stops on the way in. The studio keeps it playing, to try sounds in it.
-  useEffect(() => { if (room === 'hub' && engine.playing) { engine.stop(); setPlaying(false); } }, [room]);
+  useEffect(() => { if ((room === 'hub' || room === 'store') && engine.playing) { engine.stop(); setPlaying(false); } }, [room]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -917,6 +918,30 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
     </aside>
   );
 
+  const putInstrument = (trackId: string, key: string) => {
+    const ref = { key, version: '1.0.0' };
+    const twin = C.swapPartner(song, trackId, key);
+    apply((x) => C.setInstrument(x, trackId, ref, by));
+    setSelected(trackId);
+    const tr = song.tracks.find((x) => x.id === trackId);
+    if (twin) showToast(t('swappedWith', lang, { track: tr?.name ?? '', other: twin.name }), { label: t('undo', lang), run: undo });
+    else showToast(t('collectionUsed', lang, { name: soundName(ref, undefined, lang), track: tr?.name ?? '' }));
+  };
+  const sameStar = (x: StarredInstrument) => (y: StarredInstrument) => y.key === x.key && (y.sound?.id ?? '') === (x.sound?.id ?? '');
+  const starInstrument = (x: StarredInstrument) => {
+    onProfile({ ...profile, starred: [...starred.filter((y) => !sameStar(x)(y)), x], updated_at: new Date().toISOString() });
+    showToast(t('kitAdded', lang, { name: x.sound?.name ?? soundName({ key: x.key, version: '1.0.0' }, undefined, lang), role: ROLE_NAMES[lang][x.role] }));
+  };
+  const unstarInstrument = (x: StarredInstrument) =>
+    onProfile({ ...profile, starred: starred.filter((y) => !(y.key === x.key && (y.sound?.id ?? '') === (x.sound?.id ?? '') && y.role === x.role)), updated_at: new Date().toISOString() });
+  /** A whole style window into the kit at once: what it lacks, each in its role. */
+  const starMany = (xs: StarredInstrument[], styleName: string) => {
+    const fresh = xs.filter((x) => !starred.some((y) => y.key === x.key && !y.sound));
+    if (!fresh.length) { showToast(t('storeWindowHad', lang, { style: styleName })); return; }
+    onProfile({ ...profile, starred: [...starred, ...fresh], updated_at: new Date().toISOString() });
+    showToast(t('storeWindowAdded', lang, { n: fresh.length, style: styleName }));
+  };
+
   const roomBody = (() => {
     if (room === 'sounds') {
       return (
@@ -924,15 +949,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
           <SoundStudio song={song} selectedId={track.id} playing={playing} alone={alone} starred={starred} sounds={sounds} profileId={profile.id} lang={lang}
             onSelect={setSelected} onPlay={togglePlay} onAlone={() => setAlone((a) => !a)} onAudition={setAudition}
             onBeat={() => setModal('beat')} onDesk={() => onRoom('producer')}
-            onUse={(trackId, key) => {
-              const ref = { key, version: '1.0.0' };
-              const twin = C.swapPartner(song, trackId, key);
-              apply((x) => C.setInstrument(x, trackId, ref, by));
-              setSelected(trackId);
-              const tr = song.tracks.find((x) => x.id === trackId);
-              if (twin) showToast(t('swappedWith', lang, { track: tr?.name ?? '', other: twin.name }), { label: t('undo', lang), run: undo });
-              else showToast(t('collectionUsed', lang, { name: soundName(ref, undefined, lang), track: tr?.name ?? '' }));
-            }}
+            onUse={putInstrument}
             onUseSound={(trackId, sound) => {
               const twin = C.swapPartner(song, trackId, sound.base.key);
               apply((x) => C.applySound(x, trackId, sound, by));
@@ -960,12 +977,8 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
               setSounds(await store.listSounds(profile.id));
               onProfile({ ...profile, starred: starred.filter((x) => x.sound?.id !== id), updated_at: new Date().toISOString() });
             }}
-            onStar={(x) => {
-              const same = (y: StarredInstrument) => y.key === x.key && (y.sound?.id ?? '') === (x.sound?.id ?? '');
-              onProfile({ ...profile, starred: [...starred.filter((y) => !same(y)), x], updated_at: new Date().toISOString() });
-              showToast(t('kitAdded', lang, { name: x.sound?.name ?? soundName({ key: x.key, version: '1.0.0' }, undefined, lang), role: ROLE_NAMES[lang][x.role] }));
-            }}
-            onUnstar={(x) => onProfile({ ...profile, starred: starred.filter((y) => !(y.key === x.key && (y.sound?.id ?? '') === (x.sound?.id ?? '') && y.role === x.role)), updated_at: new Date().toISOString() })}
+            onStar={starInstrument}
+            onUnstar={unstarInstrument}
             onNewWithKit={async () => {
               const count = (await store.listSongs(profile.id)).length;
               const s = newSong(profile.id, t('songN', lang, { n: count + 1 }), 4, lang, CUSTOM_KIT, starred, false);
@@ -1001,6 +1014,9 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
         <Hub profile={profile} song={song} lang={lang} mode={mode} onLang={onLang} onToggleMode={onToggleMode} onRoom={onRoom}
           onProfiles={onProfiles} onSettings={onSettings} onClassroom={onClassroom}
           stats={{ kit: starred.length, sounds: sounds.length, songs: songList.length }} />
+      ) : room === 'store' ? (
+        <Store song={song} starred={starred} lang={lang} onHome={() => onRoom('hub')} onKit={() => onRoom('sounds')}
+          onStar={starInstrument} onStarMany={starMany} onUnstar={unstarInstrument} onUse={putInstrument} />
       ) : (<>
         <header className="topbar">
           <div className="tb-group tb-left">
