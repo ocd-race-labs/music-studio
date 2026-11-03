@@ -1139,7 +1139,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03r";
+const APP_VERSION="2026-11-03s";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1574,6 +1574,8 @@ async function fillUpcoming(path,tok,soccerish){const box=$("upc");if(!box)retur
   const ks=Object.keys(days);
   box.innerHTML=head+(ks.length?`<div class="sp-grid one">`+ks.map((k,i)=>{const d=new Date(k+"T12:00:00");const lab=d.toLocaleDateString(LOCALE,{weekday:"long",day:"numeric",month:"long"}).replace(/^./,c=>c.toUpperCase());
     return `<details class="sp-card upd"${i<3?" open":""}><summary><span>${esc(lab)}</span><em>${days[k].length}</em></summary>${days[k].map(row).join("")}</details>`}).join("")+`</div>`:note("Sin partidos programados este mes."));wire()}
+// Valor del líder: si ESPN manda una línea larga (MLB), se muestra el número de la categoría
+const ldv=x=>{const d=String(x.displayValue??"");if(d.length<=8||typeof x.value!=="number")return d;const v=x.value;return v<1&&v>0?v.toFixed(3).replace(/^0/,""):Number.isInteger(v)?String(v):v.toFixed(2)};
 async function usSport(b,kind,tok){
   const sp=SPMAP[kind];const daily=kind!=="nfl";const hk=kind==="nhl";
   const sb=await espn(`apis/site/v2/sports/${sp}/${kind}/scoreboard`);if(tok!==sportTok)return;
@@ -1614,7 +1616,7 @@ async function usSport(b,kind,tok){
   // Líderes
   const cats=(ld?.leaders?.categories||[]).slice(0,kind==="nfl"?8:6);
   h+=`<section class="topic"><div class="topic-head"><div><h2 class="sph">${esc("Líderes")}</h2><p class="meta">${esc(ld?.requestedSeason?.displayName||"")}</p></div></div>`+
-    (cats.length?`<div class="sp-grid">`+cats.map(c=>`<div class="sp-card"><div class="sp-ct">${esc(c.displayName)}</div>`+(c.leaders||[]).slice(0,5).map((x,i)=>`<div class="ld"><span>${i+1}. ${esc(x.athlete?.displayName||"")} <em>${esc(x.athlete?.team?.abbreviation||"")}</em></span><b>${esc(x.displayValue||"")}</b></div>`).join("")+`</div>`).join("")+`</div>`:note("Sin estadísticas disponibles por ahora."))+`</section>`;
+    (cats.length?`<div class="sp-grid">`+cats.map(c=>`<div class="sp-card"><div class="sp-ct">${esc(c.displayName)}</div>`+(c.leaders||[]).slice(0,5).map((x,i)=>`<div class="ld"><span>${i+1}. ${esc(x.athlete?.displayName||"")} <em>${esc(x.athlete?.team?.abbreviation||x.team?.abbreviation||"")}</em></span><b>${esc(ldv(x))}</b></div>`).join("")+`</div>`).join("")+`</div>`:note("Sin estadísticas disponibles por ahora."))+`</section>`;
   b.innerHTML=h;fillUpcoming(`apis/site/v2/sports/${sp}/${kind}/scoreboard`,tok,false)}
 /* Fútbol: selector continente/país/liga, tablas por grupo, llaves de eliminación directa y goleadores */
 function socPickers(){const box=$("ssel");const conts=Object.keys(SOC);if(!SOC[socSel.c])socSel={c:"Sudamérica",p:"Chile",l:"chi.1"};
