@@ -355,9 +355,9 @@ const audio=$("audio");
 const FAM={news:["Noticias","var(--news)","#5B7BFF",1920],culture:["Cultura","var(--culture)","#8FA3FF",1930],classic:["Clásica","var(--classic)","#F2B544",1700],jazz:["Jazz","var(--jazz)","#2FD3A0",1915],
   rock:["Rock e indie","var(--rock)","#FF5C7A",1955],elec:["Electrónica","#E85CFF","#E85CFF",1990],metal:["Metal","#B9C3D6","#B9C3D6",1980],folk:["Folklore y raíces","#9BCB6A","#9BCB6A",1900],pop:["Pop","var(--pop)","#B98CFF",1960],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
 const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán",it:"Italiano",nl:"Neerlandés",ar:"Árabe",ja:"Japonés",ko:"Coreano",hi:"Hindi",pl:"Polaco"};
-const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía",PL:"Europa",AE:"Asia"};
+const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía",PL:"Europa",AE:"Asia",GR:"Europa"};
 const REGIONS=["Chile","Latinoamérica","Norteamérica","Europa","Asia","África","Oceanía"];
-const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35],NZ:[-41.29,174.78],PL:[52.23,21.01],AE:[25.2,55.27]};
+const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35],NZ:[-41.29,174.78],PL:[52.23,21.01],AE:[25.2,55.27],GR:[37.45,25.33]};
 const RAW=`Radio Cooperativa|Coop|CL|news|es|.95|.4|4|93.3|noticias actualidad política|Cooperativa||https://www.cooperativa.cl
 Radio Bío-Bío|BíoBío|CL|news|es|.95|.4|4|99.7|noticias actualidad regional|Bio|b[ií]o.?b[ií]o|https://www.biobiochile.cl
 ADN Radio|ADN|CL|news|es|.9|.5|3|91.7|noticias deportes actualidad|ADN||https://www.adnradio.cl
@@ -489,7 +489,14 @@ Antyradio|Antyradio|PL|metal|pl|.2|.85|4||metal rock hard-rock|Antyradio|^antyra
 Megarock Radio|Megarock|US|metal|en|.05|.9|2||metal hard-rock rock-clásico|Megarock|megarock|https://megarockradio.net
 Radio Heavy Metal|R Heavy|FR|metal|en|.02|.95|1||heavy-metal metal|Radio Heavy Metal|^radio heavy metal$|https://www.radioheavymetal.fr
 Exclusively Iron Maiden|Maiden|AE|metal|en|.02|.9|2||heavy-metal metal iron-maiden|Exclusively Iron Maiden|^exclusively iron maiden$|https://exclusive.radio
-Epic Rock Radio|Epic Rock|DE|metal|en|.05|.85|1||metal épico hard-rock|Epic Rock Radio||https://www.epicrockradio.com`;
+Epic Rock Radio|Epic Rock|DE|metal|en|.05|.85|1||metal épico hard-rock|Epic Rock Radio||https://www.epicrockradio.com
+Minimalcalling|MinCall|DE|elec|en|.02|.6|1||minimal minimal-house tech-house micro-house|https://stream.laut.fm/minimalcalling||https://laut.fm/minimalcalling
+Deep Depot|DeepDep|DE|elec|en|.02|.6|1||minimal minimal-techno tech-house deep-house|https://stream.laut.fm/deep_depot||https://laut.fm/deep_depot
+Miss Aehmes|Aehmes|DE|elec|en|.02|.65|1||minimal-house micro-house tech-house minimal|https://stream.laut.fm/miss_aehmes||https://laut.fm/miss_aehmes
+Deep Pressure Music|DeepPres|DE|elec|en|.02|.55|1||deep-house soulful house underground|https://stream.laut.fm/deep-pressure-music||https://laut.fm/deep-pressure-music
+Deep House Sounds|DH Sounds|DE|elec|en|.02|.5|1||deep-house house downtempo|https://stream.laut.fm/deep-house-sounds||https://laut.fm/deep-house-sounds
+Katzenpuff|Katzenp|DE|elec|en|.02|.6|1||deep-house tech-house house|https://stream.laut.fm/katzenpuff||https://laut.fm/katzenpuff
+Chillout Radio Mykonos|Mykonos|GR|elec|en|.02|.45|1||deep-house balearic chillout ambient|https://stream.laut.fm/chillout-radio-mykonos||https://laut.fm/chillout-radio-mykonos`;
 const S=RAW.trim().split("\n").map((l,i)=>{const a=l.split("|");return{i,n:a[0],sh:a[1],cc:a[2],g:a[3],lang:a[4],talk:+a[5],en:+a[6],l:+a[7],f:a[8]?+a[8]:null,tags:new Set(a[9].split(" ")),q:a[10],re:a[11]||null,u:a[12],ll:LL[a[2]],reg:REGION_OF[a[2]]}});
 
 /* ---------- Capa analítica: afinidad entre radios ---------- */
@@ -740,7 +747,7 @@ function pick(s){
 
 
 /* ---------- Ficha de radio: al tocar un hexágono, resumen y opción de escuchar ---------- */
-const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia",CH:"Suiza",BE:"Bélgica",NZ:"Nueva Zelanda",PL:"Polonia",AE:"Emiratos Árabes"};
+const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",AU:"Australia",CH:"Suiza",BE:"Bélgica",NZ:"Nueva Zelanda",PL:"Polonia",AE:"Emiratos Árabes",GR:"Grecia"};
 let cardS=null;
 function stationDesc(s){return[FAM[s.g][0],[...s.tags].slice(0,3).map(t=>t.replace("-"," ")).join(", "),CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM Santiago":""].filter(Boolean).join(" · ")}
 function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProperty("--cc",col);
@@ -825,6 +832,7 @@ function rank(list,s){const re=s.re?new RegExp(s.re,"i"):null;
     .map(o=>({url:o.x.url_resolved,uuid:o.x.stationuuid,codec:o.x.codec||"",bitrate:o.x.bitrate||0,hls:!!o.x.hls}))}
 const SRC="dial-src4-";
 async function candidates(s,force){
+  if(/^https?:\/\//.test(s.q))return [{url:s.q,uuid:"",codec:"MP3",bitrate:0,hls:false}];
   const c=store.get(SRC+s.n,null);
   if(!force&&c&&Date.now()-c.t<7*864e5) return withPref(s,c.list||[]);
   const cc=s.cc==="VA"?"":"&countrycode="+s.cc;
@@ -917,7 +925,8 @@ function npStart(s,c){np.station=s;np.src=c;npPoll()}
 async function npPoll(){
   clearTimeout(np.timer);np.timer=null;
   if(!np.src||current!==np.station)return;const s=np.station,c=np.src;
-  const hls=c.hls||/\.m3u8(\?|$)/i.test(c.url),src=NPSRC[s.n]||"";
+  const lm=c.url.match(/stream\.laut\.fm\/([a-z0-9_-]+)/i);
+  const hls=c.hls||/\.m3u8(\?|$)/i.test(c.url),src=NPSRC[s.n]||(lm?"laut:"+lm[1]:"");
   if(!hls||src){
     const q=[src?"src="+encodeURIComponent(src):"",hls?"":"url="+encodeURIComponent(c.url)].filter(Boolean).join("&");
     try{const r=await fetch(SB+"/functions/v1/dial-nowplaying?"+q,{headers:{apikey:SBKEY,Authorization:"Bearer "+SBKEY}});const j=await r.json();if(current===s)npShow(s,j)}catch(e){}
@@ -1010,7 +1019,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02zc";
+const APP_VERSION="2026-11-02zd";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
