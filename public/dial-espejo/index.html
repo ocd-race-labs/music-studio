@@ -496,7 +496,16 @@ Miss Aehmes|Aehmes|DE|elec|en|.02|.65|1||minimal-house micro-house tech-house mi
 Deep Pressure Music|DeepPres|DE|elec|en|.02|.55|1||deep-house soulful house underground|https://stream.laut.fm/deep-pressure-music||https://laut.fm/deep-pressure-music
 Deep House Sounds|DH Sounds|DE|elec|en|.02|.5|1||deep-house house downtempo|https://stream.laut.fm/deep-house-sounds||https://laut.fm/deep-house-sounds
 Katzenpuff|Katzenp|DE|elec|en|.02|.6|1||deep-house tech-house house|https://stream.laut.fm/katzenpuff||https://laut.fm/katzenpuff
-Chillout Radio Mykonos|Mykonos|GR|elec|en|.02|.45|1||deep-house balearic chillout ambient|https://stream.laut.fm/chillout-radio-mykonos||https://laut.fm/chillout-radio-mykonos`;
+Chillout Radio Mykonos|Mykonos|GR|elec|en|.02|.45|1||deep-house balearic chillout ambient|https://stream.laut.fm/chillout-radio-mykonos||https://laut.fm/chillout-radio-mykonos
+SomaFM cliqhop idm|Soma IDM|US|elec|en|.02|.55|2||idm glitch electrónica experimental|https://ice2.somafm.com/cliqhop-128-mp3||https://somafm.com/cliqhop/
+SomaFM The Trip|Soma Trip|US|elec|en|.02|.7|2||trance progressive-house hipnótico|https://ice2.somafm.com/thetrip-128-mp3||https://somafm.com/thetrip/
+Elektronisch Querbeat|Querbeat|DE|elec|en|.02|.5|1||idm ambient glitch dub hipnótico|https://stream.laut.fm/elektronisch_querbeat||https://laut.fm/elektronisch_querbeat
+Boards of Canada Radio|BoC Radio|DE|elec|en|.02|.4|1||idm downtempo ambient|https://stream.laut.fm/boards-of-canada-radio||https://laut.fm/boards-of-canada-radio
+Aphex Twin Radio|Aphex|DE|elec|en|.02|.6|1||idm ambient-techno drill-n-bass|https://stream.laut.fm/aphex-twin-radio||https://laut.fm/aphex-twin-radio
+Trancechannel|TranceCh|DE|elec|en|.05|.85|1||trance uplifting vocal-trance|https://stream.laut.fm/trancechannel||https://laut.fm/trancechannel
+Goa Channel One|Goa One|DE|elec|en|.02|.9|1||psytrance goa progressive-trance hipnótico|https://stream.laut.fm/goa-channel-one||https://laut.fm/goa-channel-one
+Progressive Trance Mix|ProgTrnc|DE|elec|en|.02|.8|1||trance progressive-trance psytrance|https://stream.laut.fm/progressive-trance-mix||https://laut.fm/progressive-trance-mix
+Sophisticatedculture|Sophist|DE|elec|en|.02|.6|1||melodic-techno hipnótico deep-tech dub|https://stream.laut.fm/sophisticatedculture||https://laut.fm/sophisticatedculture`;
 const S=RAW.trim().split("\n").map((l,i)=>{const a=l.split("|");return{i,n:a[0],sh:a[1],cc:a[2],g:a[3],lang:a[4],talk:+a[5],en:+a[6],l:+a[7],f:a[8]?+a[8]:null,tags:new Set(a[9].split(" ")),q:a[10],re:a[11]||null,u:a[12],ll:LL[a[2]],reg:REGION_OF[a[2]]}});
 
 /* ---------- Capa analítica: afinidad entre radios ---------- */
@@ -1019,7 +1028,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-02zd";
+const APP_VERSION="2026-11-02ze";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
