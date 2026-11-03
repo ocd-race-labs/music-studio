@@ -188,6 +188,60 @@ a{color:inherit}
 .eq i:nth-child(2){animation-delay:-.3s}.eq i:nth-child(3){animation-delay:-.6s}
 @keyframes eqk{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
 
+/* Íconos: trazo fino, heredan el color del botón */
+.ic{width:1em;height:1em;display:block;flex:none}
+[data-ico]{display:inline-grid;place-items:center}
+.si{color:var(--dim);font-size:17px}
+.ctl button{font-size:17px;color:var(--ink)}
+.ib{font-size:21px}.pp{font-size:20px}
+.np-x{font-size:22px;display:grid;place-items:center}
+.np-b{font-size:21px;color:var(--ink)}.np-b:disabled{opacity:.3}
+.np-b[aria-pressed="true"]{background:var(--npc);color:var(--npk,#07070A);border-color:transparent}
+.np-pp{font-size:28px;color:var(--npk,#07070A)}
+.ftab.fav .ic{font-size:13px}
+.card .cb button{display:inline-flex;align-items:center;justify-content:center;gap:5px}.card .cb .ic{font-size:13px}
+
+/* Mis radios: favoritas y recientes, un toque y suena */
+.quick{display:grid;gap:8px}
+.qh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font:500 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.qh .qs{text-transform:none;letter-spacing:0;color:var(--dim);font-weight:400}
+.qrow{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin-inline:calc(-1 * var(--gut-l)) calc(-1 * var(--gut-r));padding:2px var(--gut-r) 4px var(--gut-l);scroll-padding-inline:var(--gut-l)}
+.qrow::-webkit-scrollbar{display:none}
+.qt{flex:none;width:92px;scroll-snap-align:start;border:0;background:none;padding:0;text-align:left;cursor:pointer;display:grid;gap:6px;color:var(--ink)}
+.qa{position:relative;width:92px;height:92px;border-radius:20px;background:var(--qc);display:grid;place-items:center;overflow:hidden;transition:transform .15s}
+.qt:active .qa{transform:scale(.96)}
+.qa .mono-l{font:600 19px var(--sans);letter-spacing:-.02em;color:var(--qk,#07070A);padding:0 8px;text-align:center;line-height:1.05;overflow-wrap:anywhere}
+.qa .lg-i{width:56px;height:56px;border-radius:14px;background:#fff;display:grid;place-items:center;overflow:hidden;box-shadow:0 6px 18px -8px rgba(0,0,0,.6)}
+.qa .lg-i img{width:100%;height:100%;object-fit:contain}
+.qa .on{position:absolute;right:7px;bottom:7px;width:24px;height:24px;border-radius:8px;background:rgba(7,7,10,.82);color:var(--qc);display:grid;place-items:center}
+.qa .on .eq{height:11px}.qa .on .eq i{width:2px;height:11px}
+.qt.cur .qa{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--qc)}
+.qt .qn{font-size:12.5px;font-weight:500;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qt .qm{font:400 10px var(--mono);color:var(--dim);margin-top:-4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qa .fv{position:absolute;left:7px;top:7px;font-size:12px;color:var(--qk,#07070A);opacity:.75}
+.fsum .dd{margin-left:auto;border:0;padding:0;background:none;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+
+/* Banda inferior: dos líneas, favorita y play; el color sale del logo de la radio */
+.band{grid-template-columns:48px minmax(0,1fr) auto;padding:8px 8px 8px 8px;gap:12px;box-shadow:0 18px 40px -16px var(--bc,transparent),0 0 0 1px rgba(255,255,255,.06) inset}
+.art{width:48px;height:48px;border-radius:12px;background:rgba(7,7,10,.88)}
+.art .lg-i{width:100%;height:100%;background:#fff;display:grid;place-items:center}.art .lg-i img{object-fit:contain}
+.b-a{opacity:.78}
+.b-btns{gap:2px}
+.ib{color:inherit}
+.pp{width:48px;height:48px;border-radius:14px}
+.np-sec{display:flex;gap:8px;flex-wrap:wrap}
+.np-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.06);border-radius:999px;padding:9px 14px;font-size:13.5px;cursor:pointer;text-decoration:none;color:var(--ink)}
+.np-pill [data-ico]{font-size:15px;color:var(--npc)}
+.np-pill:disabled{opacity:.35}
+.np-sleep{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px var(--mono);color:var(--muted)}
+.np-sleep span{margin-right:4px;text-transform:uppercase;letter-spacing:.06em}
+.np-sleep button{border:1px solid rgba(237,237,242,.16);background:transparent;border-radius:999px;padding:7px 12px;font:500 13px var(--sans);cursor:pointer}
+.np-sleep button[aria-pressed="true"]{background:var(--npc);color:var(--npk,#07070A);border-color:transparent}
+.np-cover .lg-big{width:62%;height:62%;border-radius:28px;background:#fff;display:grid;place-items:center;overflow:hidden}.np-cover .lg-big img{width:100%;height:100%;object-fit:contain}
+.np-cover{background:var(--npc)}
+@media (min-width:900px){.np-sec,.np-sleep{grid-column:2}}
+@media (min-width:1024px){#view-radio>.quick{grid-column:1/-1;grid-row:1}.qrow{margin-inline:0;padding-inline:0}}
+
 /* Deportes */
 .sp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .sp-head h2{margin:0;font-size:20px;font-weight:600}
@@ -306,11 +360,11 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   .topbar,.wrap,.band{max-width:1380px}
   /* Radio: constelación grande a la izquierda; búsqueda, filtros y afines en una columna a la derecha */
   #view-radio{grid-template-columns:minmax(0,1fr) 380px;column-gap:28px;align-items:start}
-  #view-radio>.search{grid-column:2;grid-row:1}
-  #view-radio>.fbar{grid-column:2;grid-row:2}
+  #view-radio>.search{grid-column:2;grid-row:2}
+  #view-radio>.fbar{grid-column:2;grid-row:3}
   #view-radio .radio-grid{display:contents}
-  #view-radio .radio-grid>.hive{grid-column:1;grid-row:1/span 4;position:sticky;top:12px;width:min(100%,calc(100vh - 170px));justify-self:center}
-  #view-radio .radio-grid>div:last-child{grid-column:2;grid-row:3}
+  #view-radio .radio-grid>.hive{grid-column:1;grid-row:2/span 4;position:sticky;top:12px;width:min(100%,calc(100vh - 170px));justify-self:center}
+  #view-radio .radio-grid>div:last-child{grid-column:2;grid-row:4}
   #view-radio>footer{grid-column:1/-1}
   .chips{flex-wrap:wrap;overflow:visible;margin-inline:0;padding-inline:0}
   .concept .cb{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -338,26 +392,25 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 </nav>
 
 <div class="wrap" id="view-radio">
-  <label class="search" for="rq"><span aria-hidden="true" style="color:var(--dim)">⌕</span><input id="rq" type="search" placeholder="Buscar radio, ciudad o estilo" autocomplete="off" enterkeyhint="search"></label>
+  <section class="quick" aria-label="Mis radios"><div class="qh"><span id="qT">Mis radios</span><span class="qs" id="qS"></span></div><div class="qrow" id="qrow"></div></section>
+  <label class="search" for="rq"><span aria-hidden="true" class="si" data-ico="search"></span><input id="rq" type="search" placeholder="Buscar radio, ciudad o estilo" autocomplete="off" enterkeyhint="search"></label>
   <div class="fbar">
     <div class="ftabs" id="ftabs" role="tablist" aria-label="Filtros"></div>
     <div class="chips" id="fchips" role="group"></div>
-    <div class="fsum"><span id="fsumT"></span><button id="fclr" hidden>Limpiar</button></div>
+    <div class="fsum"><span id="fsumT"></span><button class="dd" id="fdead" hidden></button><button id="fclr" hidden>Limpiar</button></div>
   </div>
   <div class="radio-grid">
     <div class="hive">
       <svg id="sv" viewBox="-190 -190 380 380" role="img" aria-label="Panal de radios ordenado por afinidad"><g id="world"><g id="mesh"></g><g id="ether"></g><g id="cells"></g><g id="whyG"></g></g></svg>
       <div class="hive-title" id="hTitle"></div>
-      <div class="hive-zoom" id="hZoom">1.0×</div>
-      <div class="hive-move" id="hMove" role="group" aria-label="Movimiento de la constelación"><span>Movimiento</span><button data-k="fijo">Fijo</button><button data-k="suave">Suave</button><button data-k="vivo">Vivo</button></div>
-      <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="rl" aria-label="Girar a la izquierda">↺</button><button id="rr" aria-label="Girar a la derecha">↻</button><button id="zh" aria-label="Volver al centro">⌂</button><button id="lbl" aria-label="Mostrar u ocultar rótulos" aria-pressed="true">Aa</button></div>
+      <div class="ctl"><button id="zi" aria-label="Acercar" data-ico="plus"></button><button id="zo" aria-label="Alejar" data-ico="minus"></button><button id="zh" aria-label="Volver al centro" data-ico="center"></button></div>
       <div class="legend" id="legend" aria-label="Familias"></div>
       <div class="card" id="card" hidden role="dialog" aria-label="Ficha de radio"></div>
     </div>
     <div><div class="nbh" id="nbTitle"></div><div id="nbs"></div></div>
   </div>
   <div class="sync" id="sync"></div>
-  <footer>Pellizca para acercar, gira con dos dedos (o con ↺ ↻), arrastra para moverte y toca una radio para ver su ficha y escucharla: queda al centro y las demás orbitan a su alrededor; mientras más cerca, más afín. Cada estilo ocupa siempre su sector y lo envuelve una nube con lo que agrupa a esas radios; las líneas dicen qué conecta a las más afines con la que suena. Las señales vienen del directorio abierto Radio Browser; las que hoy no responden quedan atenuadas.</footer>
+  <footer>Toca una radio para escucharla; mientras más cerca del centro, más afín. Señales del directorio abierto Radio Browser.</footer>
 </div>
 
 <div class="wrap" id="view-news" hidden>
@@ -381,7 +434,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 <div class="np" id="npSheet" hidden role="dialog" aria-modal="true" aria-label="Sonando ahora">
   <div class="np-bg" id="npBg"></div>
   <div class="np-in">
-    <div class="np-top"><button class="np-x" id="npClose" aria-label="Cerrar">⌄</button><span class="np-st" id="npSt"></span><span style="width:40px"></span></div>
+    <div class="np-top"><button class="np-x" id="npClose" aria-label="Cerrar" data-ico="down"></button><span class="np-st" id="npSt"></span><span style="width:40px"></span></div>
     <div class="np-cover" id="npCover"></div>
     <div class="np-meta">
       <div class="np-song" id="npSong"></div>
@@ -390,12 +443,14 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
     </div>
     <div class="np-links" id="npLinks"></div>
     <div class="np-ctl">
-      <button class="np-b" id="npFav" aria-label="Favorita">☆</button>
-      <button class="np-b" id="npAlt" aria-label="Probar otra señal">⇄</button>
-      <button class="np-pp" id="npPP" aria-label="Pausar">❚❚</button>
-      <a class="np-b" id="npWeb" target="_blank" rel="noopener" aria-label="Web de la radio">↗</a>
-      <button class="np-b" id="npNext" aria-label="Siguiente radio afín">⏭</button>
+      <button class="np-b" id="npFav" aria-label="Favorita" data-ico="star"></button>
+      <button class="np-b" id="npPrev" aria-label="Radio anterior" data-ico="prev"></button>
+      <button class="np-pp" id="npPP" aria-label="Pausar" data-ico="pause"></button>
+      <button class="np-b" id="npNext" aria-label="Radio siguiente" data-ico="next"></button>
+      <button class="np-b" id="npSleep" aria-label="Temporizador para dormir" data-ico="moon"></button>
     </div>
+    <div class="np-sleep" id="npSleepBox" hidden role="group" aria-label="Apagar en"><span>Apagar en</span><button data-m="15">15 min</button><button data-m="30">30 min</button><button data-m="60">1 h</button><button data-m="0">No</button></div>
+    <div class="np-sec"><button class="np-pill" id="npAlt"><span data-ico="signal"></span>Otra señal</button><a class="np-pill" id="npWeb" target="_blank" rel="noopener"><span data-ico="ext"></span>Web de la radio</a></div>
     <div class="np-info" id="npInfo"></div>
   </div>
 </div>
@@ -405,13 +460,10 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
     <div style="min-width:0">
       <div class="b-t mq" id="bT"></div>
       <div class="b-a mq" id="bA"></div>
-      <div class="b-m mq" id="bM"></div>
     </div>
     <div class="b-btns">
-      <button class="ib" id="bFav" aria-label="Favorita">☆</button>
-      <button class="ib" id="bAlt" aria-label="Probar otra señal" title="Otra señal">⇄</button>
-      <a class="ib" id="bWeb" target="_blank" rel="noopener" aria-label="Web de la radio" style="text-decoration:none">↗</a>
-      <button class="pp" id="bPP" aria-label="Pausar">❚❚</button>
+      <button class="ib" id="bFav" aria-label="Favorita" data-ico="star"></button>
+      <button class="pp" id="bPP" aria-label="Pausar" data-ico="pause"></button>
     </div>
   </div>
 </div>
@@ -422,11 +474,34 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 const $=id=>document.getElementById(id);
 const NS="http://www.w3.org/2000/svg";
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/* ---------- Íconos SVG: los caracteres ☆ ⇄ ❚❚ se ven distintos en cada iPhone; estos no ---------- */
+const ICO={
+  play:'<path d="M8 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L9.2 4.5A.8.8 0 0 0 8 5.2z" fill="currentColor" stroke="none"/>',
+  pause:'<rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/>',
+  star:'<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z"/>',
+  starF:'<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="currentColor"/>',
+  prev:'<path d="M6.5 5.5v13"/><path d="M18 6.3v11.4a.6.6 0 0 1-.9.5L9.4 12.5a.6.6 0 0 1 0-1l7.7-5.7a.6.6 0 0 1 .9.5z" fill="currentColor" stroke="none"/>',
+  next:'<path d="M17.5 5.5v13"/><path d="M6 6.3v11.4a.6.6 0 0 0 .9.5l7.7-5.7a.6.6 0 0 0 0-1L6.9 5.8a.6.6 0 0 0-.9.5z" fill="currentColor" stroke="none"/>',
+  moon:'<path d="M19.5 14.6A7.6 7.6 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1z"/>',
+  signal:'<circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M8.5 15.5a5 5 0 0 1 0-7M15.5 8.5a5 5 0 0 1 0 7M5.6 18.4a9 9 0 0 1 0-12.8M18.4 5.6a9 9 0 0 1 0 12.8"/>',
+  ext:'<path d="M8 16L16 8M9.5 8H16v6.5"/>',
+  down:'<path d="M6.5 9.5l5.5 5.5 5.5-5.5"/>',
+  plus:'<path d="M12 6v12M6 12h12"/>', minus:'<path d="M6 12h12"/>',
+  center:'<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>',
+  search:'<circle cx="10.8" cy="10.8" r="6"/><path d="M15.3 15.3l4.2 4.2"/>',
+  close:'<path d="M7 7l10 10M17 7L7 17"/>',
+  orbit:'<circle cx="12" cy="12" r="2.4" fill="currentColor"/><circle cx="12" cy="12" r="7.5" stroke-dasharray="2.5 3"/>'
+};
+const ico=n=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]||""}</svg>`;
+const setIco=(el,n)=>{if(typeof el==="string")el=document.getElementById(el);if(el&&el._ico!==n){el._ico=n;const sp=el.querySelector(":scope>[data-ico]");(sp||el).innerHTML=ico(n)}};
+document.querySelectorAll("[data-ico]").forEach(el=>{if(!el.children.length)el.innerHTML=ico(el.dataset.ico)});
 const flag=cc=>/^[A-Za-z]{2}$/.test(cc||"")?String.fromCodePoint(...[...cc.toUpperCase()].map(c=>127397+c.charCodeAt(0))):"";
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const I18N={en:{"Pellizca para acercar, gira con dos dedos (o con ↺ ↻), arrastra para moverte y toca una radio para ver su ficha y escucharla: queda al centro y las demás orbitan a su alrededor; mientras más cerca, más afín. Cada estilo ocupa siempre su sector y lo envuelve una nube con lo que agrupa a esas radios; las líneas dicen qué conecta a las más afines con la que suena. Las señales vienen del directorio abierto Radio Browser; las que hoy no responden quedan atenuadas.":"Pinch to zoom, twist with two fingers (or use ↺ ↻) to rotate, drag to move, and tap a station to see its card and listen: it moves to the center and the rest orbit around it; the closer, the more similar. Each style always keeps its sector, wrapped in a cloud showing what groups those stations; the lines show what links the most similar ones to what's playing. Streams come from the open Radio Browser directory; those not responding today are dimmed.","Radio": "Radio", "Noticias": "News", "Buscar radio, ciudad o estilo": "Search station, city or style", "Favoritas": "Favorites", "★ Favoritas": "★ Favorites", "☆ Favoritas": "☆ Favorites", "Solo favoritas": "Favorites only", "Contenido": "Content", "Idioma": "Language", "Región": "Region", "Limpiar": "Clear", "Movimiento": "Motion", "Fijo": "Still", "Suave": "Gentle", "Vivo": "Live", "Movimiento de la constelación": "Constellation motion", "Cultura": "Culture", "Clásica": "Classical", "Jazz": "Jazz", "Rock e indie": "Rock & indie", "Electrónica": "Electronic", "Metal": "Metal", "Folklore y raíces": "Folk & roots", "Pop": "Pop", "Latina": "Latin", "Ecléctica": "Eclectic", "Español": "Spanish", "Inglés": "English", "Francés": "French", "Portugués": "Portuguese", "Alemán": "German", "Italiano": "Italian", "Neerlandés": "Dutch", "Árabe": "Arabic", "Japonés": "Japanese", "Coreano": "Korean", "Hindi": "Hindi", "Polaco": "Polish", "Chile": "Chile", "Latinoamérica": "Latin America", "Norteamérica": "North America", "Europa": "Europe", "Asia": "Asia", "África": "Africa", "Oceanía": "Oceania", "Argentina": "Argentina", "México": "Mexico", "Colombia": "Colombia", "Perú": "Peru", "Brasil": "Brazil", "Estados Unidos": "United States", "Canadá": "Canada", "Reino Unido": "United Kingdom", "España": "Spain", "Francia": "France", "Alemania": "Germany", "Italia": "Italy", "Portugal": "Portugal", "Países Bajos": "Netherlands", "Irlanda": "Ireland", "Vaticano": "Vatican", "Japón": "Japan", "India": "India", "Corea del Sur": "South Korea", "Sudáfrica": "South Africa", "Australia": "Australia", "Suiza": "Switzerland", "Bélgica": "Belgium", "Nueva Zelanda": "New Zealand", "Polonia": "Poland", "Emiratos Árabes": "United Arab Emirates", "Grecia": "Greece", "local": "local", "regional": "regional", "nacional": "national", "grande": "large", "global": "global", "actualidad": "current affairs", "acústica": "acoustic", "adulto": "adult", "alternativo": "alternative", "baladas": "ballads", "barroco": "baroque", "clásicos": "classics", "conversación": "talk", "deportes": "sports", "economía": "economy", "electrónica": "electronic", "espacial": "space", "folklore": "folklore", "hard rock": "hard rock", "heavy metal": "heavy metal", "hipnótico": "hypnotic", "internacional": "international", "juvenil": "youth", "latina": "latin", "mercados": "markets", "música": "music", "música argentina": "argentine music", "música chilena": "chilean music", "negocios": "business", "noticias": "news", "política": "politics", "pop latino": "latin pop", "pública": "public", "raíces": "roots", "reggaetón": "reggaeton", "religión": "religion", "rock clásico": "classic rock", "romántica": "romantic", "urbano": "urban", "épico": "epic", "éxitos": "hits", "ópera": "opera", "cultura": "culture", "clásica": "classical", "ecléctica": "eclectic", "popular": "popular", "cueca": "cueca", "tropical": "tropical", "tú": "you", "Tú al centro · órbitas por afinidad": "You at the center · orbits by affinity", "Constelación estable · las afines se iluminan": "Stable constellation · similar ones light up", "Más afines a ti": "Most similar to you", "Coincidencias, de más a menos afín": "Matches, most to least similar", "Ninguna radio cumple todos los filtros. Quita uno para ampliar.": "No station matches all filters. Remove one to widen.", "sin señal por ahora": "no signal for now", "sin señal ahora": "no signal now", "mucha conversación": "lots of talk", "casi solo música": "almost all music", "misma energía": "same energy", "cerca": "nearby", "Habla": "Talk", "Energía": "Energy", "▶ Escuchar": "▶ Listen", "❚❚ Pausar": "❚❚ Pause", "◎ Afines": "◎ Similar", "Ver sus afines": "See similar stations", "Favorita": "Favorite", "Sitio web": "Website", "Instagram de la radio": "Station Instagram", "Ficha de radio": "Station card", "Cerrar": "Close", "Familias": "Families", "Acercar": "Zoom in", "Alejar": "Zoom out", "Girar a la izquierda": "Rotate left", "Girar a la derecha": "Rotate right", "Volver al centro": "Back to center", "Mostrar u ocultar rótulos": "Show or hide labels", "Panal de radios ordenado por afinidad": "Station hive ordered by affinity", "sintonizando…": "tuning…", "en vivo": "live", "en pausa": "paused", "cargando…": "loading…", "sin conexión al directorio": "can't reach the directory", "no hay otra señal disponible": "no other signal available", "Esta radio no respondió. Prueba su web ↗": "This station didn't respond. Try its website ↗", "Probar otra señal": "Try another signal", "Otra señal": "Other signal", "Web de la radio": "Station website", "Pausar": "Pause", "Reproducir": "Play", "Siguiente radio afín": "Next similar station", "Sonando ahora": "Now playing", "Canción": "Song", "Artista": "Artist", "Programa": "Show", "Estilo": "Style", "Sobre la señal": "About the stream", "Señal": "Stream", "Carátula": "Cover", "Instagram": "Instagram", "Copiar mi enlace": "Copy my link", "Usar otra clave": "Use another key", "Copiado": "Copied", "Pega el enlace o la clave de tu otro dispositivo:": "Paste the link or key from your other device:", "Vincular": "Link", "Cancelar": "Cancel", "No reconozco esa clave": "I don't recognize that key", "· vinculado": "· linked", "Las historias del momento con la cobertura de cada medio, actualizadas al entrar.": "Today's stories with coverage from each outlet, refreshed when you open.", "Explorar un tema: Boeing 777X, precio del cobre…": "Explore a topic: Boeing 777X, copper price…", "Secciones": "Sections", "Alcance": "Scope", "Mis temas": "My topics", "Política": "Politics", "Economía": "Economy", "Deportes extremos": "Extreme sports", "Tecnología": "Technology", "IA": "AI", "Educación": "Education", "Salud": "Health", "Ciencias": "Science", "Aviación": "Aviation", "Todo": "All", "Nacional": "National", "Internacional": "International", "Nuevo": "New", "Buscando noticias…": "Fetching news…", "Buscando…": "Searching…", "Exploración": "Exploration", "Fijar tema": "Pin topic", "Sin novedades desde tu última visita": "Nothing new since your last visit", "No hay noticias de los últimos días con este alcance.": "No news from the last few days with this scope.", "No hay noticias de los últimos días para este tema.": "No news from the last few days on this topic.", "No se pudieron traer noticias ahora.": "Couldn't fetch news right now.", "No se pudieron traer noticias ahora. Revisa tu conexión y vuelve a abrir la sección.": "Couldn't fetch news right now. Check your connection and reopen the section.", "Aún no tienes temas fijados. Escribe un tema arriba, por ejemplo “precio del cobre” o “Boeing 777X”, y toca Fijar tema. Cada vez que entres verás sus noticias y qué es nuevo.": "You have no pinned topics yet. Type a topic above, e.g. “copper price” or “Boeing 777X”, and tap Pin topic. Each time you open you'll see its news and what's new.", "Mis temas · toca un hexágono para ordenarlo o editarlo": "My topics · tap a hexagon to reorder or edit it", "← Antes": "← Earlier", "Después →": "Later →", "Ver noticias": "See news", "Editar": "Edit", "Quitar": "Remove", "Guardar": "Save", "¿Quitar? Toca otra vez": "Remove? Tap again", "Tema": "Topic", "Sección": "Section", "Escribe al menos 2 letras": "Type at least 2 letters", "Ya tienes ese tema en esa sección": "You already have that topic in that section", "No se pudo guardar": "Couldn't save", "No se pudo mover": "Couldn't move", "No se pudo quitar": "Couldn't remove", "Ese tema ya está fijado en esa sección.": "That topic is already pinned in that section.", "No se pudo fijar. Inténtalo de nuevo.": "Couldn't pin. Try again.", "Otras historias": "Other stories", "Misma historia": "Same story", "Más titulares": "More headlines", "Política y gobierno": "Politics & government", "Economía y mercados": "Economy & markets", "Seguridad y justicia": "Security & justice", "Deportes": "Sports", "Tecnología e IA": "Technology & AI", "Salud y ciencia": "Health & science", "Cultura y sociedad": "Culture & society", "Transporte y aviación": "Transport & aviation", "Titulares y cobertura de Google News en español, con el medio original y su hora.": "Headlines and coverage from Google News in English, with the original outlet and time.", "radio": "radio", "buscar radio, ciudad o estilo": "search station, city or style", "favoritas": "favorites", "★ favoritas": "★ favorites", "☆ favoritas": "☆ favorites", "solo favoritas": "favorites only", "contenido": "content", "idioma": "language", "región": "region", "limpiar": "clear", "movimiento": "motion", "fijo": "still", "suave": "gentle", "vivo": "live", "movimiento de la constelación": "constellation motion", "jazz": "jazz", "rock e indie": "rock & indie", "metal": "metal", "folklore y raíces": "folk & roots", "pop": "pop", "español": "spanish", "inglés": "english", "francés": "french", "portugués": "portuguese", "alemán": "german", "italiano": "italian", "neerlandés": "dutch", "árabe": "arabic", "japonés": "japanese", "coreano": "korean", "hindi": "hindi", "polaco": "polish", "chile": "chile", "latinoamérica": "latin america", "norteamérica": "north america", "europa": "europe", "asia": "asia", "áfrica": "africa", "oceanía": "oceania", "argentina": "argentina", "méxico": "mexico", "colombia": "colombia", "perú": "peru", "brasil": "brazil", "estados unidos": "united states", "canadá": "canada", "reino unido": "united kingdom", "españa": "spain", "francia": "france", "alemania": "germany", "italia": "italy", "portugal": "portugal", "países bajos": "netherlands", "irlanda": "ireland", "vaticano": "vatican", "japón": "japan", "india": "india", "corea del sur": "south korea", "sudáfrica": "south africa", "australia": "australia", "suiza": "switzerland", "bélgica": "belgium", "nueva zelanda": "new zealand", "polonia": "poland", "emiratos árabes": "united arab emirates", "grecia": "greece", "tú al centro · órbitas por afinidad": "you at the center · orbits by affinity", "constelación estable · las afines se iluminan": "stable constellation · similar ones light up", "más afines a ti": "most similar to you", "coincidencias, de más a menos afín": "matches, most to least similar", "ninguna radio cumple todos los filtros. quita uno para ampliar.": "no station matches all filters. remove one to widen.", "habla": "talk", "energía": "energy", "▶ escuchar": "▶ listen", "❚❚ pausar": "❚❚ pause", "◎ afines": "◎ similar", "ver sus afines": "see similar stations", "favorita": "favorite", "sitio web": "website", "instagram de la radio": "station instagram", "ficha de radio": "station card", "cerrar": "close", "familias": "families", "acercar": "zoom in", "alejar": "zoom out", "girar a la izquierda": "rotate left", "girar a la derecha": "rotate right", "volver al centro": "back to center", "mostrar u ocultar rótulos": "show or hide labels", "panal de radios ordenado por afinidad": "station hive ordered by affinity", "esta radio no respondió. prueba su web ↗": "this station didn't respond. try its website ↗", "probar otra señal": "try another signal", "otra señal": "other signal", "web de la radio": "station website", "pausar": "pause", "reproducir": "play", "siguiente radio afín": "next similar station", "sonando ahora": "now playing", "canción": "song", "artista": "artist", "programa": "show", "estilo": "style", "sobre la señal": "about the stream", "señal": "stream", "carátula": "cover", "instagram": "instagram", "copiar mi enlace": "copy my link", "usar otra clave": "use another key", "copiado": "copied", "pega el enlace o la clave de tu otro dispositivo:": "paste the link or key from your other device:", "vincular": "link", "cancelar": "cancel", "no reconozco esa clave": "i don't recognize that key", "las historias del momento con la cobertura de cada medio, actualizadas al entrar.": "today's stories with coverage from each outlet, refreshed when you open.", "explorar un tema: boeing 777x, precio del cobre…": "explore a topic: boeing 777x, copper price…", "secciones": "sections", "alcance": "scope", "mis temas": "my topics", "deportes extremos": "extreme sports", "tecnología": "technology", "ia": "ai", "educación": "education", "salud": "health", "ciencias": "science", "aviación": "aviation", "todo": "all", "nuevo": "new", "buscando noticias…": "fetching news…", "buscando…": "searching…", "exploración": "exploration", "fijar tema": "pin topic", "sin novedades desde tu última visita": "nothing new since your last visit", "no hay noticias de los últimos días con este alcance.": "no news from the last few days with this scope.", "no hay noticias de los últimos días para este tema.": "no news from the last few days on this topic.", "no se pudieron traer noticias ahora.": "couldn't fetch news right now.", "no se pudieron traer noticias ahora. revisa tu conexión y vuelve a abrir la sección.": "couldn't fetch news right now. check your connection and reopen the section.", "aún no tienes temas fijados. escribe un tema arriba, por ejemplo “precio del cobre” o “boeing 777x”, y toca fijar tema. cada vez que entres verás sus noticias y qué es nuevo.": "you have no pinned topics yet. type a topic above, e.g. “copper price” or “boeing 777x”, and tap pin topic. each time you open you'll see its news and what's new.", "mis temas · toca un hexágono para ordenarlo o editarlo": "my topics · tap a hexagon to reorder or edit it", "← antes": "← earlier", "después →": "later →", "ver noticias": "see news", "editar": "edit", "quitar": "remove", "guardar": "save", "¿quitar? toca otra vez": "remove? tap again", "tema": "topic", "sección": "section", "escribe al menos 2 letras": "type at least 2 letters", "ya tienes ese tema en esa sección": "you already have that topic in that section", "no se pudo guardar": "couldn't save", "no se pudo mover": "couldn't move", "no se pudo quitar": "couldn't remove", "ese tema ya está fijado en esa sección.": "that topic is already pinned in that section.", "no se pudo fijar. inténtalo de nuevo.": "couldn't pin. try again.", "otras historias": "other stories", "misma historia": "same story", "más titulares": "more headlines", "política y gobierno": "politics & government", "economía y mercados": "economy & markets", "seguridad y justicia": "security & justice", "tecnología e ia": "technology & ai", "salud y ciencia": "health & science", "cultura y sociedad": "culture & society", "transporte y aviación": "transport & aviation", "titulares y cobertura de google news en español, con el medio original y su hora.": "headlines and coverage from google news in english, with the original outlet and time."},pt:{"Pellizca para acercar, gira con dos dedos (o con ↺ ↻), arrastra para moverte y toca una radio para ver su ficha y escucharla: queda al centro y las demás orbitan a su alrededor; mientras más cerca, más afín. Cada estilo ocupa siempre su sector y lo envuelve una nube con lo que agrupa a esas radios; las líneas dicen qué conecta a las más afines con la que suena. Las señales vienen del directorio abierto Radio Browser; las que hoy no responden quedan atenuadas.":"Faça pinça para aproximar, gire com dois dedos (ou use ↺ ↻), arraste para mover e toque numa rádio para ver a ficha e ouvi-la: ela vai para o centro e as demais orbitam ao redor; quanto mais perto, mais afim. Cada estilo ocupa sempre o seu setor, envolto numa nuvem com o que agrupa essas rádios; as linhas mostram o que liga as mais afins à que está tocando. Os sinais vêm do diretório aberto Radio Browser; os que hoje não respondem aparecem atenuados.","Radio": "Rádio", "Noticias": "Notícias", "Buscar radio, ciudad o estilo": "Buscar rádio, cidade ou estilo", "Favoritas": "Favoritas", "★ Favoritas": "★ Favoritas", "☆ Favoritas": "☆ Favoritas", "Solo favoritas": "Só favoritas", "Contenido": "Conteúdo", "Idioma": "Idioma", "Región": "Região", "Limpiar": "Limpar", "Movimiento": "Movimento", "Fijo": "Fixo", "Suave": "Suave", "Vivo": "Vivo", "Movimiento de la constelación": "Movimento da constelação", "Cultura": "Cultura", "Clásica": "Clássica", "Jazz": "Jazz", "Rock e indie": "Rock e indie", "Electrónica": "Eletrônica", "Metal": "Metal", "Folklore y raíces": "Folclore e raízes", "Pop": "Pop", "Latina": "Latina", "Ecléctica": "Eclética", "Español": "Espanhol", "Inglés": "Inglês", "Francés": "Francês", "Portugués": "Português", "Alemán": "Alemão", "Italiano": "Italiano", "Neerlandés": "Holandês", "Árabe": "Árabe", "Japonés": "Japonês", "Coreano": "Coreano", "Hindi": "Hindi", "Polaco": "Polonês", "Chile": "Chile", "Latinoamérica": "América Latina", "Norteamérica": "América do Norte", "Europa": "Europa", "Asia": "Ásia", "África": "África", "Oceanía": "Oceania", "Argentina": "Argentina", "México": "México", "Colombia": "Colômbia", "Perú": "Peru", "Brasil": "Brasil", "Estados Unidos": "Estados Unidos", "Canadá": "Canadá", "Reino Unido": "Reino Unido", "España": "Espanha", "Francia": "França", "Alemania": "Alemanha", "Italia": "Itália", "Portugal": "Portugal", "Países Bajos": "Países Baixos", "Irlanda": "Irlanda", "Vaticano": "Vaticano", "Japón": "Japão", "India": "Índia", "Corea del Sur": "Coreia do Sul", "Sudáfrica": "África do Sul", "Australia": "Austrália", "Suiza": "Suíça", "Bélgica": "Bélgica", "Nueva Zelanda": "Nova Zelândia", "Polonia": "Polônia", "Emiratos Árabes": "Emirados Árabes", "Grecia": "Grécia", "local": "local", "regional": "regional", "nacional": "nacional", "grande": "grande", "global": "global", "actualidad": "atualidades", "acústica": "acústica", "adulto": "adulto", "alternativo": "alternativo", "baladas": "baladas", "barroco": "barroco", "clásicos": "clássicos", "conversación": "conversa", "deportes": "esportes", "economía": "economia", "electrónica": "eletrônica", "espacial": "espacial", "folklore": "folclore", "hard rock": "hard rock", "heavy metal": "heavy metal", "hipnótico": "hipnótico", "internacional": "internacional", "juvenil": "jovem", "latina": "latina", "mercados": "mercados", "música": "música", "música argentina": "música argentina", "música chilena": "música chilena", "negocios": "negócios", "noticias": "notícias", "política": "política", "pop latino": "pop latino", "pública": "pública", "raíces": "raízes", "reggaetón": "reggaeton", "religión": "religião", "rock clásico": "rock clássico", "romántica": "romântica", "urbano": "urbano", "épico": "épico", "éxitos": "sucessos", "ópera": "ópera", "cultura": "cultura", "clásica": "clássica", "ecléctica": "eclética", "popular": "popular", "cueca": "cueca", "tropical": "tropical", "tú": "você", "Tú al centro · órbitas por afinidad": "Você no centro · órbitas por afinidade", "Constelación estable · las afines se iluminan": "Constelação estável · as afins se iluminam", "Más afines a ti": "Mais afins a você", "Coincidencias, de más a menos afín": "Coincidências, da mais à menos afim", "Ninguna radio cumple todos los filtros. Quita uno para ampliar.": "Nenhuma rádio atende a todos os filtros. Remova um para ampliar.", "sin señal por ahora": "sem sinal por enquanto", "sin señal ahora": "sem sinal agora", "mucha conversación": "muita conversa", "casi solo música": "quase só música", "misma energía": "mesma energia", "cerca": "perto", "Habla": "Fala", "Energía": "Energia", "▶ Escuchar": "▶ Ouvir", "❚❚ Pausar": "❚❚ Pausar", "◎ Afines": "◎ Afins", "Ver sus afines": "Ver afins", "Favorita": "Favorita", "Sitio web": "Site", "Instagram de la radio": "Instagram da rádio", "Ficha de radio": "Ficha da rádio", "Cerrar": "Fechar", "Familias": "Famílias", "Acercar": "Aproximar", "Alejar": "Afastar", "Girar a la izquierda": "Girar à esquerda", "Girar a la derecha": "Girar à direita", "Volver al centro": "Voltar ao centro", "Mostrar u ocultar rótulos": "Mostrar ou ocultar rótulos", "Panal de radios ordenado por afinidad": "Colmeia de rádios por afinidade", "sintonizando…": "sintonizando…", "en vivo": "ao vivo", "en pausa": "em pausa", "cargando…": "carregando…", "sin conexión al directorio": "sem conexão com o diretório", "no hay otra señal disponible": "não há outro sinal disponível", "Esta radio no respondió. Prueba su web ↗": "Esta rádio não respondeu. Tente o site ↗", "Probar otra señal": "Tentar outro sinal", "Otra señal": "Outro sinal", "Web de la radio": "Site da rádio", "Pausar": "Pausar", "Reproducir": "Tocar", "Siguiente radio afín": "Próxima rádio afim", "Sonando ahora": "Tocando agora", "Canción": "Música", "Artista": "Artista", "Programa": "Programa", "Estilo": "Estilo", "Sobre la señal": "Sobre o sinal", "Señal": "Sinal", "Carátula": "Capa", "Instagram": "Instagram", "Copiar mi enlace": "Copiar meu link", "Usar otra clave": "Usar outra chave", "Copiado": "Copiado", "Pega el enlace o la clave de tu otro dispositivo:": "Cole o link ou a chave do seu outro dispositivo:", "Vincular": "Vincular", "Cancelar": "Cancelar", "No reconozco esa clave": "Não reconheço essa chave", "· vinculado": "· vinculado", "Las historias del momento con la cobertura de cada medio, actualizadas al entrar.": "As histórias do momento com a cobertura de cada veículo, atualizadas ao abrir.", "Explorar un tema: Boeing 777X, precio del cobre…": "Explorar um tema: Boeing 777X, preço do cobre…", "Secciones": "Seções", "Alcance": "Alcance", "Mis temas": "Meus temas", "Política": "Política", "Economía": "Economia", "Deportes extremos": "Esportes radicais", "Tecnología": "Tecnologia", "IA": "IA", "Educación": "Educação", "Salud": "Saúde", "Ciencias": "Ciências", "Aviación": "Aviação", "Todo": "Tudo", "Nacional": "Nacional", "Internacional": "Internacional", "Nuevo": "Novo", "Buscando noticias…": "Buscando notícias…", "Buscando…": "Buscando…", "Exploración": "Exploração", "Fijar tema": "Fixar tema", "Sin novedades desde tu última visita": "Sem novidades desde a sua última visita", "No hay noticias de los últimos días con este alcance.": "Não há notícias dos últimos dias com este alcance.", "No hay noticias de los últimos días para este tema.": "Não há notícias dos últimos dias sobre este tema.", "No se pudieron traer noticias ahora.": "Não foi possível trazer notícias agora.", "No se pudieron traer noticias ahora. Revisa tu conexión y vuelve a abrir la sección.": "Não foi possível trazer notícias agora. Verifique a conexão e reabra a seção.", "Aún no tienes temas fijados. Escribe un tema arriba, por ejemplo “precio del cobre” o “Boeing 777X”, y toca Fijar tema. Cada vez que entres verás sus noticias y qué es nuevo.": "Você ainda não tem temas fixados. Escreva um tema acima, por exemplo “preço do cobre” ou “Boeing 777X”, e toque em Fixar tema. Sempre que abrir verá as notícias e o que há de novo.", "Mis temas · toca un hexágono para ordenarlo o editarlo": "Meus temas · toque um hexágono para ordenar ou editar", "← Antes": "← Antes", "Después →": "Depois →", "Ver noticias": "Ver notícias", "Editar": "Editar", "Quitar": "Remover", "Guardar": "Salvar", "¿Quitar? Toca otra vez": "Remover? Toque de novo", "Tema": "Tema", "Sección": "Seção", "Escribe al menos 2 letras": "Escreva pelo menos 2 letras", "Ya tienes ese tema en esa sección": "Você já tem esse tema nessa seção", "No se pudo guardar": "Não foi possível salvar", "No se pudo mover": "Não foi possível mover", "No se pudo quitar": "Não foi possível remover", "Ese tema ya está fijado en esa sección.": "Esse tema já está fixado nessa seção.", "No se pudo fijar. Inténtalo de nuevo.": "Não foi possível fixar. Tente de novo.", "Otras historias": "Outras histórias", "Misma historia": "Mesma história", "Más titulares": "Mais manchetes", "Política y gobierno": "Política e governo", "Economía y mercados": "Economia e mercados", "Seguridad y justicia": "Segurança e justiça", "Deportes": "Esportes", "Tecnología e IA": "Tecnologia e IA", "Salud y ciencia": "Saúde e ciência", "Cultura y sociedad": "Cultura e sociedade", "Transporte y aviación": "Transporte e aviação", "Titulares y cobertura de Google News en español, con el medio original y su hora.": "Manchetes e cobertura do Google News em português, com o veículo original e o horário.", "radio": "rádio", "buscar radio, ciudad o estilo": "buscar rádio, cidade ou estilo", "favoritas": "favoritas", "★ favoritas": "★ favoritas", "☆ favoritas": "☆ favoritas", "solo favoritas": "só favoritas", "contenido": "conteúdo", "idioma": "idioma", "región": "região", "limpiar": "limpar", "movimiento": "movimento", "fijo": "fixo", "suave": "suave", "vivo": "vivo", "movimiento de la constelación": "movimento da constelação", "jazz": "jazz", "rock e indie": "rock e indie", "metal": "metal", "folklore y raíces": "folclore e raízes", "pop": "pop", "español": "espanhol", "inglés": "inglês", "francés": "francês", "portugués": "português", "alemán": "alemão", "italiano": "italiano", "neerlandés": "holandês", "árabe": "árabe", "japonés": "japonês", "coreano": "coreano", "hindi": "hindi", "polaco": "polonês", "chile": "chile", "latinoamérica": "américa latina", "norteamérica": "américa do norte", "europa": "europa", "asia": "ásia", "áfrica": "áfrica", "oceanía": "oceania", "argentina": "argentina", "méxico": "méxico", "colombia": "colômbia", "perú": "peru", "brasil": "brasil", "estados unidos": "estados unidos", "canadá": "canadá", "reino unido": "reino unido", "españa": "espanha", "francia": "frança", "alemania": "alemanha", "italia": "itália", "portugal": "portugal", "países bajos": "países baixos", "irlanda": "irlanda", "vaticano": "vaticano", "japón": "japão", "india": "índia", "corea del sur": "coreia do sul", "sudáfrica": "áfrica do sul", "australia": "austrália", "suiza": "suíça", "bélgica": "bélgica", "nueva zelanda": "nova zelândia", "polonia": "polônia", "emiratos árabes": "emirados árabes", "grecia": "grécia", "tú al centro · órbitas por afinidad": "você no centro · órbitas por afinidade", "constelación estable · las afines se iluminan": "constelação estável · as afins se iluminam", "más afines a ti": "mais afins a você", "coincidencias, de más a menos afín": "coincidências, da mais à menos afim", "ninguna radio cumple todos los filtros. quita uno para ampliar.": "nenhuma rádio atende a todos os filtros. remova um para ampliar.", "habla": "fala", "energía": "energia", "▶ escuchar": "▶ ouvir", "❚❚ pausar": "❚❚ pausar", "◎ afines": "◎ afins", "ver sus afines": "ver afins", "favorita": "favorita", "sitio web": "site", "instagram de la radio": "instagram da rádio", "ficha de radio": "ficha da rádio", "cerrar": "fechar", "familias": "famílias", "acercar": "aproximar", "alejar": "afastar", "girar a la izquierda": "girar à esquerda", "girar a la derecha": "girar à direita", "volver al centro": "voltar ao centro", "mostrar u ocultar rótulos": "mostrar ou ocultar rótulos", "panal de radios ordenado por afinidad": "colmeia de rádios por afinidade", "esta radio no respondió. prueba su web ↗": "esta rádio não respondeu. tente o site ↗", "probar otra señal": "tentar outro sinal", "otra señal": "outro sinal", "web de la radio": "site da rádio", "pausar": "pausar", "reproducir": "tocar", "siguiente radio afín": "próxima rádio afim", "sonando ahora": "tocando agora", "canción": "música", "artista": "artista", "programa": "programa", "estilo": "estilo", "sobre la señal": "sobre o sinal", "señal": "sinal", "carátula": "capa", "instagram": "instagram", "copiar mi enlace": "copiar meu link", "usar otra clave": "usar outra chave", "copiado": "copiado", "pega el enlace o la clave de tu otro dispositivo:": "cole o link ou a chave do seu outro dispositivo:", "vincular": "vincular", "cancelar": "cancelar", "no reconozco esa clave": "não reconheço essa chave", "las historias del momento con la cobertura de cada medio, actualizadas al entrar.": "as histórias do momento com a cobertura de cada veículo, atualizadas ao abrir.", "explorar un tema: boeing 777x, precio del cobre…": "explorar um tema: boeing 777x, preço do cobre…", "secciones": "seções", "alcance": "alcance", "mis temas": "meus temas", "deportes extremos": "esportes radicais", "tecnología": "tecnologia", "ia": "ia", "educación": "educação", "salud": "saúde", "ciencias": "ciências", "aviación": "aviação", "todo": "tudo", "nuevo": "novo", "buscando noticias…": "buscando notícias…", "buscando…": "buscando…", "exploración": "exploração", "fijar tema": "fixar tema", "sin novedades desde tu última visita": "sem novidades desde a sua última visita", "no hay noticias de los últimos días con este alcance.": "não há notícias dos últimos dias com este alcance.", "no hay noticias de los últimos días para este tema.": "não há notícias dos últimos dias sobre este tema.", "no se pudieron traer noticias ahora.": "não foi possível trazer notícias agora.", "no se pudieron traer noticias ahora. revisa tu conexión y vuelve a abrir la sección.": "não foi possível trazer notícias agora. verifique a conexão e reabra a seção.", "aún no tienes temas fijados. escribe un tema arriba, por ejemplo “precio del cobre” o “boeing 777x”, y toca fijar tema. cada vez que entres verás sus noticias y qué es nuevo.": "você ainda não tem temas fixados. escreva um tema acima, por exemplo “preço do cobre” ou “boeing 777x”, e toque em fixar tema. sempre que abrir verá as notícias e o que há de novo.", "mis temas · toca un hexágono para ordenarlo o editarlo": "meus temas · toque um hexágono para ordenar ou editar", "← antes": "← antes", "después →": "depois →", "ver noticias": "ver notícias", "editar": "editar", "quitar": "remover", "guardar": "salvar", "¿quitar? toca otra vez": "remover? toque de novo", "tema": "tema", "sección": "seção", "escribe al menos 2 letras": "escreva pelo menos 2 letras", "ya tienes ese tema en esa sección": "você já tem esse tema nessa seção", "no se pudo guardar": "não foi possível salvar", "no se pudo mover": "não foi possível mover", "no se pudo quitar": "não foi possível remover", "ese tema ya está fijado en esa sección.": "esse tema já está fixado nessa seção.", "no se pudo fijar. inténtalo de nuevo.": "não foi possível fixar. tente de novo.", "otras historias": "outras histórias", "misma historia": "mesma história", "más titulares": "mais manchetes", "política y gobierno": "política e governo", "economía y mercados": "economia e mercados", "seguridad y justicia": "segurança e justiça", "tecnología e ia": "tecnologia e ia", "salud y ciencia": "saúde e ciência", "cultura y sociedad": "cultura e sociedade", "transporte y aviación": "transporte e aviação", "titulares y cobertura de google news en español, con el medio original y su hora.": "manchetes e cobertura do google news em português, com o veículo original e o horário."}};
-Object.assign(I18N.en,{"Más adelante": "Later", "Hora de Chile · las próximas 2 semanas a la vista": "Chile time · next 2 weeks shown", "Sin partidos programados por ahora.": "No games scheduled yet.", "PE": "OTL", "Por liga y división": "By league and division", "Música": "Music", "Empleo": "Jobs", "Próximos partidos": "Upcoming games", "Hora de Chile": "Chile time", "Sin partidos programados este mes.": "No games scheduled this month.", "País": "Country", "Torneo": "Tournament", "Deportes": "Sports", "Tablas de posiciones, llaves, resultados y estadísticas de cada liga, actualizadas al entrar.": "Standings, brackets, results and stats for each league, refreshed when you open it.", "Datos públicos de ESPN.": "Public data from ESPN.", "Aún no hay llaves publicadas.": "No brackets published yet.", "Cargando…": "Loading…", "Downhill, enduro, surf y escalada: resultados y noticias de los últimos días": "Downhill, enduro, surf and climbing: results and news from recent days", "Esta competencia no tiene tabla en este momento.": "This competition has no table right now.", "Estadísticas": "Stats", "Fuera de temporada": "Off-season", "Goleadores y asistencias": "Goals and assists", "Internacional": "International", "Llaves y estado de cada serie": "Brackets and status of each series", "Llaves": "Brackets", "Líderes": "Leaders", "Marcador global y resultado de cada partido": "Aggregate score and result of each leg", "Mundo": "World", "No hay noticias de los últimos días con este alcance.": "No news from recent days for this scope.", "No se pudieron traer los datos ahora. Inténtalo de nuevo en un rato.": "Couldn't fetch the data right now. Try again in a bit.", "Otros": "Others", "Por conferencia y división": "By conference and division", "Posiciones de la temporada regular": "Regular season standings", "Pretemporada": "Preseason", "Resultados por división": "Results by division", "Semana en curso": "Current week", "Sin estadísticas disponibles por ahora.": "No stats available yet.", "Sin partidos jugados en este período.": "No games played in this period.", "Sin tabla disponible por ahora.": "No table available yet.", "Tabla de posiciones": "Standings", "Temporada regular": "Regular season", "Últimos 3 días": "Last 3 days", "Sudamérica": "South America", "Norteamérica": "North America", "Europa": "Europe", "Alemania": "Germany", "Brasil": "Brazil", "Escocia": "Scotland", "España": "Spain", "Estados Unidos": "United States", "Francia": "France", "Inglaterra": "England", "Italia": "Italy", "México": "Mexico", "Países Bajos": "Netherlands", "Perú": "Peru", "Copa del Mundo": "World Cup", "Mundial de Clubes": "Club World Cup", "Eliminatorias": "Qualifiers", "Equipo": "Team", "PJ": "GP", "G": "W", "E": "D", "P": "L", "GF": "GF", "GC": "GA", "DG": "GD", "Pts": "Pts", "Racha": "Streak", "Últ.10": "L10", "Dif": "GB"});Object.assign(I18N.pt,{"Más adelante": "Mais adiante", "Hora de Chile · las próximas 2 semanas a la vista": "Horário do Chile · próximas 2 semanas à vista", "Sin partidos programados por ahora.": "Sem jogos programados por enquanto.", "PE": "DP", "Por liga y división": "Por liga e divisão", "Música": "Música", "Empleo": "Emprego", "Próximos partidos": "Próximos jogos", "Hora de Chile": "Horário do Chile", "Sin partidos programados este mes.": "Sem jogos programados neste mês.", "País": "País", "Torneo": "Torneio", "Deportes": "Esportes", "Tablas de posiciones, llaves, resultados y estadísticas de cada liga, actualizadas al entrar.": "Classificações, chaves, resultados e estatísticas de cada liga, atualizados ao entrar.", "Datos públicos de ESPN.": "Dados públicos da ESPN.", "Aún no hay llaves publicadas.": "Ainda não há chaves publicadas.", "Cargando…": "Carregando…", "Downhill, enduro, surf y escalada: resultados y noticias de los últimos días": "Downhill, enduro, surfe e escalada: resultados e notícias dos últimos dias", "Esta competencia no tiene tabla en este momento.": "Esta competição não tem tabela no momento.", "Estadísticas": "Estatísticas", "Fuera de temporada": "Fora de temporada", "Goleadores y asistencias": "Artilheiros e assistências", "Internacional": "Internacional", "Llaves y estado de cada serie": "Chaves e situação de cada série", "Llaves": "Chaves", "Líderes": "Líderes", "Marcador global y resultado de cada partido": "Placar agregado e resultado de cada jogo", "Mundo": "Mundo", "No hay noticias de los últimos días con este alcance.": "Não há notícias dos últimos dias com este alcance.", "No se pudieron traer los datos ahora. Inténtalo de nuevo en un rato.": "Não foi possível trazer os dados agora. Tente de novo daqui a pouco.", "Otros": "Outros", "Por conferencia y división": "Por conferência e divisão", "Posiciones de la temporada regular": "Classificação da temporada regular", "Pretemporada": "Pré-temporada", "Resultados por división": "Resultados por divisão", "Semana en curso": "Semana atual", "Sin estadísticas disponibles por ahora.": "Sem estatísticas disponíveis por enquanto.", "Sin partidos jugados en este período.": "Sem jogos neste período.", "Sin tabla disponible por ahora.": "Sem tabela disponível por enquanto.", "Tabla de posiciones": "Classificação", "Temporada regular": "Temporada regular", "Últimos 3 días": "Últimos 3 dias", "Sudamérica": "América do Sul", "Norteamérica": "América do Norte", "Europa": "Europa", "Alemania": "Alemanha", "Brasil": "Brasil", "Escocia": "Escócia", "España": "Espanha", "Estados Unidos": "Estados Unidos", "Francia": "França", "Inglaterra": "Inglaterra", "Italia": "Itália", "México": "México", "Países Bajos": "Países Baixos", "Perú": "Peru", "Copa del Mundo": "Copa do Mundo", "Mundial de Clubes": "Mundial de Clubes", "Eliminatorias": "Eliminatórias", "Equipo": "Time", "PJ": "J", "G": "V", "E": "E", "P": "D", "GF": "GP", "GC": "GC", "DG": "SG", "Pts": "Pts", "Racha": "Seq.", "Últ.10": "Últ.10", "Dif": "Dif"});
-const I18P=[["^hace (\\d+) min$", "$1 min ago", "há $1 min"], ["^hace (\\d+) h$", "$1 h ago", "há $1 h"], ["^hace (\\d+) días$", "$1 days ago", "há $1 dias"], ["^(\\d+) de (\\d+) radios$", "$1 of $2 stations", "$1 de $2 rádios"], ["^(\\d+) radios$", "$1 stations", "$1 rádios"], ["^(\\d+) idiomas?$", "$1 languages", "$1 idiomas"], ["^(\\d+) grupos$", "$1 groups", "$1 grupos"], ["^(\\d+) historias$", "$1 stories", "$1 histórias"], ["^(\\d+)% afín a (.+)$", "$1% like $2", "$1% afim a $2"], ["^Más afines a (.+)$", "Most similar to $1", "Mais afins a $1"], ["^Cargando (.+)…$", "Loading $1…", "Carregando $1…"], ["^(\\d+) nuevas? desde tu última visita$", "$1 new since your last visit", "$1 novas desde a sua última visita"], ["^(\\d+) nuevas?$", "$1 new", "$1 novas"], ["^Cobertura en (\\d+) medios? más$", "Coverage in $1 more outlets", "Cobertura em mais $1 veículos"], ["^Actualizado (.+)$", "Updated $1", "Atualizado $1"], ["^probando señal (\\d+) de (\\d+)…$", "trying stream $1 of $2…", "testando sinal $1 de $2…"], ["^señal (\\d+) de (\\d+)$", "stream $1 of $2", "sinal $1 de $2"], ["^(\\d+) de (\\d+)$", "$1 of $2", "$1 de $2"], ["^([\\d.]+) FM Santiago$", "$1 FM Santiago", "$1 FM Santiago"], ["^en (.+)$", "on $1", "em $1"], ["^Fijar tema en (.+)$", "Pin topic in $1", "Fixar tema em $1"], ["^Fijado en (.+)\\.$", "Pinned in $1.", "Fixado em $1."], ["^No se pudieron traer noticias de (.+) ahora\\.$", "Couldn't fetch news about $1 right now.", "Não foi possível trazer notícias de $1 agora."], ["^Filtrar (.+)$", "Filter $1", "Filtrar $1"], ["^Carátula de (.*)$", "Cover of $1", "Capa de $1"], ["^★ Tus favoritas \\((\\d+)\\) se respaldan en la nube con tu clave (\\S+)\\. Para no perderlas, abre siempre la app desde el ícono o guarda tu enlace\\.$", "★ Your favorites ($1) are backed up in the cloud with your key $2. To keep them, always open the app from its icon or save your link.", "★ Suas favoritas ($1) ficam salvas na nuvem com a sua chave $2. Para não perdê-las, abra sempre o app pelo ícone ou guarde o seu link."], ["^★ Tus favoritas \\((\\d+)\\) se respaldan en la nube con tu clave$", "★ Your favorites ($1) are backed up in the cloud with your key", "★ Suas favoritas ($1) ficam salvas na nuvem com a sua chave"], ["^\\. Para no perderlas, abre siempre la app desde el ícono o guarda tu enlace\\.$", ". To keep them, always open the app from its icon or save your link.", ". Para não perdê-las, abra sempre o app pelo ícone ou guarde o seu link."]].map(([r,e,p])=>[new RegExp(r),e,p]);
+Object.assign(I18N.en,{"Mis radios":"My stations","Para empezar":"To start","Toca ★ en una radio para dejarla aquí":"Tap ★ on a station to keep it here","Recientes · toca ★ para fijarlas":"Recent · tap ★ to pin them","recientes":"recent","favorita":"favorite","favoritas":"favorites","sonando":"playing","Toca una radio para escucharla; mientras más cerca del centro, más afín. Señales del directorio abierto Radio Browser.":"Tap a station to listen; the closer to the center, the more similar. Streams from the open Radio Browser directory.","Radio anterior":"Previous station","Radio siguiente":"Next station","Temporizador para dormir":"Sleep timer","Apagar en":"Stop in","No":"Off","Otra señal":"Other stream","Web de la radio":"Station website","reconectando…":"reconnecting…","sin conexión · reintentando":"offline · retrying","apagada por el temporizador":"stopped by the sleep timer","Volver al centro":"Back to center","Afines":"Similar","Escuchar":"Listen","Pausar":"Pause"});
+Object.assign(I18N.en,{"Más adelante": "Later", "Hora de Chile · las próximas 2 semanas a la vista": "Chile time · next 2 weeks shown", "Sin partidos programados por ahora.": "No games scheduled yet.", "PE": "OTL", "Por liga y división": "By league and division", "Música": "Music", "Empleo": "Jobs", "Próximos partidos": "Upcoming games", "Hora de Chile": "Chile time", "Sin partidos programados este mes.": "No games scheduled this month.", "País": "Country", "Torneo": "Tournament", "Deportes": "Sports", "Tablas de posiciones, llaves, resultados y estadísticas de cada liga, actualizadas al entrar.": "Standings, brackets, results and stats for each league, refreshed when you open it.", "Datos públicos de ESPN.": "Public data from ESPN.", "Aún no hay llaves publicadas.": "No brackets published yet.", "Cargando…": "Loading…", "Downhill, enduro, surf y escalada: resultados y noticias de los últimos días": "Downhill, enduro, surf and climbing: results and news from recent days", "Esta competencia no tiene tabla en este momento.": "This competition has no table right now.", "Estadísticas": "Stats", "Fuera de temporada": "Off-season", "Goleadores y asistencias": "Goals and assists", "Internacional": "International", "Llaves y estado de cada serie": "Brackets and status of each series", "Llaves": "Brackets", "Líderes": "Leaders", "Marcador global y resultado de cada partido": "Aggregate score and result of each leg", "Mundo": "World", "No hay noticias de los últimos días con este alcance.": "No news from recent days for this scope.", "No se pudieron traer los datos ahora. Inténtalo de nuevo en un rato.": "Couldn't fetch the data right now. Try again in a bit.", "Otros": "Others", "Por conferencia y división": "By conference and division", "Posiciones de la temporada regular": "Regular season standings", "Pretemporada": "Preseason", "Resultados por división": "Results by division", "Semana en curso": "Current week", "Sin estadísticas disponibles por ahora.": "No stats available yet.", "Sin partidos jugados en este período.": "No games played in this period.", "Sin tabla disponible por ahora.": "No table available yet.", "Tabla de posiciones": "Standings", "Temporada regular": "Regular season", "Últimos 3 días": "Last 3 days", "Sudamérica": "South America", "Norteamérica": "North America", "Europa": "Europe", "Alemania": "Germany", "Brasil": "Brazil", "Escocia": "Scotland", "España": "Spain", "Estados Unidos": "United States", "Francia": "France", "Inglaterra": "England", "Italia": "Italy", "México": "Mexico", "Países Bajos": "Netherlands", "Perú": "Peru", "Copa del Mundo": "World Cup", "Mundial de Clubes": "Club World Cup", "Eliminatorias": "Qualifiers", "Equipo": "Team", "PJ": "GP", "G": "W", "E": "D", "P": "L", "GF": "GF", "GC": "GA", "DG": "GD", "Pts": "Pts", "Racha": "Streak", "Últ.10": "L10", "Dif": "GB"});Object.assign(I18N.pt,{"Mis radios":"Minhas rádios","Para empezar":"Para começar","Toca ★ en una radio para dejarla aquí":"Toque ★ numa rádio para deixá-la aqui","Recientes · toca ★ para fijarlas":"Recentes · toque ★ para fixá-las","recientes":"recentes","favorita":"favorita","favoritas":"favoritas","sonando":"tocando","Toca una radio para escucharla; mientras más cerca del centro, más afín. Señales del directorio abierto Radio Browser.":"Toque uma rádio para ouvir; quanto mais perto do centro, mais afim. Sinais do diretório aberto Radio Browser.","Radio anterior":"Rádio anterior","Radio siguiente":"Próxima rádio","Temporizador para dormir":"Timer para dormir","Apagar en":"Desligar em","No":"Não","Otra señal":"Outro sinal","Web de la radio":"Site da rádio","reconectando…":"reconectando…","sin conexión · reintentando":"sem conexão · tentando de novo","apagada por el temporizador":"desligada pelo timer","Volver al centro":"Voltar ao centro","Afines":"Afins","Escuchar":"Ouvir","Pausar":"Pausar"});
+Object.assign(I18N.pt,{"Más adelante": "Mais adiante", "Hora de Chile · las próximas 2 semanas a la vista": "Horário do Chile · próximas 2 semanas à vista", "Sin partidos programados por ahora.": "Sem jogos programados por enquanto.", "PE": "DP", "Por liga y división": "Por liga e divisão", "Música": "Música", "Empleo": "Emprego", "Próximos partidos": "Próximos jogos", "Hora de Chile": "Horário do Chile", "Sin partidos programados este mes.": "Sem jogos programados neste mês.", "País": "País", "Torneo": "Torneio", "Deportes": "Esportes", "Tablas de posiciones, llaves, resultados y estadísticas de cada liga, actualizadas al entrar.": "Classificações, chaves, resultados e estatísticas de cada liga, atualizados ao entrar.", "Datos públicos de ESPN.": "Dados públicos da ESPN.", "Aún no hay llaves publicadas.": "Ainda não há chaves publicadas.", "Cargando…": "Carregando…", "Downhill, enduro, surf y escalada: resultados y noticias de los últimos días": "Downhill, enduro, surfe e escalada: resultados e notícias dos últimos dias", "Esta competencia no tiene tabla en este momento.": "Esta competição não tem tabela no momento.", "Estadísticas": "Estatísticas", "Fuera de temporada": "Fora de temporada", "Goleadores y asistencias": "Artilheiros e assistências", "Internacional": "Internacional", "Llaves y estado de cada serie": "Chaves e situação de cada série", "Llaves": "Chaves", "Líderes": "Líderes", "Marcador global y resultado de cada partido": "Placar agregado e resultado de cada jogo", "Mundo": "Mundo", "No hay noticias de los últimos días con este alcance.": "Não há notícias dos últimos dias com este alcance.", "No se pudieron traer los datos ahora. Inténtalo de nuevo en un rato.": "Não foi possível trazer os dados agora. Tente de novo daqui a pouco.", "Otros": "Outros", "Por conferencia y división": "Por conferência e divisão", "Posiciones de la temporada regular": "Classificação da temporada regular", "Pretemporada": "Pré-temporada", "Resultados por división": "Resultados por divisão", "Semana en curso": "Semana atual", "Sin estadísticas disponibles por ahora.": "Sem estatísticas disponíveis por enquanto.", "Sin partidos jugados en este período.": "Sem jogos neste período.", "Sin tabla disponible por ahora.": "Sem tabela disponível por enquanto.", "Tabla de posiciones": "Classificação", "Temporada regular": "Temporada regular", "Últimos 3 días": "Últimos 3 dias", "Sudamérica": "América do Sul", "Norteamérica": "América do Norte", "Europa": "Europa", "Alemania": "Alemanha", "Brasil": "Brasil", "Escocia": "Escócia", "España": "Espanha", "Estados Unidos": "Estados Unidos", "Francia": "França", "Inglaterra": "Inglaterra", "Italia": "Itália", "México": "México", "Países Bajos": "Países Baixos", "Perú": "Peru", "Copa del Mundo": "Copa do Mundo", "Mundial de Clubes": "Mundial de Clubes", "Eliminatorias": "Eliminatórias", "Equipo": "Time", "PJ": "J", "G": "V", "E": "E", "P": "D", "GF": "GP", "GC": "GC", "DG": "SG", "Pts": "Pts", "Racha": "Seq.", "Últ.10": "Últ.10", "Dif": "Dif"});
+const I18P=[["^(\\d+) sin señal · mostrar$", "$1 offline · show", "$1 sem sinal · mostrar"], ["^Ocultar (\\d+) sin señal$", "Hide $1 offline", "Ocultar $1 sem sinal"], ["^(\\d+) favoritas?$", "$1 favorite(s)", "$1 favorita(s)"], ["^se apaga en (\\d+) min$", "stops in $1 min", "desliga em $1 min"], ["^Se apaga en (\\d+) min$", "Stops in $1 min", "Desliga em $1 min"], ["^hace (\\d+) min$", "$1 min ago", "há $1 min"], ["^hace (\\d+) h$", "$1 h ago", "há $1 h"], ["^hace (\\d+) días$", "$1 days ago", "há $1 dias"], ["^(\\d+) de (\\d+) radios$", "$1 of $2 stations", "$1 de $2 rádios"], ["^(\\d+) radios$", "$1 stations", "$1 rádios"], ["^(\\d+) idiomas?$", "$1 languages", "$1 idiomas"], ["^(\\d+) grupos$", "$1 groups", "$1 grupos"], ["^(\\d+) historias$", "$1 stories", "$1 histórias"], ["^(\\d+)% afín a (.+)$", "$1% like $2", "$1% afim a $2"], ["^Más afines a (.+)$", "Most similar to $1", "Mais afins a $1"], ["^Cargando (.+)…$", "Loading $1…", "Carregando $1…"], ["^(\\d+) nuevas? desde tu última visita$", "$1 new since your last visit", "$1 novas desde a sua última visita"], ["^(\\d+) nuevas?$", "$1 new", "$1 novas"], ["^Cobertura en (\\d+) medios? más$", "Coverage in $1 more outlets", "Cobertura em mais $1 veículos"], ["^Actualizado (.+)$", "Updated $1", "Atualizado $1"], ["^probando señal (\\d+) de (\\d+)…$", "trying stream $1 of $2…", "testando sinal $1 de $2…"], ["^señal (\\d+) de (\\d+)$", "stream $1 of $2", "sinal $1 de $2"], ["^(\\d+) de (\\d+)$", "$1 of $2", "$1 de $2"], ["^([\\d.]+) FM Santiago$", "$1 FM Santiago", "$1 FM Santiago"], ["^en (.+)$", "on $1", "em $1"], ["^Fijar tema en (.+)$", "Pin topic in $1", "Fixar tema em $1"], ["^Fijado en (.+)\\.$", "Pinned in $1.", "Fixado em $1."], ["^No se pudieron traer noticias de (.+) ahora\\.$", "Couldn't fetch news about $1 right now.", "Não foi possível trazer notícias de $1 agora."], ["^Filtrar (.+)$", "Filter $1", "Filtrar $1"], ["^Carátula de (.*)$", "Cover of $1", "Capa de $1"], ["^★ Tus favoritas \\((\\d+)\\) se respaldan en la nube con tu clave (\\S+)\\. Para no perderlas, abre siempre la app desde el ícono o guarda tu enlace\\.$", "★ Your favorites ($1) are backed up in the cloud with your key $2. To keep them, always open the app from its icon or save your link.", "★ Suas favoritas ($1) ficam salvas na nuvem com a sua chave $2. Para não perdê-las, abra sempre o app pelo ícone ou guarde o seu link."], ["^★ Tus favoritas \\((\\d+)\\) se respaldan en la nube con tu clave$", "★ Your favorites ($1) are backed up in the cloud with your key", "★ Suas favoritas ($1) ficam salvas na nuvem com a sua chave"], ["^\\. Para no perderlas, abre siempre la app desde el ícono o guarda tu enlace\\.$", ". To keep them, always open the app from its icon or save your link.", ". Para não perdê-las, abra sempre o app pelo ícone ou guarde o seu link."]].map(([r,e,p])=>[new RegExp(r),e,p]);
 /* ---------- Idioma de la interfaz: ES / EN / PT ----------
    La app se escribe en español; al elegir otro idioma, un traductor recorre los textos que aparecen en pantalla
    (y sus etiquetas de accesibilidad) y los cambia por su versión. Canciones, titulares y nombres no se tocan. */
@@ -644,7 +719,7 @@ async function rpc(fn,body){const r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"P
 async function syncFavs(){try{const srv=await rpc("dial_prefs_get",{p_key:DKEY});const before=favs.size;
   if(Array.isArray(srv))srv.forEach(n=>favs.add(n));store.set("dial-favs",[...favs]);
   if(!Array.isArray(srv)||srv.length!==favs.size)saveFavs();
-  if(favs.size!==before){layout()}}catch(e){}}
+  if(favs.size!==before){layout();renderQuick()}}catch(e){}}
 function profileOf(list){
   if(!list.length) return null;
   const cnt=(f)=>{const m={};list.forEach(s=>[].concat(f(s)).forEach(x=>m[x]=(m[x]||0)+1));return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(x=>x[0])};
@@ -719,7 +794,7 @@ function renderFilters(){
   const tabs=$("ftabs");tabs.innerHTML="";
   const fv=document.createElement("button");fv.className="ftab fav";fv.setAttribute("aria-pressed",FAV);fv.setAttribute("aria-label","Solo favoritas");
   const nf=S.filter(s=>matchExcept(s,"fav")&&favs.has(s.n)).length;
-  fv.innerHTML=`${FAV?"★":"☆"} Favoritas<span class="c">${nf}</span>`;fv.onclick=()=>{FAV=!FAV;store.set("dial-f-fav",FAV);if(MOVE==="vivo"){F=null;resetView()}layout()};tabs.appendChild(fv);
+  fv.innerHTML=`${ico(FAV?"starF":"star")} Favoritas<span class="c">${nf}</span>`;fv.onclick=()=>{FAV=!FAV;store.set("dial-f-fav",FAV);if(MOVE==="vivo"){F=null;resetView()}layout()};tabs.appendChild(fv);
   FTABS.forEach(([k,l])=>{const b=document.createElement("button");b.className="ftab";b.role="tab";b.setAttribute("aria-selected",k===ftab);
     const n=k==="move"?0:SEL[k].size;b.innerHTML=esc(l)+(n?`<span class="n">${n}</span>`:"");b.onclick=()=>{ftab=k;store.set("dial-ftab",k);renderFilters()};tabs.appendChild(b)});
   const box=$("fchips");box.innerHTML="";
@@ -733,9 +808,12 @@ function renderFilters(){
   const m=S.filter(match).length,act=(FAV?1:0)+SEL.fam.size+SEL.lang.size+SEL.reg.size+(query?1:0);
   const desc=(FAV?["Favoritas"]:[]).concat([...SEL.fam].map(k=>FAM[k][0])).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
   $("fsumT").textContent=act?`${m} de ${S.length} radios · ${desc.join(" + ")}`:`${S.length} radios`;
+  const nd=S.filter(s=>s.dead).length,dd=$("fdead");
+  if(nd){dd.hidden=false;dd.textContent=SHOWDEAD?`Ocultar ${nd} sin señal`:`${nd} sin señal · mostrar`}else dd.hidden=true;
   $("fclr").hidden=!act;
 }
 $("fclr").onclick=()=>{FAV=false;store.set("dial-f-fav",false);Object.values(SEL).forEach(x=>x.clear());["fam","lang","reg"].forEach(k=>store.set("dial-f-"+k,[]));query="";$("rq").value="";if(MOVE==="vivo")F=null;layout()};
+$("fdead").onclick=()=>{SHOWDEAD=!SHOWDEAD;layout()};
 $("rq").addEventListener("input",e=>{query=e.target.value.trim();if(MOVE==="vivo")F=null;layout()});
 $("rq").addEventListener("keydown",e=>{if(e.key==="Enter"){const m=S.filter(match);if(m.length){e.target.blur();pick(m[0])}}});
 
@@ -744,7 +822,8 @@ $("rq").addEventListener("keydown",e=>{if(e.key==="Enter"){const m=S.filter(matc
    Suave: los filtros solo iluminan; elegir una radio la pone al centro con sus afines alrededor.
    Vivo: filtros y selección reorganizan todo el panal. */
 let F=null;
-let MOVE=store.get("dial-move","suave"); if(!["fijo","suave","vivo"].includes(MOVE)) MOVE="suave";
+let SHOWDEAD=false;
+const MOVE="suave";   // un solo modo: quieto, y la radio elegida pasa al centro con sus afines
 // Centro estable para Fijo y para Suave sin selección: tu perfil base (Chile), no tus favoritas
 const BASEPROF=profileOf(S.filter(s=>s.cc==="CL"));
 const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -774,7 +853,9 @@ function layout(){
   core.style.opacity=centerSt?0:1;
   S.forEach(s=>{const o=by.get(s);s.v=o.v;
     let op=filtering()?(o.m?1:.13):(F?(.42+.58*Math.max(0,Math.min(1,(o.v-.2)/.7))):.92);
-    if(s===F)op=1;if(s.dead)op=Math.min(op,.25);s.el.style.opacity=op.toFixed(2)});
+    if(s===F)op=1;if(s.dead)op=Math.min(op,.25);s.el.style.opacity=op.toFixed(2);
+    // Las radios sin señal se ocultan, salvo que se pidan o sean la elegida
+    const hide=s.dead&&!SHOWDEAD&&s!==F&&s!==current;s.hid=hide;s.el.style.display=hide?"none":""});
   // Éter: líneas desde la radio elegida (o desde el centro) a sus 6 más afines; se redibujan en cada cuadro
   eth.innerHTML="";$("whyG").innerHTML="";ethL=[];
   const src=F||current||null;
@@ -788,7 +869,7 @@ function layout(){
   $("hTitle").textContent=F?`${F.n}${desc.length?" · "+desc.join(" + "):""}`:desc.length?`${matches.length} radios · ${desc.join(" + ")}`:(MOVE==="vivo"?"Tú al centro · órbitas por afinidad":"Constelación estable · las afines se iluminan");
   $("nbTitle").textContent=F?`Más afines a ${F.n}`:desc.length?"Coincidencias, de más a menos afín":"Más afines a ti";
   const nbs=$("nbs");nbs.innerHTML="";
-  const list=scored.filter(o=>o.s!==F&&(!filtering()||o.m)).sort((a,b)=>((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v)).slice(0,10);
+  const list=scored.filter(o=>o.s!==F&&(!filtering()||o.m)&&(SHOWDEAD||!o.s.dead)).sort((a,b)=>((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v)).slice(0,10);
   if(!list.length){nbs.innerHTML='<p class="note">Ninguna radio cumple todos los filtros. Quita uno para ampliar.</p>'}
   list.forEach(o=>{const b=document.createElement("button");b.className="nb"+(o.s.dead?" dead":"");
     const why=o.s.dead?"sin señal por ahora":(o.shared.slice(0,2).map(t=>t.replace("-"," ")).join(", ")||FAM[o.s.g][0]);
@@ -796,9 +877,7 @@ function layout(){
     b.onclick=()=>pick(o.s);nbs.appendChild(b)});
   S.forEach(s=>s.el.querySelector(".sel").setAttribute("opacity",s===F?1:0));
   renderFilters();
-  document.querySelectorAll("#hMove button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===MOVE));
 }
-document.querySelectorAll("#hMove button").forEach(b=>b.onclick=()=>{MOVE=b.dataset.k;store.set("dial-move",MOVE);layout._k=null;if(MOVE!=="fijo")resetView();layout()});
 /* ---------- Leyenda de familias: rótulos fijos en pantalla que apuntan a su sector ----------
    No giran ni crecen con el zoom: se ubican junto al borde de su nube o, si está fuera de vista, en el borde del mapa en su dirección. */
 const LEG=SW8.map(o=>{const b=document.createElement("button");b.className="lg";b.style.setProperty("--lc",FAM[o.k][2]);
@@ -850,7 +929,7 @@ function draw(t,force){
     if(force&&s.x==null){s.x=tx;s.y=ty}
     s.x+=(tx-s.x)*.08;s.y+=(ty-s.y)*.08;
     s.el.setAttribute("transform",`translate(${s.x.toFixed(1)},${s.y.toFixed(1)}) scale(${(p.sc*(s===F?1.15:1)).toFixed(2)})`);
-    s.cl.setAttribute("cx",s.x.toFixed(1));s.cl.setAttribute("cy",s.y.toFixed(1));s.cl.setAttribute("r",(R*p.sc*1.45).toFixed(1))});
+    s.cl.setAttribute("cx",s.x.toFixed(1));s.cl.setAttribute("cy",s.y.toFixed(1));s.cl.setAttribute("r",s.hid?"0":(R*p.sc*1.45).toFixed(1))});
   if(centerSt)centerSt.cl.setAttribute("r","0");
   if(centerSt){const c=centerSt;if(c.x==null){c.x=0;c.y=0}c.x+=(0-c.x)*.1;c.y+=(0-c.y)*.1;c.el.setAttribute("transform",`translate(${c.x.toFixed(1)},${c.y.toFixed(1)}) scale(1.35)`)}
   const o=F&&!centerSt?F:null;
@@ -874,16 +953,16 @@ function stationDesc(s){return[FAM[s.g][0],[...s.tags].slice(0,3).map(t=>t.repla
 function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProperty("--cc",col);
   const ref=current&&current!==s?current:(F&&F!==s?F:null);const o=ref?{s,...sim(ref,s)}:null;
   const playing=current===s&&!audio.paused;
-  c.innerHTML=`<div class="ch"><div><div class="cn">${flag(s.cc)} ${esc(s.n)}</div><div class="cm">${esc([FAM[s.g][0],LANG[s.lang],CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM":"",["","local","regional","nacional","grande","global"][s.l]].filter(Boolean).join(" · "))}</div></div><button class="cx" aria-label="Cerrar">✕</button></div>
+  c.innerHTML=`<div class="ch"><div><div class="cn">${flag(s.cc)} ${esc(s.n)}</div><div class="cm">${esc([FAM[s.g][0],LANG[s.lang],CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM":"",["","local","regional","nacional","grande","global"][s.l]].filter(Boolean).join(" · "))}</div></div><button class="cx" aria-label="Cerrar">${ico("close")}</button></div>
     <div class="cm">${esc([...s.tags].slice(0,4).map(t=>t.replace("-"," ")).join(" · "))}${s.dead?" · sin señal ahora":""}</div>
     ${o?`<div class="cw">${Math.round(o.v*100)}% afín a ${esc(ref.n)} · ${esc(whyLink(o))}</div>`:""}
     <div class="bars"><span>Habla</span><span class="bar"><i style="width:${Math.round(s.talk*100)}%"></i></span><span>Energía</span><span class="bar"><i style="width:${Math.round(s.en*100)}%"></i></span></div>
-    <div class="cb"><button class="go">${playing?"❚❚ Pausar":"▶ Escuchar"}</button><button data-a="c" aria-label="Ver sus afines">◎ Afines</button><button data-a="f" aria-label="Favorita">${favs.has(s.n)?"★":"☆"}</button>${IG[s.n]?`<button data-a="ig" aria-label="Instagram de la radio">IG</button>`:""}${s.u?`<button data-a="w" aria-label="Sitio web">↗</button>`:""}</div>`;
+    <div class="cb"><button class="go">${ico(playing?"pause":"play")} ${playing?"Pausar":"Escuchar"}</button><button data-a="c" aria-label="Ver sus afines">${ico("orbit")} Afines</button><button data-a="f" aria-label="Favorita">${ico(favs.has(s.n)?"starF":"star")}</button>${IG[s.n]?`<button data-a="ig" aria-label="Instagram de la radio">IG</button>`:""}${s.u?`<button data-a="w" aria-label="Sitio web">${ico("ext")}</button>`:""}</div>`;
   c.hidden=false;
   c.querySelector(".cx").onclick=closeCard;
   c.querySelector(".go").onclick=()=>{closeCard();pick(s)};
   c.querySelector('[data-a="c"]').onclick=()=>{F=s;closeCard();if(MOVE!=="fijo")resetView();layout()};
-  c.querySelector('[data-a="f"]').onclick=e=>{favs.has(s.n)?favs.delete(s.n):favs.add(s.n);saveFavs();e.target.textContent=favs.has(s.n)?"★":"☆";if(current===s)$("bFav").textContent=e.target.textContent;renderFilters()};
+  c.querySelector('[data-a="f"]').onclick=e=>{toggleFav(s);e.currentTarget.innerHTML=ico(favs.has(s.n)?"starF":"star")};
   const w=c.querySelector('[data-a="w"]');if(w)w.onclick=()=>window.open(s.u,"_blank","noopener");
   const ig=c.querySelector('[data-a="ig"]');if(ig)ig.onclick=()=>window.open(igLink(s),"_blank","noopener");
   placeCard();
@@ -900,7 +979,7 @@ function placeCard(){if(!cardS)return;const c=$("card"),hv=c.parentElement.getBo
 
 /* ---------- Zoom y gestos ---------- */
 let z=1,px=0,py=0,moved=false;const world=$("world"),sv=$("sv");
-function apply(){z=Math.max(.5,Math.min(6,z));world.setAttribute("transform",`translate(${px.toFixed(1)},${py.toFixed(1)}) scale(${z.toFixed(3)})`);$("hZoom").textContent=z.toFixed(1)+"×";
+function apply(){z=Math.max(.5,Math.min(6,z));world.setAttribute("transform",`translate(${px.toFixed(1)},${py.toFixed(1)}) scale(${z.toFixed(3)})`);
   // Los rótulos no crecen con el zoom: así no tapan las radios al acercarse
   const k=Math.min(1.15,Math.max(.22,Z0/z));LK=k;
   LBL.forEach(([el,fs,sw])=>{el.style.fontSize=(fs*k).toFixed(2)+"px";el.style.strokeWidth=(sw*k).toFixed(2)+"px"});
@@ -919,12 +998,9 @@ sv.addEventListener("touchstart",e=>{e.preventDefault();const ts=[...e.touches].
 sv.addEventListener("touchmove",e=>{e.preventDefault();if(!t0)return;const ts=[...e.touches].map(t=>toSvg(t.clientX,t.clientY));
   if(t0.mode==="pinch"&&ts.length>=2){const d=Math.hypot(ts[0][0]-ts[1][0],ts[0][1]-ts[1][1]);const mid=[(ts[0][0]+ts[1][0])/2,(ts[0][1]+ts[1][1])/2];
     const nz=Math.max(.5,Math.min(6,t0.z*d/t0.d));const wx=(t0.mid[0]-t0.px)/t0.z,wy=(t0.mid[1]-t0.py)/t0.z;z=nz;px=mid[0]-wx*nz;py=mid[1]-wy*nz;apply();
-    // Girar con dos dedos: el universo completo rota alrededor de su centro
-    let da=Math.atan2(ts[1][1]-ts[0][1],ts[1][0]-ts[0][0])-t0.ang;da=Math.atan2(Math.sin(da),Math.cos(da));
-    const now=performance.now(),target=t0.rot+da;vrot=(target-rot)/Math.max(16,now-t0.lt)*.6;t0.lt=now;rot=target}
+}
   else if(t0.mode==="pan"&&ts.length===1){const dx=ts[0][0]-t0.p[0],dy=ts[0][1]-t0.p[1];if(Math.abs(dx)+Math.abs(dy)>5)moved=true;if(moved){px=t0.px+dx;py=t0.py+dy;apply()}}},{passive:false});
 sv.addEventListener("touchend",e=>{e.preventDefault();
-  if(t0&&t0.mode==="pinch"&&e.touches.length<2&&Math.abs(vrot)>.004)vrot=Math.sign(vrot)*.004;
   if(e.touches.length===1){const p=toSvg(e.touches[0].clientX,e.touches[0].clientY);t0={mode:"pan",p,px,py};return}
   if(!moved&&e.changedTouches.length===1){const t=e.changedTouches[0],now=Date.now();
     if(now-lastTap<300){clearTimeout(tapTimer);zoomAt(1.8,...toSvg(t.clientX,t.clientY));lastTap=0}
@@ -935,14 +1011,10 @@ let md=null;
 sv.addEventListener("mousedown",e=>{md={p:toSvg(e.clientX,e.clientY),px,py};moved=false});
 window.addEventListener("mousemove",e=>{if(!md)return;const p=toSvg(e.clientX,e.clientY),dx=p[0]-md.p[0],dy=p[1]-md.p[1];if(Math.abs(dx)+Math.abs(dy)>5)moved=true;if(moved){px=md.px+dx;py=md.py+dy;apply()}});
 window.addEventListener("mouseup",e=>{if(md&&!moved&&e.target.closest&&e.target.closest("#sv")){const s=hexAt(e.clientX,e.clientY);s?openCard(s):closeCard()}md=null});
-sv.addEventListener("wheel",e=>{e.preventDefault();if(e.shiftKey){vrot+=(e.deltaY>0?1:-1)*.0012;return}zoomAt(e.deltaY<0?1.15:1/1.15,...toSvg(e.clientX,e.clientY))},{passive:false});
+sv.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.deltaY<0?1.15:1/1.15,...toSvg(e.clientX,e.clientY))},{passive:false});
 $("zi").onclick=()=>zoomAt(1.4,0,0);$("zo").onclick=()=>zoomAt(1/1.4,0,0);
 $("zh").onclick=()=>{F=null;closeCard();rot=0;vrot=0;resetView();layout()};
-$("rl").onclick=()=>{vrot-=.0032};
-// Rótulos: se pueden apagar para ver solo las radios; la preferencia se recuerda
-let LBLON=store.get("dial-labels",true);
-function applyLbl(){$("sv").closest(".hive").classList.toggle("nolbl",!LBLON);$("lbl").setAttribute("aria-pressed",LBLON)}
-$("lbl").onclick=()=>{LBLON=!LBLON;store.set("dial-labels",LBLON);applyLbl()};applyLbl();$("rr").onclick=()=>{vrot+=.0032};
+
 
 /* ---------- Señales (Radio Browser) ---------- */
 const API=["https://de1.api.radio-browser.info","https://nl1.api.radio-browser.info","https://fi1.api.radio-browser.info","https://de2.api.radio-browser.info"];
@@ -951,16 +1023,16 @@ function rank(list,s){const re=s.re?new RegExp(s.re,"i"):null;
   return list.filter(x=>x.url_resolved&&(!re||re.test(x.name)))
     .map(x=>({x,score:(x.url_resolved.startsWith("https")?1000:0)+(x.lastcheckok?500:0)+Math.min(x.votes||0,400)+(x.bitrate>=64?20:0)}))
     .sort((a,b)=>b.score-a.score)
-    .map(o=>({url:o.x.url_resolved,uuid:o.x.stationuuid,codec:o.x.codec||"",bitrate:o.x.bitrate||0,hls:!!o.x.hls}))}
-const SRC="dial-src4-";
+    .map(o=>({url:o.x.url_resolved,uuid:o.x.stationuuid,codec:o.x.codec||"",bitrate:o.x.bitrate||0,hls:!!o.x.hls,fav:o.x.favicon||""}))}
+const SRC="dial-src5-";   // 5: guarda también el logo (favicon) de cada señal
 async function candidates(s,force){
   if(/^https?:\/\//.test(s.q))return [{url:s.q,uuid:"",codec:"MP3",bitrate:0,hls:false}];
   const c=store.get(SRC+s.n,null);
-  if(!force&&c&&Date.now()-c.t<7*864e5) return withPref(s,c.list||[]);
+  if(!force&&c&&Date.now()-c.t<7*864e5){setLogo(s,c.list||[]);return withPref(s,c.list||[])}
   const cc=s.cc==="VA"?"":"&countrycode="+s.cc;
   const seen=new Set();
   const list=rank(await rb(`/json/stations/search?name=${encodeURIComponent(s.q)}${cc}&hidebroken=true&order=votes&reverse=true&limit=25`),s).filter(x=>!seen.has(x.url)&&seen.add(x.url)).slice(0,8);
-  store.set(SRC+s.n,{t:Date.now(),list});
+  store.set(SRC+s.n,{t:Date.now(),list});setLogo(s,list);
   return withPref(s,list);
 }
 // En el iPhone una página https no puede reproducir señales http: se prueba primero la misma señal por https
@@ -988,50 +1060,114 @@ function fitMq(el){const tr=el.firstChild;if(!tr)return;const txt=el._t;const fi
     const ms=Math.max(4000,shift/28/0.86*1000+500);
     el._a=tr.animate([{transform:"translateX(0)",offset:0},{transform:"translateX(0)",offset:Math.min(.3,1500/ms)},{transform:`translateX(${-shift}px)`,offset:1}],{duration:ms,iterations:Infinity,easing:"linear"});
   }else{if(el._a){el._a.cancel();el._a=null}if(tr.children.length>1)tr.innerHTML=`<span>${esc(txt)}</span>`;el.classList.remove("run")}}
-const refitMq=()=>["bT","bA","bM"].forEach(id=>{const el=$(id);if(el._t!=null)fitMq(el)});
+const refitMq=()=>["bT","bA"].forEach(id=>{const el=$(id);if(el._t!=null)fitMq(el)});
 window.addEventListener("resize",refitMq);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(refitMq);
 let current=null,playToken=0,curList=[],curIdx=0,statusTxt="";
-function setBand(s){
-  $("player").hidden=false;const c=FAM[s.g][2];const band=$("band");band.style.background=c;band.style.color="#07070A";
-  $("bPP").style.color=c;$("art").style.color=c;
-  $("bFav").textContent=favs.has(s.n)?"★":"☆";$("bWeb").href=s.u||"#";$("bWeb").hidden=!s.u;
-}
-function setStatus(t){statusTxt=t;renderMeta();if(typeof renderSheet==="function"&&!$("npSheet").hidden)renderSheet()}
-function renderMeta(){if(!current)return;const s=current;
-  const sig=curList[curIdx];const parts=[`${flag(s.cc)} ${s.n}`,s.f?s.f.toFixed(1)+" FM":"",statusTxt,sig&&sig.bitrate?sig.bitrate+" kbps":""].filter(Boolean);
-  mset("bM",parts.join(" · "))}
-function setBtn(playing){$("bPP").textContent=playing?"❚❚":"▶";$("bPP").setAttribute("aria-label",playing?"Pausar":"Reproducir");
-  if(!np.art) $("art").innerHTML=playing?'<span class="eq"><i></i><i></i><i></i></span>':'<span style="font-size:20px">♪</span>'}
-function tryUrl(url,token){return new Promise((res,rej)=>{
-  const done=ok=>{audio.removeEventListener("playing",on);audio.removeEventListener("error",off);clearTimeout(t);ok?res():rej()};
+function setBand(s){$("player").hidden=false;applyColor(s);setIco("bFav",favs.has(s.n)?"starF":"star")}
+/* Color de la radio que suena: sale de su logo cuando el servidor lo permite; si no, el de su familia */
+const COL={};
+const hx2rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const rgb2hex=(r,g,b)=>"#"+[r,g,b].map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,"0")).join("").toUpperCase();
+function inkOn(hex){const L=hx2rgb(hex).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*L[0]+.7152*L[1]+.0722*L[2]>.3?"#07070A":"#F5F5F8"}
+function colOf(s){return COL[s.n]||store.get("dial-col-"+s.n,null)||FAM[s.g][2]}
+function hsl2hex(h,s,l){const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1));return rgb2hex(f(0)*255,f(8)*255,f(4)*255)}
+function sampleLogo(s){if(!s.logo||COL[s.n]||store.get("dial-col-"+s.n,null)||sampleLogo[s.n])return;sampleLogo[s.n]=1;
+  const im=new Image();im.crossOrigin="anonymous";
+  im.onload=()=>{try{const N=28,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,N,N);
+    const d=x.getImageData(0,0,N,N).data,B=new Array(18).fill(0).map(()=>({w:0,h:0,s:0,l:0}));
+    for(let i=0;i<d.length;i+=4){if(d[i+3]<160)continue;const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,ch=mx-mn;
+      if(ch<.18||l<.12||l>.92)continue;const sat=ch/(1-Math.abs(2*l-1));let h=mx===r?((g-b)/ch)%6:mx===g?(b-r)/ch+2:(r-g)/ch+4;h=(h*60+360)%360;
+      const o=B[Math.floor(h/20)],w=sat*sat;o.w+=w;o.h+=h*w;o.s+=sat*w;o.l+=l*w}
+    const best=B.reduce((a,b)=>b.w>a.w?b:a);if(best.w<4)return;   // logo en blanco y negro: queda el color de la familia
+    const col=hsl2hex(best.h/best.w,Math.max(.55,Math.min(.9,best.s/best.w)),Math.max(.5,Math.min(.66,best.l/best.w)));
+    COL[s.n]=col;store.set("dial-col-"+s.n,col);if(current===s)applyColor(s);renderQuick()}catch(e){}};
+  im.src=s.logo}
+function applyColor(s){const c=colOf(s),k=inkOn(c),band=$("band");
+  band.style.background=c;band.style.color=k;band.style.setProperty("--bc",c);
+  $("bPP").style.background=k;$("bPP").style.color=c;
+  npSheet.style.setProperty("--npc",c);npSheet.style.setProperty("--npk",k)}
+/* Logos: el favicon que publica cada radio en el directorio; se usan solo si cargan bien y tienen tamaño decente */
+function setLogo(s,list){if(s.logo)return;const f=(list.find(x=>x.fav&&/^https?:\/\//.test(x.fav))||{}).fav;if(!f)return;
+  const url=f.replace(/^http:/i,"https:");const im=new Image();
+  im.onload=()=>{if(im.naturalWidth<32||s.logo)return;s.logo=url;cellLogo(s);sampleLogo(s);if(current===s){if(!np.art)setBtn(!audio.paused);renderSheet()}quickSoon()};im.src=url}
+function cellLogo(s){if(s._lg)return;s._lg=1;const g=s.el,[t1,t2]=g.querySelectorAll("text");const lg=document.createElementNS(NS,"g");
+  lg.innerHTML=`<rect x="-7.5" y="-11.8" width="15" height="15" rx="3.6" fill="#fff"/><image href="${esc(s.logo)}" x="-6.3" y="-10.6" width="12.6" height="12.6" preserveAspectRatio="xMidYMid meet"/>`;
+  g.insertBefore(lg,t1);t1.setAttribute("y","9.4");t1.setAttribute("font-size","4.7");if(t2)t2.style.display="none"}
+const logoTag=(s,cls)=>s.logo?`<span class="${cls}"><img src="${esc(s.logo)}" alt="" onerror="this.parentNode.remove()"></span>`:"";
+function setStatus(t){statusTxt=t;renderBand();if(typeof renderSheet==="function"&&!$("npSheet").hidden)renderSheet()}
+// Banda: arriba lo que suena (o la radio); abajo el artista y la radio, o el estado mientras sintoniza
+function renderBand(){if(!current)return;const s=current,live=!statusTxt||statusTxt.startsWith("en vivo")||statusTxt==="en pausa";
+  mset("bT",np.t||s.n);mset("bA",live?(np.a||`${flag(s.cc)} ${s.n}`):`${statusTxt} · ${flag(s.cc)} ${s.n}`)}
+function setBtn(playing){setIco("bPP",playing?"pause":"play");$("bPP").setAttribute("aria-label",playing?"Pausar":"Reproducir");
+  if(!np.art&&current) $("art").innerHTML=logoTag(current,"lg-i")||(playing?'<span class="eq"><i></i><i></i><i></i></span>':`<span style="font-size:20px;color:${colOf(current)}">${ico("play")}</span>`);
+  quickSoon()}
+let trying=0;
+function tryUrl(url,token){trying++;return new Promise((res,rej)=>{
+  let fin=false;const done=ok=>{if(fin)return;fin=true;audio.removeEventListener("playing",on);audio.removeEventListener("error",off);clearTimeout(t);trying=Math.max(0,trying-1);ok?res():rej()};
   const on=()=>done(true),off=()=>done(false);const t=setTimeout(()=>done(false),12000);
   audio.addEventListener("playing",on);audio.addEventListener("error",off);audio.src=url;const p=audio.play();if(p)p.catch(()=>{if(token===playToken)done(false)})})}
 async function play(s){
-  const token=++playToken;current=s;curList=[];curIdx=0;npReset(s);setBand(s);
-  mset("bT",s.n);mset("bA",stationDesc(s));setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
-  if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:FAM[s.g][0],album:"Dial Espejo",artwork:[{src:"icon-hex-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
+  const token=++playToken;current=s;wantPlay=true;curList=[];curIdx=0;npReset(s);setBand(s);
+  setStatus("sintonizando…");setBtn(true);
+  mediaMeta(s.n,FAM[s.g][0],"Dial Espejo",null);
   let list=[];try{list=await candidates(s)}catch(e){if(token===playToken){setStatus("sin conexión al directorio");setBtn(false)}return}
   for(let attempt=0;attempt<2;attempt++){
     for(const[i,c]of list.entries()){if(token!==playToken)return;
-      try{await tryUrl(c.url,token);if(token!==playToken)return;curList=list;curIdx=i;$("bAlt").disabled=list.length<2;setStatus("en vivo");setBtn(true);npStart(s,c);
+      try{await tryUrl(c.url,token);if(token!==playToken)return;curList=list;curIdx=i;setStatus("en vivo");setBtn(true);npStart(s,c);pushRecent(s);
         if(s.dead){s.dead=false;layout()}fetch(API[0]+"/json/url/"+c.uuid).catch(()=>{});return}catch(e){}}
     if(attempt)break;try{list=await candidates(s,true)}catch(e){break}
   }
-  if(token===playToken){audio.removeAttribute("src");audio.load();setStatus("sin señal ahora");setBtn(false);mset("bT",s.n);mset("bA","Esta radio no respondió. Prueba su web ↗");s.dead=true;layout()}
+  if(token===playToken){audio.removeAttribute("src");audio.load();wantPlay=false;setStatus("sin señal ahora");setBtn(false);s.dead=true;layout()}
 }
-function toggle(){if(!current)return;if(!audio.paused){audio.pause();return}
-  if(audio.src&&statusTxt!=="sin señal ahora"){audio.load();setStatus("sintonizando…");audio.play().catch(()=>play(current))}else play(current)}
+function toggle(){if(!current)return;if(!audio.paused){wantPlay=false;audio.pause();return}
+  wantPlay=true;if(audio.src&&statusTxt!=="sin señal ahora"){audio.load();setStatus("sintonizando…");audio.play().catch(()=>play(current))}else play(current)}
 $("bPP").onclick=toggle;
-$("bFav").onclick=()=>{if(!current)return;favs.has(current.n)?favs.delete(current.n):favs.add(current.n);saveFavs();$("bFav").textContent=favs.has(current.n)?"★":"☆";if(!F)layout();else renderFilters()};
-$("bAlt").onclick=async()=>{if(!current||curList.length<2)return;const s=current,token=++playToken,n=curList.length;$("bAlt").disabled=true;
+function toggleFav(s){if(!s)return;favs.has(s.n)?favs.delete(s.n):favs.add(s.n);saveFavs();
+  if(current===s)setIco("bFav",favs.has(s.n)?"starF":"star");if(!F)layout();else renderFilters();renderQuick();if(!npSheet.hidden)renderSheet()}
+$("bFav").onclick=()=>toggleFav(current);
+async function altSignal(){if(!current||curList.length<2)return;const s=current,token=++playToken,n=curList.length;wantPlay=true;$("npAlt").disabled=true;
   for(let k=1;k<n;k++){const i=(curIdx+k)%n;setStatus(`probando señal ${i+1} de ${n}…`);
-    try{await tryUrl(curList[i].url,token);if(token!==playToken)return;curIdx=i;store.set("dial-pref-"+s.n,curList[i]);setStatus("en vivo · señal "+(i+1)+" de "+n);$("bAlt").disabled=false;npStart(s,curList[i]);return}catch(e){if(token!==playToken)return}}
-  $("bAlt").disabled=false;setStatus("no hay otra señal disponible");setBtn(false)};
+    try{await tryUrl(curList[i].url,token);if(token!==playToken)return;curIdx=i;store.set("dial-pref-"+s.n,curList[i]);setStatus("en vivo · señal "+(i+1)+" de "+n);$("npAlt").disabled=false;npStart(s,curList[i]);return}catch(e){if(token!==playToken)return}}
+  $("npAlt").disabled=false;setStatus("no hay otra señal disponible");setBtn(false)}
 audio.addEventListener("pause",()=>{if(current){setBtn(false);if(statusTxt.startsWith("en vivo"))setStatus("en pausa");npStop()}});
 audio.addEventListener("playing",()=>{if(current){setBtn(true);if(!statusTxt.startsWith("en vivo"))setStatus("en vivo");if(np.src&&!np.timer)npPoll()}});
-audio.addEventListener("waiting",()=>{if(current&&!audio.paused)setStatus("cargando…")});
-function step(d){const v=S.filter(s=>!s.dead&&(!filtering()||match(s)));if(!v.length)return;const i=v.indexOf(current);pick(v[(i+d+v.length)%v.length])}
-if("mediaSession" in navigator){try{navigator.mediaSession.setActionHandler("play",()=>{if(audio.paused)toggle()});navigator.mediaSession.setActionHandler("pause",()=>audio.pause());
+audio.addEventListener("waiting",()=>{if(current&&!audio.paused){if(!recovering)setStatus("cargando…");armStall()}});
+/* ---------- Reconexión: si la señal se cae o el teléfono cambia de red, retoma sola ---------- */
+let wantPlay=false,stallT=null,recovering=false;
+function armStall(){clearTimeout(stallT);stallT=setTimeout(()=>{if(wantPlay&&current&&!trying)recover()},9000)}
+audio.addEventListener("stalled",()=>{if(wantPlay&&current)armStall()});
+audio.addEventListener("playing",()=>clearTimeout(stallT));
+audio.addEventListener("error",()=>{if(wantPlay&&current&&!trying)recover()});
+window.addEventListener("online",()=>{if(wantPlay&&current&&/^(reconectando|sin conexión|cargando)/.test(statusTxt))recover()});
+const nap=ms=>new Promise(r=>setTimeout(r,ms));
+async function recover(){if(recovering||!current)return;recovering=true;const s=current,token=++playToken;
+  try{for(let round=0;round<5;round++){
+      setStatus(navigator.onLine===false?"sin conexión · reintentando":"reconectando…");
+      let list=curList.length?[...curList.slice(curIdx),...curList.slice(0,curIdx)]:[];
+      if(!list.length||round===2){try{list=await candidates(s,round===2)}catch(e){list=[]}}
+      for(const c of list){if(token!==playToken||!wantPlay)return;
+        try{await tryUrl(c.url,token);if(token!==playToken)return;if(!curList.includes(c))curList=list;curIdx=curList.indexOf(c);setStatus("en vivo");setBtn(true);npStart(s,c);return}catch(e){}}
+      if(token!==playToken||!wantPlay)return;await nap([1500,4000,8000,15000,25000][round]);if(token!==playToken||!wantPlay)return}
+    setStatus("sin señal ahora");setBtn(false)}
+  finally{recovering=false}}
+/* ---------- Anterior / siguiente: entre tus favoritas; sin favoritas, entre las más afines ---------- */
+let stepRing=[];
+function ring(){const f=[...favs].map(n=>S.find(x=>x.n===n)).filter(x=>x&&!x.dead);if(f.length>=2)return f;
+  if(current&&stepRing.includes(current))return stepRing;const base=current||S[0];
+  return stepRing=[base,...S.filter(x=>x!==base&&!x.dead).map(x=>({x,v:sim(base,x).v})).sort((a,b)=>b.v-a.v).slice(0,11).map(o=>o.x)]}
+function step(d){const v=ring();if(!v.length)return;let i=v.indexOf(current);if(i<0)i=d>0?-1:0;const s=v[(i+d+v.length)%v.length];F=s;resetView();layout();play(s)}
+function mediaMeta(title,artist,album,art){if(!("mediaSession" in navigator))return;const s=current;
+  const a=art?{src:art,sizes:"300x300",type:"image/jpeg"}:s&&s.logo?{src:s.logo,sizes:"256x256"}:{src:"icon-hex-512.png",sizes:"512x512",type:"image/png"};
+  try{navigator.mediaSession.metadata=new MediaMetadata({title,artist,album,artwork:[a]})}catch(e){}}
+/* ---------- Temporizador para dormir ---------- */
+let sleepAt=0;
+function setSleep(m){sleepAt=m?Date.now()+m*60000:0;renderSleep()}
+function checkSleep(){if(sleepAt&&Date.now()>=sleepAt){sleepAt=0;wantPlay=false;audio.pause();setStatus("apagada por el temporizador");renderSleep()}}
+function sleepLeft(){return sleepAt?Math.max(1,Math.round((sleepAt-Date.now())/60000)):0}
+function renderSleep(){const b=$("npSleep");b.setAttribute("aria-pressed",!!sleepAt);b.setAttribute("aria-label",sleepAt?`Se apaga en ${sleepLeft()} min`:"Temporizador para dormir");
+  $("npSleepBox").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",+x.dataset.m===0?!sleepAt:false));if(!npSheet.hidden)renderSheet()}
+audio.addEventListener("timeupdate",checkSleep);setInterval(()=>{checkSleep();if(sleepAt&&!npSheet.hidden)renderSheet()},20000);
+if("mediaSession" in navigator){try{navigator.mediaSession.setActionHandler("play",()=>{if(audio.paused)toggle()});navigator.mediaSession.setActionHandler("pause",()=>{wantPlay=false;audio.pause()});
   navigator.mediaSession.setActionHandler("nexttrack",()=>step(1));navigator.mediaSession.setActionHandler("previoustrack",()=>step(-1))}catch(e){}}
 
 /* ---------- Sonando ahora (metadatos de la señal) ---------- */
@@ -1041,7 +1177,7 @@ const np={timer:null,src:null,station:null,last:"",art:false};
 // Radios que publican su lista al aire: se consultan directo (más fiable que el metadato de la señal)
 const NPSRC={"triple j":"abc:triplej","ABC Classic":"abc:classic","Double J":"abc:doublej","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","Radio Paradise Mellow":"rp:1","KCRW":"kcrw",
   "FIP":"rf:7","FIP Rock":"rf:64","FIP Jazz":"rf:65","FIP Reggae":"rf:71","FIP Monde":"rf:69","FIP Electro":"rf:74","France Inter":"rf:1","BBC Radio 1":"bbc:bbc_radio_one","BBC Radio 2":"bbc:bbc_radio_two","BBC 6 Music":"bbc:bbc_6music","BBC Radio 3":"bbc:bbc_radio_three"};
-function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;np.cur=null;$("art").innerHTML='<span class="eq"><i></i><i></i><i></i></span>'}
+function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;np.cur=null;np.t="";np.a="";$("art").innerHTML=logoTag(s,"lg-i")||'<span class="eq"><i></i><i></i><i></i></span>'}
 function npStop(){clearTimeout(np.timer);np.timer=null}
 function npStart(s,c){np.station=s;np.src=c;npPoll()}
 async function npPoll(){
@@ -1059,14 +1195,15 @@ function npShow(s,j){np.cur=j;if(!npSheet.hidden)setTimeout(renderSheet,0);
   const song=j&&j.song,artist=j&&j.artist,raw=j&&j.raw;
   const prog=j&&j.program,pdesc=j&&j.program_desc;
   if(raw&&!artist){const f=x=>String(x||"").toLowerCase().replace(/[^a-z0-9]/g,"");const r0=f(raw);if(r0.includes(f(s.sh))||f(s.n).includes(r0)||r0.includes(f(s.n).slice(0,8)))return npShow(s,{...j,raw:null})}
-  if(song&&artist){mset("bT",song);mset("bA",[artist,j.album,j.year,prog?"en "+prog:""].filter(Boolean).join(" · "))}
-  else if(prog){mset("bT",prog);mset("bA",pdesc||stationDesc(s))}
-  else if(raw){mset("bT",raw);mset("bA",stationDesc(s))}
-  else{mset("bT",s.n);mset("bA",[j&&j.stream_description&&j.stream_description!==s.n?j.stream_description:"",stationDesc(s)].filter(Boolean).join(" · "))}
+  const st=`${flag(s.cc)} ${s.n}`;
+  if(song&&artist){np.t=song;np.a=[artist,st].join(" · ")}
+  else if(prog){np.t=prog;np.a=[pdesc,st].filter(Boolean).join(" · ")}
+  else if(raw){np.t=raw;np.a=st}
+  else{np.t=s.n;np.a=[flag(s.cc),FAM[s.g][0],CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM":""].filter(Boolean).join(" · ")}
+  renderBand();
   if(j&&j.artwork){np.art=true;$("art").innerHTML=`<img src="${esc(j.artwork)}" alt="Carátula de ${esc(song||"")}">`}else{np.art=false;setBtn(!audio.paused)}
   const line=song&&artist?`${artist} · ${song}`:(raw||prog||"");
-  if(line!==np.last&&"mediaSession" in navigator){np.last=line;try{navigator.mediaSession.metadata=new MediaMetadata({title:song||prog||raw||s.n,artist:artist||s.n,album:s.n,
-    artwork:[{src:(j&&j.artwork)||"icon-hex-512.png",sizes:j&&j.artwork?"300x300":"512x512",type:j&&j.artwork?"image/jpeg":"image/png"}]})}catch(e){}}
+  if(line!==np.last){np.last=line;mediaMeta(song||prog||raw||s.n,artist||s.n,s.n,j&&j.artwork)}
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&!audio.paused)npPoll()});
 
@@ -1080,15 +1217,15 @@ function hexArt(s){const c=FAM[s.g][2];const R2=14,SQ3=Math.sqrt(3);let g="";con
   return `<svg viewBox="-80 -80 160 160" aria-hidden="true">${g}</svg>`}
 const npSheet=$("npSheet");
 function npQuery(){const j=np.cur||{};return{song:j.song||null,artist:j.artist||null,raw:j.raw||null}}
-function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.cur||{},col=FAM[s.g][2];
-  npSheet.style.setProperty("--npc",col);
+function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.cur||{},col=colOf(s);
   const song=j.song&&j.artist?j.song:(j.program||j.raw||s.n);
   const artist=j.song&&j.artist?j.artist:(j.program?(j.program_desc||s.n):(j.raw?s.n:stationDesc(s)));
-  $("npSt").textContent=`${flag(s.cc)} ${s.n}${s.f?" · "+s.f.toFixed(1)+" FM":""} · ${statusTxt||""}`;
+  $("npSt").textContent=`${flag(s.cc)} ${s.n}${s.f?" · "+s.f.toFixed(1)+" FM":""} · ${statusTxt||""}${sleepAt?" · se apaga en "+sleepLeft()+" min":""}`;
   $("npSong").textContent=song;$("npArtist").textContent=artist;
   $("npAlbum").textContent=j.song&&j.artist?[j.album,j.year,j.genre].filter(Boolean).join(" · "):"";
   const cover=$("npCover");const art=j.artwork||null;
-  if(cover._a!==art){cover._a=art;cover.innerHTML=art?`<img src="${esc(art)}" alt="Carátula">`:hexArt(s)}
+  const ck=art||(s.logo?"logo:"+s.logo:"hex:"+s.n);
+  if(cover._a!==ck){cover._a=ck;cover.innerHTML=art?`<img src="${esc(art)}" alt="Carátula">`:(logoTag(s,"lg-big")||hexArt(s))}
   $("npBg").style.backgroundImage=art?`url("${art.replace(/"/g,"%22")}")`:`radial-gradient(circle at 50% 30%,${col},transparent 60%)`;
   // Enlaces: canción si se conoce; si no, el artista o el texto en antena; si no hay nada, la radio
   const q=j.artist&&j.song?`${j.artist} ${j.song}`:(j.raw||j.artist||null);
@@ -1101,8 +1238,8 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
     L.innerHTML=`<div class="np-col"><div class="np-k">Canción</div>${sp(songQ)}${yt(songQ)}</div>`+
       (j.artist?`<div class="np-col"><div class="np-k">Artista</div>${sp(j.artist)}${yt(j.artist)}</div>`:"")}
   else L.innerHTML=`<div class="np-col"><div class="np-k">Radio</div>${yt(s.n+" radio en vivo")}</div>`;
-  const playing=!audio.paused;$("npPP").textContent=playing?"❚❚":"▶";$("npPP").setAttribute("aria-label",playing?"Pausar":"Reproducir");
-  $("npFav").textContent=favs.has(s.n)?"★":"☆";$("npWeb").href=s.u||"#";$("npWeb").hidden=!s.u;$("npAlt").disabled=curList.length<2;
+  const playing=!audio.paused;setIco("npPP",playing?"pause":"play");$("npPP").setAttribute("aria-label",playing?"Pausar":"Reproducir");
+  setIco("npFav",favs.has(s.n)?"starF":"star");$("npFav").setAttribute("aria-pressed",favs.has(s.n));$("npWeb").href=s.u||"#";$("npWeb").hidden=!s.u;$("npAlt").disabled=curList.length<2;
   const rows=[];
   if(j.program)rows.push(["Programa",j.program+(j.program_desc?" · "+j.program_desc:"")]);
   rows.push(["Radio",[FAM[s.g][0],LANG[s.lang],CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+" FM Santiago":""].filter(Boolean).join(" · ")]);
@@ -1114,12 +1251,16 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
 }
 function openSheet(){if(!current)return;npSheet.hidden=false;document.body.style.overflow="hidden";renderSheet()}
 function closeSheet(){npSheet.hidden=true;document.body.style.overflow=""}
-$("band").addEventListener("click",e=>{if(e.target.closest("button,a"))return;openSheet()});
+// composedPath: el ícono del botón se reemplaza al tocarlo, así que e.target puede quedar fuera del documento
+$("band").addEventListener("click",e=>{if(e.composedPath().some(n=>n.tagName==="BUTTON"||n.tagName==="A"))return;openSheet()});
 $("npClose").onclick=closeSheet;
 $("npPP").onclick=()=>{toggle();setTimeout(renderSheet,50)};
-$("npFav").onclick=()=>{$("bFav").click();renderSheet()};
-$("npAlt").onclick=()=>$("bAlt").click();
-$("npNext").onclick=()=>{if(!current)return;const af=S.filter(x=>x!==current&&!x.dead).map(x=>({x,v:sim(current,x).v})).sort((a,b)=>b.v-a.v);if(af[0]){F=af[0].x;layout();play(af[0].x);setTimeout(renderSheet,60)}};
+$("npFav").onclick=()=>toggleFav(current);
+$("npAlt").onclick=altSignal;
+$("npNext").onclick=()=>{step(1);setTimeout(renderSheet,60)};
+$("npPrev").onclick=()=>{step(-1);setTimeout(renderSheet,60)};
+$("npSleep").onclick=()=>{const b=$("npSleepBox");b.hidden=!b.hidden};
+$("npSleepBox").querySelectorAll("button").forEach(b=>b.onclick=()=>{setSleep(+b.dataset.m);$("npSleepBox").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b&&+b.dataset.m>0));$("npSleepBox").hidden=true});
 // Deslizar hacia abajo para cerrar
 (function(){let y0=null;npSheet.addEventListener("touchstart",e=>{const sc=npSheet.querySelector(".np-in");y0=sc.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
   npSheet.addEventListener("touchmove",e=>{if(y0==null)return;const dy=e.touches[0].clientY-y0;if(dy>0)npSheet.style.transform=`translateY(${dy*.6}px)`},{passive:true});
@@ -1138,15 +1279,32 @@ function renderSync(mode){const box=$("sync");const short=DKEY.slice(0,4).toUppe
   $("syncCopy").onclick=async e=>{try{await navigator.clipboard.writeText(link);e.target.textContent="Copiado"}catch(_){prompt?.("Tu enlace",link)}};
   $("syncLink").onclick=()=>renderSync("link");
 }
+/* ---------- Mis radios: favoritas primero, después las recientes; sin ninguna, sugerencias de Chile ---------- */
+let recent=store.get("dial-recent",[]).filter(n=>S.some(s=>s.n===n));
+function pushRecent(s){recent=[s.n,...recent.filter(n=>n!==s.n)].slice(0,12);store.set("dial-recent",recent);renderQuick()}
+let qT=null;function quickSoon(){clearTimeout(qT);qT=setTimeout(renderQuick,120)}
+function renderQuick(){const row=$("qrow");if(!row)return;const byN=n=>S.find(s=>s.n===n);
+  const fv=[...favs].map(byN).filter(Boolean),rc=recent.filter(n=>!favs.has(n)).map(byN).filter(Boolean);
+  let list=[...fv,...rc].slice(0,14),hint;
+  if(list.length){$("qT").textContent="Mis radios";hint=fv.length?`${fv.length} favorita${fv.length>1?"s":""}${rc.length?" · recientes":""}`:"Recientes · toca ★ para fijarlas"}
+  else{$("qT").textContent="Para empezar";hint="Toca ★ en una radio para dejarla aquí";list=S.filter(s=>s.cc==="CL"&&s.l>=3&&!s.dead).slice(0,10)}
+  $("qS").textContent=hint;
+  const playing=current&&!audio.paused;
+  row.innerHTML=list.map(s=>{const c=colOf(s),k=inkOn(c),cur=s===current;
+    return `<button class="qt${cur?" cur":""}" data-n="${esc(s.n)}" style="--qc:${c};--qk:${k}" aria-label="${esc(s.n)}${cur&&playing?" · sonando":""}">
+      <span class="qa">${favs.has(s.n)?`<span class="fv">${ico("starF")}</span>`:""}${s.logo?`<span class="lg-i"><img src="${esc(s.logo)}" alt="" onerror="this.parentNode.outerHTML='<span class=&quot;mono-l&quot;>${esc(s.sh).replace(/'/g,"")}</span>'"></span>`:`<span class="mono-l">${esc(s.sh)}</span>`}${cur?`<span class="on">${playing?'<span class="eq"><i></i><i></i><i></i></span>':ico("play")}</span>`:""}</span>
+      <span class="qn">${esc(s.n)}</span><span class="qm">${flag(s.cc)} ${esc(FAM[s.g][0])}</span></button>`}).join("");
+  row.querySelectorAll(".qt").forEach(b=>b.onclick=()=>{const s=byN(b.dataset.n);if(s)pick(s)})}
+audio.addEventListener("playing",quickSoon);audio.addEventListener("pause",quickSoon);
 /* ---------- Arranque ---------- */
-resetView();layout();syncFavs().then(()=>renderSync());renderSync();
+renderQuick();resetView();layout();syncFavs().then(()=>renderSync());renderSync();
 setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 
 </script>
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03t";
+const APP_VERSION="2026-11-03u";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
