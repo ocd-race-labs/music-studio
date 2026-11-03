@@ -1129,7 +1129,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03l";
+const APP_VERSION="2026-11-03m";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1532,7 +1532,8 @@ async function loadSports(){sportChips();const tok=++sportTok;const b=$("sbody")
 /* Xtreme: no hay tablas públicas gratuitas de downhill, enduro o surf; se muestran resultados y noticias agrupados */
 // Solo titulares que de verdad son de deportes de aventura (Google News a veces trae noticias generales del país)
 const XTR=/(downhill|enduro|\bsurf|escalad|climb|bouldering|\bmtb\b|mountain ?bike|bicicleta de monta|ciclismo de monta|\bdescenso|red bull|skate|motocross|supercross|freeride|freestyle|parapente|kite|wing ?foil|snowboard|esqu[ií]|\bski|trail run|ultramarat|\bkayak|rafting|x games|crankworx|\buci\b|\bwsl\b|\bifsc\b|alpinis|monta[ñn]is|cumbre|everest|n[ií]do de c[oó]ndores|rally|dakar|bmx|bodyboard|olas|big wave|paracaid|base jump|slackline|deportes? (extremos?|de aventura|outdoor))/i;
-async function xtreme(b,tok){const [qn,qi]=Q.deportes_extremos;const items=(await gather(qn,qi,4)).filter(it=>XTR.test(it.title||""));if(tok!==sportTok)return;
+const XJUNK=/(stock (image|photo)|for sale|en venta|se vende|\b(small|medium|large|xl)\s*$|forum|message boards|best \d+|\bbest\b.*(tested|rated)|reifen)/i;
+async function xtreme(b,tok){const [qn,qi]=Q.deportes_extremos;const items=(await gather(qn,qi,4)).filter(it=>XTR.test(it.title||"")&&!XJUNK.test(it.title||""));if(tok!==sportTok)return;
   b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>Xtreme</h2><p class="meta">${esc("Downhill, enduro, surf y escalada: resultados y noticias de los últimos días")}</p></div></div>`+
     (items.length?groupedHTML(items.slice(0,24)):note("No hay noticias de los últimos días con este alcance."))+`</section>`}
 /* NBA y NFL: fase de la temporada, posiciones por conferencia y división, resultados por división, llaves de playoffs y líderes */
