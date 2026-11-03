@@ -1129,7 +1129,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03k";
+const APP_VERSION="2026-11-03l";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1173,7 +1173,7 @@ const LABEL=Object.fromEntries(SECTIONS.map(([k,l])=>[k,trText(l)]));
 const Q={
   politica:["política Chile gobierno OR congreso","política internacional"],
   economia:["economía Chile","economía mundial mercados"],
-  deportes_extremos:["Chile downhill OR enduro OR surf OR escalada OR \"deportes extremos\"","\"descenso\" ciclismo de montaña OR enduro OR \"Red Bull\" OR surf OR escalada OR \"deportes extremos\""],
+  deportes_extremos:["Chile (downhill OR enduro OR surf OR escalada OR \"deportes extremos\" OR \"mountain bike\")","\"descenso\" ciclismo de montaña OR enduro OR \"Red Bull\" OR surf OR escalada OR \"deportes extremos\""],
   nba:[null,"NBA"],
   nfl:[null,"NFL"],
   tecnologia:["tecnología Chile","tecnología"],
@@ -1186,12 +1186,12 @@ const Q={
 };
 // Búsquedas en inglés y portugués: misma intención que las de español, en el idioma de la edición de Google News elegida
 const QL={en:{politica:["Chile politics government","world politics"],economia:["Chile economy","global economy markets"],
-  deportes_extremos:["Chile downhill OR enduro OR surf OR climbing","downhill mountain bike OR enduro OR \"Red Bull\" OR surfing OR climbing"],
+  deportes_extremos:["Chile (downhill OR enduro OR surf OR climbing OR \"mountain bike\")","downhill mountain bike OR enduro OR \"Red Bull\" OR surfing OR climbing"],
   nba:[null,"NBA"],nfl:[null,"NFL"],tecnologia:["Chile technology","technology"],ia:["Chile artificial intelligence","artificial intelligence"],
   educacion:["Chile education","education"],salud:["Chile health","health WHO OR medicine"],ciencias:["Chile science","science discovery OR NASA OR research"],
   aviacion:["Chile aviation LATAM OR JetSMART OR airport","aviation airlines OR Boeing OR Airbus"],cultura:["Chile culture","culture film OR music OR books"]},
  pt:{politica:["Chile política governo","política internacional"],economia:["Chile economia","economia mundial mercados"],
-  deportes_extremos:["Chile downhill OR enduro OR surf OR escalada","downhill mountain bike OR enduro OR \"Red Bull\" OR surf OR escalada"],
+  deportes_extremos:["Chile (downhill OR enduro OR surf OR escalada OR \"mountain bike\")","downhill mountain bike OR enduro OR \"Red Bull\" OR surf OR escalada"],
   nba:[null,"NBA"],nfl:[null,"NFL"],tecnologia:["Chile tecnologia","tecnologia"],ia:["Chile inteligência artificial","inteligência artificial"],
   educacion:["Chile educação","educação"],salud:["Chile saúde","saúde OMS OR medicina"],ciencias:["Chile ciência","ciência descoberta OR NASA OR pesquisa"],
   aviacion:["Chile aviação LATAM OR JetSMART OR aeroporto","aviação companhias aéreas OR Boeing OR Airbus"],cultura:["Chile cultura","cultura cinema OR música OR livros"]}};
@@ -1530,7 +1530,9 @@ async function loadSports(){sportChips();const tok=++sportTok;const b=$("sbody")
   try{if(sport==="xtreme")await xtreme(b,tok);else if(sport==="soccer")await soccer(b,tok);else await usSport(b,sport,tok)}
   catch(e){if(tok===sportTok)b.innerHTML=note("No se pudieron traer los datos ahora. Inténtalo de nuevo en un rato.")}}
 /* Xtreme: no hay tablas públicas gratuitas de downhill, enduro o surf; se muestran resultados y noticias agrupados */
-async function xtreme(b,tok){const [qn,qi]=Q.deportes_extremos;const items=await gather(qn,qi,4);if(tok!==sportTok)return;
+// Solo titulares que de verdad son de deportes de aventura (Google News a veces trae noticias generales del país)
+const XTR=/(downhill|enduro|\bsurf|escalad|climb|bouldering|\bmtb\b|mountain ?bike|bicicleta de monta|ciclismo de monta|\bdescenso|red bull|skate|motocross|supercross|freeride|freestyle|parapente|kite|wing ?foil|snowboard|esqu[ií]|\bski|trail run|ultramarat|\bkayak|rafting|x games|crankworx|\buci\b|\bwsl\b|\bifsc\b|alpinis|monta[ñn]is|cumbre|everest|n[ií]do de c[oó]ndores|rally|dakar|bmx|bodyboard|olas|big wave|paracaid|base jump|slackline|deportes? (extremos?|de aventura|outdoor))/i;
+async function xtreme(b,tok){const [qn,qi]=Q.deportes_extremos;const items=(await gather(qn,qi,4)).filter(it=>XTR.test(it.title||""));if(tok!==sportTok)return;
   b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>Xtreme</h2><p class="meta">${esc("Downhill, enduro, surf y escalada: resultados y noticias de los últimos días")}</p></div></div>`+
     (items.length?groupedHTML(items.slice(0,24)):note("No hay noticias de los últimos días con este alcance."))+`</section>`}
 /* NBA y NFL: fase de la temporada, posiciones por conferencia y división, resultados por división, llaves de playoffs y líderes */
