@@ -215,8 +215,10 @@ a{color:inherit}
 .upd summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none;padding:4px 4px 6px;font-weight:600;font-size:14px}
 .upd summary::-webkit-details-marker{display:none}.upd summary em{font:400 11px var(--mono);color:var(--dim);font-style:normal}
 .upd summary span::before{content:"+ ";color:var(--dim)}.upd[open] summary span::before{content:"– "}
-.up{display:grid;grid-template-columns:52px minmax(0,1fr);gap:2px 10px;align-items:center;padding:8px 4px;border-top:1px solid #1A1A21;font-size:13px}
-.up .ut{font:500 12px var(--mono);color:var(--ink)}.up .ut .live{color:#FF5C7A}
+#sbody,#sres{display:grid;gap:32px}
+#sbody>#ssel{margin-bottom:-12px}
+.up{display:grid;grid-template-columns:72px minmax(0,1fr);gap:2px 10px;align-items:center;padding:8px 4px;border-top:1px solid #1A1A21;font-size:13px}
+.up .ut{font:500 12px var(--mono);color:var(--ink);white-space:nowrap}.up .ut .live{color:#FF5C7A}
 .up .um{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}.up .um .gt{color:var(--ink)}
 .up .uv{grid-column:2;font:400 10.5px var(--mono);color:var(--dim)}
 .upm{margin-bottom:10px}
@@ -365,7 +367,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 <div class="wrap" id="view-sports" hidden>
   <div class="nhead"><h1>Deportes</h1><p class="sub">Tablas de posiciones, llaves, resultados y estadísticas de cada liga, actualizadas al entrar.</p></div>
   <div class="chips sseg" id="stabs" role="group" aria-label="Deportes"></div>
-  <div id="sbody" style="display:grid;gap:18px"></div>
+  <div id="sbody"></div>
   <footer>Datos públicos de ESPN.</footer>
 </div>
 
@@ -1137,7 +1139,7 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03o";
+const APP_VERSION="2026-11-03p";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
