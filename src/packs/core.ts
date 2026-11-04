@@ -61,9 +61,9 @@ export const LATIN_VOICES = [
   item('sound', 'sound.conga-high', 'High conga', 'Conga', { voice: 'congaHigh' }),
   item('sound', 'sound.bongo', 'Bongo', 'Bongó', { voice: 'bongo' }),
   item('sound', 'sound.guiro', 'Güiro', 'Güiro', { voice: 'guiro' }),
-  item('sound', 'sound.maracas', 'Maracas', 'Maracas', { voice: 'maracas' }),
+  item('sound', 'sound.maracas', 'Shaker', 'Shaker', { voice: 'maracas' }),
   item('sound', 'sound.clave', 'Clave', 'Clave', { voice: 'clave' }),
-  item('sound', 'sound.timbale', 'Timbale', 'Timbal', { voice: 'timbale' }),
+  item('sound', 'sound.agogo', 'Agogô', 'Agogó', { voice: 'agogo' }),
   item('sound', 'sound.cowbell', 'Cowbell', 'Cencerro', { voice: 'cowbell' }),
 ];
 
@@ -88,6 +88,14 @@ export const FULL_ROWS = [
 
 const kit = (key: string, en: string, es: string, kitId: string, rows: string[] = STANDARD_ROWS) =>
   item('instrument', key, en, es, { type: 'drumkit', kit: kitId, rows });
+/** A kit of real recordings (VCSL, CC0; see collection-drums.json), played by its rows. */
+const realKit = (key: string, en: string, es: string, set: string, rows: string[] = STANDARD_ROWS): CatalogItem => {
+  const spec = SAMPLED_KITS[set] as { license?: string; source?: string } | undefined;
+  return {
+  ...item('instrument', key, en, es, { type: 'drumkit', kit: 'sampled', set, rows }),
+  license: spec?.license ?? 'CC0 1.0', source: spec?.source ?? 'Versilian Community Sample Library (VCSL)',
+  };
+};
 /** low: the lowest note shown when the 2-octave grid opens. */
 const synth = (key: string, en: string, es: string, voice: string, low: number) =>
   item('instrument', key, en, es, { type: 'synth', voice, low });
@@ -119,9 +127,9 @@ const CORE_INSTRUMENTS = [
   kit('instrument.drums-rock', 'Drums: rock', 'Batería: rock', 'rock'),
   kit('instrument.drums-909', 'Drum machine', 'Caja de ritmos', 'electro'),
   kit('instrument.drums-jazz', 'Drums: brushes', 'Batería: escobillas', 'jazz'),
-  kit('instrument.drums-latin', 'Drums: latin', 'Batería: latina', 'latin'),
+  realKit('instrument.drums-latin', 'Drums: unplugged', 'Batería: unplugged', 'unplugged'),
   kit('instrument.drums-orch', 'Orchestral percussion', 'Percusión orquestal', 'orch', ORCH_ROWS),
-  kit('instrument.perc-latin', 'Latin percussion', 'Percusión latina', 'latinPerc', LATIN_ROWS),
+  realKit('instrument.perc-latin', 'Latin percussion', 'Percusión latina', 'latin-perc', LATIN_ROWS),
 
   synth('instrument.bass-808', '808 bass', 'Bajo 808', 'bass808', 36),
   synth('instrument.bass-synth', 'Synth bass', 'Bajo sintetizado', 'bassSynth', 36),
@@ -139,7 +147,7 @@ const CORE_INSTRUMENTS = [
   synth('instrument.pad-warm', 'Warm pad', 'Pad cálido', 'padWarm', 55),
   synth('instrument.pad-supersaw', 'Supersaw pad', 'Pad supersaw', 'padSupersaw', 55),
   rec('instrument.strings-ensemble', 'String ensemble', 'Cuerdas', 'strings', 55),
-  synth('instrument.choir-aah', 'Choir (aah)', 'Coro de voces', 'choirAah', 55),
+  synth('instrument.choir-aah', 'Synth choir', 'Coro sintético', 'choirAah', 55),
   rec('instrument.brass-section', 'Brass section', 'Metales', 'horns', 48),
 
   synth('instrument.lead-bright', 'Bright lead', 'Lead brillante', 'leadBright', 60),
@@ -392,6 +400,8 @@ const STAND_IN: Record<string, string[]> = {
   'sound.china': ['sound.crash'],
   'sound.clap': ['sound.snare'],
   'sound.rim': ['sound.snare'],
+  // The latin set had a synthesized timbal until it became real recordings; its row now plays the agogó.
+  'sound.timbale': ['sound.agogo'],
 };
 
 /**

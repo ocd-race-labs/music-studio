@@ -24,3 +24,9 @@ Electronic and hip hop kits
   layers in others.
 - Acoustic kits above also appear here: SM Drums (Break jungle; crashes in trip hop, boom bap, lo-fi),
   MuldjordKit (drum and bass, dubstep snare), DRSKit (drum and bass cross-stick).
+
+Latin percussion and the unplugged kit
+- Versilian Community Sample Library (VCSL) by Versilian Studios. CC0 1.0. https://github.com/sgossner/VCSL
+  Percusión latina: tumba, conga, bongó, güiro, shaker, claves, agogó, cencerro.
+  Batería unplugged: cajón, palmas, shaker, pandereta, claves, tumba, platillo suspendido.
+  Built with tools/collection/latin.py.

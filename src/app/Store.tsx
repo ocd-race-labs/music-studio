@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Lang, StarredInstrument, Song } from '../domain/types';
 import { engine } from '../engine/engine';
 import { entryOf, GROUPS } from '../packs/collection';
-import { findByKey, lowOf, resolveRow, rowsOf, STANDARD_ROWS } from '../packs/core';
+import { findByKey, lowOf, rowsOf } from '../packs/core';
 import { defaultRole, fitsTrack } from './sounddraft';
 import { t } from './i18n';
 import type { StringKey } from './i18n';
@@ -161,7 +161,7 @@ export default function Store({ song, starred, lang, onHome, onKit, onStar, onSt
   const base = Math.ceil(lowOf(item.key) / 12) * 12 + oct * 12;
   const vel = loud ? 0.9 : 0.6;
   const rows = drums ? rowsOf(item.key) : [];
-  const pads = drums ? STANDARD_ROWS.map((r, i) => findByKey(resolveRow(rows, r) ?? rows[i])?.title[lang] ?? `${i + 1}`) : [];
+  const pads = drums ? rows.map((r, i) => findByKey(r)?.title[lang] ?? `${i + 1}`) : [];
   const e = entryOf(item.key);
   const src = findByKey(item.key);
   const where = `${WING_TITLE[item.wing][lang]} · ${AISLE_TITLE[item.aisle][lang]}`;

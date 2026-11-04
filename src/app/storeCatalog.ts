@@ -8,11 +8,11 @@ import type { ArtId } from './storeArt';
 
 export type Wing = 'acoustic' | 'electric';
 export type Aisle =
-  | 'strings' | 'winds' | 'keys' | 'drums' | 'perc' | 'voices'
+  | 'strings' | 'winds' | 'keys' | 'drums' | 'perc'
   | 'guitars' | 'basses' | 'ekeys' | 'synths' | 'synthbass' | 'machines';
 
 export const AISLES: Record<Wing, Aisle[]> = {
-  acoustic: ['strings', 'winds', 'keys', 'drums', 'perc', 'voices'],
+  acoustic: ['strings', 'winds', 'keys', 'drums', 'perc'],
   electric: ['guitars', 'basses', 'ekeys', 'synths', 'synthbass', 'machines'],
 };
 
@@ -22,7 +22,6 @@ export const AISLE_TITLE: Record<Aisle, { en: string; es: string }> = {
   keys: { en: 'Keys and mallets', es: 'Teclados y láminas' },
   drums: { en: 'Drum kits', es: 'Baterías' },
   perc: { en: 'Percussion', es: 'Percusión' },
-  voices: { en: 'Voices', es: 'Voces' },
   guitars: { en: 'Electric guitars', es: 'Guitarras eléctricas' },
   basses: { en: 'Electric basses', es: 'Bajos eléctricos' },
   ekeys: { en: 'Electric keys', es: 'Teclados eléctricos' },
@@ -53,9 +52,8 @@ export function aisleOf(key: string): Aisle {
   if (/^(violin|cello|bass-upright|strings-ensemble|guitar-nylon)$/.test(k)) return 'strings';
   if (/^(flute|trumpet|trumpet-mute|brass-section|sax)$/.test(k)) return 'winds';
   if (/^(keys-piano|vibes)$/.test(k)) return 'keys';
-  if (/^drums-(pop|rock|jazz)$/.test(k)) return 'drums';
-  if (/^(drums-latin|perc-latin|drums-orch)$/.test(k)) return 'perc';
-  if (/^choir/.test(k)) return 'voices';
+  if (/^drums-(pop|rock|jazz|latin)$/.test(k)) return 'drums';
+  if (/^(perc-latin|drums-orch)$/.test(k)) return 'perc';
   if (/^guitar-/.test(k)) return 'guitars';
   if (/^bass-(electric|di)$/.test(k)) return 'basses';
   if (/^(keys-ep|organ)$/.test(k)) return 'ekeys';
@@ -85,8 +83,8 @@ export function artOf(key: string): ArtId {
   const table: [RegExp, ArtId][] = [
     [/^violin$/, 'i-violin'], [/^(cello|bass-upright)$/, 'i-cello'], [/^strings/, 'i-section'], [/^guitar-nylon$/, 'i-guitar'],
     [/^flute$/, 'i-flute'], [/^trumpet-mute$/, 'i-tmute'], [/^trumpet$/, 'i-trumpet'], [/^brass/, 'i-horn'], [/^sax$/, 'i-sax'],
-    [/^keys-piano$/, 'i-piano'], [/^(vibes|bells)/, 'i-vibes'], [/^keys-ep$/, 'i-epiano'], [/^organ$/, 'i-organ'], [/^choir/, 'i-mic'],
-    [/^(drums-latin|perc-latin)$/, 'i-congas'], [/^drums-orch$/, 'i-timpani'], [/^drums-(909|trap|boom-bap)$/, 'i-machine'], [/^drums-/, 'i-drums'],
+    [/^keys-piano$/, 'i-piano'], [/^(vibes|bells)/, 'i-vibes'], [/^keys-ep$/, 'i-epiano'], [/^organ$/, 'i-organ'],
+    [/^perc-latin$/, 'i-congas'], [/^drums-orch$/, 'i-timpani'], [/^drums-(909|trap|boom-bap)$/, 'i-machine'], [/^drums-/, 'i-drums'],
     [/^guitar-/, 'i-eguitar'], [/^bass-(electric|di)$/, 'i-ebass'],
   ];
   return table.find(([re]) => re.test(k))?.[1] ?? 'i-synth';

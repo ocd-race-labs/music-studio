@@ -2493,5 +2493,242 @@
   "license": "Original (Music Studio)",
   "source": "Analog-style drum machine, synthesized for Music Studio",
   "bytes": 139687
+ },
+ "unplugged": {
+  "id": "unplugged",
+  "trimDb": -1.4,
+  "pieces": {
+   "kick": {
+    "layers": [
+     [
+      "kick-s1.mp3",
+      "kick-s2.mp3"
+     ],
+     [
+      "kick-m1.mp3",
+      "kick-m2.mp3"
+     ],
+     [
+      "kick-h1.mp3",
+      "kick-h2.mp3"
+     ]
+    ]
+   },
+   "snare": {
+    "layers": [
+     [
+      "snare-s1.mp3",
+      "snare-s2.mp3"
+     ],
+     [
+      "snare-m1.mp3",
+      "snare-m2.mp3"
+     ],
+     [
+      "snare-h1.mp3",
+      "snare-h2.mp3"
+     ]
+    ]
+   },
+   "clap": {
+    "layers": [
+     [
+      "clap-s1.mp3",
+      "clap-s2.mp3",
+      "clap-s3.mp3",
+      "clap-s4.mp3",
+      "clap-s5.mp3",
+      "clap-s6.mp3"
+     ]
+    ]
+   },
+   "hatClosed": {
+    "layers": [
+     [
+      "hatClosed-s1.mp3",
+      "hatClosed-s2.mp3",
+      "hatClosed-s3.mp3",
+      "hatClosed-s4.mp3"
+     ]
+    ]
+   },
+   "hatOpen": {
+    "layers": [
+     [
+      "hatOpen-s1.mp3"
+     ],
+     [
+      "hatOpen-m1.mp3"
+     ]
+    ]
+   },
+   "rim": {
+    "layers": [
+     [
+      "rim-s1.mp3"
+     ],
+     [
+      "rim-m1.mp3"
+     ],
+     [
+      "rim-h1.mp3"
+     ]
+    ]
+   },
+   "tom": {
+    "layers": [
+     [
+      "tom-v11.mp3",
+      "tom-v12.mp3"
+     ],
+     [
+      "tom-v21.mp3",
+      "tom-v22.mp3"
+     ],
+     [
+      "tom-v31.mp3",
+      "tom-v32.mp3"
+     ],
+     [
+      "tom-v41.mp3",
+      "tom-v42.mp3"
+     ]
+    ]
+   },
+   "crash": {
+    "layers": [
+     [
+      "crash-s1.mp3"
+     ],
+     [
+      "crash-m1.mp3"
+     ],
+     [
+      "crash-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC0 1.0",
+  "source": "Versilian Community Sample Library (VCSL)",
+  "bytes": 497581
+ },
+ "latin-perc": {
+  "id": "latin-perc",
+  "trimDb": -0.5,
+  "pieces": {
+   "congaLow": {
+    "layers": [
+     [
+      "congaLow-v11.mp3",
+      "congaLow-v12.mp3"
+     ],
+     [
+      "congaLow-v21.mp3",
+      "congaLow-v22.mp3"
+     ],
+     [
+      "congaLow-v31.mp3",
+      "congaLow-v32.mp3"
+     ],
+     [
+      "congaLow-v41.mp3",
+      "congaLow-v42.mp3"
+     ]
+    ]
+   },
+   "congaHigh": {
+    "layers": [
+     [
+      "congaHigh-s1.mp3",
+      "congaHigh-s2.mp3"
+     ],
+     [
+      "congaHigh-m1.mp3",
+      "congaHigh-m2.mp3"
+     ],
+     [
+      "congaHigh-h1.mp3",
+      "congaHigh-h2.mp3"
+     ]
+    ]
+   },
+   "bongo": {
+    "layers": [
+     [
+      "bongo-s1.mp3",
+      "bongo-s2.mp3"
+     ],
+     [
+      "bongo-m1.mp3",
+      "bongo-m2.mp3"
+     ],
+     [
+      "bongo-h1.mp3",
+      "bongo-h2.mp3"
+     ]
+    ]
+   },
+   "guiro": {
+    "layers": [
+     [
+      "guiro-s1.mp3",
+      "guiro-s2.mp3"
+     ]
+    ]
+   },
+   "maracas": {
+    "layers": [
+     [
+      "maracas-s1.mp3",
+      "maracas-s2.mp3",
+      "maracas-s3.mp3",
+      "maracas-s4.mp3"
+     ]
+    ]
+   },
+   "clave": {
+    "layers": [
+     [
+      "clave-s1.mp3"
+     ],
+     [
+      "clave-m1.mp3"
+     ],
+     [
+      "clave-h1.mp3"
+     ]
+    ]
+   },
+   "agogo": {
+    "layers": [
+     [
+      "agogo-s1.mp3"
+     ],
+     [
+      "agogo-m1.mp3"
+     ],
+     [
+      "agogo-h1.mp3"
+     ]
+    ]
+   },
+   "cowbell": {
+    "layers": [
+     [
+      "cowbell-s1.mp3"
+     ],
+     [
+      "cowbell-m1.mp3"
+     ],
+     [
+      "cowbell-h1.mp3"
+     ]
+    ]
+   }
+  },
+  "license": "CC0 1.0",
+  "source": "Versilian Community Sample Library (VCSL)",
+  "bytes": 361040
  }
 }

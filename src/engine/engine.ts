@@ -831,6 +831,7 @@ export class StudioEngine {
   }
 
   /** The voice of a kit's standard row (0 kick, 1 snare, 2 clap, 3 closed hat, …) on any kit. */
+  /** The voice a standard row (kick, snare, …) plays in this kit, wherever the kit keeps it. */
   private padVoice(instrumentKey: string, row: number): string {
     const rows = rowsOf(instrumentKey);
     return findByKey(resolveRow(rows, STANDARD_ROWS[row]) ?? rows[row])?.manifest.voice as string;
@@ -847,7 +848,7 @@ export class StudioEngine {
     voice.play(midi, 0.9, Tone.immediate() + 0.01, vel, this.song?.tuning_a4_hz ?? 440);
   }
 
-  /** Hit one pad of any kit: a row of the kit by its place (kick, snare, …). */
+  /** Hit one pad of any kit: the kit's own row at this place (a full kit has nine: two toms, a ride, a china). */
   async previewPad(instrumentKey: string, row: number, vel = 0.9): Promise<void> {
     this.ensure();
     const voice = this.previewVoice(instrumentKey);
@@ -855,7 +856,7 @@ export class StudioEngine {
     const asked = performance.now();
     await loadInstrument(findByKey(instrumentKey)?.manifest);
     if (performance.now() - asked > 1500) return;
-    voice.hit(this.padVoice(instrumentKey, row), Tone.immediate() + 0.01, vel);
+    voice.hit(findByKey(rowsOf(instrumentKey)[row])?.manifest.voice as string, Tone.immediate() + 0.01, vel);
   }
 
   /**
