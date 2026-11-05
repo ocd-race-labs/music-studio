@@ -753,7 +753,7 @@ const HAS={fam:(s,k)=>s.g===k,lang:(s,k)=>s.lang===k,reg:(s,k)=>s.reg===k};
 const FTABS=[["fam","Contenido"],["lang","Idioma"],["reg","Región"]];
 let ftab=store.get("dial-ftab","fam");if(ftab==="move")ftab="fam";if(!FTABS.some(t=>t[0]===ftab))ftab="fam";
 function optsOf(key){return key==="fam"?[...SECT.map(k=>[k,FAM[k][0],FAM[k][2]])]:key==="lang"?Object.entries(LANG).map(([k,v])=>[k,v]):key==="reg"?REGIONS.map(r=>[r,r]):[["fijo","Fijo"],["suave","Suave"],["vivo","Vivo"]]}
-function renderFilters(){
+function renderFilters(){if(window.altSync)setTimeout(window.altSync,0);
   const tabs=$("ftabs");tabs.innerHTML="";
   const fv=document.createElement("button");fv.className="ftab fav";fv.setAttribute("aria-pressed",FAV);fv.setAttribute("aria-label","Solo favoritas");
   const nf=S.filter(s=>matchExcept(s,"fav")&&favs.has(s.n)).length;
@@ -1196,6 +1196,7 @@ const perCC={};S.forEach(s=>{(perCC[s.cc]=perCC[s.cc]||[]).push(s)});
 Object.values(perCC).forEach(l=>l.forEach((s,i)=>{const a=i*2.399,r=l.length>1?1.2+1.6*Math.sqrt(i):0;s.geo=[s.ll[1]+r*Math.cos(a)*1.3,s.ll[0]+r*Math.sin(a)];const h=hsh(s.n);s.jx=(h%1000)/1000-.5;s.jy=((h>>>10)%1000)/1000-.5}));
 const aff=(s,n)=>S.filter(x=>x!==s&&!x.dead).map(x=>({x,v:sim(s,x).v})).sort((a,b)=>b.v-a.v).slice(0,n);
 const choose=s=>{pick(s)};
+const onF=s=>!filtering()||match(s);
 
 let libs=null;
 function need(){if(libs)return libs;
@@ -1240,10 +1241,10 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     const g=Math.min(1.9,Math.pow(k,.3));
     gDot.selectAll("circle").data(vis,d=>d.i).join("circle")
       .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>(d===cur?7:near.has(d)?5:2.2+d.l*.55)*(d===cur?1:g))
-      .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur||near.has(d)?1:d.dead?.2:.7).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
+      .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur?1:!onF(d)?.12:near.has(d)?1:d.dead?.2:.75).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
     // Nombres: la que suena y sus afines siempre; al acercar, también las demás que quepan sin taparse
-    const pri=[cur,...A.map(a=>a.x)].filter(s=>s._v);
-    const extra=k>=2.2?vis.filter(s=>s!==cur&&!near.has(s)).sort((a,b)=>b.l-a.l):[];
+    const pri=[cur,...A.map(a=>a.x)].filter(s=>s._v&&(s===cur||onF(s)));
+    const extra=k>=2.2||filtering()?vis.filter(s=>s!==cur&&!near.has(s)&&onF(s)&&(k>=2.2||filtering())).sort((a,b)=>b.l-a.l):[];
     const placed=[],L=[];
     for(const s of [...pri,...extra]){const [x,y]=s._p,w=(s.sh.length+3)*5.6,ly=y-9-(s===cur?2:0);
       const box=[x-w/2,ly-10,x+w/2,ly+2];
@@ -1310,7 +1311,7 @@ const SONIDO=(()=>{let svg,hov=null,ax=store.get("dial-ejes",{x:"habla",y:"energ
     const my=PT+(Wd-P-PT)/2;q.append("text").attr("class","alt-axis").attr("x",12).attr("y",my).attr("transform",`rotate(-90 12 ${my})`).attr("text-anchor","middle").text(`${Y.lo.toLowerCase()} ↔ ${Y.hi.toLowerCase()}`)}
   function draw(an){if(!svg)return;const cur=ref(),A=new Set(aff(cur,6).map(a=>a.x)),t=hov?hov.b:null,ua=usesAff();
     const c=svg.select(".sd").selectAll("circle").data(S,d=>d.i).join("circle");
-    c.attr("r",d=>d===cur?7:d===t?6:A.has(d)?4.5:3.4).attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur||d===t||A.has(d)?1:d.dead?.2:hov?.35:.7)
+    c.attr("r",d=>d===cur?7:d===t?6:A.has(d)?4.5:3.4).attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur||d===t?1:!onF(d)?.1:A.has(d)?1:d.dead?.2:hov?.35:.75)
       .attr("stroke",d=>d===cur?"#EDEDF2":ua&&d===anc?"#EDEDF2":"none").attr("stroke-width",d=>d===cur?2:1.2).attr("stroke-dasharray",d=>d!==cur&&ua&&d===anc?"2 2":null);
     (an&&!RMV?c.transition().duration(650).ease(d3.easeCubicInOut):c).attr("cx",x).attr("cy",y);
     const f=svg.select(".sf");f.selectAll("*").remove();const who=hov?t:cur;
@@ -1339,7 +1340,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-05c";
+const APP_VERSION="2026-11-05d";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
