@@ -1011,7 +1011,7 @@ export default function Studio({ store, profile, room, onRoom, lang, onLang, mod
   return (
     <div className={`studio room-${room}${wide ? ' wide' : ''}`}>
       {room === 'hub' ? (
-        <Hub profile={profile} song={song} lang={lang} mode={mode} onLang={onLang} onToggleMode={onToggleMode} onRoom={onRoom}
+        <Hub profile={profile} song={song} songs={songList} onOpenSong={(s) => { if (s.id !== song?.id) switchTo(s); }} lang={lang} mode={mode} onLang={onLang} onToggleMode={onToggleMode} onRoom={onRoom}
           onProfiles={onProfiles} onSettings={onSettings} onClassroom={onClassroom}
           stats={{ kit: starred.length, sounds: sounds.length, songs: songList.length }} />
       ) : room === 'store' ? (

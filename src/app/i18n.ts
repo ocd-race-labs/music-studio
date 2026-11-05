@@ -501,10 +501,14 @@ const STRINGS = {
   hubAltNone: { en: 'No producer sounds yet', es: 'Aún sin sonidos del productor' },
   hubSongs: { en: '{n} songs', es: '{n} canciones' },
   roomStore: { en: 'Instrument store', es: 'Tienda de instrumentos' },
-  roomStoreBlurb: { en: 'Walk the aisles, take down any instrument and try it. If you like it, add it to your kit. It is all free.', es: 'Recorre los pasillos, descuelga cualquier instrumento y pruébalo. Si te gusta, llévalo a tu kit. Todo es gratis.' },
+  roomStoreBlurb: { en: 'Take down any instrument, play it and add it to your kit.', es: 'Descuelga cualquier instrumento, tócalo y llévalo a tu kit.' },
   hubStoreWindows: { en: '{n} style windows', es: '{n} vitrinas por estilo' },
   hubStoreReal: { en: '{n} real recordings', es: '{n} grabaciones reales' },
   hubStoreCount: { en: '{n} instruments', es: '{n} instrumentos' },
+  hubStoreEnter: { en: 'Enter the store', es: 'Entrar a la tienda' },
+  hubInProgress: { en: 'IN PROGRESS', es: 'EN CURSO' },
+  hubSongsAll: { en: 'Versions and sounds of every track', es: 'Versiones y sonidos de cada pista' },
+  hubSongNew: { en: 'New', es: 'Nueva' },
 
   /* instrument store */
   storeOpen: { en: 'Open · everything free', es: 'Abierto · todo gratis' },

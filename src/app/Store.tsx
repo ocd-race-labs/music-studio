@@ -1,6 +1,6 @@
-// The instrument store: style windows at the entrance (each a kit, with the Colección's styles), two wings
-// (acoustic and electric) with aisles by how an instrument is played, and a counter to hear and play the one you
-// took down, add it to your kit or use it in the song.
+// The instrument store: two wings (acoustic and electric) with aisles by how an instrument is played; the style
+// windows (each a kit, with the Colección's styles) slide in from the left on demand; and a counter, always in view,
+// to hear and play the one you took down, add it to your kit or use it in the song.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Lang, StarredInstrument, Song } from '../domain/types';
@@ -16,6 +16,7 @@ import {
   type Aisle, type StoreItem, type WindowId, type Wing,
 } from './storeCatalog';
 import { Icon } from './ui';
+import { KitArt, kitLine, lookOf, MachineArt } from './kitArt';
 
 const nameOf = (key: string, lang: Lang) => findByKey(key)?.title[lang] ?? key;
 
@@ -27,6 +28,15 @@ export function Art({ id, w, h }: { id: ArtId; w: number; h: number }) {
 /** The drawings' definitions, once per page. */
 export function ArtDefs() {
   return <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: STORE_DEFS }} />;
+}
+
+/** An item's drawing: its own kit or machine when it has one, else its family's. */
+function ItemArt({ itemKey, art, w, h }: { itemKey: string; art: ArtId; w: number; h: number }) {
+  const look = lookOf(itemKey);
+  const id = itemKey.replace('instrument.', '');
+  if (look?.kind === 'kit') return <KitArt id={id} look={look} w={w} h={h} />;
+  if (look?.kind === 'machine') return <MachineArt id={id} look={look} w={w} h={h} />;
+  return <Art id={art} w={w} h={h} />;
 }
 
 /** How big each drawing hangs in a niche (a flute lies long and thin, a cello stands tall). */
@@ -67,13 +77,20 @@ export default function Store({ song, starred, lang, onHome, onKit, onStar, onSt
   const [picking, setPicking] = useState(false);
   const [listening, setListening] = useState(false);
 
-  const wingsRef = useRef<HTMLDivElement>(null);
-  /** Open a style window (or one of its styles) and walk down to it. */
+  const [drawer, setDrawer] = useState(false);
+  const floorRef = useRef<HTMLElement>(null);
+  /** Open a style window (or one of its styles): the drawer closes and the floor shows it from the top. */
   const openWindow = (id: WindowId, styleId: string | null) => {
-    setWin(id); setStyle(styleId); setQuery('');
-    requestAnimationFrame(() => wingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    setWin(id); setStyle(styleId); setQuery(''); setDrawer(false);
+    requestAnimationFrame(() => floorRef.current?.scrollTo({ top: 0, behavior: 'smooth' }));
   };
   useEffect(() => () => engine.stopPreview(), []);
+  useEffect(() => {
+    if (!drawer) return;
+    const esc = (ev: KeyboardEvent) => { if (ev.key === 'Escape') setDrawer(false); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [drawer]);
   useEffect(() => { setOct(0); setPicking(false); }, [sel]);
 
   const keep = (keys: string[]) => keys.filter((k) => !realOnly || STORE_ITEMS.find((x) => x.key === k)?.recorded);
@@ -83,21 +100,32 @@ export default function Store({ song, starred, lang, onHome, onKit, onStar, onSt
   const results = useMemo(() => (query.trim() ? keep(STORE_ITEMS.filter((x) => matches(x.key, query, lang)).map((x) => x.key)) : []),
     [query, lang, realOnly]);
 
-  const pick = (key: string) => { setSel(key); engine.stopPreview(); setListening(false); };
+  const counterRef = useRef<HTMLElement>(null);
+  const pick = (key: string) => {
+    setSel(key); engine.stopPreview(); setListening(false);
+    // On a narrow screen the counter sits above the floor: bring it into view.
+    if (window.matchMedia('(max-width: 860px)').matches) counterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const card = (key: string) => {
     const x = STORE_ITEMS.find((i) => i.key === key);
     if (!x) return null;
     const [w, h] = NICHE_SIZE[x.art];
+    const look = lookOf(key);
+    const kitish = x.aisle === 'drums' || x.aisle === 'machines';
+    const short = nameOf(key, lang).replace(/^(Batería|Drums): /, '');
+    const name = kitish ? short.charAt(0).toUpperCase() + short.slice(1) : nameOf(key, lang);
     return (
       <button key={key} type="button" className={`st-item${sel === key ? ' on' : ''}`} aria-pressed={sel === key} onClick={() => pick(key)}>
         <span className={`st-niche${LIES_DOWN.has(x.art) ? ' lying' : ''}`}>
-          <Art id={x.art} w={w} h={h} />
+          <ItemArt itemKey={key} art={x.art} w={w * 0.82} h={h * 0.82} />
           <span className="st-floor" />
+          {look?.era && <span className="st-era mono">{look.era}</span>}
           {inKit(key) && <span className="st-owned" aria-label={t('storeInKit', lang)}><Icon name="check" size={14} /></span>}
         </span>
         <span className="st-meta">
-          <span className="st-name">{nameOf(key, lang)}</span>
+          <span className="st-name">{name}</span>
+          {kitish && <span className="st-parts mono">{kitLine(key, lang)}</span>}
           <Tag recorded={x.recorded} lang={lang} />
         </span>
       </button>
@@ -168,82 +196,85 @@ export default function Store({ song, starred, lang, onHome, onKit, onStar, onSt
   const tracks = song ? song.tracks.filter((tr) => fitsTrack(item.key, tr)) : [];
   const owned = inKit(item.key);
   const [bw, bh] = NICHE_SIZE[item.art];
-  const scale = Math.min(250 / bh, 300 / bw, 1.7);
+  const scale = Math.min(84 / bh, 92 / bw);
 
   return (
     <div className="store">
       <ArtDefs />
       <header className="st-top">
-        <button type="button" className="btn ghost" onClick={onHome}><Icon name="home" size={18} /> {t('home', lang)}</button>
+        <button type="button" className="btn ghost" onClick={onHome}><Icon name="home" size={18} /> <span className="hide-sm">{t('home', lang)}</span></button>
+        <button type="button" className={`btn ghost st-drawer-btn${drawer ? ' on' : ''}`} aria-expanded={drawer} aria-controls="st-drawer" onClick={() => setDrawer((d) => !d)}>
+          <Icon name="panel" size={18} /> {t('storeWindows', lang)}
+        </button>
+        <div className="st-wings" role="tablist" aria-label={t('roomStore', lang)}>
+          {(['acoustic', 'electric'] as Wing[]).map((w) => (
+            <button key={w} type="button" role="tab" aria-selected={!win && !query.trim() && wing === w} className="st-wing display"
+              onClick={() => { setWing(w); setWin(null); setStyle(null); setQuery(''); floorRef.current?.scrollTo({ top: 0 }); }}>{WING_TITLE[w][lang]}</button>
+          ))}
+        </div>
         <span className="grow" />
         <label className="st-search">
           <Icon name="search" size={16} />
           <span className="st-sr">{t('storeSearch', lang)}</span>
           <input type="search" value={query} placeholder={t('storeSearch', lang)} onChange={(ev) => setQuery(ev.target.value)} />
         </label>
-        <button type="button" className="btn primary" onClick={onKit}><Icon name="star" size={18} /> {t('storeMyKit', lang, { n: starred.length })}</button>
-      </header>
-
-      <section className="st-entrance">
-        <div className="st-sign mono">{t('storeOpen', lang)}</div>
-        <h1 className="display st-h1">{t('roomStore', lang)}</h1>
-        <p className="st-intro">{t('storeIntro', lang)}</p>
-        <div className="st-aisle-head light"><b>{t('storeWindows', lang)}</b><span>{t('storeWindowsHint', lang)}</span></div>
-        <div className="st-windows">
-          {WINDOWS.map((w) => {
-            const styles = windowStyles(w.id);
-            const kit = windowKit(w.id);
-            return (
-              <div key={w.id} className={`st-win${win === w.id ? ' on' : ''}`} style={{ '--glow': w.glow } as React.CSSProperties}>
-                <button type="button" className="st-win-main" aria-pressed={win === w.id}
-                  onClick={() => openWindow(w.id, null)}>
-                  <span className="st-glass">{w.art.map((a) => { const [aw, ah] = NICHE_SIZE[a]; const s = Math.min(70 / ah, 84 / aw); return <Art key={a} id={a} w={aw * s} h={ah * s} />; })}</span>
-                  <strong className="display st-win-title">{windowTitle(w.id, lang)}</strong>
-                  {!styles.length && <span className="st-win-line">{kit.map((s) => nameOf(s.instrument, lang)).join(', ')}</span>}
-                </button>
-                {styles.length > 0 && (
-                  <span className="st-chips">
-                    {styles.slice(0, 4).map((s) => (
-                      <button key={s.id} type="button" className={`st-chip${win === w.id && style === s.id ? ' on' : ''}`}
-                        onClick={() => openWindow(w.id, s.id)}>{s.title[lang]}</button>
-                    ))}
-                    {styles.length > 4 && (
-                      <button type="button" className="st-chip" onClick={() => openWindow(w.id, null)}>+{styles.length - 4}</button>
-                    )}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <div className="st-wings" ref={wingsRef} role="tablist" aria-label={t('roomStore', lang)}>
-        {(['acoustic', 'electric'] as Wing[]).map((w) => (
-          <button key={w} type="button" role="tab" aria-selected={!win && !query.trim() && wing === w} className="st-wing display"
-            onClick={() => { setWing(w); setWin(null); setStyle(null); setQuery(''); }}>{WING_TITLE[w][lang]}</button>
-        ))}
-        <span className="grow" />
         <button type="button" className={`st-realonly${realOnly ? ' on' : ''}`} aria-pressed={realOnly} onClick={() => setRealOnly((v) => !v)}>
           {realOnly && <Icon name="check" size={14} />} {t('storeRealOnly', lang)}
         </button>
-      </div>
+        <button type="button" className="btn primary" onClick={onKit}><Icon name="star" size={18} /> {t('storeMyKit', lang, { n: starred.length })}</button>
+      </header>
 
       <div className="st-body">
-        <main className="st-floorplan">{floor}</main>
+        <main className="st-floorplan" ref={floorRef}>{floor}</main>
 
-        <aside className="st-counter" aria-label={t('storeCounter', lang)}>
-          <div className="st-counter-lbl mono">{t('storeCounter', lang)}</div>
-          <div className="st-stage">
-            <Art id={item.art} w={bw * scale} h={bh * scale} />
-            <span className="st-stage-floor" />
+        {drawer && <button type="button" className="st-scrim" aria-label={t('close', lang)} onClick={() => setDrawer(false)} />}
+        <section id="st-drawer" className={`st-drawer${drawer ? ' open' : ''}`} aria-label={t('storeWindows', lang)} aria-hidden={!drawer} inert={!drawer}>
+          <div className="st-drawer-head">
+            <div className="stack" style={{ gap: 2 }}>
+              <span className="st-sign mono">{t('storeWindows', lang)}</span>
+              <span className="small muted">{t('storeWindowsHint', lang)}</span>
+            </div>
+            <button type="button" className="btn icon" onClick={() => setDrawer(false)} aria-label={t('close', lang)} title={t('close', lang)}><Icon name="back" size={18} /></button>
           </div>
-          <div className="stack" style={{ gap: 8 }}>
-            <div className="small muted mono">{where}</div>
-            <div className="row wrap" style={{ gap: 12 }}>
+          <div className="st-windows">
+            {WINDOWS.map((w) => {
+              const styles = windowStyles(w.id);
+              const kit = windowKit(w.id);
+              return (
+                <div key={w.id} className={`st-win${win === w.id ? ' on' : ''}`} style={{ '--glow': w.glow } as React.CSSProperties}>
+                  <button type="button" className="st-win-main" aria-pressed={win === w.id} onClick={() => openWindow(w.id, null)}>
+                    <span className="st-glass">{w.art.map((a) => { const [aw, ah] = NICHE_SIZE[a]; const k = Math.min(54 / ah, 60 / aw); return <Art key={a} id={a} w={aw * k} h={ah * k} />; })}</span>
+                    <strong className="display st-win-title">{windowTitle(w.id, lang)}</strong>
+                    {!styles.length && <span className="st-win-line">{kit.map((s) => nameOf(s.instrument, lang)).join(', ')}</span>}
+                  </button>
+                  {styles.length > 0 && (
+                    <span className="st-chips">
+                      {styles.slice(0, 4).map((s) => (
+                        <button key={s.id} type="button" className={`st-chip${win === w.id && style === s.id ? ' on' : ''}`} onClick={() => openWindow(w.id, s.id)}>{s.title[lang]}</button>
+                      ))}
+                      {styles.length > 4 && <button type="button" className="st-chip" onClick={() => openWindow(w.id, null)}>+{styles.length - 4}</button>}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <aside className="st-counter" ref={counterRef} aria-label={t('storeCounter', lang)}>
+          <div className="st-counter-lbl mono">{t('storeCounter', lang)}</div>
+          <div className="st-counter-head">
+            <div className="st-stage">
+              <ItemArt itemKey={item.key} art={item.art} w={bw * scale} h={bh * scale} />
+              <span className="st-stage-floor" />
+            </div>
+            <div className="stack" style={{ gap: 5, minWidth: 0 }}>
+              <div className="small muted mono">{where}</div>
               <h2 className="display st-counter-name">{nameOf(item.key, lang)}</h2>
               <Tag recorded={item.recorded} lang={lang} long />
             </div>
+          </div>
+          <div className="stack" style={{ gap: 8 }}>
             {e && <p className="st-desc">{e.era[lang]} · {e.blurb[lang]}</p>}
             <p className="st-desc">{item.recorded && src ? t('storeFrom', lang, { source: src.source, license: src.license }) : t('storeSynthBlurb', lang)}</p>
             {windowsOf(item.key).length > 0 && (
@@ -258,13 +289,11 @@ export default function Store({ song, starred, lang, onHome, onKit, onStar, onSt
             )}
           </div>
 
-          <button type="button" className="btn st-listen" onClick={listen}>
-            <Icon name={listening ? 'stop' : 'play'} size={16} /> {t(listening ? 'storeStop' : 'storeListen', lang)}
-          </button>
-
           <div className="stack" style={{ gap: 10 }}>
             <div className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
-              <span className="small muted">{t('storePlayKeys', lang)}</span>
+              <button type="button" className="btn st-listen" onClick={listen}>
+                <Icon name={listening ? 'stop' : 'play'} size={16} /> {t(listening ? 'storeStop' : 'storeListen', lang)}
+              </button>
               <div className="seg" role="group" aria-label={t('storeIntensity', lang)}>
                 <button type="button" aria-pressed={!loud} onClick={() => setLoud(false)}>{t('storeSoft', lang)}</button>
                 <button type="button" aria-pressed={loud} onClick={() => setLoud(true)}>{t('storeLoud', lang)}</button>
