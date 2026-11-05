@@ -27,6 +27,6 @@ Electronic and hip hop kits
 
 Latin percussion and the unplugged kit
 - Versilian Community Sample Library (VCSL) by Versilian Studios. CC0 1.0. https://github.com/sgossner/VCSL
-  Percusión latina: tumba, conga, bongó, güiro, shaker, claves, agogó, cencerro grave (mambo) y agudo (chachachá).
+  Percusión latina: tumba, conga, bongó, güiro (raspado corto y largo), shaker, claves, agogó, cencerro grave (mambo) y agudo (chachachá).
   Batería unplugged: cajón, palmas, shaker, pandereta, claves, tumba, platillo suspendido.
   Built with tools/collection/latin.py.

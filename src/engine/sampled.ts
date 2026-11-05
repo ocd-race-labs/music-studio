@@ -8,6 +8,8 @@ import type { DrumVoice } from './voices';
 export interface SampledPiece {
   /** Velocity layers from soft to hard; each layer lists its alternate takes (file names in the kit's folder). */
   layers: string[][];
+  /** Where each layer ends, by velocity, when the even split does not fit (the güiro's long stroke only on accents). */
+  split?: number[];
   /** Pieces this one silences when it plays: the closed hi-hat stops the open one. */
   chokes?: string[];
   /** Level of the piece in the kit, in dB. */
@@ -90,9 +92,9 @@ export async function loadKit(spec: SampledKitSpec): Promise<number> {
  * Which layer plays at this velocity, and how loud within it. Three layers split at 0.5 and 0.8, so the
  * sequencer's off-beats (0.75) land on the middle layer, its down-beats (0.9) on the hard one, and ghost notes on the soft one.
  */
-export function pickLayer(vel: number, layers: number): { layer: number; gain: number } {
+export function pickLayer(vel: number, layers: number, split?: number[]): { layer: number; gain: number } {
   const v = Math.max(0.02, Math.min(1, vel));
-  const bounds = layers === 3 ? [0.5, 0.8, 1] : Array.from({ length: layers }, (_, i) => (i + 1) / layers);
+  const bounds = split?.length === layers ? split : layers === 3 ? [0.5, 0.8, 1] : Array.from({ length: layers }, (_, i) => (i + 1) / layers);
   const layer = Math.max(0, bounds.findIndex((b) => v < b || b === 1));
   const gain = Math.max(0.3, Math.pow(v / bounds[layer], 0.9));
   return { layer, gain };
@@ -124,7 +126,7 @@ export function createSampledKit(spec: SampledKitSpec): DrumVoice {
     hit(voice, time, vel) {
       const piece = spec.pieces[voice];
       if (!piece || disposed) return;
-      const { layer, gain } = pickLayer(vel, piece.layers.length);
+      const { layer, gain } = pickLayer(vel, piece.layers.length, piece.split);
       const takes = piece.layers[layer];
       const n = (rr.get(`${voice}:${layer}`) ?? 0) + 1;
       rr.set(`${voice}:${layer}`, n);

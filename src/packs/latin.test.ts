@@ -14,3 +14,13 @@ describe('real latin percussion and the unplugged kit', () => {
     expect(resolveRow(LATIN_ROWS, 'sound.timbale')).toBe('sound.agogo');
   });
 });
+
+describe('the güiro', () => {
+  it('scrapes short on off-beats and long on accents', async () => {
+    const { pickLayer } = await import('../engine/sampled');
+    const split = SAMPLED_KITS['latin-perc'].pieces.guiro.split;
+    expect(pickLayer(0.75, 2, split).layer).toBe(0);
+    expect(pickLayer(0.6, 2, split).layer).toBe(0);
+    expect(pickLayer(0.9, 2, split).layer).toBe(1);
+  });
+});

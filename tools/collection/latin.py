@@ -36,7 +36,10 @@ KITS = {
         "congaLow": dict(layers=vl(M + "Conga/", "Tumba_HitN", (1, 2, 3, 4), tail="_Sum"), length=0.9, gain=0),
         "congaHigh": dict(layers=vl(M + "Conga/", "Conga_HitN", (1, 2, 3), tail="_Sum"), length=0.8, gain=0),
         "bongo": dict(layers=vl(M + "Bongos/", "BongoH_Hit1", (1, 2, 3)), length=0.7, gain=-1),
-        "guiro": dict(layers=[[I + "Guiro/Guiro_Hit_rr1_Mid.wav", I + "Guiro/Guiro_Hit_rr2_Mid.wav"]], length=0.6, gain=-5),
+        # The scrape, not the tap: short strokes, and a long stroke on accents (the sequencer's down-beats, 0.9).
+        "guiro": dict(layers=[[I + "Guiro/" + f for f in ("Guiro_Fast_rr1_Mid.wav", "Legacy/guiro_short.wav", "Legacy/guiro_short2.wav", "Legacy/guiro_short4.wav", "Legacy/guiro_short5.wav")],
+                              [I + "Guiro/" + f for f in ("Guiro_Med_rr1_Mid.wav", "Legacy/guiro_long.wav", "Legacy/guiro_long2.wav")]], length=0.7, gain=-4,
+                      split=[0.85, 1]),
         "maracas": dict(layers=[[I + f"Shaker, Small/Mid_ShakerHighFaster_{d}_{r}.wav" for d in ("Down", "Up") for r in ("rr1", "rr2")]], length=0.35, gain=-6),
         "clave": dict(layers=[[I + f"Claves/Claves2_Hit_v{v}_rr1_Mid.wav"] for v in (1, 2, 3)], length=0.5, gain=-4),
         "agogo": dict(layers=[[I + f"Agogo Bells/Agogo_High_v{v}_rr1_Mid.wav"] for v in (1, 2, 3)], length=0.9, gain=-6),
@@ -107,7 +110,7 @@ def build(vcsl, repo):
                     encode(x, os.path.join(folder, fn))
                     names.append(fn)
                 files.append(names)
-            spec[name] = {"layers": files}
+            spec[name] = {"layers": files, **({"split": p["split"]} if "split" in p else {})}
         loud = pyln.Meter(SR).integrated_loudness(groove(made).T)
         specs[kit] = {"id": kit, "trimDb": round(TRIM_TO - loud, 1), "pieces": spec,
                       "license": "CC0 1.0", "source": "Versilian Community Sample Library (VCSL)",

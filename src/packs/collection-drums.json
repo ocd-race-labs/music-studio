@@ -2615,7 +2615,7 @@
  },
  "latin-perc": {
   "id": "latin-perc",
-  "trimDb": -0.6,
+  "trimDb": -1.4,
   "pieces": {
    "congaLow": {
     "layers": [
@@ -2673,8 +2673,20 @@
     "layers": [
      [
       "guiro-s1.mp3",
-      "guiro-s2.mp3"
+      "guiro-s2.mp3",
+      "guiro-s3.mp3",
+      "guiro-s4.mp3",
+      "guiro-s5.mp3"
+     ],
+     [
+      "guiro-m1.mp3",
+      "guiro-m2.mp3",
+      "guiro-m3.mp3"
      ]
+    ],
+    "split": [
+     0.85,
+     1
     ]
    },
    "maracas": {
@@ -2736,6 +2748,6 @@
   },
   "license": "CC0 1.0",
   "source": "Versilian Community Sample Library (VCSL)",
-  "bytes": 376077
+  "bytes": 426079
  }
 }
