@@ -74,6 +74,18 @@ a{color:inherit}
 .ftab .n{font:500 10px var(--mono);background:var(--ink);color:var(--bg);border-radius:999px;padding:1px 6px}
 .chip .c{font:400 10px var(--mono);opacity:.6}
 .chip.zero{opacity:.32}
+/* Filtros de la radio: una grilla pareja de teclas del mismo tamaño, en vez de píldoras de largo variable */
+#fchips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;overflow:visible;margin-inline:0;padding-inline:0}
+#fchips .chip{--c:#8B8B96;width:100%;min-width:0;height:36px;border-radius:11px;border:1px solid #23232B;background:#111116;color:#C9C9D2;padding:0 10px 0 0;gap:9px;font-size:13px;justify-content:flex-start;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+#fchips .chip:hover{border-color:#30303A;background:#15151B}
+#fchips .chip .sw{flex:none;width:4px;height:100%;border-radius:0;background:var(--c)}
+#fchips .chip.nosw{padding-left:12px}
+#fchips .chip .l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+#fchips .chip .c{flex:none;font:400 10.5px var(--mono);color:var(--dim);opacity:1;font-variant-numeric:tabular-nums}
+#fchips .chip[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 18%,#111116);border-color:var(--c);color:var(--ink)}
+#fchips .chip[aria-pressed="true"] .c{color:var(--ink)}
+#fchips .chip.nosw[aria-pressed="true"]{--c:#EDEDF2}
+@media (max-width:440px){#fchips .chip{font-size:12px;gap:7px;height:38px;padding-right:8px}#fchips .chip .c{font-size:10px}}
 .fsum{display:flex;align-items:center;justify-content:space-between;gap:10px;font:400 11px var(--mono);color:var(--muted);min-height:22px}
 .fsum span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fsum button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 10px;font:400 11px var(--mono);cursor:pointer;flex:none}
@@ -775,7 +787,8 @@ function renderFilters(){if(window.altSync)setTimeout(window.altSync,0);
     if(ftab==="move"){b.setAttribute("aria-pressed",MOVE===k);b.textContent=label;b.onclick=()=>{MOVE=k;store.set("dial-move",MOVE);layout._k=null;if(MOVE!=="fijo")resetView();layout()};box.appendChild(b);return}
     const on=SEL[ftab].has(k),cnt=S.filter(s=>matchExcept(s,ftab)&&HAS[ftab](s,k)).length;
     if(!cnt&&!on)b.classList.add("zero");b.setAttribute("aria-pressed",on);
-    b.innerHTML=(col?`<span class="sw" style="background:${col}"></span>`:"")+esc(label)+`<span class="c">${cnt}</span>`;
+    if(col)b.style.setProperty("--c",col);else b.classList.add("nosw");b.title=label;
+    b.innerHTML=(col?`<span class="sw"></span>`:"")+`<span class="l">${esc(label)}</span><span class="c">${cnt}</span>`;
     b.onclick=()=>{SEL[ftab].has(k)?SEL[ftab].delete(k):SEL[ftab].add(k);store.set("dial-f-"+ftab,[...SEL[ftab]]);if(MOVE==="vivo"){F=null;resetView()}layout()};
     box.appendChild(b)});
   const m=S.filter(match).length,act=(FAV?1:0)+SEL.fam.size+SEL.lang.size+SEL.reg.size+(query?1:0);
@@ -1351,7 +1364,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-05f";
+const APP_VERSION="2026-11-05g";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
