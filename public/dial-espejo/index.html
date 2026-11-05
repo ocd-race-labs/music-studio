@@ -104,6 +104,38 @@ a{color:inherit}
 .card .cb button{border:1px solid rgba(237,237,242,.18);background:rgba(237,237,242,.05);border-radius:999px;padding:6px 8px;font-size:11.5px;cursor:pointer;white-space:nowrap;flex:none;min-width:30px}.card .cb .go{flex:1 1 100%}
 .card .cb .go{background:var(--cc);color:#07070A;border-color:var(--cc);font-weight:600;box-shadow:0 0 14px -2px var(--cc)}
 
+/* Vistas de la radio: Constelación, Globo y Sonido */
+.vtop{display:grid;gap:10px}
+.vseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:3px}
+.vseg button{border:0;background:transparent;border-radius:11px;padding:8px 2px;font-size:13px;color:var(--muted);display:grid;gap:1px;justify-items:center;cursor:pointer}
+.vseg button small{font:400 10px var(--mono);color:var(--dim)}
+.vseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.vseg button[aria-pressed="true"] small{color:#55555F}
+.alt{position:absolute;inset:0;z-index:8;background:var(--bg);display:flex;flex-direction:column}
+.hive .alt svg{height:100%}
+.alt>svg{flex:1;min-height:0}
+.alt-plot{position:relative;flex:1;min-height:0}
+.alt-plot svg{position:absolute;inset:0;width:100%}
+.alt-wait{margin:auto;padding:24px;text-align:center;font:400 12px var(--mono);color:var(--muted);max-width:32ch}
+.alt-cap{position:absolute;left:10px;top:10px;font:400 11px var(--mono);color:var(--ink);background:rgba(7,7,10,.82);border:1px solid var(--line);border-radius:999px;padding:5px 10px;pointer-events:none;max-width:calc(100% - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alt-hint{position:absolute;left:12px;bottom:10px;right:12px;font:400 11px var(--mono);color:var(--dim);pointer-events:none}
+.alt-lbl{font:500 11px var(--sans);fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3.2px;stroke-linejoin:round;pointer-events:none}
+.alt-lbl.cur{font-weight:600;font-size:12.5px}
+.alt-lbl.anc{font-size:10.5px;fill:var(--muted)}
+.alt-axis{font:400 10px var(--mono);fill:var(--dim)}
+.alt-quad{font:500 11px var(--sans);fill:#3C3C48}
+.alt-ctl{display:grid;gap:8px}
+.axes{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:end}
+.axes label{display:grid;gap:4px;min-width:0}
+.axes label span{font:400 10.5px var(--mono);color:var(--dim)}
+.axes select{appearance:none;-webkit-appearance:none;width:100%;min-width:0;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B8B96' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 8px center/14px;border:1px solid var(--line);border-radius:12px;color:var(--ink);font:500 13px var(--sans);padding:9px 26px 9px 11px;text-overflow:ellipsis}
+.axes>button{width:40px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;color:var(--muted);cursor:pointer}
+.anc{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);min-width:0}
+.anc .lk{color:var(--ink);display:grid}
+.anc .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.anc b{color:var(--ink);font-weight:500}
+.anc button{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 11px;font:500 12px var(--sans);color:var(--ink);cursor:pointer}
+
 /* Panal */
 .hive{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:22px;overflow:hidden}
 .hive svg{display:block;width:100%;height:auto;touch-action:none;-webkit-user-select:none;user-select:none}
@@ -309,7 +341,8 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   #view-radio>.search{grid-column:2;grid-row:1}
   #view-radio>.fbar{grid-column:2;grid-row:2}
   #view-radio .radio-grid{display:contents}
-  #view-radio .radio-grid>.hive{grid-column:1;grid-row:1/span 4;position:sticky;top:12px;width:min(100%,calc(100vh - 170px));justify-self:center}
+  #view-radio>.vtop{grid-column:1;grid-row:1;width:min(100%,calc(100vh - 170px));justify-self:center}
+  #view-radio .radio-grid>.hive{grid-column:1;grid-row:2/span 4;position:sticky;top:12px;width:min(100%,calc(100vh - 170px));justify-self:center}
   #view-radio .radio-grid>div:last-child{grid-column:2;grid-row:3}
   #view-radio>footer{grid-column:1/-1}
   .chips{flex-wrap:wrap;overflow:visible;margin-inline:0;padding-inline:0}
@@ -344,6 +377,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
     <div class="chips" id="fchips" role="group"></div>
     <div class="fsum"><span id="fsumT"></span><button id="fclr" hidden>Limpiar</button></div>
   </div>
+  <div class="vtop"><div class="vseg" id="vseg" role="group" aria-label="Vista"><button data-v="constelacion"><span>Constelación</span><small>afinidad</small></button><button data-v="globo"><span>Globo</span><small>dónde</small></button><button data-v="sonido"><span>Sonido</span><small>cómo suena</small></button></div><div class="alt-ctl" id="altCtl" hidden></div></div>
   <div class="radio-grid">
     <div class="hive">
       <svg id="sv" viewBox="-190 -190 380 380" role="img" aria-label="Panal de radios ordenado por afinidad"><g id="world"><g id="mesh"></g><g id="ether"></g><g id="cells"></g><g id="whyG"></g></g></svg>
@@ -353,6 +387,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <div class="ctl"><button id="zi" aria-label="Acercar">+</button><button id="zo" aria-label="Alejar">−</button><button id="rl" aria-label="Girar a la izquierda">↺</button><button id="rr" aria-label="Girar a la derecha">↻</button><button id="zh" aria-label="Volver al centro">⌂</button><button id="lbl" aria-label="Mostrar u ocultar rótulos" aria-pressed="true">Aa</button></div>
       <div class="legend" id="legend" aria-label="Familias"></div>
       <div class="card" id="card" hidden role="dialog" aria-label="Ficha de radio"></div>
+      <div class="alt" id="alt" hidden></div>
     </div>
     <div><div class="nbh" id="nbTitle"></div><div id="nbs"></div></div>
   </div>
@@ -1007,9 +1042,9 @@ function tryUrl(url,token){return new Promise((res,rej)=>{
   const on=()=>done(true),off=()=>done(false);const t=setTimeout(()=>done(false),12000);
   audio.addEventListener("playing",on);audio.addEventListener("error",off);audio.src=url;const p=audio.play();if(p)p.catch(()=>{if(token===playToken)done(false)})})}
 async function play(s){
-  const token=++playToken;current=s;curList=[];curIdx=0;npReset(s);setBand(s);
+  const token=++playToken;current=s;if(window.altSync)altSync();curList=[];curIdx=0;npReset(s);setBand(s);
   mset("bT",s.n);mset("bA",stationDesc(s));setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
-  if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:FAM[s.g][0],album:"Dial Espejo",artwork:[{src:"icon-hex-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
+  if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:[FAM[s.g][0],CN[s.cc]||s.cc].join(" · "),album:"Dial Espejo",artwork:[{src:"icon-hex-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
   let list=[];try{list=await candidates(s)}catch(e){if(token===playToken){setStatus("sin conexión al directorio");setBtn(false)}return}
   for(let attempt=0;attempt<2;attempt++){
     for(const[i,c]of list.entries()){if(token!==playToken)return;
@@ -1065,7 +1100,7 @@ function npShow(s,j){np.cur=j;if(!npSheet.hidden)setTimeout(renderSheet,0);
   else{mset("bT",s.n);mset("bA",[j&&j.stream_description&&j.stream_description!==s.n?j.stream_description:"",stationDesc(s)].filter(Boolean).join(" · "))}
   if(j&&j.artwork){np.art=true;$("art").innerHTML=`<img src="${esc(j.artwork)}" alt="Carátula de ${esc(song||"")}">`}else{np.art=false;setBtn(!audio.paused)}
   const line=song&&artist?`${artist} · ${song}`:(raw||prog||"");
-  if(line!==np.last&&"mediaSession" in navigator){np.last=line;try{navigator.mediaSession.metadata=new MediaMetadata({title:song||prog||raw||s.n,artist:artist||s.n,album:s.n,
+  if(line!==np.last&&"mediaSession" in navigator){np.last=line;try{navigator.mediaSession.metadata=new MediaMetadata({title:song||prog||raw||s.n,artist:song&&artist?`${artist} · ${s.n}`:(song||prog||raw)?s.n:[FAM[s.g][0],CN[s.cc]||s.cc].join(" · "),album:s.n,
     artwork:[{src:(j&&j.artwork)||"icon-hex-512.png",sizes:j&&j.artwork?"300x300":"512x512",type:j&&j.artwork?"image/jpeg":"image/png"}]})}catch(e){}}
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&!audio.paused)npPoll()});
@@ -1144,9 +1179,138 @@ setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 
 </script>
 <script>
+/* ===================== Dial Espejo · Otras vistas de la radio: Globo y Sonido =====================
+   La constelación sigue siendo la vista principal. Globo y Sonido se dibujan encima del panal, con las mismas radios,
+   y al tocar una radio llaman a pick(): suena, la constelación se reordena por detrás y la lista de afines se actualiza.
+   d3, topojson y el contorno de los continentes se cargan solo la primera vez que se abre una de estas vistas. */
+(()=>{
+const COLR=g=>FAM[g][2];
+const ref=()=>current||F||S.find(s=>s.cc==="CL")||S[0];
+const RMV=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hsh=s=>{let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0};
+// Posición estable por radio: las de un mismo país se reparten alrededor de su punto en el mapa
+const perCC={};S.forEach(s=>{(perCC[s.cc]=perCC[s.cc]||[]).push(s)});
+Object.values(perCC).forEach(l=>l.forEach((s,i)=>{const a=i*2.399,r=l.length>1?1.2+1.6*Math.sqrt(i):0;s.geo=[s.ll[1]+r*Math.cos(a)*1.3,s.ll[0]+r*Math.sin(a)];const h=hsh(s.n);s.jx=(h%1000)/1000-.5;s.jy=((h>>>10)%1000)/1000-.5}));
+const aff=(s,n)=>S.filter(x=>x!==s&&!x.dead).map(x=>({x,v:sim(s,x).v})).sort((a,b)=>b.v-a.v).slice(0,n);
+const choose=s=>{pick(s)};
+
+let libs=null;
+function need(){if(libs)return libs;
+  const js=src=>new Promise((ok,ko)=>{const e=document.createElement("script");e.src=src;e.onload=ok;e.onerror=ko;document.head.appendChild(e)});
+  libs=js("https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js").then(()=>js("https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"))
+    .then(()=>fetch("land-110m.json")).then(r=>r.json()).catch(e=>{libs=null;throw e});return libs}
+
+/* ---------- Globo: la afinidad sobre el mapa real ---------- */
+const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,anim=null,rot=[0,0,0],land,gr,shown=null;
+  function mount(st,LAND){land=topojson.feature(LAND,LAND.objects.land);gr=d3.geoGraticule10();
+    st.innerHTML=`<svg viewBox="0 0 360 360" role="img" aria-label="Globo con las radios del catálogo"></svg><div class="alt-cap" id="altCap"></div><div class="alt-hint">Arrastra para girar · toca un punto para escuchar</div>`;
+    svg=d3.select(st.querySelector("svg"));proj=d3.geoOrthographic().scale(158).translate([180,184]).clipAngle(90);path=d3.geoPath(proj);
+    svg.append("circle").attr("cx",180).attr("cy",184).attr("r",158).attr("fill","#0B0B10").attr("stroke","var(--line)");
+    grat=svg.append("path").attr("fill","none").attr("stroke","#191920").attr("stroke-width",.6);
+    gLand=svg.append("path").attr("fill","#1F1F29").attr("stroke","#2E2E3A").attr("stroke-width",.5);
+    gArc=svg.append("g");gDot=svg.append("g");gLbl=svg.append("g");
+    const c=ref();shown=c;rot=[-c.geo[0],-c.geo[1]+12,0];proj.rotate(rot);
+    let moved=0;svg.call(d3.drag().on("start",()=>{moved=0;anim&&anim.stop()}).on("drag",e=>{moved+=Math.abs(e.dx)+Math.abs(e.dy);rot=[rot[0]+e.dx*.32,Math.max(-80,Math.min(80,rot[1]-e.dy*.32)),0];proj.rotate(rot);draw()})
+      .on("end",e=>{if(moved<6){const se=e.sourceEvent,t=se.changedTouches?se.changedTouches[0]:se;const el=document.elementFromPoint(t.clientX,t.clientY);const i=el&&el.dataset&&el.dataset.i;if(i!=null)choose(S[+i])}}));
+    draw()}
+  function draw(){const cur=ref(),c=proj.invert([180,184]);grat.attr("d",path(gr));gLand.attr("d",path(land));
+    const A=aff(cur,6);gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
+      .attr("d",d=>path({type:"LineString",coordinates:[cur.geo,d.x.geo]}));
+    const vis=S.filter(s=>d3.geoDistance(s.geo,c)<Math.PI/2-.02);const near=new Set(A.map(a=>a.x));
+    gDot.selectAll("circle").data(vis,d=>d.i).join("circle").attr("data-i",d=>d.i)
+      .attr("cx",d=>proj(d.geo)[0]).attr("cy",d=>proj(d.geo)[1]).attr("r",d=>d===cur?7:near.has(d)?5:2.2+d.l*.55)
+      .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur||near.has(d)?1:d.dead?.2:.6).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
+    const L=[cur,...A.map(a=>a.x)].filter(s=>d3.geoDistance(s.geo,c)<Math.PI/2-.05),placed=[];
+    gLbl.selectAll("text").data(L,d=>d.i).join("text").attr("class",d=>"alt-lbl"+(d===cur?" cur":"")).text(d=>`${flag(d.cc)} ${d.sh}`)
+      .each(function(d){const [x,y]=proj(d.geo);let ly=y-10;for(const p of placed)if(Math.abs(p[0]-x)<46&&Math.abs(p[1]-ly)<13)ly=p[1]-14;placed.push([x,ly]);d3.select(this).attr("x",x).attr("y",ly).attr("text-anchor",x>300?"end":x<60?"start":"middle")});
+    $("altCap").textContent=`${cur.n} · ${A.filter(a=>a.x.cc!==cur.cc).length} de 6 afines en otros países`}
+  function sync(){const s=ref();if(s===shown){draw();return}shown=s;anim&&anim.stop();const to=[-s.geo[0],-s.geo[1]+12,0],ip=d3.interpolate(rot.slice(),to);
+    if(RMV){rot=to;proj.rotate(rot);draw();return}
+    anim=d3.timer(t=>{const k=d3.easeCubicInOut(Math.min(1,t/900));rot=ip(k);proj.rotate(rot);draw();if(k>=1)anim.stop()})}
+  return{mount,sync,unmount(){anim&&anim.stop()}}})();
+
+/* ---------- Sonido: un mapa de dos ejes; cada eje se elige entre seis criterios ---------- */
+const SCL=(S.find(s=>s.cc==="CL")||S[0]).ll;
+const KMV=S.map(s=>km(SCL,s.ll)),KMS=[...KMV].sort((a,b)=>a-b),KMR=KMV.map(v=>KMS.indexOf(v)/(KMS.length-1));
+let anc=null;   // radio ancla: la afinidad se mide contra ella y solo cambia cuando la anclas de nuevo
+const AXES={
+  habla:{n:"Habla o música",lo:"Hablada",hi:"Musical",v:s=>1-s.talk,j:.13,f:s=>`${Math.round(s.talk*100)}% habla`},
+  energia:{n:"Energía",lo:"Serena",hi:"Intensa",v:s=>s.en,j:.13,f:s=>`energía ${Math.round(s.en*100)}%`},
+  epoca:{n:"Época del estilo",lo:"Tradicional",hi:"Actual",v:s=>(FAM[s.g][3]-1700)/290,j:.22,f:s=>`estilo de ${FAM[s.g][3]}`},
+  distancia:{n:"Distancia",lo:"Cercana",hi:"Lejana",v:s=>KMR[s.i],j:.06,f:s=>`${Math.round(km(SCL,s.ll)).toLocaleString("es-CL")} km de Santiago`},
+  alcance:{n:"Alcance",lo:"De nicho",hi:"Masiva",v:s=>(s.l-1)/4,j:.6,f:s=>["de nicho","pequeña","mediana","grande","masiva"][s.l-1]},
+  afinidad:{n:"Afinidad",lo:"Distinta",hi:"Afín",v:null,j:.05,f:s=>s===anc?"la ancla":`${Math.round(sim(anc,s).v*100)}% afín a ${anc.sh}`}
+};
+const SONIDO=(()=>{let svg,hov=null,ax=store.get("dial-ejes",{x:"habla",y:"energia"}),aRank=new Map();const P=30,PT=62,Wd=360;
+  if(!AXES[ax.x]||!AXES[ax.y]||ax.x===ax.y)ax={x:"habla",y:"energia"};
+  const usesAff=()=>ax.x==="afinidad"||ax.y==="afinidad";
+  const val=(k,s)=>k==="afinidad"?(s===anc?1:aRank.get(s)):AXES[k].v(s);
+  const pos=(k,s,jit)=>Math.max(0,Math.min(1,val(k,s)+jit*AXES[k].j*(k==="alcance"?.25:1)));
+  const x=s=>P+pos(ax.x,s,s.jx)*(Wd-2*P),y=s=>PT+(1-pos(ax.y,s,s.jy))*(Wd-P-PT);
+  const opts=sel=>Object.entries(AXES).map(([k,a])=>`<option value="${k}"${k===sel?" selected":""}>${a.n}</option>`).join("");
+  function mount(st){
+    if(!anc)anc=S.find(s=>s.n===store.get("dial-ancla",""))||ref();
+    const ctl=$("altCtl");ctl.hidden=false;ctl.innerHTML=`<div class="axes"><label><span>Eje horizontal</span><select id="axX">${opts(ax.x)}</select></label><button id="axSw" aria-label="Intercambiar ejes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></button><label><span>Eje vertical</span><select id="axY">${opts(ax.y)}</select></label></div><div class="anc" id="anc"></div>`;
+    st.innerHTML=`<div class="alt-plot"><svg viewBox="0 0 360 360" role="img" aria-label="Radios ordenadas según dos criterios"></svg><div class="alt-cap" id="altCap"></div></div>`;
+    const save=()=>{$("axX").value=ax.x;$("axY").value=ax.y;store.set("dial-ejes",ax);frame();draw(true)};
+    const set=(k,v)=>{const o=k==="x"?"y":"x";if(ax[o]===v)ax[o]=ax[k];ax[k]=v;save()};
+    $("axX").onchange=e=>set("x",e.target.value);$("axY").onchange=e=>set("y",e.target.value);
+    $("axSw").onclick=()=>{ax={x:ax.y,y:ax.x};save()};
+    svg=d3.select(st.querySelector(".alt-plot svg"));
+    svg.append("line").attr("x1",180).attr("x2",180).attr("y1",PT-4).attr("y2",Wd-P+8).attr("stroke","#191920");
+    svg.append("line").attr("y1",PT+(Wd-P-PT)/2).attr("y2",PT+(Wd-P-PT)/2).attr("x1",P-8).attr("x2",Wd-P+8).attr("stroke","#191920");
+    svg.append("g").attr("class","sq");svg.append("g").attr("class","sd");svg.append("g").attr("class","sf");
+    const ev=e=>{const r=svg.node().getBoundingClientRect(),px=(e.clientX-r.left)/r.width*360,py=(e.clientY-r.top)/r.height*360;let b=null,bd=1e9;S.forEach(s=>{const d=Math.hypot(x(s)-px,y(s)-py);if(d<bd){bd=d;b=s}});return{px,py,b}};
+    const node=svg.node();
+    node.addEventListener("pointerdown",e=>{node.setPointerCapture(e.pointerId);hov=ev(e);draw()});
+    node.addEventListener("pointermove",e=>{if(!hov)return;hov=ev(e);draw()});
+    node.addEventListener("pointerup",()=>{if(!hov)return;const b=hov.b;hov=null;draw();choose(b)});
+    node.addEventListener("pointercancel",()=>{hov=null;draw()});
+    frame();draw()}
+  function renderAnc(){const el=$("anc");if(!el)return;el.hidden=!usesAff();if(el.hidden)return;const c=ref(),same=c===anc;
+    el.innerHTML=`<span class="lk" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="t">Afinidad respecto de <b>${flag(anc.cc)} ${esc(anc.n)}</b></span>${same?"":`<button id="ancSet">Anclar a ${esc(c.sh)}</button>`}`;
+    const b=$("ancSet");if(b)b.onclick=()=>{anc=ref();store.set("dial-ancla",anc.n);frame();draw(true)}}
+  function frame(){const X=AXES[ax.x],Y=AXES[ax.y];
+    if(usesAff()){const o=S.filter(s=>s!==anc).map(s=>({s,v:sim(anc,s).v})).sort((a,b)=>a.v-b.v);aRank=new Map(o.map((e,i)=>[e.s,.94*i/(o.length-1)]))}
+    renderAnc();
+    const q=svg.select(".sq");q.selectAll("*").remove();
+    [[`${Y.hi} · ${X.lo}`,P+6,PT-8,"start"],[`${Y.hi} · ${X.hi}`,Wd-P-6,PT-8,"end"],[`${Y.lo} · ${X.lo}`,P+6,Wd-P-26,"start"],[`${Y.lo} · ${X.hi}`,Wd-P-6,Wd-P-26,"end"]]
+      .forEach(([t,a,b,an])=>q.append("text").attr("class","alt-quad").attr("x",a).attr("y",b).attr("text-anchor",an).text(t));
+    q.append("text").attr("class","alt-axis").attr("x",P).attr("y",Wd-8).text(`← ${X.lo.toLowerCase()}`);
+    q.append("text").attr("class","alt-axis").attr("x",Wd-P).attr("y",Wd-8).attr("text-anchor","end").text(`${X.hi.toLowerCase()} →`);
+    const my=PT+(Wd-P-PT)/2;q.append("text").attr("class","alt-axis").attr("x",12).attr("y",my).attr("transform",`rotate(-90 12 ${my})`).attr("text-anchor","middle").text(`${Y.lo.toLowerCase()} ↔ ${Y.hi.toLowerCase()}`)}
+  function draw(an){if(!svg)return;const cur=ref(),A=new Set(aff(cur,6).map(a=>a.x)),t=hov?hov.b:null,ua=usesAff();
+    const c=svg.select(".sd").selectAll("circle").data(S,d=>d.i).join("circle");
+    c.attr("r",d=>d===cur?7:d===t?6:A.has(d)?4.5:3.4).attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur||d===t||A.has(d)?1:d.dead?.2:hov?.35:.7)
+      .attr("stroke",d=>d===cur?"#EDEDF2":ua&&d===anc?"#EDEDF2":"none").attr("stroke-width",d=>d===cur?2:1.2).attr("stroke-dasharray",d=>d!==cur&&ua&&d===anc?"2 2":null);
+    (an&&!RMV?c.transition().duration(650).ease(d3.easeCubicInOut):c).attr("cx",x).attr("cy",y);
+    const f=svg.select(".sf");f.selectAll("*").remove();const who=hov?t:cur;
+    if(hov){f.append("circle").attr("cx",hov.px).attr("cy",hov.py).attr("r",30).attr("fill","none").attr("stroke","#EDEDF2").attr("stroke-opacity",.5);
+      f.append("line").attr("x1",hov.px).attr("y1",hov.py).attr("x2",x(t)).attr("y2",y(t)).attr("stroke","#EDEDF2").attr("stroke-opacity",.5)}
+    const lab=(s,cls)=>{const l=f.append("text").attr("class","alt-lbl "+cls).attr("x",x(s)).attr("y",y(s)-12).attr("text-anchor",x(s)>290?"end":x(s)<70?"start":"middle").text(`${flag(s.cc)} ${s.n}`);if(an&&!RMV)l.attr("opacity",0).transition().delay(500).duration(200).attr("opacity",1)};
+    if(ua&&anc!==who)lab(anc,"anc");lab(who,"cur");
+    $("altCap").textContent=hov?`${t.n} · ${AXES[ax.x].f(t)} · ${AXES[ax.y].f(t)}`:"Desliza el dedo y suelta para escuchar"}
+  return{mount,sync(){renderAnc();draw()},unmount(){svg=null;const c=$("altCtl");c.hidden=true;c.innerHTML=""}}})();
+
+/* ---------- Selector de vista ---------- */
+const VIEWS={globo:GLOBO,sonido:SONIDO};let view=null;
+const alt=$("alt"),seg=$("vseg");
+async function show(v){if(!VIEWS[v])v="constelacion";
+  seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===v));store.set("dial-vista",v);
+  if(view&&VIEWS[view])VIEWS[view].unmount();view=v;
+  if(v==="constelacion"){alt.hidden=true;alt.innerHTML="";return}
+  alt.hidden=false;alt.innerHTML=`<div class="alt-wait">Cargando ${v==="globo"?"el globo":"el mapa de sonido"}…</div>`;
+  let LAND;try{LAND=await need()}catch(e){if(view===v)alt.innerHTML=`<div class="alt-wait">No se pudo cargar esta vista. Revisa la conexión y vuelve a tocarla.</div>`;return}
+  if(view!==v)return;alt.innerHTML="";VIEWS[v].mount(alt,LAND)}
+seg.querySelectorAll("button").forEach(b=>b.onclick=()=>show(b.dataset.v));
+window.altSync=()=>{if(view&&VIEWS[view]&&!alt.hidden&&alt.children.length&&window.d3)VIEWS[view].sync()};
+show(store.get("dial-vista","constelacion"));
+})();
+</script>
+<script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-03t";
+const APP_VERSION="2026-11-05a";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
