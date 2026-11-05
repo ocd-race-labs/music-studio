@@ -1229,7 +1229,7 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     $("gzi").onclick=()=>by(1.8);$("gzo").onclick=()=>by(1/1.8);
     if(k>1)svg.call(zoom.transform,d3.zoomIdentity.scale(k));
     draw()}
-  function draw(){const cur=ref();proj.scale(R0*k);const c=proj.invert([180,184]);
+  function draw(){const cur=ref();proj.scale(R0*k).rotate(rot);const c=proj.invert([180,184]);
     sea.attr("r",R0*k);grat.attr("d",path(gr));gLand.attr("d",path(land));
     const A=aff(cur,6);gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
       .attr("d",d=>path({type:"LineString",coordinates:[cur.geo,d.x.geo]}));
@@ -1339,7 +1339,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-05b";
+const APP_VERSION="2026-11-05c";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
