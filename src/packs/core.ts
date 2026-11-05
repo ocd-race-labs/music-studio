@@ -64,7 +64,8 @@ export const LATIN_VOICES = [
   item('sound', 'sound.maracas', 'Shaker', 'Shaker', { voice: 'maracas' }),
   item('sound', 'sound.clave', 'Clave', 'Clave', { voice: 'clave' }),
   item('sound', 'sound.agogo', 'Agogô', 'Agogó', { voice: 'agogo' }),
-  item('sound', 'sound.cowbell', 'Cowbell', 'Cencerro', { voice: 'cowbell' }),
+  item('sound', 'sound.cowbell', 'Low cowbell (mambo)', 'Cencerro grave (mambo)', { voice: 'cowbell' }),
+  item('sound', 'sound.cowbell-high', 'High cowbell (cha-cha)', 'Cencerro agudo (chachachá)', { voice: 'cowbellHigh' }),
 ];
 
 /** The extra rows of a full rock kit: two toms, a ride and a china. Kick, snare, hats and crash are shared. */

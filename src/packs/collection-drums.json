@@ -2615,7 +2615,7 @@
  },
  "latin-perc": {
   "id": "latin-perc",
-  "trimDb": -0.5,
+  "trimDb": -0.6,
   "pieces": {
    "congaLow": {
     "layers": [
@@ -2720,15 +2720,22 @@
      ],
      [
       "cowbell-m1.mp3"
+     ]
+    ]
+   },
+   "cowbellHigh": {
+    "layers": [
+     [
+      "cowbellHigh-s1.mp3"
      ],
      [
-      "cowbell-h1.mp3"
+      "cowbellHigh-m1.mp3"
      ]
     ]
    }
   },
   "license": "CC0 1.0",
   "source": "Versilian Community Sample Library (VCSL)",
-  "bytes": 361040
+  "bytes": 376077
  }
 }

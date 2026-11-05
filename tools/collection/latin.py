@@ -31,7 +31,7 @@ KITS = {
         "tom": dict(layers=vl(M + "Conga/", "Tumba_HitN", (1, 2, 3, 4), tail="_Sum"), length=0.9, gain=-2),
         "crash": dict(layers=[[I + f"Suspended Cymbal 1/susCymb1_hit_{d}1.wav"] for d in ("mp", "f", "fff")], length=3.0, gain=-6),
     },
-    # Latin hand percussion, in the latin rows: tumba, conga, bongó, güiro, shaker, clave, agogó, cencerro.
+    # Latin hand percussion, in the latin rows: tumba, conga, bongó, güiro, shaker, clave, agogó, two cencerros.
     "latin-perc": {
         "congaLow": dict(layers=vl(M + "Conga/", "Tumba_HitN", (1, 2, 3, 4), tail="_Sum"), length=0.9, gain=0),
         "congaHigh": dict(layers=vl(M + "Conga/", "Conga_HitN", (1, 2, 3), tail="_Sum"), length=0.8, gain=0),
@@ -40,7 +40,9 @@ KITS = {
         "maracas": dict(layers=[[I + f"Shaker, Small/Mid_ShakerHighFaster_{d}_{r}.wav" for d in ("Down", "Up") for r in ("rr1", "rr2")]], length=0.35, gain=-6),
         "clave": dict(layers=[[I + f"Claves/Claves2_Hit_v{v}_rr1_Mid.wav"] for v in (1, 2, 3)], length=0.5, gain=-4),
         "agogo": dict(layers=[[I + f"Agogo Bells/Agogo_High_v{v}_rr1_Mid.wav"] for v in (1, 2, 3)], length=0.9, gain=-6),
-        "cowbell": dict(layers=[[I + f"Cowbells/Cowbell1_Hit_v{v}_rr1_Mid.wav"] for v in (2, 3, 4)], length=0.8, gain=-6),
+        # Two bells, as on a timbal stand: the low mambo bell (about 460 Hz) and the high cha-cha bell (about 690 Hz).
+        "cowbell": dict(layers=[[I + f"Cowbells/Cowbell2_Normal_v{v}_rr1_Mid.wav"] for v in (2, 3)], length=0.9, gain=-6),
+        "cowbellHigh": dict(layers=[[I + f"Cowbells/Cowbell1_Normal_v{v}_rr1_Mid.wav"] for v in (2, 3)], length=0.8, gain=-2),
     },
 }
 TRIM_TO = -21.0  # LUFS of the kit's test groove, like every other instrument

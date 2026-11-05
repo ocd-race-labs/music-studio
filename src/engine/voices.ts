@@ -538,6 +538,12 @@ function latinPercussion(): DrumVoice {
         bellB.triggerAttackRelease(800, '16n', t, vel);
         break;
       }
+      case 'cowbellHigh': {
+        const t = at('cowbellHigh', time);
+        bellA.triggerAttackRelease(810, '16n', t, vel);
+        bellB.triggerAttackRelease(1200, '16n', t, vel);
+        break;
+      }
       default: break;
     }
   });
