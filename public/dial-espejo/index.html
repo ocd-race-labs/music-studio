@@ -121,6 +121,9 @@ a{color:inherit}
 .alt-hint{position:absolute;left:12px;bottom:10px;right:12px;font:400 11px var(--mono);color:var(--dim);pointer-events:none}
 .alt-lbl{font:500 11px var(--sans);fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:3.2px;stroke-linejoin:round;pointer-events:none}
 .alt-lbl.cur{font-weight:600;font-size:12.5px}
+.alt-lbl.far{font-size:10px;font-weight:400;fill:#B4B4BE}
+.alt-zoom{position:absolute;right:10px;top:44px;display:grid;gap:6px}
+.alt-zoom button{width:36px;height:36px;border-radius:11px;background:rgba(237,237,242,.07);border:1px solid var(--line);color:var(--ink);font-size:18px;display:grid;place-items:center;padding:0;cursor:pointer}
 .alt-lbl.anc{font-size:10.5px;fill:var(--muted)}
 .alt-axis{font:400 10px var(--mono);fill:var(--dim)}
 .alt-quad{font:500 11px var(--sans);fill:#3C3C48}
@@ -1200,33 +1203,59 @@ function need(){if(libs)return libs;
   libs=js("https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js").then(()=>js("https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"))
     .then(()=>fetch("land-110m.json")).then(r=>r.json()).catch(e=>{libs=null;throw e});return libs}
 
-/* ---------- Globo: la afinidad sobre el mapa real ---------- */
-const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,anim=null,rot=[0,0,0],land,gr,shown=null;
+/* ---------- Globo: la afinidad sobre el mapa real; se gira arrastrando y se acerca pellizcando ---------- */
+const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=[0,0,0],land,gr,shown=null,k=1,zoom,last=null;
+  const R0=158,KMAX=12;
   function mount(st,LAND){land=topojson.feature(LAND,LAND.objects.land);gr=d3.geoGraticule10();
-    st.innerHTML=`<svg viewBox="0 0 360 360" role="img" aria-label="Globo con las radios del catálogo"></svg><div class="alt-cap" id="altCap"></div><div class="alt-hint">Arrastra para girar · toca un punto para escuchar</div>`;
-    svg=d3.select(st.querySelector("svg"));proj=d3.geoOrthographic().scale(158).translate([180,184]).clipAngle(90);path=d3.geoPath(proj);
-    svg.append("circle").attr("cx",180).attr("cy",184).attr("r",158).attr("fill","#0B0B10").attr("stroke","var(--line)");
+    st.innerHTML=`<svg viewBox="0 0 360 360" role="img" aria-label="Globo con las radios del catálogo"></svg><div class="alt-cap" id="altCap"></div><div class="alt-zoom"><button id="gzi" aria-label="Acercar">+</button><button id="gzo" aria-label="Alejar">−</button></div><div class="alt-hint" id="gHint">Arrastra para girar · pellizca para acercar</div>`;
+    svg=d3.select(st.querySelector("svg"));proj=d3.geoOrthographic().translate([180,184]).clipAngle(90);path=d3.geoPath(proj);
+    sea=svg.append("circle").attr("cx",180).attr("cy",184).attr("fill","#0B0B10").attr("stroke","var(--line)");
     grat=svg.append("path").attr("fill","none").attr("stroke","#191920").attr("stroke-width",.6);
     gLand=svg.append("path").attr("fill","#1F1F29").attr("stroke","#2E2E3A").attr("stroke-width",.5);
     gArc=svg.append("g");gDot=svg.append("g");gLbl=svg.append("g");
-    const c=ref();shown=c;rot=[-c.geo[0],-c.geo[1]+12,0];proj.rotate(rot);
-    let moved=0;svg.call(d3.drag().on("start",()=>{moved=0;anim&&anim.stop()}).on("drag",e=>{moved+=Math.abs(e.dx)+Math.abs(e.dy);rot=[rot[0]+e.dx*.32,Math.max(-80,Math.min(80,rot[1]-e.dy*.32)),0];proj.rotate(rot);draw()})
-      .on("end",e=>{if(moved<6){const se=e.sourceEvent,t=se.changedTouches?se.changedTouches[0]:se;const el=document.elementFromPoint(t.clientX,t.clientY);const i=el&&el.dataset&&el.dataset.i;if(i!=null)choose(S[+i])}}));
+    const c=ref();shown=c;rot=[-c.geo[0],-c.geo[1]+(k>1.5?0:12),0];proj.rotate(rot);
+    // d3.zoom da pellizco, rueda y arrastre; el arrastre se traduce en giro y la escala en acercamiento
+    let moved=0;
+    zoom=d3.zoom().scaleExtent([1,KMAX]).clickDistance(6)
+      .on("start",e=>{moved=0;anim&&anim.stop();last=e.transform})
+      .on("zoom",e=>{const t=e.transform;if(last){const dx=t.x-last.x,dy=t.y-last.y;moved+=Math.abs(dx)+Math.abs(dy);
+          if(t.k===last.k){const f=.32/k;rot=[rot[0]+dx*f,Math.max(-85,Math.min(85,rot[1]-dy*f)),0]}}
+        last=t;k=t.k;draw()});
+    svg.call(zoom).on("dblclick.zoom",null);
+    svg.on("click",e=>{const [px,py]=d3.pointer(e);let b=null,bd=22;
+      S.forEach(s=>{if(!s._v)return;const p=proj(s.geo),d=Math.hypot(p[0]-px,p[1]-py);if(d<bd){bd=d;b=s}});if(b)choose(b)});
+    // Los botones acercan sobre la radio que suena, no sobre el centro del globo
+    const by=f=>{const c=ref();if(c._v&&f>1){anim&&anim.stop();rot=[-c.geo[0],-c.geo[1],0];proj.rotate(rot)}return svg.transition().duration(RMV?0:350).call(zoom.scaleBy,f,[180,184])};
+    $("gzi").onclick=()=>by(1.8);$("gzo").onclick=()=>by(1/1.8);
+    if(k>1)svg.call(zoom.transform,d3.zoomIdentity.scale(k));
     draw()}
-  function draw(){const cur=ref(),c=proj.invert([180,184]);grat.attr("d",path(gr));gLand.attr("d",path(land));
+  function draw(){const cur=ref();proj.scale(R0*k);const c=proj.invert([180,184]);
+    sea.attr("r",R0*k);grat.attr("d",path(gr));gLand.attr("d",path(land));
     const A=aff(cur,6);gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
       .attr("d",d=>path({type:"LineString",coordinates:[cur.geo,d.x.geo]}));
-    const vis=S.filter(s=>d3.geoDistance(s.geo,c)<Math.PI/2-.02);const near=new Set(A.map(a=>a.x));
-    gDot.selectAll("circle").data(vis,d=>d.i).join("circle").attr("data-i",d=>d.i)
-      .attr("cx",d=>proj(d.geo)[0]).attr("cy",d=>proj(d.geo)[1]).attr("r",d=>d===cur?7:near.has(d)?5:2.2+d.l*.55)
-      .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur||near.has(d)?1:d.dead?.2:.6).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
-    const L=[cur,...A.map(a=>a.x)].filter(s=>d3.geoDistance(s.geo,c)<Math.PI/2-.05),placed=[];
-    gLbl.selectAll("text").data(L,d=>d.i).join("text").attr("class",d=>"alt-lbl"+(d===cur?" cur":"")).text(d=>`${flag(d.cc)} ${d.sh}`)
-      .each(function(d){const [x,y]=proj(d.geo);let ly=y-10;for(const p of placed)if(Math.abs(p[0]-x)<46&&Math.abs(p[1]-ly)<13)ly=p[1]-14;placed.push([x,ly]);d3.select(this).attr("x",x).attr("y",ly).attr("text-anchor",x>300?"end":x<60?"start":"middle")});
-    $("altCap").textContent=`${cur.n} · ${A.filter(a=>a.x.cc!==cur.cc).length} de 6 afines en otros países`}
-  function sync(){const s=ref();if(s===shown){draw();return}shown=s;anim&&anim.stop();const to=[-s.geo[0],-s.geo[1]+12,0],ip=d3.interpolate(rot.slice(),to);
+    const near=new Set(A.map(a=>a.x));
+    S.forEach(s=>{s._v=false;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;const p=proj(s.geo);s._p=p;s._v=p[0]>-10&&p[0]<370&&p[1]>-10&&p[1]<370});
+    const vis=S.filter(s=>s._v);
+    // Los puntos crecen un poco al acercar, pero mucho menos que el mapa: así las radios de una misma zona se separan
+    const g=Math.min(1.9,Math.pow(k,.3));
+    gDot.selectAll("circle").data(vis,d=>d.i).join("circle")
+      .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>(d===cur?7:near.has(d)?5:2.2+d.l*.55)*(d===cur?1:g))
+      .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur||near.has(d)?1:d.dead?.2:.7).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
+    // Nombres: la que suena y sus afines siempre; al acercar, también las demás que quepan sin taparse
+    const pri=[cur,...A.map(a=>a.x)].filter(s=>s._v);
+    const extra=k>=2.2?vis.filter(s=>s!==cur&&!near.has(s)).sort((a,b)=>b.l-a.l):[];
+    const placed=[],L=[];
+    for(const s of [...pri,...extra]){const [x,y]=s._p,w=(s.sh.length+3)*5.6,ly=y-9-(s===cur?2:0);
+      const box=[x-w/2,ly-10,x+w/2,ly+2];
+      if(placed.some(b=>box[0]<b[2]&&box[2]>b[0]&&box[1]<b[3]&&box[3]>b[1])){if(pri.includes(s)){box[1]+=26;box[3]+=26}else continue}
+      placed.push(box);L.push({s,x,y:box[3]-2})}
+    gLbl.selectAll("text").data(L,d=>d.s.i).join("text").attr("class",d=>"alt-lbl"+(d.s===cur?" cur":pri.includes(d.s)?"":" far"))
+      .attr("x",d=>d.x).attr("y",d=>d.y).attr("text-anchor","middle").text(d=>`${flag(d.s.cc)} ${d.s.sh}`);
+    $("altCap").textContent=`${cur.n} · ${A.filter(a=>a.x.cc!==cur.cc).length} de 6 afines en otros países`;
+    $("gHint").hidden=k>1.2}
+  function sync(){const s=ref();if(s===shown){draw();return}shown=s;anim&&anim.stop();const to=[-s.geo[0],-s.geo[1]+(k>1.5?0:12),0],ip=d3.interpolate(rot.slice(),to);
     if(RMV){rot=to;proj.rotate(rot);draw();return}
-    anim=d3.timer(t=>{const k=d3.easeCubicInOut(Math.min(1,t/900));rot=ip(k);proj.rotate(rot);draw();if(k>=1)anim.stop()})}
+    anim=d3.timer(t=>{const e=d3.easeCubicInOut(Math.min(1,t/900));rot=ip(e);proj.rotate(rot);draw();if(e>=1)anim.stop()})}
   return{mount,sync,unmount(){anim&&anim.stop()}}})();
 
 /* ---------- Sonido: un mapa de dos ejes; cada eje se elige entre seis criterios ---------- */
@@ -1310,7 +1339,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-05a";
+const APP_VERSION="2026-11-05b";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
