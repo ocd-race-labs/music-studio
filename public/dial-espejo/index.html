@@ -273,6 +273,19 @@ a{color:inherit}
 .upd summary::-webkit-details-marker{display:none}.upd summary em{font:400 11px var(--mono);color:var(--dim);font-style:normal}
 .upd summary span::before{content:"+ ";color:var(--dim)}.upd[open] summary span::before{content:"– "}
 #sbody,#sres{display:grid;gap:32px}
+/* Motor */
+#view-sports #stabs.sseg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (min-width:700px){#view-sports #stabs.sseg{grid-template-columns:repeat(var(--n,8),minmax(0,1fr))}}
+.fl1{width:20px;height:14px;object-fit:cover;border-radius:2px}
+.tdot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:8px;vertical-align:1px}
+.ld .rnd{display:inline-block;width:22px;font:400 11px var(--mono);color:var(--dim);font-style:normal}
+.ld.can span{color:var(--dim);text-decoration:line-through}.ld em.cx{color:var(--dim)}
+.ld.isnx{background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:8px}.ld em.nx{color:#F2B544}
+.mgh{display:grid;gap:2px;margin:0 4px 6px}.mgh b{font-size:16px;font-weight:600}.mgh span{font-size:12px;color:var(--muted)}
+.mgn{margin:6px 4px 2px;font-size:12px;color:var(--muted)}
+.st .l small{display:block;font-size:11px;color:var(--dim)}.st .l small.cc{display:inline;margin-left:6px;font:400 10px var(--mono)}
+.st .l.wl{font-weight:600}
+.mgcat{max-width:360px}
 /* MTB */
 .mctl{display:grid;gap:8px;margin:14px 0 4px;max-width:860px}
 .mrow{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
@@ -1401,7 +1414,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-05h";
+const APP_VERSION="2026-11-05i";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1773,7 +1786,8 @@ $("nq").addEventListener("input",e=>{ if(!e.target.value.trim() && explore){ exp
 
 /* ---- Deportes: tablas de posiciones, llaves, resultados y estadísticas (datos públicos de ESPN vía dial-sports) ---- */
 const SPORTY=new Set(["nba","nfl","deportes_extremos"]);
-const SPORT_TABS=[["mtb","MTB"],["soccer","Soccer"],["nba","NBA"],["nfl","NFL"],["nhl","NHL"],["mlb","MLB"]];
+const MOTOGP_ON=false; // se enciende cuando dial-sports tenga la ruta de MotoGP desplegada
+const SPORT_TABS=[["soccer","Fútbol"],["nba","NBA"],["nfl","NFL"],["nhl","NHL"],["mlb","MLB"],["f1","F1"],["motogp","MotoGP"],["mtb","MTB"]].filter(t=>MOTOGP_ON||t[0]!=="motogp");
 const SPMAP={nba:"basketball",nfl:"football",nhl:"hockey",mlb:"baseball"};
 let sport=store.get("dial-sport","soccer");if(sport==="xtreme")sport="mtb";if(!SPORT_TABS.some(t=>t[0]===sport))sport="soccer";
 // Fútbol: continente → país (o torneos internacionales) → liga, con los códigos de liga de ESPN
@@ -1803,10 +1817,10 @@ const tlogo=t=>{const h=t&&(t.logos?.[0]?.href||t.logo);return h?`<img class="tl
 const tname=t=>esc(t?.shortDisplayName||t?.displayName||t?.name||"");
 const note=x=>`<p class="note">${x}</p>`;
 let sportTok=0;
-function sportChips(){const c=$("stabs");c.innerHTML="";SPORT_TABS.forEach(([k,l])=>{const b=document.createElement("button");b.className="chip";b.textContent=l;b.setAttribute("aria-pressed",k===sport);
+function sportChips(){const c=$("stabs");c.innerHTML="";c.style.setProperty("--n",SPORT_TABS.length);SPORT_TABS.forEach(([k,l])=>{const b=document.createElement("button");b.className="chip";b.textContent=l;b.setAttribute("aria-pressed",k===sport);
   b.onclick=()=>{sport=k;store.set("dial-sport",k);loadSports()};c.appendChild(b)})}
 async function loadSports(){sportChips();upcM=0;const tok=++sportTok;const b=$("sbody");b.innerHTML=note("Cargando…");
-  try{if(sport==="mtb")await mtb(b,tok);else if(sport==="soccer")await soccer(b,tok);else await usSport(b,sport,tok)}
+  try{if(sport==="mtb")await mtb(b,tok);else if(sport==="f1")await f1(b,tok);else if(sport==="motogp")await motogp(b,tok);else if(sport==="soccer")await soccer(b,tok);else await usSport(b,sport,tok)}
   catch(e){if(tok===sportTok)b.innerHTML=note("No se pudieron traer los datos ahora. Inténtalo de nuevo en un rato.")}}
 // Solo titulares de MTB de competencia: downhill, enduro y cross country (Google News a veces trae noticias generales)
 const XTR=/(downhill|\benduro\b|\bmtb\b|mountain ?bik|bicicleta de monta|ciclismo de monta|mountainbike|\bdescenso\b|cross ?country|\bxco\b|\bxcm\b|\bxcc\b|world cup.*(dh|xc)|copa del mundo.*(mtb|descenso)|crankworx|\bews\b|enduro world|world series|cerro abajo|andes pac[ií]fico|transandes|red bull hardline|rampage)/i;
@@ -1854,6 +1868,73 @@ async function mtb(b,tok){
   const [qn,qi]=Q.deportes_extremos;const items=(await gather(qn,qi,7).catch(()=>[])).filter(it=>XTR.test(it.title||"")&&!XJUNK.test(it.title||""));
   if(tok!==sportTok||!$("mtbNews"))return;
   $("mtbNews").innerHTML=$("mtbNews").querySelector(".topic-head").outerHTML+(items.length?groupedHTML(items.slice(0,18)):note("No hay noticias de MTB de los últimos días."))}
+/* Motor: F1 directo desde ESPN (permite consultas desde el navegador) y MotoGP desde la API de resultados de motogp.com vía dial-sports */
+const TZCL={timeZone:"America/Santiago"};
+const gpName=n=>String(n||"").replace(/^(Qatar Airways|Heineken|Aramco|Gulf Air|STC|Crypto\.com|Lenovo|MSC Cruises|Pirelli|Moët & Chandon|AWS|Tag Heuer|TAG Heuer|Singapore Airlines|Etihad Airways|Louis Vuitton|Formula 1)\s+/i,"").replace(/ Grand Prix/," GP");
+const SES={FP1:"Práctica 1",FP2:"Práctica 2",FP3:"Práctica 3",SS:"Clasificación sprint",SR:"Sprint",Qual:"Clasificación",Race:"Carrera"};
+const whenCL=(d,o={})=>new Date(d).toLocaleString(LOCALE,{...TZCL,weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23",...o});
+const dayCL=d=>new Date(d).toLocaleDateString(LOCALE,{...TZCL,day:"numeric",month:"short"});
+const flagImg=(h,alt)=>h?`<img class="tl fl1" src="${esc(h)}" alt="${esc(alt||"")}" loading="lazy">`:"";
+async function f1(b,tok){
+  const E="https://site.api.espn.com/apis";const yr=new Date().getFullYear();
+  const [sb,st]=await Promise.all([fetch(`${E}/site/v2/sports/racing/f1/scoreboard?dates=${yr}`).then(r=>r.json()),fetch(`${E}/v2/sports/racing/f1/standings`).then(r=>r.json()).catch(()=>null)]);
+  if(tok!==sportTok)return;
+  const evs=(sb.events||[]).slice().sort((a,c)=>a.date.localeCompare(c.date));
+  const comp=(e,t)=>(e.competitions||[]).find(c=>c.type?.abbreviation===t);
+  const done=evs.filter(e=>e.status?.type?.completed&&!/CANCEL/.test(e.status.type.name));
+  const next=evs.find(e=>!e.status?.type?.completed&&!/CANCEL/.test(e.status?.type?.name||""));
+  const last=done.at(-1);
+  const sorted=c=>(c?.competitors||[]).slice().sort((a,x)=>(a.order||99)-(x.order||99));
+  const drv=(x,w)=>`<span class="gt${w?" w":""}">${flagImg(x.athlete?.flag?.href,x.athlete?.flag?.alt)}${esc(x.athlete?.displayName||"")}</span>`;
+  const nextHTML=next?`<div class="sp-card"><div class="sp-ct">${esc("Próximo GP")}</div><div class="mgh"><b>${esc(gpName(next.name))}</b><span>${esc([next.circuit?.fullName,next.circuit?.address?.country].filter(Boolean).join(" · "))}</span></div>
+    ${(next.competitions||[]).map(c=>`<div class="ld"><span>${esc(SES[c.type?.abbreviation]||c.type?.abbreviation||"")}</span><em>${esc(whenCL(c.date))}</em></div>`).join("")}</div>`:"";
+  const lastHTML=last?(()=>{const r=sorted(comp(last,"Race")),q=sorted(comp(last,"Qual")),sp=sorted(comp(last,"SR"));
+    return `<div class="sp-card"><div class="sp-ct">${esc("Último GP · "+gpName(last.name))}</div><div class="tw"><table class="st"><tbody>${r.slice(0,10).map(x=>`<tr><td class="sd">${x.order}</td><td class="l">${drv(x,x.winner)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="mgn">${[q[0]&&`${esc("Pole")}: ${esc(q[0].athlete?.displayName||"")}`,sp[0]&&`${esc("Sprint")}: ${esc(sp[0].athlete?.displayName||"")}`].filter(Boolean).join(" · ")}</p></div>`})():"";
+  const ch=st?.children||[];const pts=e=>{const s=(e.stats||[]).find(x=>x.name==="championshipPts"||x.name==="points");return s?.displayValue??""};
+  const rank=e=>(e.stats||[]).find(x=>x.name==="rank")?.displayValue??"";
+  const tbl=(rows,f)=>`<div class="tw"><table class="st"><thead><tr><th class="sd">#</th><th class="l"></th><th>${esc("Pts")}</th></tr></thead><tbody>${rows.map(f).join("")}</tbody></table></div>`;
+  const dr=ch.find(c=>/Driver/i.test(c.name))?.standings?.entries||[],co=ch.find(c=>/Constructor/i.test(c.name))?.standings?.entries||[];
+  const drRow=e=>`<tr><td class="sd">${esc(rank(e))}</td><td class="l">${flagImg(e.athlete?.flag?.href,e.athlete?.flag?.alt)}${esc(e.athlete?.displayName||"")}</td><td>${esc(pts(e))}</td></tr>`;
+  const coRow=e=>`<tr><td class="sd">${esc(rank(e))}</td><td class="l"><span class="tdot" style="background:#${esc(e.team?.color||"555")}"></span>${esc(e.team?.displayName||"")}</td><td>${esc(pts(e))}</td></tr>`;
+  const drHTML=dr.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de pilotos")}</div>${tbl(dr.slice(0,10),drRow)}${dr.length>10?`<details class="mprev"><summary><span>${esc("Resto de la parrilla")}</span><em>${dr.length-10}</em></summary>${tbl(dr.slice(10),drRow)}</details>`:""}</div>`:"";
+  const coHTML=co.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de constructores")}</div>${tbl(co,coRow)}</div>`:"";
+  let rn=0;const calHTML=`<div class="sp-card"><div class="sp-ct">${esc("Calendario")}</div>${evs.map(e=>{const can=/CANCEL/.test(e.status?.type?.name||"");if(!can)rn++;const w=sorted(comp(e,"Race"))[0];
+    const right=can?`<em class="cx">${esc("Cancelado")}</em>`:e.status?.type?.completed&&w?`<span class="gt w">${flagImg(w.athlete?.flag?.href)}${esc(w.athlete?.shortName||w.athlete?.displayName||"")}</span>`:e===next?`<em class="nx">${esc("Próximo")}</em>`:`<em>${esc(dayCL(comp(e,"Race")?.date||e.date))}</em>`;
+    return `<div class="ld${can?" can":""}${e===next?" isnx":""}"><span><i class="rnd">${can?"–":rn}</i>${esc(gpName(e.shortName||e.name))}</span>${right}</div>`}).join("")}</div>`;
+  b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>${esc("Fórmula 1 · "+yr)}</h2><p class="meta">${esc(`${done.length} de ${evs.filter(e=>!/CANCEL/.test(e.status?.type?.name||"")).length} grandes premios corridos · hora de Chile`)}</p></div></div>
+    <div class="sp-grid">${nextHTML}${lastHTML}${drHTML}${coHTML}${calHTML}</div></section>`}
+/* MotoGP: temporada actual por categoría (MotoGP, Moto2, Moto3) */
+const MGP_CATS=[["MotoGP","MotoGP"],["Moto2","Moto2"],["Moto3","Moto3"]];
+let mgpCat=store.get("dial-mgp","MotoGP");
+const mgp=(path,params={})=>espn("motogp/v1/results/"+path,params);
+async function motogp(b,tok){
+  const seasons=await mgp("seasons");const cur=seasons.find(s=>s.current)||seasons[0];
+  const all=(await mgp("events",{seasonUuid:cur.id})).filter(e=>!e.test).sort((a,c)=>a.date_start.localeCompare(c.date_start));
+  if(tok!==sportTok)return;
+  const fin=all.filter(e=>e.status==="FINISHED"),last=fin.at(-1),now=all.find(e=>e.status==="CURRENT")||all.find(e=>e.status==="NOT-STARTED");
+  const cats=await mgp("categories",{eventUuid:(last||all[0]).id});const cat=cats.find(c=>c.name.startsWith(mgpCat))||cats[0];
+  const [stand,ses,nses]=await Promise.all([mgp("standings",{seasonUuid:cur.id,categoryUuid:cat.id}).catch(()=>null),last?mgp("sessions",{eventUuid:last.id,categoryUuid:cat.id}).catch(()=>[]):[],now?mgp("sessions",{eventUuid:now.id,categoryUuid:(await mgp("categories",{eventUuid:now.id}).catch(()=>cats)).find(c=>c.name.startsWith(mgpCat))?.id||cat.id}).catch(()=>[]):[]]);
+  const rac=ses.find(s=>s.type==="RAC"),spr=ses.find(s=>s.type==="SPR");
+  const [rc,sc]=await Promise.all([rac?mgp(`session/${rac.id}/classification`,{test:"false"}).catch(()=>null):null,spr?mgp(`session/${spr.id}/classification`,{test:"false"}).catch(()=>null):null]);
+  if(tok!==sportTok)return;
+  const MS={FP1:"Práctica 1",FP2:"Práctica 2",PR:"Práctica",Q1:"Q1",Q2:"Q2",SPR:"Sprint",WUP:"Warm up",RAC:"Carrera",Q:"Clasificación",FP:"Práctica"};
+  const nm=e=>String(e.name||"").replace(/^GRAND PRIX OF (THE )?/i,"GP ").replace(/\s+$/,"").toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase()).replace(/^Gp /,"GP ");
+  const rider=r=>`${esc(r?.full_name||"")}<small class="cc">${esc(r?.country?.iso||"")}</small>`;
+  const tabs=`<div class="mseg mgcat" id="mgpCat">${MGP_CATS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k===mgpCat}">${l}</button>`).join("")}</div>`;
+  const nextHTML=now?`<div class="sp-card"><div class="sp-ct">${esc(now.status==="CURRENT"?"Este fin de semana":"Próximo GP")}</div><div class="mgh"><b>${esc(nm(now))}</b><span>${esc([now.circuit?.name,now.country?.name].filter(Boolean).join(" · "))}</span></div>
+    ${nses.map(s=>`<div class="ld"><span>${esc((MS[s.type]||s.type)+(s.number&&!/Q1|Q2/.test(s.type)?" "+s.number:""))}</span><em>${esc(s.status==="FINISHED"?"Terminada":whenCL(s.date))}</em></div>`).join("")}</div>`:"";
+  const clsT=(cl,n)=>`<div class="tw"><table class="st"><tbody>${(cl?.classification||[]).filter(x=>x.position).slice(0,n).map(x=>`<tr><td class="sd">${x.position}</td><td class="l${x.position===1?" wl":""}">${rider(x.rider)}<small>${esc(x.team?.name||"")}</small></td><td>${esc(x.position===1?x.time||"":x.gap?.first?"+"+x.gap.first:"")}</td></tr>`).join("")}</tbody></table></div>`;
+  const lastHTML=last&&rc?`<div class="sp-card"><div class="sp-ct">${esc("Último GP · "+nm(last))}</div>${clsT(rc,10)}${sc?.classification?.length?`<p class="mgn">${esc("Sprint")}: ${esc(sc.classification.find(x=>x.position===1)?.rider?.full_name||"")}</p>`:""}</div>`:"";
+  const sr=stand?.classification||[];
+  const srow=x=>`<tr><td class="sd">${x.position}</td><td class="l">${rider(x.rider)}<small>${esc(x.team?.name||x.constructor?.name||"")}</small></td><td>${x.race_wins??""}</td><td><b>${x.points}</b></td></tr>`;
+  const stT=rows=>`<div class="tw"><table class="st"><thead><tr><th class="sd">#</th><th class="l"></th><th>${esc("Vict.")}</th><th>${esc("Pts")}</th></tr></thead><tbody>${rows.map(srow).join("")}</tbody></table></div>`;
+  const stHTML=sr.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de pilotos")}</div>${stT(sr.slice(0,10))}${sr.length>10?`<details class="mprev"><summary><span>${esc("Resto")}</span><em>${sr.length-10}</em></summary>${stT(sr.slice(10))}</details>`:""}</div>`:"";
+  const calHTML=`<div class="sp-card"><div class="sp-ct">${esc("Calendario")}</div>${all.map((e,i)=>`<div class="ld${e===now?" isnx":""}"><span><i class="rnd">${i+1}</i>${esc(nm(e))}</span><em${e===now?' class="nx"':""}>${esc(e.status==="FINISHED"?"Corrido":e===now?(e.status==="CURRENT"?"En curso":"Próximo"):dayCL(e.date_start+"T12:00:00Z"))}</em></div>`).join("")}</div>`;
+  b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>${esc("MotoGP · "+cur.year)}</h2><p class="meta">${esc(`${fin.length} de ${all.length} grandes premios corridos · hora de Chile`)}</p></div></div>
+    <div class="mctl">${tabs}</div><div class="sp-grid">${nextHTML}${lastHTML}${stHTML}${calHTML}</div></section>`;
+  $("mgpCat").querySelectorAll("button").forEach(x=>x.onclick=()=>{mgpCat=x.dataset.k;store.set("dial-mgp",mgpCat);loadSports()})}
+
 /* NBA y NFL: fase de la temporada, posiciones por conferencia y división, resultados por división, llaves de playoffs y líderes */
 /* Próximos partidos: un mes a la vista (este y los dos siguientes), agrupados por día */
 let upcM=0;const UPC=`<section class="topic" id="upc"></section>`;
