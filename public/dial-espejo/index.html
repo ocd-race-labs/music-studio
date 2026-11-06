@@ -273,7 +273,13 @@ a{color:inherit}
 .upd summary::-webkit-details-marker{display:none}.upd summary em{font:400 11px var(--mono);color:var(--dim);font-style:normal}
 .upd summary span::before{content:"+ ";color:var(--dim)}.upd[open] summary span::before{content:"– "}
 #sbody,#sres{display:grid;gap:32px}
-/* Motor */
+/* Motor */.champ{padding:16px 16px 14px;margin-bottom:12px;display:grid;gap:4px;border-color:color-mix(in srgb,#F2B544 30%,var(--line))}
+.champ.won{background:linear-gradient(135deg,color-mix(in srgb,#F2B544 16%,var(--panel)),var(--panel) 70%);border-color:color-mix(in srgb,#F2B544 60%,transparent)}
+.chk{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#F2B544}
+.chn{font-size:26px;font-weight:600;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}.chn .fl1{width:28px;height:19px}
+.chd{margin:0;font-size:13px;color:var(--ink)}.chc{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+.cbadge{margin-left:8px;font:500 9.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:#111;background:#F2B544;border-radius:999px;padding:2px 6px;vertical-align:1px}
+
 #view-sports #stabs.sseg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (min-width:700px){#view-sports #stabs.sseg{grid-template-columns:repeat(var(--n,8),minmax(0,1fr))}}
 .fl1{width:20px;height:14px;object-fit:cover;border-radius:2px}
@@ -1414,7 +1420,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-05i";
+const APP_VERSION="2026-11-05j";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1786,7 +1792,7 @@ $("nq").addEventListener("input",e=>{ if(!e.target.value.trim() && explore){ exp
 
 /* ---- Deportes: tablas de posiciones, llaves, resultados y estadísticas (datos públicos de ESPN vía dial-sports) ---- */
 const SPORTY=new Set(["nba","nfl","deportes_extremos"]);
-const MOTOGP_ON=false; // se enciende cuando dial-sports tenga la ruta de MotoGP desplegada
+const MOTOGP_ON=true; // se enciende cuando dial-sports tenga la ruta de MotoGP desplegada
 const SPORT_TABS=[["soccer","Fútbol"],["nba","NBA"],["nfl","NFL"],["nhl","NHL"],["mlb","MLB"],["f1","F1"],["motogp","MotoGP"],["mtb","MTB"]].filter(t=>MOTOGP_ON||t[0]!=="motogp");
 const SPMAP={nba:"basketball",nfl:"football",nhl:"hockey",mlb:"baseball"};
 let sport=store.get("dial-sport","soccer");if(sport==="xtreme")sport="mtb";if(!SPORT_TABS.some(t=>t[0]===sport))sport="soccer";
@@ -1895,15 +1901,31 @@ async function f1(b,tok){
   const rank=e=>(e.stats||[]).find(x=>x.name==="rank")?.displayValue??"";
   const tbl=(rows,f)=>`<div class="tw"><table class="st"><thead><tr><th class="sd">#</th><th class="l"></th><th>${esc("Pts")}</th></tr></thead><tbody>${rows.map(f).join("")}</tbody></table></div>`;
   const dr=ch.find(c=>/Driver/i.test(c.name))?.standings?.entries||[],co=ch.find(c=>/Constructor/i.test(c.name))?.standings?.entries||[];
-  const drRow=e=>`<tr><td class="sd">${esc(rank(e))}</td><td class="l">${flagImg(e.athlete?.flag?.href,e.athlete?.flag?.alt)}${esc(e.athlete?.displayName||"")}</td><td>${esc(pts(e))}</td></tr>`;
-  const coRow=e=>`<tr><td class="sd">${esc(rank(e))}</td><td class="l"><span class="tdot" style="background:#${esc(e.team?.color||"555")}"></span>${esc(e.team?.displayName||"")}</td><td>${esc(pts(e))}</td></tr>`;
-  const drHTML=dr.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de pilotos")}</div>${tbl(dr.slice(0,10),drRow)}${dr.length>10?`<details class="mprev"><summary><span>${esc("Resto de la parrilla")}</span><em>${dr.length-10}</em></summary>${tbl(dr.slice(10),drRow)}</details>`:""}</div>`:"";
-  const coHTML=co.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de constructores")}</div>${tbl(co,coRow)}</div>`:"";
+  const drRow=e=>`<tr><td class="sd">${esc(rank(e))}</td><td class="l">${flagImg(e.athlete?.flag?.href,e.athlete?.flag?.alt)}${esc(e.athlete?.displayName||"")}${tD?.won&&e===tD.L?'<span class="cbadge">Campeón</span>':""}</td><td>${esc(pts(e))}</td></tr>`;
+  const coRow=e=>`<tr><td class="sd">${esc(rank(e))}</td><td class="l"><span class="tdot" style="background:#${esc(e.team?.color||"555")}"></span>${esc(e.team?.displayName||"")}${tC?.won&&e===tC.L?'<span class="cbadge">Campeón</span>':""}</td><td>${esc(pts(e))}</td></tr>`;
+  const drHTMLf=()=>dr.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de pilotos")}</div>${tbl(dr.slice(0,10),drRow)}${dr.length>10?`<details class="mprev"><summary><span>${esc("Resto de la parrilla")}</span><em>${dr.length-10}</em></summary>${tbl(dr.slice(10),drRow)}</details>`:""}</div>`:"";
+  const coHTMLf=()=>co.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de constructores")}</div>${tbl(co,coRow)}</div>`:"";
+  // ¿Ya hay campeón? Se reconstruye el puntaje acumulado GP a GP y se compara la ventaja con los puntos que aún quedan en juego
+  const live=evs.filter(e=>!/CANCEL/.test(e.status?.type?.name||""));
+  const per=(e,team)=>(team?43:25)+((e.competitions||[]).some(c=>c.type?.abbreviation==="SR")?(team?15:8):0);
+  const gpCols=e0=>(e0?.stats||[]).filter(x=>!["rank","championshipPts","points","overall"].includes(x.name));
+  const title=(rows,team)=>{if(rows.length<2)return null;const P=e=>Number(pts(e))||0;const L=rows[0],R=rows[1],cols=gpCols(L);
+    const left=live.filter(e=>!e.status?.type?.completed).reduce((n,e)=>n+per(e,team),0);const gap=P(L)-P(R);
+    let at=null;if(gap>left&&cols.length===evs.length){const cum=rows.map(()=>0);for(let i=0;i<evs.length;i++){if(/CANCEL/.test(evs[i].status?.type?.name||"")||!evs[i].status?.type?.completed)continue;
+      rows.forEach((e,j)=>{cum[j]+=Number(gpCols(e)[i]?.displayValue)||0});const rest=live.filter(e=>e.date>evs[i].date).reduce((n,e)=>n+per(e,team),0);
+      if(cum.slice(1).every(c=>cum[0]-c>rest)){at=evs[i];break}}}
+    return {L,gap,left,won:gap>left,at}};
+  const tD=title(dr,false),tC=title(co,true);const yr2=yr;
+  const champ=tD?(()=>{const n=tD.L.athlete?.displayName||"";
+    const big=tD.won?`<div class="chk">${esc("Campeón del mundo "+yr2)}</div><div class="chn">${flagImg(tD.L.athlete?.flag?.href,tD.L.athlete?.flag?.alt)}${esc(n)}</div><p class="chd">${esc(`${pts(tD.L)} puntos · ${tD.gap} de ventaja${tD.at?` · asegurado en el ${gpName(tD.at.name)}`:""}`)}</p>`
+      :`<div class="chk">${esc("Líder del campeonato")}</div><div class="chn">${flagImg(tD.L.athlete?.flag?.href,tD.L.athlete?.flag?.alt)}${esc(n)}</div><p class="chd">${esc(`${tD.gap} puntos de ventaja · quedan ${tD.left} en juego`)}</p>`;
+    const cons=tC?`<p class="chc"><span class="tdot" style="background:#${esc(tC.L.team?.color||"555")}"></span>${esc(tC.won?`${tC.L.team?.displayName} campeón de constructores${tC.at?` desde el ${gpName(tC.at.name)}`:""}`:`Constructores: ${tC.L.team?.displayName} lidera por ${tC.gap}; quedan ${tC.left} en juego, aún sin campeón`)}</p>`:"";
+    return `<div class="sp-card champ${tD.won?" won":""}">${big}${cons}</div>`})():"";
   let rn=0;const calHTML=`<div class="sp-card"><div class="sp-ct">${esc("Calendario")}</div>${evs.map(e=>{const can=/CANCEL/.test(e.status?.type?.name||"");if(!can)rn++;const w=sorted(comp(e,"Race"))[0];
     const right=can?`<em class="cx">${esc("Cancelado")}</em>`:e.status?.type?.completed&&w?`<span class="gt w">${flagImg(w.athlete?.flag?.href)}${esc(w.athlete?.shortName||w.athlete?.displayName||"")}</span>`:e===next?`<em class="nx">${esc("Próximo")}</em>`:`<em>${esc(dayCL(comp(e,"Race")?.date||e.date))}</em>`;
     return `<div class="ld${can?" can":""}${e===next?" isnx":""}"><span><i class="rnd">${can?"–":rn}</i>${esc(gpName(e.shortName||e.name))}</span>${right}</div>`}).join("")}</div>`;
   b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>${esc("Fórmula 1 · "+yr)}</h2><p class="meta">${esc(`${done.length} de ${evs.filter(e=>!/CANCEL/.test(e.status?.type?.name||"")).length} grandes premios corridos · hora de Chile`)}</p></div></div>
-    <div class="sp-grid">${nextHTML}${lastHTML}${drHTML}${coHTML}${calHTML}</div></section>`}
+    ${champ}<div class="sp-grid">${nextHTML}${lastHTML}${drHTMLf()}${coHTMLf()}${calHTML}</div></section>`}
 /* MotoGP: temporada actual por categoría (MotoGP, Moto2, Moto3) */
 const MGP_CATS=[["MotoGP","MotoGP"],["Moto2","Moto2"],["Moto3","Moto3"]];
 let mgpCat=store.get("dial-mgp","MotoGP");
@@ -1927,12 +1949,14 @@ async function motogp(b,tok){
   const clsT=(cl,n)=>`<div class="tw"><table class="st"><tbody>${(cl?.classification||[]).filter(x=>x.position).slice(0,n).map(x=>`<tr><td class="sd">${x.position}</td><td class="l${x.position===1?" wl":""}">${rider(x.rider)}<small>${esc(x.team?.name||"")}</small></td><td>${esc(x.position===1?x.time||"":x.gap?.first?"+"+x.gap.first:"")}</td></tr>`).join("")}</tbody></table></div>`;
   const lastHTML=last&&rc?`<div class="sp-card"><div class="sp-ct">${esc("Último GP · "+nm(last))}</div>${clsT(rc,10)}${sc?.classification?.length?`<p class="mgn">${esc("Sprint")}: ${esc(sc.classification.find(x=>x.position===1)?.rider?.full_name||"")}</p>`:""}</div>`:"";
   const sr=stand?.classification||[];
+  const mLeft=all.filter(e=>e.status!=="FINISHED").length*37,mGap=sr.length>1?sr[0].points-sr[1].points:0,mWon=sr.length>1&&mGap>mLeft;
+  const mChamp=sr.length>1?`<div class="sp-card champ${mWon?" won":""}"><div class="chk">${esc(mWon?`Campeón del mundo ${mgpCat} ${cur.year}`:`Líder de ${mgpCat}`)}</div><div class="chn">${esc(sr[0].rider?.full_name||"")}<small class="cc">${esc(sr[0].rider?.country?.iso||"")}</small></div><p class="chd">${esc(`${sr[0].points} puntos · ${mGap} de ventaja · ${mWon?"título asegurado":`quedan ${mLeft} en juego`}`)}</p><p class="chc">${esc(sr[0].team?.name||"")}</p></div>`:"";
   const srow=x=>`<tr><td class="sd">${x.position}</td><td class="l">${rider(x.rider)}<small>${esc(x.team?.name||x.constructor?.name||"")}</small></td><td>${x.race_wins??""}</td><td><b>${x.points}</b></td></tr>`;
   const stT=rows=>`<div class="tw"><table class="st"><thead><tr><th class="sd">#</th><th class="l"></th><th>${esc("Vict.")}</th><th>${esc("Pts")}</th></tr></thead><tbody>${rows.map(srow).join("")}</tbody></table></div>`;
   const stHTML=sr.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de pilotos")}</div>${stT(sr.slice(0,10))}${sr.length>10?`<details class="mprev"><summary><span>${esc("Resto")}</span><em>${sr.length-10}</em></summary>${stT(sr.slice(10))}</details>`:""}</div>`:"";
   const calHTML=`<div class="sp-card"><div class="sp-ct">${esc("Calendario")}</div>${all.map((e,i)=>`<div class="ld${e===now?" isnx":""}"><span><i class="rnd">${i+1}</i>${esc(nm(e))}</span><em${e===now?' class="nx"':""}>${esc(e.status==="FINISHED"?"Corrido":e===now?(e.status==="CURRENT"?"En curso":"Próximo"):dayCL(e.date_start+"T12:00:00Z"))}</em></div>`).join("")}</div>`;
   b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>${esc("MotoGP · "+cur.year)}</h2><p class="meta">${esc(`${fin.length} de ${all.length} grandes premios corridos · hora de Chile`)}</p></div></div>
-    <div class="mctl">${tabs}</div><div class="sp-grid">${nextHTML}${lastHTML}${stHTML}${calHTML}</div></section>`;
+    <div class="mctl">${tabs}</div>${mChamp}<div class="sp-grid">${nextHTML}${lastHTML}${stHTML}${calHTML}</div></section>`;
   $("mgpCat").querySelectorAll("button").forEach(x=>x.onclick=()=>{mgpCat=x.dataset.k;store.set("dial-mgp",mgpCat);loadSports()})}
 
 /* NBA y NFL: fase de la temporada, posiciones por conferencia y división, resultados por división, llaves de playoffs y líderes */
