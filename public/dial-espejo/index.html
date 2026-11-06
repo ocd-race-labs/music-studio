@@ -273,6 +273,43 @@ a{color:inherit}
 .upd summary::-webkit-details-marker{display:none}.upd summary em{font:400 11px var(--mono);color:var(--dim);font-style:normal}
 .upd summary span::before{content:"+ ";color:var(--dim)}.upd[open] summary span::before{content:"– "}
 #sbody,#sres{display:grid;gap:32px}
+/* MTB */
+.mctl{display:grid;gap:8px;margin:14px 0 4px;max-width:860px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+@media (min-width:700px){.mrow{grid-template-columns:minmax(0,3fr) minmax(0,1fr)}}
+.mseg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:3px}
+.mseg button{border:0;background:transparent;border-radius:11px;padding:8px 2px;font-size:12.5px;color:var(--muted);display:grid;gap:1px;justify-items:center;cursor:pointer;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mseg button small{font:400 10px var(--mono);color:var(--dim)}
+.mseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.mseg button[aria-pressed="true"] small{color:#55555F}
+#mtbS{grid-auto-flow:row;grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (min-width:700px){#mtbS{grid-auto-flow:column;grid-template-columns:none}}
+.mres{margin:4px 2px 12px;font:400 11px var(--mono);color:var(--dim)}
+.mrace{display:grid;gap:8px;padding:14px 14px 10px;align-content:start}
+.mrace.dim{opacity:.55}
+.mrh{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.mrh h3{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.mrh p{margin:3px 0 0;font-size:12px;color:var(--muted)}
+.mlv{flex:none;font:500 10px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:#FF9F5A;border:1px solid color-mix(in srgb,#FF9F5A 45%,transparent);border-radius:999px;padding:3px 8px}
+.med{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:8px}
+.meh{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:600}
+.meh em{font:400 10.5px var(--mono);color:var(--dim);font-style:normal;text-align:right}
+.mpod{display:grid;gap:2px}
+.mpc{font:500 10.5px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin:2px 0}
+.mst td{vertical-align:top}
+.mst .l{max-width:none;white-space:normal}
+.mst .l b{font-weight:500}.mst .l small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.mst small{display:block;font-size:11px;color:var(--dim);margin-top:1px;font-weight:400}
+.mst .mp{text-align:center;width:22px;font:500 12px var(--mono);color:var(--muted)}.mst .mp.g{color:#F2B544}
+.mst .mn{font:400 11px var(--mono);color:var(--muted);width:34px;text-align:center}
+.mst .mt{font:400 12px var(--mono)}
+.mnote{margin:0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.msrc{margin:0;font-size:11px;color:var(--dim);line-height:1.4}
+.mprev summary{display:flex;justify-content:space-between;cursor:pointer;list-style:none;font-size:13px;color:var(--muted);padding:8px 0 4px;border-top:1px solid var(--line)}
+.mprev summary::-webkit-details-marker{display:none}.mprev summary em{font:400 11px var(--mono);color:var(--dim);font-style:normal}
+.mprev summary span::before{content:"+ ";color:var(--dim)}.mprev[open] summary span::before{content:"– "}
+.mprev{display:grid;gap:10px}
+.mfoot{margin:14px 2px 0;font-size:11.5px;color:var(--dim)}
+
 #sbody>#ssel{margin-bottom:-12px}
 .up{display:grid;grid-template-columns:72px minmax(0,1fr);gap:2px 10px;align-items:center;padding:8px 4px;border-top:1px solid #1A1A21;font-size:13px}
 .up .ut{font:500 12px var(--mono);color:var(--ink);white-space:nowrap}.up .ut .live{color:#FF5C7A}
@@ -435,7 +472,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   <div class="nhead"><h1>Deportes</h1><p class="sub">Tablas de posiciones, llaves, resultados y estadísticas de cada liga, actualizadas al entrar.</p></div>
   <div class="chips sseg" id="stabs" role="group" aria-label="Deportes"></div>
   <div id="sbody"></div>
-  <footer>Datos públicos de ESPN.</footer>
+  <footer>Datos públicos de ESPN; MTB desde el archivo de OCD Race Labs.</footer>
 </div>
 
 <div class="np" id="npSheet" hidden role="dialog" aria-modal="true" aria-label="Sonando ahora">
@@ -1364,7 +1401,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-05g";
+const APP_VERSION="2026-11-05h";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1409,7 +1446,7 @@ const LABEL=Object.fromEntries(SECTIONS.map(([k,l])=>[k,trText(l)]));
 const Q={
   politica:["política Chile gobierno OR congreso","política internacional"],
   economia:["economía Chile","economía mundial mercados"],
-  deportes_extremos:["Chile (downhill OR enduro OR surf OR escalada OR \"deportes extremos\" OR \"mountain bike\")","\"descenso\" ciclismo de montaña OR enduro OR \"Red Bull\" OR surf OR escalada OR \"deportes extremos\""],
+  deportes_extremos:["Chile (downhill OR \"enduro MTB\" OR \"mountain bike\" OR \"ciclismo de montaña\" OR XCO OR XCM)","\"mountain bike\" (downhill OR enduro OR \"cross country\" OR \"world cup\" OR \"world series\")"],
   nba:[null,"NBA"],
   nfl:[null,"NFL"],
   tecnologia:["tecnología Chile","tecnología"],
@@ -1424,12 +1461,12 @@ const Q={
 };
 // Búsquedas en inglés y portugués: misma intención que las de español, en el idioma de la edición de Google News elegida
 const QL={en:{politica:["Chile politics government","world politics"],economia:["Chile economy","global economy markets"],
-  deportes_extremos:["Chile (downhill OR enduro OR surf OR climbing OR \"mountain bike\")","downhill mountain bike OR enduro OR \"Red Bull\" OR surfing OR climbing"],
+  deportes_extremos:["Chile (downhill OR \"enduro MTB\" OR \"mountain bike\" OR XCO)","\"mountain bike\" (downhill OR enduro OR \"cross country\" OR \"world cup\" OR \"world series\")"],
   nba:[null,"NBA"],nfl:[null,"NFL"],tecnologia:["Chile technology","technology"],ia:["Chile artificial intelligence","artificial intelligence"],
   educacion:["Chile education","education"],salud:["Chile health","health WHO OR medicine"],ciencias:["Chile science","science discovery OR NASA OR research"],
   aviacion:["Chile aviation LATAM OR JetSMART OR airport","aviation airlines OR Boeing OR Airbus"],cultura:["Chile culture -music -concert","culture film OR books OR art OR theater -music"],musica:["Chile music concert OR album OR festival","music concert OR album OR tour OR Grammy"],empleo:["Chile jobs unemployment OR \"labor market\"","jobs \"labor market\" OR unemployment OR hiring"]},
  pt:{politica:["Chile política governo","política internacional"],economia:["Chile economia","economia mundial mercados"],
-  deportes_extremos:["Chile (downhill OR enduro OR surf OR escalada OR \"mountain bike\")","downhill mountain bike OR enduro OR \"Red Bull\" OR surf OR escalada"],
+  deportes_extremos:["Chile (downhill OR \"enduro MTB\" OR \"mountain bike\" OR XCO)","\"mountain bike\" (downhill OR enduro OR \"cross country\" OR \"world cup\" OR \"world series\")"],
   nba:[null,"NBA"],nfl:[null,"NFL"],tecnologia:["Chile tecnologia","tecnologia"],ia:["Chile inteligência artificial","inteligência artificial"],
   educacion:["Chile educação","educação"],salud:["Chile saúde","saúde OMS OR medicina"],ciencias:["Chile ciência","ciência descoberta OR NASA OR pesquisa"],
   aviacion:["Chile aviação LATAM OR JetSMART OR aeroporto","aviação companhias aéreas OR Boeing OR Airbus"],cultura:["Chile cultura -música -show","cultura cinema OR livros OR arte OR teatro -música"],musica:["Chile música show OR álbum OR festival","música show OR álbum OR turnê OR Grammy"],empleo:["Chile emprego desemprego OR \"mercado de trabalho\"","emprego \"mercado de trabalho\" OR desemprego OR contratações"]}};
@@ -1473,7 +1510,7 @@ async function fetchNews(q,days){
 // Contexto que aporta la sección a un tema: "Hormuz" en Política busca gobierno y diplomacia; en Economía, petróleo y mercados
 const CTX={politica:"(gobierno OR política OR sanciones OR diplomacia OR elecciones OR congreso)",
   economia:"(economía OR mercados OR precios OR petróleo OR comercio OR inflación OR bolsa)",
-  deportes_extremos:"(downhill OR enduro OR surf OR escalada OR \"Red Bull\" OR competencia)",
+  deportes_extremos:"(downhill OR enduro OR \"mountain bike\" OR XCO OR competencia)",
   nba:"(NBA OR básquetbol)",nfl:"(NFL OR fútbol americano)",
   tecnologia:"(tecnología OR empresa OR lanzamiento OR software OR dispositivo)",
   ia:"(\"inteligencia artificial\" OR IA OR modelo OR algoritmo)",
@@ -1485,11 +1522,11 @@ const CTX={politica:"(gobierno OR política OR sanciones OR diplomacia OR elecci
   musica:"(música OR concierto OR disco OR canción OR banda OR festival)",
   empleo:"(empleo OR trabajo OR desempleo OR sueldos OR contrataciones)"};
 const CTXL={en:{politica:"(government OR politics OR sanctions OR diplomacy OR elections OR congress)",economia:"(economy OR markets OR prices OR oil OR trade OR inflation OR stocks)",
-  deportes_extremos:"(downhill OR enduro OR surf OR climbing OR \"Red Bull\" OR race)",nba:"(NBA OR basketball)",nfl:"(NFL OR football)",tecnologia:"(technology OR company OR launch OR software OR device)",
+  deportes_extremos:"(downhill OR enduro OR \"mountain bike\" OR XCO OR race)",nba:"(NBA OR basketball)",nfl:"(NFL OR football)",tecnologia:"(technology OR company OR launch OR software OR device)",
   ia:"(\"artificial intelligence\" OR AI OR model OR algorithm)",educacion:"(education OR schools OR university OR students)",salud:"(health OR hospital OR patients OR doctors OR disease)",
   ciencias:"(science OR research OR study OR scientists)",aviacion:"(aviation OR airline OR aircraft OR airport OR flight)",cultura:"(culture OR film OR book OR art OR theater OR museum)",musica:"(music OR concert OR album OR song OR band OR festival)",empleo:"(jobs OR employment OR unemployment OR wages OR hiring)"},
  pt:{politica:"(governo OR política OR sanções OR diplomacia OR eleições OR congresso)",economia:"(economia OR mercados OR preços OR petróleo OR comércio OR inflação OR bolsa)",
-  deportes_extremos:"(downhill OR enduro OR surf OR escalada OR \"Red Bull\" OR competição)",nba:"(NBA OR basquete)",nfl:"(NFL OR futebol americano)",tecnologia:"(tecnologia OR empresa OR lançamento OR software OR dispositivo)",
+  deportes_extremos:"(downhill OR enduro OR \"mountain bike\" OR XCO OR competição)",nba:"(NBA OR basquete)",nfl:"(NFL OR futebol americano)",tecnologia:"(tecnologia OR empresa OR lançamento OR software OR dispositivo)",
   ia:"(\"inteligência artificial\" OR IA OR modelo OR algoritmo)",educacion:"(educação OR escolas OR universidade OR estudantes)",salud:"(saúde OR hospital OR pacientes OR médicos OR doença)",
   ciencias:"(ciência OR pesquisa OR estudo OR cientistas)",aviacion:"(aviação OR companhia aérea OR avião OR aeroporto OR voo)",cultura:"(cultura OR cinema OR livro OR arte OR teatro OR museu)",musica:"(música OR show OR álbum OR canção OR banda OR festival)",empleo:"(emprego OR trabalho OR desemprego OR salários OR contratações)"}};
 if(CTXL[UIL])Object.assign(CTX,CTXL[UIL]);
@@ -1736,9 +1773,9 @@ $("nq").addEventListener("input",e=>{ if(!e.target.value.trim() && explore){ exp
 
 /* ---- Deportes: tablas de posiciones, llaves, resultados y estadísticas (datos públicos de ESPN vía dial-sports) ---- */
 const SPORTY=new Set(["nba","nfl","deportes_extremos"]);
-const SPORT_TABS=[["xtreme","Xtreme"],["soccer","Soccer"],["nba","NBA"],["nfl","NFL"],["nhl","NHL"],["mlb","MLB"]];
+const SPORT_TABS=[["mtb","MTB"],["soccer","Soccer"],["nba","NBA"],["nfl","NFL"],["nhl","NHL"],["mlb","MLB"]];
 const SPMAP={nba:"basketball",nfl:"football",nhl:"hockey",mlb:"baseball"};
-let sport=store.get("dial-sport","soccer");if(!SPORT_TABS.some(t=>t[0]===sport))sport="soccer";
+let sport=store.get("dial-sport","soccer");if(sport==="xtreme")sport="mtb";if(!SPORT_TABS.some(t=>t[0]===sport))sport="soccer";
 // Fútbol: continente → país (o torneos internacionales) → liga, con los códigos de liga de ESPN
 const SOC={
   "Sudamérica":{"Chile":[["chi.1","Primera División"],["chi.copa_chi","Copa Chile"]],"Argentina":[["arg.1","Liga Profesional"],["arg.2","Primera Nacional"],["arg.copa","Copa Argentina"]],"Brasil":[["bra.1","Brasileirão"],["bra.2","Série B"],["bra.copa_do_brazil","Copa do Brasil"],["bra.camp.paulista","Paulista"],["bra.camp.carioca","Carioca"],["bra.camp.mineiro","Mineiro"],["bra.camp.gaucho","Gaúcho"]],"Colombia":[["col.1","Liga BetPlay"],["col.copa","Copa Colombia"]],
@@ -1769,15 +1806,54 @@ let sportTok=0;
 function sportChips(){const c=$("stabs");c.innerHTML="";SPORT_TABS.forEach(([k,l])=>{const b=document.createElement("button");b.className="chip";b.textContent=l;b.setAttribute("aria-pressed",k===sport);
   b.onclick=()=>{sport=k;store.set("dial-sport",k);loadSports()};c.appendChild(b)})}
 async function loadSports(){sportChips();upcM=0;const tok=++sportTok;const b=$("sbody");b.innerHTML=note("Cargando…");
-  try{if(sport==="xtreme")await xtreme(b,tok);else if(sport==="soccer")await soccer(b,tok);else await usSport(b,sport,tok)}
+  try{if(sport==="mtb")await mtb(b,tok);else if(sport==="soccer")await soccer(b,tok);else await usSport(b,sport,tok)}
   catch(e){if(tok===sportTok)b.innerHTML=note("No se pudieron traer los datos ahora. Inténtalo de nuevo en un rato.")}}
-/* Xtreme: no hay tablas públicas gratuitas de downhill, enduro o surf; se muestran resultados y noticias agrupados */
-// Solo titulares que de verdad son de deportes de aventura (Google News a veces trae noticias generales del país)
-const XTR=/(downhill|enduro|\bsurf|escalad|climb|bouldering|\bmtb\b|mountain ?bike|bicicleta de monta|ciclismo de monta|\bdescenso|red bull|skate|motocross|supercross|freeride|freestyle|parapente|kite|wing ?foil|snowboard|esqu[ií]|\bski|trail run|ultramarat|\bkayak|rafting|x games|crankworx|\buci\b|\bwsl\b|\bifsc\b|alpinis|monta[ñn]is|cumbre|everest|n[ií]do de c[oó]ndores|rally|dakar|bmx|bodyboard|olas|big wave|paracaid|base jump|slackline|deportes? (extremos?|de aventura|outdoor))/i;
-const XJUNK=/(stock (image|photo)|for sale|en venta|se vende|\b(small|medium|large|xl)\s*$|forum|message boards|best \d+|\bbest\b.*(tested|rated)|reifen)/i;
-async function xtreme(b,tok){const [qn,qi]=Q.deportes_extremos;const items=(await gather(qn,qi,4)).filter(it=>XTR.test(it.title||"")&&!XJUNK.test(it.title||""));if(tok!==sportTok)return;
-  b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>Xtreme</h2><p class="meta">${esc("Downhill, enduro, surf y escalada: resultados y noticias de los últimos días")}</p></div></div>`+
-    (items.length?groupedHTML(items.slice(0,24)):note("No hay noticias de los últimos días con este alcance."))+`</section>`}
+// Solo titulares de MTB de competencia: downhill, enduro y cross country (Google News a veces trae noticias generales)
+const XTR=/(downhill|\benduro\b|\bmtb\b|mountain ?bik|bicicleta de monta|ciclismo de monta|mountainbike|\bdescenso\b|cross ?country|\bxco\b|\bxcm\b|\bxcc\b|world cup.*(dh|xc)|copa del mundo.*(mtb|descenso)|crankworx|\bews\b|enduro world|world series|cerro abajo|andes pac[ií]fico|transandes|red bull hardline|rampage)/i;
+const XJUNK=/(stock (image|photo)|for sale|en venta|se vende|\b(small|medium|large|xl)\s*$|forum|message boards|best \d+|\bbest\b.*(tested|rated)|reifen|moto(cross)?\b|motorcycle|\bmoto\b|enduro (moto|motocicleta)|hard enduro|\bktm\b|husqvarna|six days|isde)/i;
+/* MTB: downhill, enduro y cross country. Resultados por disciplina y segmento desde el archivo de OCD Race Labs (mtb.json), más noticias del día */
+const MTB_D=[["dh","Downhill","DH"],["enduro","Enduro","EDR"],["xc","Cross country","XC"]];
+const MTB_SEG=[["all","Todas"],["elite","Elite"],["u23","Sub-23"],["junior","Junior"],["master","Master"],["amateur","Amateur y Open"]];
+const MTB_SX=[["","Todos"],["m","Varones"],["f","Damas"]];
+let mtbSel=store.get("dial-mtb",{d:"dh",s:"all",x:""}),mtbData=null;
+const MTB_MES={ENE:1,FEB:2,MAR:3,ABR:4,MAY:5,JUN:6,JUL:7,AGO:8,SEP:9,OCT:10,NOV:11,DIC:12};
+const mtbOk=p=>(mtbSel.s==="all"?p.seg!=="otros":p.seg===mtbSel.s)&&(!mtbSel.x||p.sx===mtbSel.x)&&(mtbSel.s==="all"||p.seg!=="cal");
+function mtbPodium(p){
+  if(!p.r.length)return `<div class="mpod"><div class="mpc">${esc(p.c)}</div>${p.t?`<p class="mnote">${esc(p.t)}</p>`:""}</div>`;
+  const rows=p.r.map(([pos,n,info,nac,t,gap,bike])=>{const sub=[info,bike&&!/sin verificar/i.test(bike)?bike:""].filter(Boolean).join(" · ");
+    return `<tr><td class="mp${/^P?1$/.test(pos)?" g":""}">${esc(pos.replace(/^P/,""))}</td><td class="l"><b>${esc(n)}</b>${sub?`<small>${esc(sub)}</small>`:""}</td><td class="mn">${esc(nac)}</td><td class="mt">${esc(t)}${gap?`<small>${esc(gap)}</small>`:""}</td></tr>`}).join("");
+  return `<div class="mpod"><div class="mpc">${esc(p.c)}</div><div class="tw"><table class="st mst"><tbody>${rows}</tbody></table></div></div>`}
+function mtbEdition(r,e){const ps=e.p.filter(p=>p.d===mtbSel.d);const ok=ps.filter(mtbOk);
+  const body=ok.length?ok.map(mtbPodium).join(""):ps.some(p=>p.r.length)?`<p class="mnote">${esc("Sin podio de este segmento en esta edición.")}</p>`:(e.note?`<p class="mnote">${esc(e.note)}</p>`:"");
+  const src=e.src.length?`<p class="msrc">${esc(e.src.join(" · "))}</p>`:"";
+  return `<div class="med"><div class="meh"><span>${esc(e.l)}</span><em>${esc(e.s)}</em></div>${body}${ok.length?src:""}</div>`}
+function mtbRace(r){const eds=r.ed.filter(e=>!e.p.length||e.p.some(p=>p.d===mtbSel.d));if(!eds.length)return"";
+  const hit=eds.some(e=>e.p.some(p=>p.d===mtbSel.d&&mtbOk(p)&&p.r.length));
+  const [first,...rest]=eds;
+  return `<article class="sp-card mrace${hit?"":" dim"}"><header class="mrh"><div><h3>${esc(r.n)}</h3><p>${esc([r.when,r.where,r.fmt].join(" · "))}</p></div><span class="mlv">${esc(r.lvl)}</span></header>
+    ${mtbEdition(r,first)}${rest.length?`<details class="mprev"><summary><span>${esc("Años anteriores")}</span><em>${rest.length}</em></summary>${rest.map(e=>mtbEdition(r,e)).join("")}</details>`:""}</article>`}
+function mtbCtl(){const seg=(id,list,key)=>`<div class="mseg" id="${id}" role="group">${list.map(([k,l,s])=>`<button type="button" data-k="${k}" aria-pressed="${mtbSel[key]===k}">${esc(l)}${s?`<small>${s}</small>`:""}</button>`).join("")}</div>`;
+  return seg("mtbD",MTB_D,"d")+`<div class="mrow">${seg("mtbS",MTB_SEG,"s")}${seg("mtbX",MTB_SX,"x")}</div>`}
+function mtbRender(){const box=$("mtbBox");if(!box||!mtbData)return;
+  const races=mtbData.races.filter(r=>r.ed.some(e=>e.p.some(p=>p.d===mtbSel.d))||r.d===mtbSel.d)
+    .sort((a,b)=>(MTB_MES[a.when.slice(0,3)]||13)-(MTB_MES[b.when.slice(0,3)]||13));
+  const withHit=races.filter(r=>r.ed.some(e=>e.p.some(p=>p.d===mtbSel.d&&mtbOk(p)&&p.r.length)));
+  const order=[...withHit,...races.filter(r=>!withHit.includes(r))];
+  box.innerHTML=`<div class="sp-grid">${order.map(mtbRace).join("")}</div>`;
+  $("mtbSum").textContent=`${withHit.length} de ${races.length} carreras con podios para este filtro`}
+function mtbBind(){[["mtbD","d"],["mtbS","s"],["mtbX","x"]].forEach(([id,key])=>$(id).querySelectorAll("button").forEach(b=>b.onclick=()=>{mtbSel[key]=b.dataset.k;store.set("dial-mtb",mtbSel);
+  $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));mtbRender()}))}
+async function mtb(b,tok){
+  b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>MTB</h2><p class="meta">${esc("Downhill, enduro y cross country · circuito chileno y Mundial Master")}</p></div></div>
+    <div class="mctl">${mtbCtl()}</div><p class="mres" id="mtbSum"></p><div id="mtbBox">${note("Cargando…")}</div>
+    <p class="mfoot">${esc("Resultados del archivo de OCD Race Labs, con la fuente de cada edición. Corte: 14 de mayo de 2026.")}</p></section>
+    <section class="topic" id="mtbNews"><div class="topic-head"><div><h2 class="sph">${esc("Noticias MTB")}</h2><p class="meta">${esc("Downhill, enduro y XC de los últimos días")}</p></div></div>${note("Cargando…")}</section>`;
+  mtbBind();
+  try{mtbData=mtbData||await fetch("mtb.json",{cache:"no-cache"}).then(r=>r.json());if(tok!==sportTok)return;mtbRender()}
+  catch(e){if(tok===sportTok)$("mtbBox").innerHTML=note("No se pudo abrir el archivo de resultados.")}
+  const [qn,qi]=Q.deportes_extremos;const items=(await gather(qn,qi,7).catch(()=>[])).filter(it=>XTR.test(it.title||"")&&!XJUNK.test(it.title||""));
+  if(tok!==sportTok||!$("mtbNews"))return;
+  $("mtbNews").innerHTML=$("mtbNews").querySelector(".topic-head").outerHTML+(items.length?groupedHTML(items.slice(0,18)):note("No hay noticias de MTB de los últimos días."))}
 /* NBA y NFL: fase de la temporada, posiciones por conferencia y división, resultados por división, llaves de playoffs y líderes */
 /* Próximos partidos: un mes a la vista (este y los dos siguientes), agrupados por día */
 let upcM=0;const UPC=`<section class="topic" id="upc"></section>`;
