@@ -231,8 +231,8 @@ a{color:inherit}
 
 /* Enlaces solo con ícono: una sola fila, con el botón de información al extremo derecho */
 .np-lrow{display:flex;align-items:center;gap:12px;min-width:0}.np-lrow .np-links{flex:1;min-width:0}
-.np-it{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.06);color:var(--ink);font:500 16px/1 Georgia,"Times New Roman",serif;font-style:italic;cursor:pointer;display:grid;place-items:center}
-.np-it[aria-expanded="true"]{border-color:rgba(237,237,242,.6);background:rgba(237,237,242,.16)}
+.np-it{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.06);color:var(--muted);font:500 16px/1 Georgia,"Times New Roman",serif;font-style:italic;cursor:pointer;display:grid;place-items:center}
+.np-it[aria-expanded="true"]{color:var(--ink);border-color:rgba(237,237,242,.32);background:rgba(237,237,242,.1)}
 .np-info[hidden]{display:none}
 .np-links{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center}
 .np-col{display:flex;gap:8px;align-items:center}
@@ -1512,7 +1512,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-06e";
+const APP_VERSION="2026-11-06f";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
