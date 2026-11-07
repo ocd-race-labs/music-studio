@@ -1311,7 +1311,7 @@ function vaAnalyze(buf){const sr=buf.sampleRate,ch=buf.getChannelData(0),ch2=buf
   const re=new Float32Array(1024),im=new Float32Array(1024);
   for(let o=0;o+1024<=ch.length;o+=hop){for(let i=0;i<1024;i++){re[i]=(ch2?(ch[o+i]+ch2[o+i])/2:ch[o+i])*VA_W[i];im[i]=0}fft(re,im);
     const e=Array(7).fill(0);for(let k=1;k<512;k++){const f=k*sr/1024;if(f<VA_E[0]||f>=VA_E[7])continue;let b=0;while(f>=VA_E[b+1])b++;e[b]+=Math.hypot(re[k],im[k])}
-    const lv=e.map((x,b)=>{VA.max[b]=Math.max(x,VA.max[b]*.997,1e-3);return Math.pow(x/VA.max[b],1.4)});
+    const lv=e.map((x,b)=>{VA.max[b]=Math.max(x,VA.max[b]*.997,1e-3);return Math.max(0,Math.min(1,(x/VA.max[b]-.1)/.8))});
     const low=e[0]+e[1],beat=Math.max(0,Math.min(1,(low-VA.prevLow*1.15)/(VA.prevLow+1e-3)));VA.prevLow=VA.prevLow*.85+low*.15;
     out.push({lv,beat})}
   return {frames:out,dur:hop/sr}}
@@ -1637,7 +1637,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07p";
+const APP_VERSION="2026-11-07q";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
