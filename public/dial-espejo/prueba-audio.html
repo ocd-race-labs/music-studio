@@ -1,0 +1,15 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prueba de audio</title>
+<style>body{margin:0;background:#07070A;color:#EDEDF2;font:16px system-ui;padding:24px 20px;display:grid;gap:14px}button{font:600 17px system-ui;padding:16px;border-radius:14px;border:1px solid #333;background:#16161B;color:#EDEDF2;text-align:left}p{margin:0;color:#9A9AA6;font-size:14px}#log{font:12px ui-monospace,monospace;white-space:pre-wrap;color:#9A9AA6}</style></head><body>
+<h2 style="margin:0">Prueba de audio</h2><p>Toca un botón. Cada uno usa un reproductor nuevo, sin nada de la app.</p>
+<button data-u="https://ice1.somafm.com/groovesalad-128-mp3">1 · SomaFM Groove Salad (MP3)</button>
+<button data-u="https://unlimited3-cl.dps.live/cooperativafm/mp3/icecast.audio">2 · Cooperativa (MP3)</button>
+<button data-u="https://stream.sunshine-live.de/afrohouse/mp3-192/">3 · Sunshine Live Afro House (MP3)</button>
+<button id="stop">Detener</button><div id="log"></div>
+<script>
+let a=null;const L=t=>{log.textContent=new Date().toLocaleTimeString()+"  "+t+"\n"+log.textContent};
+document.querySelectorAll("button[data-u]").forEach(b=>b.onclick=()=>{if(a){a.pause();a.src=""}a=new Audio(b.dataset.u);
+ ["playing","pause","stalled","waiting","error"].forEach(ev=>a.addEventListener(ev,()=>L(ev+(ev==="error"&&a.error?" "+a.error.code:""))));
+ a.play().then(()=>L("play() ok · "+b.textContent)).catch(e=>L("play() falló: "+e.name));
+ setTimeout(()=>a&&L("tiempo "+a.currentTime.toFixed(1)+" s · volumen "+a.volume+" · muted "+a.muted),5000)});
+stop.onclick=()=>{if(a){a.pause();a.src="";L("detenido")}};
+</script></body></html>
