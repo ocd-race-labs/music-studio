@@ -1319,6 +1319,11 @@ var ND={for:null,marks:[],under:null,on:store.get("dial-dial",true)};
 const ndK=v=>Math.max(0,Math.min(1,(v-.55)/.38));
 const ndDesc=x=>`${esc(CN[x.cc]||x.cc)} · <em>${esc(FAM[x.g][0])}</em> · ${esc([...x.tags].slice(0,2).map(t=>t.replace(/-/g," ")).join(" · "))}`;
 function ndSet(on){ND.on=on;store.set("dial-dial",on);$("ndBox").classList.toggle("off",!on);$("npDialT").setAttribute("aria-pressed",on);if(on){ND.for=null;requestAnimationFrame(ndBuild)}}
+/* Movimiento propio de la franja: el scroll suave nativo sobre un contenedor con snap se revierte en iOS, por eso se anima a mano y el snap se apaga mientras dura */
+let ndAnim=null;
+function ndTo(x){const sc=$("ndSc");cancelAnimationFrame(ndAnim);sc.style.scrollSnapType="none";const x0=sc.scrollLeft,dx=x-x0,t0=performance.now(),T=200;
+  const f=t=>{const p=Math.min(1,(t-t0)/T),e=1-Math.pow(1-p,3);sc.scrollLeft=x0+dx*e;if(p<1)ndAnim=requestAnimationFrame(f);else{ndAnim=null;setTimeout(()=>{if(!ndAnim&&!kDrag)sc.style.scrollSnapType=""},120)}};ndAnim=requestAnimationFrame(f)}
+const ndGo=m=>ndTo(m.px-$("ndSc").clientWidth/2);
 function ndBuild(){if(!ND.on||!current||npSheet.hidden)return;const sc=$("ndSc"),tr=$("ndTr"),w=sc.clientWidth;if(!w)return;
   const cur=current,PX=1800,GAP=104;ND.for=cur;
   const af=S.filter(x=>x!==cur&&!x.dead).map(x=>({x,v:sim(cur,x).v})).sort((a,b)=>b.v-a.v).slice(0,18);
@@ -1328,7 +1333,7 @@ function ndBuild(){if(!ND.on||!current||npSheet.hidden)return;const sc=$("ndSc")
   const mn=Math.min(...all.map(a=>a.d)),mx=Math.max(...all.map(a=>a.d)),x0=w/2-mn;tr.style.width=(mx-mn+w)+"px";
   tr.innerHTML=all.map((a,i)=>`<button class="nd-mk${a.x===cur?" now":""}" data-i="${i}" style="left:${x0+a.d}px;--mc:${FAM[a.x.g][2]};--h:${a.x===cur?28:Math.round(6+22*ndK(a.v))}px;--o:${a.x===cur?1:(.35+.65*ndK(a.v)).toFixed(2)}" aria-label="${esc(a.x.n)}"><span>${esc(a.x.sh)}</span></button>`).join("");
   ND.marks=all.map((a,i)=>({...a,px:x0+a.d,el:tr.children[i]}));
-  [...tr.children].forEach(b=>b.onclick=()=>{const m=ND.marks[+b.dataset.i];sc.scrollTo({left:m.px-w/2,behavior:"smooth"})});
+  [...tr.children].forEach(b=>b.onclick=()=>ndGo(ND.marks[+b.dataset.i]));
   const best=ND.marks.reduce((a,b)=>b.v>a.v?b:a);sc.style.scrollSnapType="none";sc.scrollLeft=best.px-w/2;requestAnimationFrame(()=>sc.style.scrollSnapType="");ND.shown=null;ndRead();ndKnobSync()}
 function ndRead(){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2;let b=null,bd=1e9;for(const m of ND.marks){const d=Math.abs(m.px-c);if(d<bd){bd=d;b=m}}if(!b)return;
   const near=bd<30;ND.under=near?b:null;ND.marks.forEach(m=>m.el.classList.toggle("hit",m===ND.under));
@@ -1336,26 +1341,26 @@ function ndRead(){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2;let b=null
   if(ND.shown!==b){ND.shown=b;npSheet.style.setProperty("--uc",FAM[b.x.g][2]);$("ndN").textContent=b.x.n;$("ndD").innerHTML=ndDesc(b.x)}}
 $("ndSc").addEventListener("scroll",ndRead,{passive:true});
 $("ndSc").addEventListener("keydown",e=>{if(!/Arrow(Left|Right)/.test(e.key))return;e.preventDefault();const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.marks.slice().sort((a,b)=>a.px-b.px);
-  const n=e.key==="ArrowRight"?o.find(m=>m.px>c+4):o.reverse().find(m=>m.px<c-4);if(n)sc.scrollTo({left:n.px-sc.clientWidth/2,behavior:"smooth"})});
+  const n=e.key==="ArrowRight"?o.find(m=>m.px>c+4):o.reverse().find(m=>m.px<c-4);if(n)ndGo(n)});
 (()=>{const sc=$("ndSc");let x=null,l=0;sc.addEventListener("mousedown",e=>{x=e.clientX;l=sc.scrollLeft;sc.style.scrollSnapType="none"});
   addEventListener("mousemove",e=>{if(x!==null)sc.scrollLeft=l-(e.clientX-x)});
-  addEventListener("mouseup",()=>{if(x===null)return;x=null;let b=ND.marks[0];const c=sc.scrollLeft+sc.clientWidth/2;for(const m of ND.marks)if(Math.abs(m.px-c)<Math.abs(b.px-c))b=m;sc.style.scrollSnapType="";if(b)sc.scrollTo({left:b.px-sc.clientWidth/2,behavior:"smooth"})})})();
+  addEventListener("mouseup",()=>{if(x===null)return;x=null;let b=ND.marks[0];const c=sc.scrollLeft+sc.clientWidth/2;for(const m of ND.marks)if(Math.abs(m.px-c)<Math.abs(b.px-c))b=m;if(b)ndGo(b);else sc.style.scrollSnapType=""})})();
 $("ndSw").onclick=()=>{const m=ND.under;if(!m||m.x===current)return;F=m.x;layout();play(m.x);setTimeout(renderSheet,60)};
 $("npDialT").onclick=()=>ndSet(!ND.on);
 /* La perilla mueve el dial de a una radio: cada 22° de giro es un paso (horario = hacia la derecha, más intenso). La franja también gira la perilla. */
-const KSTEP=22;let kDeg=0,kDrag=false;
+const KSTEP=22;let kDeg=0,kDrag=false,kOff=0;
 const kSet=d=>{kDeg=d;npSheet.style.setProperty("--kr",d+"deg")};
-const ndKnobSync=()=>{if(!kDrag)kSet($("ndSc").scrollLeft/4)};
+const ndKnobSync=()=>{if(!kDrag&&!ND.kBusy)kSet($("ndSc").scrollLeft/4+kOff)};
 $("ndSc").addEventListener("scroll",ndKnobSync,{passive:true});
 function ndStep(dir){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.marks.slice().sort((a,b)=>a.px-b.px);if(!o.length)return;
   let i=0;for(let j=1;j<o.length;j++)if(Math.abs(o[j].px-c)<Math.abs(o[i].px-c))i=j;
-  if(ND.kTarget!=null)i=ND.kTarget;const t=Math.max(0,Math.min(o.length-1,i+dir));ND.kTarget=t;sc.scrollTo({left:o[t].px-sc.clientWidth/2,behavior:"smooth"})}
+  if(ND.kTarget!=null)i=ND.kTarget;const t=Math.max(0,Math.min(o.length-1,i+dir));ND.kTarget=t;ndGo(o[t])}
 (()=>{const k=$("npKnob");let a0=null,id=null,acc=0;
   const ang=e=>{const r=k.getBoundingClientRect();return Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))*180/Math.PI};
-  k.addEventListener("pointerdown",e=>{a0=ang(e);id=e.pointerId;acc=0;kDrag=true;ND.kTarget=null;try{k.setPointerCapture(id)}catch(_){}k.classList.add("drag")});
+  k.addEventListener("pointerdown",e=>{a0=ang(e);id=e.pointerId;acc=0;kDrag=true;ND.kBusy=false;ND.kTarget=null;$("ndSc").style.scrollSnapType="none";try{k.setPointerCapture(id)}catch(_){}k.classList.add("drag")});
   k.addEventListener("pointermove",e=>{if(a0===null||e.pointerId!==id)return;const a=ang(e);let d=a-a0;if(d>180)d-=360;if(d<-180)d+=360;a0=a;acc+=d;kSet(kDeg+d);
     while(acc>=KSTEP){ndStep(1);acc-=KSTEP}while(acc<=-KSTEP){ndStep(-1);acc+=KSTEP}});
-  const end=()=>{if(a0===null)return;a0=null;kDrag=false;ND.kTarget=null;k.classList.remove("drag")};
+  const end=()=>{if(a0===null)return;a0=null;k.classList.remove("drag");ND.kBusy=true;setTimeout(()=>{kDrag=false;ND.kTarget=null;ND.kBusy=false;kOff=kDeg-$("ndSc").scrollLeft/4;const sc=$("ndSc");if(!ndAnim)sc.style.scrollSnapType=""},320)};
   k.addEventListener("pointerup",end);k.addEventListener("pointercancel",end)})();
 $("npInfoT").onclick=()=>{const i=$("npInfo"),o=i.hidden;i.hidden=!o;$("npInfoT").setAttribute("aria-expanded",o);if(o)setTimeout(()=>i.scrollIntoView({behavior:"smooth",block:"nearest"}),30)};
 addEventListener("resize",()=>{ND.for=null;ndBuild()});
@@ -1542,7 +1547,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-06h";
+const APP_VERSION="2026-11-07a";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
