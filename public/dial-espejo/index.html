@@ -306,7 +306,13 @@ a{color:inherit}
 .b-t{font-weight:600;font-size:15px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .b-a{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
 .b-m{font:400 11px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.7}
-.b-btns{display:flex;gap:4px;align-items:center}
+.b-btns{display:flex;gap:6px;align-items:center}
+/* La barra se abre a la pantalla completa: asa arriba y flecha hacia arriba (favorita, otra señal y web viven en la pantalla extendida) */
+.band{position:relative}
+#bFav,#bAlt,#bWeb{display:none!important}
+.band::before{content:"";position:absolute;top:5px;left:50%;width:34px;height:4px;margin-left:-17px;border-radius:2px;background:currentColor;opacity:.28}
+.b-exp{width:40px;height:40px;border-radius:50%;border:1px solid color-mix(in srgb,currentColor 28%,transparent);background:color-mix(in srgb,currentColor 8%,transparent);color:inherit;display:grid;place-items:center;cursor:pointer;padding:0;animation:bexp 2.6s ease-in-out 1.2s 2}
+@keyframes bexp{0%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
 .ib{width:38px;height:38px;border:0;background:transparent;border-radius:12px;display:grid;place-items:center;cursor:pointer;font-size:17px;padding:0}
 .ib:disabled{opacity:.35}
 .pp{width:46px;height:46px;border-radius:15px;background:rgba(0,0,0,.88);border:0;display:grid;place-items:center;cursor:pointer;font-size:17px}
@@ -600,9 +606,10 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <div class="b-m mq" id="bM"></div>
     </div>
     <div class="b-btns">
-      <button class="ib" id="bFav" aria-label="Favorita">☆</button>
-      <button class="ib" id="bAlt" aria-label="Probar otra señal" title="Otra señal">⇄</button>
-      <a class="ib" id="bWeb" target="_blank" rel="noopener" aria-label="Web de la radio" style="text-decoration:none">↗</a>
+      <button class="ib" id="bFav" aria-label="Favorita" hidden>☆</button>
+      <button class="ib" id="bAlt" aria-label="Probar otra señal" hidden>⇄</button>
+      <a class="ib" id="bWeb" target="_blank" rel="noopener" aria-label="Web de la radio" hidden>↗</a>
+      <button class="b-exp" id="bExp" aria-label="Abrir la pantalla de la radio"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 14.5 12 9.5l5 5"/></svg></button>
       <button class="pp" id="bPP" aria-label="Pausar">❚❚</button>
     </div>
   </div>
@@ -1315,7 +1322,7 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
 }
 function openSheet(){if(!current)return;npSheet.hidden=false;document.body.style.overflow="hidden";renderSheet()}
 function closeSheet(){npSheet.hidden=true;document.body.style.overflow=""}
-$("band").addEventListener("click",e=>{if(e.target.closest("button,a"))return;openSheet()});
+$("band").addEventListener("click",e=>{if(e.target.closest("button,a")&&!e.target.closest("#bExp"))return;openSheet()});
 $("npClose").onclick=closeSheet;
 /* Compartir: enlace limpio a la radio (sin la clave personal ?k=); quien lo abre llega a esta misma pantalla */
 const slug=s=>s.n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
@@ -1566,7 +1573,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07j";
+const APP_VERSION="2026-11-07k";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
