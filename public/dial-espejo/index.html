@@ -203,7 +203,7 @@ a{color:inherit}
 @keyframes npUp{from{transform:translateY(100%)}to{transform:none}}
 .np-bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(40px) saturate(1.4);opacity:.55;transform:scale(1.1)}
 .np-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,7,10,.35),rgba(7,7,10,.85) 70%,#07070A)}
-.np-in{position:relative;height:100%;overflow-y:auto;display:grid;align-content:start;gap:16px;max-width:520px;margin:0 auto;
+.np-in{position:relative;height:100%;overflow-y:auto;display:grid;grid-auto-rows:max-content;align-content:start;gap:16px;max-width:520px;margin:0 auto;
   padding:calc(10px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
 .np-top{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center}
 .np-x{width:40px;height:40px;border-radius:12px;border:0;background:rgba(237,237,242,.08);font-size:22px;line-height:1;cursor:pointer}
@@ -228,6 +228,37 @@ a{color:inherit}
 .np-ctl{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .np-b{width:48px;height:48px;border-radius:16px;border:1px solid rgba(237,237,242,.14);background:rgba(237,237,242,.06);display:grid;place-items:center;font-size:19px;cursor:pointer;text-decoration:none}
 .np-pp{width:72px;height:72px;border-radius:24px;border:0;background:var(--npc,#EDEDF2);color:#07070A;font-size:24px;display:grid;place-items:center;cursor:pointer;box-shadow:0 0 30px -6px var(--npc)}
+
+/* Enlaces solo con ícono: una sola fila */
+.np-links{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center}
+.np-col{display:flex;gap:8px;align-items:center}
+.np-col .np-k{margin-right:2px}
+.np-links a{width:40px;height:40px;padding:0;justify-content:center;border-radius:50%}
+.np-links a i{width:18px;height:18px}
+/* Dial de afines: franja horizontal con mira láser al centro */
+.nd-box{display:grid;gap:10px;margin-inline:calc(-1*max(20px,env(safe-area-inset-left,0px)));overflow:hidden;transition:max-height .32s cubic-bezier(.2,.8,.2,1),opacity .2s,margin .32s;max-height:200px;min-height:max-content;flex:none}
+.nd-box.off{min-height:0;max-height:0;opacity:0;margin-bottom:-16px}
+.nd{position:relative;min-width:0;border-block:1px solid rgba(237,237,242,.14);background:rgba(9,9,12,.72);user-select:none;-webkit-user-select:none}
+.nd-sc{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;cursor:grab;outline:none}
+.nd-sc::-webkit-scrollbar{display:none}
+.nd-tr{position:relative;height:62px;background:repeating-linear-gradient(90deg,rgba(237,237,242,.2) 0 1px,transparent 1px 10px) 0 100%/100% 9px no-repeat,repeating-linear-gradient(90deg,rgba(237,237,242,.38) 0 1px,transparent 1px 50px) 0 100%/100% 17px no-repeat}
+.nd-mk{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;scroll-snap-align:center;border:0;padding:0;background:none;cursor:pointer}
+.nd-mk::after{content:"";position:absolute;left:0;bottom:0;width:2px;height:var(--h);background:var(--mc);opacity:var(--o)}
+.nd-mk span{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);font:400 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mc);opacity:calc(var(--o)*.75);white-space:nowrap;transition:opacity .15s}
+.nd-mk.hit span,.nd-mk.hit::after{opacity:1}
+.nd-mk.now span::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ink);margin-right:6px;vertical-align:1px}
+.nd-laser{position:absolute;top:0;bottom:0;left:50%;width:1px;background:#FF2A1A;box-shadow:0 0 6px 1px rgba(255,42,26,.55);pointer-events:none;z-index:2}
+.nd-laser::before{content:"";position:absolute;top:0;left:-4px;width:9px;height:1px;background:#FF2A1A}
+.nd-fade{position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(90deg,#09090C,transparent 18%,transparent 82%,#09090C)}
+.nd-read{display:grid;gap:8px;padding-inline:max(20px,env(safe-area-inset-left,0px))}
+.nd-read div{display:grid;gap:3px;min-width:0;transition:opacity .12s}.nd-read.between div{opacity:.35}
+.nd-read b{font-size:15px;line-height:20px;height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nd-read.cur b::after{content:" · sonando";font:400 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.nd-read div span{font:400 10.5px var(--mono);line-height:14px;height:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nd-read em{font-style:normal;color:var(--uc)}
+.nd-sw{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--uc);background:transparent;border:0;border-block:1px solid color-mix(in srgb,var(--uc) 55%,transparent);padding:11px 2px;cursor:pointer;display:flex;justify-content:space-between}
+.nd-sw:active{background:color-mix(in srgb,var(--uc) 10%,transparent)}.nd-sw.off{visibility:hidden}
+.nd-t[aria-pressed="false"]{opacity:.55}.nd-t[aria-pressed="false"] svg path:last-child{stroke:currentColor}
 .np-info{display:grid;gap:10px;background:rgba(17,17,22,.7);border:1px solid var(--line);border-radius:18px;padding:14px}
 .np-info .k{font:400 10.5px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
 .np-info .v{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
@@ -440,7 +471,8 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 @media (min-width:900px){
   .np-in{max-width:1120px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:56px;row-gap:18px;align-content:center;min-height:100%}
   .np-top{grid-column:1/-1}
-  .np-cover{grid-column:1;grid-row:2/span 4;width:min(44vw,64vh,540px);height:min(44vw,64vh,540px);align-self:center;border-radius:28px}
+  .nd-box{grid-column:1/-1;margin-inline:0}.nd-read{padding-inline:0;max-width:640px}
+  .np-cover{grid-column:1;grid-row:3/span 4;width:min(44vw,64vh,540px);height:min(44vw,64vh,540px);align-self:center;border-radius:28px}
   .np-meta,.np-links,.np-ctl,.np-info{grid-column:2}
   .np-song{font-size:36px}.np-artist{font-size:22px}.np-album{font-size:13px}
   .np-ctl{justify-content:flex-start;gap:14px}
@@ -503,6 +535,10 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   <div class="np-bg" id="npBg"></div>
   <div class="np-in">
     <div class="np-top"><button class="np-x" id="npClose" aria-label="Cerrar">⌄</button><span class="np-st" id="npSt"></span><button class="np-x np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div>
+    <div class="nd-box" id="ndBox">
+      <section class="nd" aria-label="Dial de radios afines"><div class="nd-sc" id="ndSc" tabindex="0"><div class="nd-tr" id="ndTr"></div></div><div class="nd-fade"></div><div class="nd-laser"></div></section>
+      <div class="nd-read" id="ndRead"><div><b id="ndN"></b><span id="ndD"></span></div><button class="nd-sw off" id="ndSw"><span>Cambiar a esta radio</span><span>→</span></button></div>
+    </div>
     <div class="np-cover" id="npCover"></div>
     <div class="np-meta">
       <div class="np-song" id="npSong"></div>
@@ -515,7 +551,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <button class="np-b" id="npAlt" aria-label="Probar otra señal">⇄</button>
       <button class="np-pp" id="npPP" aria-label="Pausar">❚❚</button>
       <a class="np-b" id="npWeb" target="_blank" rel="noopener" aria-label="Web de la radio">↗</a>
-      <button class="np-b" id="npNext" aria-label="Siguiente radio afín">⏭</button>
+      <button class="np-b nd-t" id="npDialT" aria-label="Mostrar u ocultar el dial de afines" aria-pressed="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M3 15.5h18" stroke="currentColor" stroke-width="1.4"/><path d="M5 15.5v-2M8 15.5v-3.5M11 15.5v-2M14 15.5v-2M17 15.5v-3.5M20 15.5v-2" stroke="currentColor" stroke-width="1.2"/><path d="M12.5 6v13" stroke="#FF2A1A" stroke-width="1.6"/></svg></button>
     </div>
     <div class="np-info" id="npInfo"></div>
   </div>
@@ -1207,7 +1243,7 @@ function hexArt(s){const c=FAM[s.g][2];const R2=14,SQ3=Math.sqrt(3);let g="";con
   return `<svg viewBox="-80 -80 160 160" aria-hidden="true">${g}</svg>`}
 const npSheet=$("npSheet");
 function npQuery(){const j=np.cur||{};return{song:j.song||null,artist:j.artist||null,raw:j.raw||null}}
-function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.cur||{},col=FAM[s.g][2];
+function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.cur||{},col=FAM[s.g][2];if(typeof ND!=="undefined"&&ND.on&&ND.for!==s)requestAnimationFrame(ndBuild);
   npSheet.style.setProperty("--npc",col);
   const song=j.song&&j.artist?j.song:(j.program||j.raw||s.n);
   const artist=j.song&&j.artist?j.artist:(j.program?(j.program_desc||s.n):(j.raw?s.n:stationDesc(s)));
@@ -1222,8 +1258,8 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   const L=$("npLinks");
   // Dos columnas: la canción a la izquierda y el artista a la derecha, cada uno con Spotify y YouTube
   // La app de Spotify toma el último tramo del enlace como texto a buscar: por eso va solo la búsqueda, sin /tracks ni /artists
-  const sp=t=>`<a class="sp" href="https://open.spotify.com/search/${encodeURIComponent(t)}" target="_blank" rel="noopener"><i></i>Spotify</a>`;
-  const yt=t=>`<a class="yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(t)}" target="_blank" rel="noopener"><i></i>YouTube</a>`;
+  const sp=t=>`<a class="sp" href="https://open.spotify.com/search/${encodeURIComponent(t)}" target="_blank" rel="noopener" aria-label="Buscar en Spotify" title="Spotify"><i></i></a>`;
+  const yt=t=>`<a class="yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(t)}" target="_blank" rel="noopener" aria-label="Buscar en YouTube" title="YouTube"><i></i></a>`;
   if(q){const songQ=j.artist&&j.song?`${j.song} ${j.artist}`:q;
     L.innerHTML=`<div class="np-col"><div class="np-k">Canción</div>${sp(songQ)}${yt(songQ)}</div>`+
       (j.artist?`<div class="np-col"><div class="np-k">Artista</div>${sp(j.artist)}${yt(j.artist)}</div>`:"")}
@@ -1259,7 +1295,36 @@ function openShared(){let r;try{r=new URLSearchParams(location.search).get("r")}
 $("npPP").onclick=()=>{toggle();setTimeout(renderSheet,50)};
 $("npFav").onclick=()=>{$("bFav").click();renderSheet()};
 $("npAlt").onclick=()=>$("bAlt").click();
-$("npNext").onclick=()=>{if(!current)return;const af=S.filter(x=>x!==current&&!x.dead).map(x=>({x,v:sim(current,x).v})).sort((a,b)=>b.v-a.v);if(af[0]){F=af[0].x;layout();play(af[0].x);setTimeout(renderSheet,60)}};
+/* Dial de afines: la radio que suena al centro; a la izquierda las más calmas, a la derecha las más intensas; la distancia y la altura de la marca dicen cuánto se parecen */
+var ND={for:null,marks:[],under:null,on:store.get("dial-dial",true)};
+const ndK=v=>Math.max(0,Math.min(1,(v-.55)/.38));
+const ndDesc=x=>`${esc(CN[x.cc]||x.cc)} · <em>${esc(FAM[x.g][0])}</em> · ${esc([...x.tags].slice(0,2).map(t=>t.replace(/-/g," ")).join(" · "))}`;
+function ndSet(on){ND.on=on;store.set("dial-dial",on);$("ndBox").classList.toggle("off",!on);$("npDialT").setAttribute("aria-pressed",on);if(on){ND.for=null;requestAnimationFrame(ndBuild)}}
+function ndBuild(){if(!ND.on||!current||npSheet.hidden)return;const sc=$("ndSc"),tr=$("ndTr"),w=sc.clientWidth;if(!w)return;
+  const cur=current,PX=1800,GAP=104;ND.for=cur;
+  const af=S.filter(x=>x!==cur&&!x.dead).map(x=>({x,v:sim(cur,x).v})).sort((a,b)=>b.v-a.v).slice(0,18);
+  const Lf=af.filter(a=>a.x.en<cur.en||(a.x.en===cur.en&&a.x.talk>cur.talk)),Rt=af.filter(a=>!Lf.includes(a));
+  const place=(arr,dir)=>{let last=0;return arr.map(a=>{const d=Math.max((1-a.v)*PX,last+GAP);last=d;return{...a,d:d*dir}})};
+  const all=[{x:cur,v:1,d:0},...place(Lf,-1),...place(Rt,1)];
+  const mn=Math.min(...all.map(a=>a.d)),mx=Math.max(...all.map(a=>a.d)),x0=w/2-mn;tr.style.width=(mx-mn+w)+"px";
+  tr.innerHTML=all.map((a,i)=>`<button class="nd-mk${a.x===cur?" now":""}" data-i="${i}" style="left:${x0+a.d}px;--mc:${FAM[a.x.g][2]};--h:${a.x===cur?28:Math.round(6+22*ndK(a.v))}px;--o:${a.x===cur?1:(.35+.65*ndK(a.v)).toFixed(2)}" aria-label="${esc(a.x.n)}"><span>${esc(a.x.sh)}</span></button>`).join("");
+  ND.marks=all.map((a,i)=>({...a,px:x0+a.d,el:tr.children[i]}));
+  [...tr.children].forEach(b=>b.onclick=()=>{const m=ND.marks[+b.dataset.i];sc.scrollTo({left:m.px-w/2,behavior:"smooth"})});
+  sc.style.scrollSnapType="none";sc.scrollLeft=x0-w/2;requestAnimationFrame(()=>sc.style.scrollSnapType="");ND.shown=null;ndRead()}
+function ndRead(){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2;let b=null,bd=1e9;for(const m of ND.marks){const d=Math.abs(m.px-c);if(d<bd){bd=d;b=m}}if(!b)return;
+  const near=bd<30;ND.under=near?b:null;ND.marks.forEach(m=>m.el.classList.toggle("hit",m===ND.under));
+  const R=$("ndRead");R.classList.toggle("between",!near);R.classList.toggle("cur",near&&b.x===current);$("ndSw").classList.toggle("off",!near||b.x===current);
+  if(ND.shown!==b){ND.shown=b;npSheet.style.setProperty("--uc",FAM[b.x.g][2]);$("ndN").textContent=b.x.n;$("ndD").innerHTML=ndDesc(b.x)}}
+$("ndSc").addEventListener("scroll",ndRead,{passive:true});
+$("ndSc").addEventListener("keydown",e=>{if(!/Arrow(Left|Right)/.test(e.key))return;e.preventDefault();const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.marks.slice().sort((a,b)=>a.px-b.px);
+  const n=e.key==="ArrowRight"?o.find(m=>m.px>c+4):o.reverse().find(m=>m.px<c-4);if(n)sc.scrollTo({left:n.px-sc.clientWidth/2,behavior:"smooth"})});
+(()=>{const sc=$("ndSc");let x=null,l=0;sc.addEventListener("mousedown",e=>{x=e.clientX;l=sc.scrollLeft;sc.style.scrollSnapType="none"});
+  addEventListener("mousemove",e=>{if(x!==null)sc.scrollLeft=l-(e.clientX-x)});
+  addEventListener("mouseup",()=>{if(x===null)return;x=null;let b=ND.marks[0];const c=sc.scrollLeft+sc.clientWidth/2;for(const m of ND.marks)if(Math.abs(m.px-c)<Math.abs(b.px-c))b=m;sc.style.scrollSnapType="";if(b)sc.scrollTo({left:b.px-sc.clientWidth/2,behavior:"smooth"})})})();
+$("ndSw").onclick=()=>{const m=ND.under;if(!m||m.x===current)return;F=m.x;layout();play(m.x);setTimeout(renderSheet,60)};
+$("npDialT").onclick=()=>ndSet(!ND.on);
+addEventListener("resize",()=>{ND.for=null;ndBuild()});
+ndSet(ND.on);
 // Deslizar hacia abajo para cerrar
 (function(){let y0=null;npSheet.addEventListener("touchstart",e=>{const sc=npSheet.querySelector(".np-in");y0=sc.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
   npSheet.addEventListener("touchmove",e=>{if(y0==null)return;const dy=e.touches[0].clientY-y0;if(dy>0)npSheet.style.transform=`translateY(${dy*.6}px)`},{passive:true});
@@ -1442,7 +1507,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-06b";
+const APP_VERSION="2026-11-06d";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
