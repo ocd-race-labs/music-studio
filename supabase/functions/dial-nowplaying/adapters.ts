@@ -98,6 +98,24 @@ export async function adapter(src: string): Promise<NP | null> {
       if (m) return { song: m[1].trim(), artist: m[2].trim(), program };
       return program ? { program } : null;
     }
+    if (src === "nova") {
+      // Radio Nova publica la canción en curso de cada una de sus radios en un JSON de su web
+      const j = await get("https://www.nova.fr/radios-data/www.nova.fr/all.json");
+      const it = (Array.isArray(j) ? j : []).find((x: any) => x.radio?.code === "radio-nova"); if (!it) return null;
+      const t = it.currentTrack;
+      const cap = (x: string) => x && x === x.toUpperCase() ? x.toLowerCase().replace(/(^|[\s(\-"&/])\p{L}/gu, (c) => c.toUpperCase()) : x; // vienen en mayúsculas
+      if (t?.title && t?.artist) return { song: cap(t.title), artist: cap(t.artist) };
+      return it.currentShow?.title ? { program: it.currentShow.title } : null;
+    }
+    if (src === "stubru") {
+      // VRT (Studio Brussel): el reproductor de VRT MAX pide título y artista en curso a su GraphQL público
+      const r = await fetch("https://www.vrt.be/vrtnu-api/graphql/public/v1", { method: "POST", signal: AbortSignal.timeout(5000),
+        headers: { "Content-Type": "application/json", "x-vrt-client-name": "WEB", "x-vrt-client-version": "1.5.19", "User-Agent": "Mozilla/5.0 (DialEspejo)" },
+        body: JSON.stringify({ query: "query L($pageId: ID!){ page(id:$pageId){ ... on PlaybackPage { player { title subtitle } } } }", variables: { pageId: "/vrtmax/livestream/audio/studio-brussel/" } }) });
+      if (!r.ok) return null;
+      const p = (await r.json())?.data?.page?.player; if (!p?.title) return null;
+      return p.subtitle ? { song: p.title, artist: p.subtitle } : { program: p.title };
+    }
     if (src === "kcrw") {
       const j = await get("https://tracklist-api.kcrw.com/Simulcast/all/1");
       const it = Array.isArray(j) ? j[0] : null; if (!it) return null;

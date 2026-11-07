@@ -1250,7 +1250,7 @@ const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SBKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const np={timer:null,src:null,station:null,last:"",art:false};
 // Radios que publican su lista al aire: se consultan directo (más fiable que el metadato de la señal)
-const NPSRC={"WFMU":"wfmu","sunshine live":"iris:sunshinelive:3","RADIO BOB!":"iris:bob:69","Sunshine Live Afro House":"iris:sunshinelive:95","triple j":"abc:triplej","ABC Classic":"abc:classic","Double J":"abc:doublej","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","Radio Paradise Mellow":"rp:1","KCRW":"kcrw",
+const NPSRC={"WFMU":"wfmu","Radio Nova":"nova","Studio Brussel":"stubru","sunshine live":"iris:sunshinelive:3","RADIO BOB!":"iris:bob:69","Sunshine Live Afro House":"iris:sunshinelive:95","triple j":"abc:triplej","ABC Classic":"abc:classic","Double J":"abc:doublej","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","Radio Paradise Mellow":"rp:1","KCRW":"kcrw",
   "FIP":"rf:7","FIP Rock":"rf:64","FIP Jazz":"rf:65","FIP Reggae":"rf:71","FIP Monde":"rf:69","FIP Electro":"rf:74","France Inter":"rf:1","BBC Radio 1":"bbc:bbc_radio_one","BBC Radio 2":"bbc:bbc_radio_two","BBC 6 Music":"bbc:bbc_6music","BBC Radio 3":"bbc:bbc_radio_three"};
 function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;np.cur=null;$("art").innerHTML='<span class="eq"><i></i><i></i><i></i></span>'}
 function npStop(){clearTimeout(np.timer);np.timer=null}
@@ -1293,22 +1293,58 @@ function hexArt(s,full){const c=FAM[s.g][2];const R2=full?11:14,SQ3=Math.sqrt(3)
   if(!full)return `<svg viewBox="-80 -80 160 160" aria-hidden="true">${g}</svg>`;
   // Versión de portada: la colmena llena el cuadro y debajo hay un halo de luz que respira con el pulso
   return `<div class="vu-glow"></div><svg class="hexvu" viewBox="-80 -80 160 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><radialGradient id="vuShade"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".72" stop-color="#000" stop-opacity=".15"/><stop offset="1" stop-color="#000" stop-opacity=".7"/></radialGradient></defs>${g}<rect x="-80" y="-80" width="160" height="160" fill="url(#vuShade)"/></svg>`}
-/* Sin carátula, la colmena es un ecualizador: doce bandas (una por dirección) encienden cinco anillos hacia afuera,
-   con un halo de luz que respira con el pulso y sombra en los bordes. Es una animación, no un análisis del audio: leer la
-   señal exigiría permisos (CORS) que la mayoría de las radios no da, y en el iPhone eso silencia el audio.
-   Solo corre con la pantalla abierta y la radio sonando. */
-const VU={raf:0,t:0,lv:Array(12).fill(.3),beat:0,next:0,pk:Array(12).fill(0)};
+/* Sin carátula, la colmena es un ecualizador de verdad: mientras la pantalla está abierta se abre una segunda conexión a
+   la señal (solo si la radio lo permite: CORS), se decodifica en trozos de ~1 s y se mide la energía en 7 bandas de
+   frecuencia, graves abajo y agudos arriba. La reproducción no se toca (el iPhone silencia el audio si pasa por Web Audio),
+   y el análisis se atrasa lo mismo que el búfer del reproductor para que calce con lo que suena.
+   Si la radio no lo permite (o es HLS), la colmena solo respira lento: no aparenta seguir el ritmo. */
+const VU={raf:0,t:0,lv:Array(12).fill(.2),beat:0,pk:Array(12).fill(0)};
 const VUT=[0,.12,.3,.48,.64,.8];
+const VA={ctl:null,url:null,frames:[],play:0,max:Array(7).fill(1e-3),fail:{},prevLow:0,live:false};
+const VA_E=Array.from({length:8},(_,i)=>40*Math.pow(14000/40,i/7)); // bordes de banda en Hz
+const vaBand=b=>{const d=Math.abs(b-3);return Math.min(d,12-d)}; // 3 = abajo (graves), 9 = arriba (agudos)
+function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]]}}
+  for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let j=0;j<len/2;j++){const k=i+j,l=k+len/2;
+    const tr=re[l]*cr-im[l]*ci,ti=re[l]*ci+im[l]*cr;re[l]=re[k]-tr;im[l]=im[k]-ti;re[k]+=tr;im[k]+=ti;const nr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nr}}}}
+const VA_W=Float32Array.from({length:1024},(_,i)=>.5-.5*Math.cos(2*Math.PI*i/1023));
+function vaAnalyze(buf){const sr=buf.sampleRate,ch=buf.getChannelData(0),ch2=buf.numberOfChannels>1?buf.getChannelData(1):null,hop=Math.round(sr/30),out=[];
+  const re=new Float32Array(1024),im=new Float32Array(1024);
+  for(let o=0;o+1024<=ch.length;o+=hop){for(let i=0;i<1024;i++){re[i]=(ch2?(ch[o+i]+ch2[o+i])/2:ch[o+i])*VA_W[i];im[i]=0}fft(re,im);
+    const e=Array(7).fill(0);for(let k=1;k<512;k++){const f=k*sr/1024;if(f<VA_E[0]||f>=VA_E[7])continue;let b=0;while(f>=VA_E[b+1])b++;e[b]+=Math.hypot(re[k],im[k])}
+    const lv=e.map((x,b)=>{VA.max[b]=Math.max(x,VA.max[b]*.997,1e-3);return Math.pow(x/VA.max[b],1.4)});
+    const low=e[0]+e[1],beat=Math.max(0,Math.min(1,(low-VA.prevLow*1.15)/(VA.prevLow+1e-3)));VA.prevLow=VA.prevLow*.85+low*.15;
+    out.push({lv,beat})}
+  return {frames:out,dur:hop/sr}}
+function vaStop(){if(VA.ctl)try{VA.ctl.abort()}catch(e){}VA.ctl=null;VA.url=null;VA.frames=[];VA.play=0;VA.live=false}
+function vaDelay(){try{const b=audio.buffered;if(b.length)return Math.max(0,Math.min(15,b.end(b.length-1)-audio.currentTime))}catch(e){}return 2}
+async function vaStart(){const c=np.src;if(!c)return;const u=c.url;if(VA.url===u)return;vaStop();
+  if(c.hls||/\.m3u8(\?|$)/i.test(u)||VA.fail[u]||!window.OfflineAudioContext)return;
+  VA.url=u;const ctl=VA.ctl=new AbortController();const dec=new OfflineAudioContext(2,1,44100);
+  try{const r=await fetch(u,{signal:ctl.signal,cache:"no-store"});if(!r.ok||!r.body)throw 0;const rd=r.body.getReader();let parts=[],n=0,bad=0;
+    while(VA.ctl===ctl){const {value,done}=await rd.read();if(done)break;parts.push(value);n+=value.length;
+      if(n<20000)continue;const all=new Uint8Array(n);let o=0;for(const p of parts){all.set(p,o);o+=p.length}parts=[];n=0;
+      let buf;try{buf=await dec.decodeAudioData(all.buffer)}catch(e){if(++bad>3)throw 0;continue}bad=0;
+      // Lo que llega ahora es lo último transmitido y suena cuando el reproductor consuma su búfer: el trozo termina en ahora + atraso.
+      // Si la cola se desfasa (ráfaga inicial del servidor, cortes), se descarta y se reancla.
+      const {frames,dur}=vaAnalyze(buf),len=frames.length*dur*1000,end=performance.now()+vaDelay()*1000;
+      if(!VA.play||Math.abs(VA.play+len-end)>700){VA.frames=[];VA.play=end-len}
+      frames.forEach((f,i)=>{f.t=VA.play+i*dur*1000});VA.play+=len;VA.frames.push(...frames);VA.live=true;
+      if(VA.frames.length>900)VA.frames.splice(0,VA.frames.length-900)}
+    if(VA.ctl===ctl)throw 0; // la señal se cortó
+  }catch(e){if(VA.ctl===ctl){VA.fail[u]=1;VA.live=false}}}
 function vuTick(now){VU.raf=0;const cv=$("npCover"),svg=cv&&cv.querySelector(".hexvu");
-  if(!svg||npSheet.hidden||audio.paused||document.hidden){if(svg){svg.querySelectorAll("polygon").forEach(p=>p.style.fillOpacity="");cv.style.removeProperty("--vg")}return}
-  if(now-VU.t>66){VU.t=now;
-    if(now>VU.next){VU.beat=1;VU.next=now+360+Math.random()*280}
-    VU.beat*=.8;
-    VU.lv=VU.lv.map((v,i)=>{const bass=i%3===0?1:.75;const target=.18+.62*VU.beat*bass*(.55+.45*Math.random())+.3*Math.random()*Math.random();return v+(target-v)*(target>v?.75:.22)});
-    VU.pk=VU.pk.map((p,i)=>Math.max(VU.lv[i],p-.03));
-    cv.style.setProperty("--vg",(.35+.65*VU.beat).toFixed(2));
+  if(!svg||npSheet.hidden||audio.paused||document.hidden){vaStop();if(svg){svg.querySelectorAll("polygon").forEach(p=>p.style.fillOpacity="");cv.style.removeProperty("--vg")}return}
+  if(np.src&&VA.url!==np.src.url&&!VA.fail[np.src.url])vaStart();
+  if(now-VU.t>33){VU.t=now;let f=null;while(VA.frames.length&&VA.frames[0].t<=now)f=VA.frames.shift();
+    if(f){VU.beat=Math.max(VU.beat*.8,f.beat);
+      VU.lv=VU.lv.map((v,i)=>{const t=.06+.9*f.lv[vaBand(i)];return v+(t-v)*(t>v?.8:.3)})}
+    else if(!VA.live){// sin análisis: respiración lenta, sin fingir ritmo
+      VU.beat*=.9;const ph=now/2400;VU.lv=VU.lv.map((v,i)=>{const t=.16+.1*Math.sin(ph+vaBand(i)*.7);return v+(t-v)*.08})}
+    else{VU.beat*=.85;VU.lv=VU.lv.map(v=>v*.9)}
+    VU.pk=VU.pk.map((p,i)=>Math.max(VU.lv[i],p-.02));
+    cv.style.setProperty("--vg",(.3+.7*VU.beat).toFixed(2));
     svg.querySelectorAll("polygon").forEach(p=>{const k=+p.dataset.k,b=+p.dataset.b,v=VU.lv[b];
-      let o;if(k===0)o=.8+.2*VU.beat;else{const t=VUT[k],on=Math.max(0,Math.min(1,(v-t)/.16));const peak=Math.abs(VU.pk[b]-t)<.06?.55:0;o=.06+.94*Math.max(on,peak)*(1-k*.15)}
+      let o;if(k===0)o=.75+.25*VU.beat;else{const t=VUT[k],on=Math.max(0,Math.min(1,(v-t)/.16));const peak=Math.abs(VU.pk[b]-t)<.06?.55:0;o=.06+.94*Math.max(on,peak)*(1-k*.15)}
       p.style.fillOpacity=o.toFixed(2)})}
   VU.raf=requestAnimationFrame(vuTick)}
 function vuStart(){if(!VU.raf)VU.raf=requestAnimationFrame(vuTick)}
@@ -1601,7 +1637,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07o";
+const APP_VERSION="2026-11-07p";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
