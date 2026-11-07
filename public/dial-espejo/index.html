@@ -1348,12 +1348,12 @@ function ndBuild(){if(!ND.on||!current||npSheet.hidden)return;const sc=$("ndSc")
   const af=S.filter(x=>x!==cur&&!x.dead).map(x=>({x,v:sim(cur,x).v})).sort((a,b)=>b.v-a.v).slice(0,18);
   const Lf=af.filter(a=>a.x.en<cur.en||(a.x.en===cur.en&&a.x.talk>cur.talk)),Rt=af.filter(a=>!Lf.includes(a));
   const place=(arr,dir)=>{let last=0;return arr.map(a=>{const d=Math.max((1-a.v)*PX,last+GAP);last=d;return{...a,d:d*dir}})};
-  const all=[...place(Lf,-1),...place(Rt,1)];if(!all.length)return;
+  const all=[{x:cur,v:1,d:0},...place(Lf,-1),...place(Rt,1)];
   const mn=Math.min(...all.map(a=>a.d)),mx=Math.max(...all.map(a=>a.d)),x0=w/2-mn;tr.style.width=(mx-mn+w)+"px";
   tr.innerHTML=all.map((a,i)=>`<button class="nd-mk${a.x===cur?" now":""}" data-i="${i}" style="left:${x0+a.d}px;--mc:${FAM[a.x.g][2]};--h:${a.x===cur?28:Math.round(6+22*ndK(a.v))}px;--o:${a.x===cur?1:(.35+.65*ndK(a.v)).toFixed(2)}" aria-label="${esc(a.x.n)}"><span>${esc(a.x.sh)}</span></button>`).join("");
   ND.marks=all.map((a,i)=>({...a,px:x0+a.d,el:tr.children[i]}));
   [...tr.children].forEach(b=>b.onclick=()=>ndGo(ND.marks[+b.dataset.i]));
-  const best=ND.marks.reduce((a,b)=>b.v>a.v?b:a);sc.style.scrollSnapType="none";sc.scrollLeft=best.px-w/2;requestAnimationFrame(()=>sc.style.scrollSnapType="");ND.shown=null;ndRead();ndKnobSync()}
+  sc.style.scrollSnapType="none";sc.scrollLeft=x0-w/2;requestAnimationFrame(()=>sc.style.scrollSnapType="");ND.shown=null;ndRead();ndKnobSync()}
 function ndRead(){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2;let b=null,bd=1e9;for(const m of ND.marks){const d=Math.abs(m.px-c);if(d<bd){bd=d;b=m}}if(!b)return;
   const near=bd<30;ND.under=near?b:null;ND.marks.forEach(m=>m.el.classList.toggle("hit",m===ND.under));
   const R=$("ndRead");R.classList.toggle("between",!near);R.classList.toggle("cur",near&&b.x===current);$("ndSw").classList.toggle("off",!near||b.x===current);
@@ -1566,7 +1566,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07g";
+const APP_VERSION="2026-11-07h";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
