@@ -244,8 +244,12 @@ a{color:inherit}
 .np-in{grid-template-columns:minmax(0,1fr);overflow-x:hidden}
 .np-stage{position:relative;display:grid;place-items:center;justify-self:stretch;overflow-x:visible;overflow-y:clip}
 .np-stage .np-cover{position:relative;z-index:1}
-.np-knob{position:absolute;left:50%;top:50%;width:min(calc(100vw - 6px),calc(min(78vw,340px,44vh)*1.36));aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;clip-path:circle(50%);isolation:isolate;touch-action:none;cursor:grab;z-index:0;
-  -webkit-mask:linear-gradient(180deg,transparent 0,#000 16%,#000 84%,transparent 100%);mask:linear-gradient(180deg,transparent 0,#000 16%,#000 84%,transparent 100%)}
+/* con el dial encendido la portada se achica para que la perilla se vea y se alcance con el pulgar */
+.nd-box:not(.off)~.np-stage .np-cover{width:min(60vw,280px,38vh);height:min(60vw,280px,38vh);transition:width .3s,height .3s}
+.np-stage{padding-block:min(9vw,40px)}
+.nd-box.off~.np-stage{padding-block:0}
+.np-knob{position:absolute;left:50%;top:50%;width:min(calc(100vw - 6px),calc(min(60vw,280px,38vh)*1.62));aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;clip-path:circle(50%);isolation:isolate;touch-action:none;cursor:grab;z-index:0;
+  -webkit-mask:linear-gradient(180deg,transparent 0 10%,#000 24%,#000 76%,transparent 90% 100%);mask:linear-gradient(180deg,transparent 0 10%,#000 24%,#000 76%,transparent 90% 100%)}
 .np-knob>*{position:absolute;border-radius:50%;pointer-events:none}
 /* escala fija alrededor de la perilla: rayitas finas y una más larga cada 30° */
 .np-knob .k-tk{inset:0;background:repeating-conic-gradient(rgba(237,237,242,.5) 0 .45deg,transparent .45deg 30deg),repeating-conic-gradient(rgba(237,237,242,.2) 0 .35deg,transparent .35deg 6deg);
@@ -1557,7 +1561,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07c";
+const APP_VERSION="2026-11-07d";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
