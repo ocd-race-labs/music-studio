@@ -71,6 +71,18 @@ export async function adapter(src: string): Promise<NP | null> {
       if (!j?.title) return null;
       return { song: j.title, artist: j.artist?.name || j.artist_name || null, album: j.album || null, year: j.releaseyear ? String(j.releaseyear) : null, artist_image: j.artist?.image || null } as NP;
     }
+    if (src.startsWith("iris:")) {
+      // Iris (loverad.io): lista al aire de radios alemanas como Sunshine Live; src = iris:<marca>:<estación>
+      const [, brand, station] = src.split(":");
+      if (!/^[a-z0-9-]+$/.test(brand || "") || !/^\d+$/.test(station || "")) return null;
+      const j = await get(`https://iris-${brand}.loverad.io/flow.json?station=${station}&offset=1&count=1`);
+      const e = j?.result?.entry?.[0]; const so = e?.song?.entry?.[0]; if (!so?.title) return null;
+      const end = Date.parse(e.airtime) + (Number(e.duration) || 0) * 1000;
+      if (end && Date.now() - end > 5 * 60000) return null; // dato viejo
+      const ar = so.artist?.entry?.map((a: any) => a.name).filter(Boolean).join(", ") || null;
+      const art = so.cover_art_url_xl || so.cover_art_url_l || so.cover_art_url_m || null;
+      return { song: so.title, artist: ar, album: so.collection_name || null, year: so.release_date ? String(so.release_date).slice(0, 4) : null, artwork: art };
+    }
     if (src === "kcrw") {
       const j = await get("https://tracklist-api.kcrw.com/Simulcast/all/1");
       const it = Array.isArray(j) ? j[0] : null; if (!it) return null;

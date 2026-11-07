@@ -1240,7 +1240,7 @@ const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SBKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const np={timer:null,src:null,station:null,last:"",art:false};
 // Radios que publican su lista al aire: se consultan directo (más fiable que el metadato de la señal)
-const NPSRC={"triple j":"abc:triplej","ABC Classic":"abc:classic","Double J":"abc:doublej","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","Radio Paradise Mellow":"rp:1","KCRW":"kcrw",
+const NPSRC={"Sunshine Live Afro House":"iris:sunshinelive:95","triple j":"abc:triplej","ABC Classic":"abc:classic","Double J":"abc:doublej","KEXP":"kexp","NTS Radio":"nts","Radio Paradise":"rp","Radio Paradise Mellow":"rp:1","KCRW":"kcrw",
   "FIP":"rf:7","FIP Rock":"rf:64","FIP Jazz":"rf:65","FIP Reggae":"rf:71","FIP Monde":"rf:69","FIP Electro":"rf:74","France Inter":"rf:1","BBC Radio 1":"bbc:bbc_radio_one","BBC Radio 2":"bbc:bbc_radio_two","BBC 6 Music":"bbc:bbc_6music","BBC Radio 3":"bbc:bbc_radio_three"};
 function npReset(s){npStop();np.station=s;np.src=null;np.last="";np.art=false;np.cur=null;$("art").innerHTML='<span class="eq"><i></i><i></i><i></i></span>'}
 function npStop(){clearTimeout(np.timer);np.timer=null}
@@ -1566,7 +1566,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07h";
+const APP_VERSION="2026-11-07i";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
