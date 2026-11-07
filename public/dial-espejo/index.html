@@ -244,12 +244,12 @@ a{color:inherit}
 .np-in{grid-template-columns:minmax(0,1fr);overflow-x:hidden}
 .np-stage{position:relative;display:grid;place-items:center;justify-self:stretch;overflow-x:visible;overflow-y:clip}
 .np-stage .np-cover{position:relative;z-index:1}
-.np-knob{position:absolute;left:50%;top:50%;width:min(calc(100vw - 6px),calc(min(78vw,340px,44vh)*1.34));aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;touch-action:none;cursor:grab;z-index:0;
-  background:conic-gradient(from var(--kr,0deg),#15151a,#26262e 12%,#121216 25%,#22222a 38%,#111115 50%,#26262e 62%,#121216 75%,#22222a 88%,#15151a);
-  box-shadow:inset 0 0 0 1px rgba(237,237,242,.08),0 0 40px -10px var(--npc,transparent)}
-.np-knob::after{content:"";position:absolute;inset:3%;border-radius:50%;background:repeating-conic-gradient(from var(--kr,0deg),rgba(237,237,242,.3) 0 .3deg,transparent .3deg 5deg);
+.np-knob{position:absolute;left:50%;top:50%;width:min(calc(100vw - 6px),calc(min(78vw,340px,44vh)*1.34));aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;clip-path:circle(50%);overflow:hidden;isolation:isolate;touch-action:none;cursor:grab;z-index:0;background:#111115}
+/* el disco gira con transform (sin repintar), así el borde redondo no se pierde en iOS */
+.np-knob i{position:absolute;inset:0;border-radius:50%;transform:rotate(var(--kr,0deg));will-change:transform;
+  background:conic-gradient(#15151a,#26262e 12%,#121216 25%,#22222a 38%,#111115 50%,#26262e 62%,#121216 75%,#22222a 88%,#15151a);box-shadow:inset 0 0 0 1px rgba(237,237,242,.08)}
+.np-knob i::after{content:"";position:absolute;inset:3%;border-radius:50%;background:repeating-conic-gradient(rgba(237,237,242,.3) 0 .3deg,transparent .3deg 5deg);
   -webkit-mask:radial-gradient(circle closest-side,transparent 0 80%,#000 81% 97%,transparent 98%);mask:radial-gradient(circle closest-side,transparent 0 80%,#000 81% 97%,transparent 98%)}
-.np-knob i{position:absolute;inset:0;border-radius:50%;transform:rotate(var(--kr,0deg))}
 .np-knob i::before{content:"";position:absolute;left:50%;top:4%;z-index:1;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--npc,#EDEDF2);box-shadow:0 0 8px var(--npc,#EDEDF2)}
 .np-knob.drag{cursor:grabbing}
 .nd-box.off~.np-stage .np-knob{display:none}
@@ -1349,7 +1349,7 @@ $("ndSw").onclick=()=>{const m=ND.under;if(!m||m.x===current)return;F=m.x;layout
 $("npDialT").onclick=()=>ndSet(!ND.on);
 /* La perilla mueve el dial de a una radio: cada 22° de giro es un paso (horario = hacia la derecha, más intenso). La franja también gira la perilla. */
 const KSTEP=22;let kDeg=0,kDrag=false,kOff=0;
-const kSet=d=>{kDeg=d;npSheet.style.setProperty("--kr",d+"deg")};
+const kSet=d=>{kDeg=d;$("npKnob").style.setProperty("--kr",d+"deg")};
 const ndKnobSync=()=>{if(!kDrag&&!ND.kBusy)kSet($("ndSc").scrollLeft/4+kOff)};
 $("ndSc").addEventListener("scroll",ndKnobSync,{passive:true});
 function ndStep(dir){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.marks.slice().sort((a,b)=>a.px-b.px);if(!o.length)return;
@@ -1547,7 +1547,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07a";
+const APP_VERSION="2026-11-07b";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
