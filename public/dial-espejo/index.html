@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Dial Espejo</title>
+<meta property="og:title" content="Dial Espejo">
+<meta property="og:description" content="Radios de Chile y el mundo, ordenadas por afinidad. Toca y escucha.">
+<meta property="og:image" content="https://ocd-race-labs.github.io/music-studio/dial-espejo/icon-hex-512.png">
+<meta property="og:type" content="website">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -203,6 +207,7 @@ a{color:inherit}
   padding:calc(10px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
 .np-top{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center}
 .np-x{width:40px;height:40px;border-radius:12px;border:0;background:rgba(237,237,242,.08);font-size:22px;line-height:1;cursor:pointer}
+.np-sh{display:grid;place-items:center;color:inherit;position:relative}.np-sh[data-ok]::after{content:attr(data-ok);position:absolute;right:0;top:46px;white-space:nowrap;font:500 11px var(--mono);background:rgba(237,237,242,.92);color:#07070A;padding:5px 8px;border-radius:8px}
 .np-st{font:400 11px var(--mono);color:var(--muted);text-align:center;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .np-cover{width:min(78vw,340px,44vh);height:min(78vw,340px,44vh);justify-self:center;border-radius:22px;overflow:hidden;background:#111116;box-shadow:0 24px 60px -18px var(--npc,#5B7BFF);display:grid;place-items:center}
 .np-cover img{width:100%;height:100%;object-fit:cover;display:block}
@@ -497,7 +502,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 <div class="np" id="npSheet" hidden role="dialog" aria-modal="true" aria-label="Sonando ahora">
   <div class="np-bg" id="npBg"></div>
   <div class="np-in">
-    <div class="np-top"><button class="np-x" id="npClose" aria-label="Cerrar">⌄</button><span class="np-st" id="npSt"></span><span style="width:40px"></span></div>
+    <div class="np-top"><button class="np-x" id="npClose" aria-label="Cerrar">⌄</button><span class="np-st" id="npSt"></span><button class="np-x np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div>
     <div class="np-cover" id="npCover"></div>
     <div class="np-meta">
       <div class="np-song" id="npSong"></div>
@@ -1238,6 +1243,19 @@ function openSheet(){if(!current)return;npSheet.hidden=false;document.body.style
 function closeSheet(){npSheet.hidden=true;document.body.style.overflow=""}
 $("band").addEventListener("click",e=>{if(e.target.closest("button,a"))return;openSheet()});
 $("npClose").onclick=closeSheet;
+/* Compartir: enlace limpio a la radio (sin la clave personal ?k=); quien lo abre llega a esta misma pantalla */
+const slug=s=>s.n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const shareURL=s=>location.origin+location.pathname+"?r="+slug(s);
+$("npShare").onclick=async()=>{if(!current)return;const s=current,url=shareURL(s),b=$("npShare");
+  const text=`${s.n} · ${FAM[s.g][0]} · ${CN[s.cc]||s.cc}`;
+  const flash=t=>{b.dataset.ok=t;setTimeout(()=>delete b.dataset.ok,1800)};
+  if(navigator.share){try{await navigator.share({title:s.n+" en Dial Espejo",text,url});return}catch(e){if(e&&e.name==="AbortError")return}}
+  try{await navigator.clipboard.writeText(url);flash("Enlace copiado")}catch(e){window.open("https://wa.me/?text="+encodeURIComponent(text+" "+url),"_blank","noopener")}};
+/* Llegada desde un enlace compartido: deja la radio lista con la pantalla extendida; suena al tocar ▶ (los navegadores no permiten audio sin un toque) */
+function openShared(){let r;try{r=new URLSearchParams(location.search).get("r")}catch(e){}if(!r)return;
+  const s=S.find(x=>slug(x)===r);try{const q=new URLSearchParams(location.search);q.delete("r");history.replaceState(null,"",location.pathname+(q.toString()?"?"+q:"")+location.hash)}catch(e){}
+  if(!s)return;current=s;F=s;layout();npReset(s);setBand(s);mset("bT",s.n);mset("bA",stationDesc(s));setStatus("toca ▶");setBtn(false);
+  if(window.altSync)altSync();openSheet()}
 $("npPP").onclick=()=>{toggle();setTimeout(renderSheet,50)};
 $("npFav").onclick=()=>{$("bFav").click();renderSheet()};
 $("npAlt").onclick=()=>$("bAlt").click();
@@ -1261,7 +1279,7 @@ function renderSync(mode){const box=$("sync");const short=DKEY.slice(0,4).toUppe
   $("syncLink").onclick=()=>renderSync("link");
 }
 /* ---------- Arranque ---------- */
-resetView();layout();syncFavs().then(()=>renderSync());renderSync();
+resetView();layout();openShared();syncFavs().then(()=>renderSync());renderSync();
 setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 
 </script>
@@ -1424,7 +1442,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-06a";
+const APP_VERSION="2026-11-06b";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
