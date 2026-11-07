@@ -244,13 +244,23 @@ a{color:inherit}
 .np-in{grid-template-columns:minmax(0,1fr);overflow-x:hidden}
 .np-stage{position:relative;display:grid;place-items:center;justify-self:stretch;overflow-x:visible;overflow-y:clip}
 .np-stage .np-cover{position:relative;z-index:1}
-.np-knob{position:absolute;left:50%;top:50%;width:min(calc(100vw - 6px),calc(min(78vw,340px,44vh)*1.34));aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;clip-path:circle(50%);overflow:hidden;isolation:isolate;touch-action:none;cursor:grab;z-index:0;background:#111115}
-/* el disco gira con transform (sin repintar), así el borde redondo no se pierde en iOS */
-.np-knob i{position:absolute;inset:0;border-radius:50%;transform:rotate(var(--kr,0deg));will-change:transform;
-  background:conic-gradient(#15151a,#26262e 12%,#121216 25%,#22222a 38%,#111115 50%,#26262e 62%,#121216 75%,#22222a 88%,#15151a);box-shadow:inset 0 0 0 1px rgba(237,237,242,.08)}
-.np-knob i::after{content:"";position:absolute;inset:3%;border-radius:50%;background:repeating-conic-gradient(rgba(237,237,242,.3) 0 .3deg,transparent .3deg 5deg);
-  -webkit-mask:radial-gradient(circle closest-side,transparent 0 80%,#000 81% 97%,transparent 98%);mask:radial-gradient(circle closest-side,transparent 0 80%,#000 81% 97%,transparent 98%)}
-.np-knob i::before{content:"";position:absolute;left:50%;top:4%;z-index:1;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--npc,#EDEDF2);box-shadow:0 0 8px var(--npc,#EDEDF2)}
+.np-knob{position:absolute;left:50%;top:50%;width:min(calc(100vw - 6px),calc(min(78vw,340px,44vh)*1.36));aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;clip-path:circle(50%);isolation:isolate;touch-action:none;cursor:grab;z-index:0;
+  -webkit-mask:linear-gradient(180deg,transparent 0,#000 16%,#000 84%,transparent 100%);mask:linear-gradient(180deg,transparent 0,#000 16%,#000 84%,transparent 100%)}
+.np-knob>*{position:absolute;border-radius:50%;pointer-events:none}
+/* escala fija alrededor de la perilla: rayitas finas y una más larga cada 30° */
+.np-knob .k-tk{inset:0;background:repeating-conic-gradient(rgba(237,237,242,.5) 0 .45deg,transparent .45deg 30deg),repeating-conic-gradient(rgba(237,237,242,.2) 0 .35deg,transparent .35deg 6deg);
+  -webkit-mask:radial-gradient(circle closest-side,transparent 0 89%,#000 90% 98%,transparent 99%);mask:radial-gradient(circle closest-side,transparent 0 89%,#000 90% 98%,transparent 99%)}
+/* arco encendido que sigue al indicador, en el color de la radio (gira con transform, sin repintar) */
+.np-knob .k-led{inset:0;transform:rotate(var(--kr,0deg));will-change:transform;
+  background:conic-gradient(from -24deg,transparent 0,var(--npc,#EDEDF2) 24deg,transparent 48deg);
+  -webkit-mask:radial-gradient(circle closest-side,transparent 0 89%,#000 90% 93.5%,transparent 94.5%);mask:radial-gradient(circle closest-side,transparent 0 89%,#000 90% 93.5%,transparent 94.5%);opacity:.9;filter:drop-shadow(0 0 4px var(--npc,#EDEDF2))}
+/* el disco: grafito cepillado que gira con transform */
+.np-knob i{inset:6%;transform:rotate(var(--kr,0deg));will-change:transform;
+  background:conic-gradient(#1b1b21,#3a3a44 7%,#18181d 17%,#2f2f38 30%,#141418 42%,#3a3a44 55%,#18181d 66%,#2f2f38 80%,#141418 91%,#1b1b21);
+  box-shadow:0 10px 30px rgba(0,0,0,.6),inset 0 0 0 1px rgba(237,237,242,.1)}
+.np-knob i::before{content:"";position:absolute;left:50%;top:2.5%;width:2px;height:5%;margin-left:-1px;border-radius:2px;background:var(--npc,#EDEDF2);box-shadow:0 0 6px var(--npc,#EDEDF2)}
+/* brillo fijo: luz desde arriba a la izquierda y un bisel sobre el borde del disco */
+.np-knob .k-gl{inset:6%;background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.16),transparent 46%),radial-gradient(circle,transparent 0 92%,rgba(255,255,255,.07) 96%,rgba(0,0,0,.4) 100%)}
 .np-knob.drag{cursor:grabbing}
 .nd-box.off~.np-stage .np-knob{display:none}
 /* Dial de afines: franja horizontal con mira láser al centro */
@@ -558,7 +568,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <section class="nd" aria-label="Dial de radios afines"><div class="nd-sc" id="ndSc" tabindex="0"><div class="nd-tr" id="ndTr"></div></div><div class="nd-fade"></div><div class="nd-laser"></div></section>
       <div class="nd-read" id="ndRead"><div><b id="ndN"></b><span id="ndD"></span></div><button class="nd-sw off" id="ndSw"><span>Cambiar a esta radio</span><span>→</span></button></div>
     </div>
-    <div class="np-stage"><div class="np-knob" id="npKnob" aria-hidden="true"><i></i></div><div class="np-cover" id="npCover"></div></div>
+    <div class="np-stage"><div class="np-knob" id="npKnob" aria-hidden="true"><b class="k-tk"></b><b class="k-led"></b><i></i><b class="k-gl"></b></div><div class="np-cover" id="npCover"></div></div>
     <div class="np-meta">
       <div class="np-song" id="npSong"></div>
       <div class="np-artist" id="npArtist"></div>
@@ -1547,7 +1557,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07b";
+const APP_VERSION="2026-11-07c";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
