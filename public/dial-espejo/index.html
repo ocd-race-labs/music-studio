@@ -229,7 +229,11 @@ a{color:inherit}
 .np-b{width:48px;height:48px;border-radius:16px;border:1px solid rgba(237,237,242,.14);background:rgba(237,237,242,.06);display:grid;place-items:center;font-size:19px;cursor:pointer;text-decoration:none}
 .np-pp{width:72px;height:72px;border-radius:24px;border:0;background:var(--npc,#EDEDF2);color:#07070A;font-size:24px;display:grid;place-items:center;cursor:pointer;box-shadow:0 0 30px -6px var(--npc)}
 
-/* Enlaces solo con ícono: una sola fila */
+/* Enlaces solo con ícono: una sola fila, con el botón de información al extremo derecho */
+.np-lrow{display:flex;align-items:center;gap:12px;min-width:0}.np-lrow .np-links{flex:1;min-width:0}
+.np-it{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.06);color:var(--ink);font:500 16px/1 Georgia,"Times New Roman",serif;font-style:italic;cursor:pointer;display:grid;place-items:center}
+.np-it[aria-expanded="true"]{border-color:rgba(237,237,242,.6);background:rgba(237,237,242,.16)}
+.np-info[hidden]{display:none}
 .np-links{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center}
 .np-col{display:flex;gap:8px;align-items:center}
 .np-col .np-k{margin-right:2px}
@@ -473,7 +477,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   .np-top{grid-column:1/-1}
   .nd-box{grid-column:1/-1;margin-inline:0}.nd-read{padding-inline:0;max-width:640px}
   .np-cover{grid-column:1;grid-row:3/span 4;width:min(44vw,64vh,540px);height:min(44vw,64vh,540px);align-self:center;border-radius:28px}
-  .np-meta,.np-links,.np-ctl,.np-info{grid-column:2}
+  .np-meta,.np-lrow,.np-links,.np-ctl,.np-info{grid-column:2}
   .np-song{font-size:36px}.np-artist{font-size:22px}.np-album{font-size:13px}
   .np-ctl{justify-content:flex-start;gap:14px}
   .np-x{width:44px;height:44px}
@@ -545,7 +549,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <div class="np-artist" id="npArtist"></div>
       <div class="np-album" id="npAlbum"></div>
     </div>
-    <div class="np-links" id="npLinks"></div>
+    <div class="np-lrow"><div class="np-links" id="npLinks"></div><button class="np-it" id="npInfoT" aria-label="Información de la radio" aria-expanded="false">i</button></div>
     <div class="np-ctl">
       <button class="np-b" id="npFav" aria-label="Favorita">☆</button>
       <button class="np-b" id="npAlt" aria-label="Probar otra señal">⇄</button>
@@ -553,7 +557,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <a class="np-b" id="npWeb" target="_blank" rel="noopener" aria-label="Web de la radio">↗</a>
       <button class="np-b nd-t" id="npDialT" aria-label="Mostrar u ocultar el dial de afines" aria-pressed="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M3 15.5h18" stroke="currentColor" stroke-width="1.4"/><path d="M5 15.5v-2M8 15.5v-3.5M11 15.5v-2M14 15.5v-2M17 15.5v-3.5M20 15.5v-2" stroke="currentColor" stroke-width="1.2"/><path d="M12.5 6v13" stroke="#FF2A1A" stroke-width="1.6"/></svg></button>
     </div>
-    <div class="np-info" id="npInfo"></div>
+    <div class="np-info" id="npInfo" hidden></div>
   </div>
 </div>
 <div class="player" id="player" hidden>
@@ -1305,12 +1309,12 @@ function ndBuild(){if(!ND.on||!current||npSheet.hidden)return;const sc=$("ndSc")
   const af=S.filter(x=>x!==cur&&!x.dead).map(x=>({x,v:sim(cur,x).v})).sort((a,b)=>b.v-a.v).slice(0,18);
   const Lf=af.filter(a=>a.x.en<cur.en||(a.x.en===cur.en&&a.x.talk>cur.talk)),Rt=af.filter(a=>!Lf.includes(a));
   const place=(arr,dir)=>{let last=0;return arr.map(a=>{const d=Math.max((1-a.v)*PX,last+GAP);last=d;return{...a,d:d*dir}})};
-  const all=[{x:cur,v:1,d:0},...place(Lf,-1),...place(Rt,1)];
+  const all=[...place(Lf,-1),...place(Rt,1)];if(!all.length)return;
   const mn=Math.min(...all.map(a=>a.d)),mx=Math.max(...all.map(a=>a.d)),x0=w/2-mn;tr.style.width=(mx-mn+w)+"px";
   tr.innerHTML=all.map((a,i)=>`<button class="nd-mk${a.x===cur?" now":""}" data-i="${i}" style="left:${x0+a.d}px;--mc:${FAM[a.x.g][2]};--h:${a.x===cur?28:Math.round(6+22*ndK(a.v))}px;--o:${a.x===cur?1:(.35+.65*ndK(a.v)).toFixed(2)}" aria-label="${esc(a.x.n)}"><span>${esc(a.x.sh)}</span></button>`).join("");
   ND.marks=all.map((a,i)=>({...a,px:x0+a.d,el:tr.children[i]}));
   [...tr.children].forEach(b=>b.onclick=()=>{const m=ND.marks[+b.dataset.i];sc.scrollTo({left:m.px-w/2,behavior:"smooth"})});
-  sc.style.scrollSnapType="none";sc.scrollLeft=x0-w/2;requestAnimationFrame(()=>sc.style.scrollSnapType="");ND.shown=null;ndRead()}
+  const best=ND.marks.reduce((a,b)=>b.v>a.v?b:a);sc.style.scrollSnapType="none";sc.scrollLeft=best.px-w/2;requestAnimationFrame(()=>sc.style.scrollSnapType="");ND.shown=null;ndRead()}
 function ndRead(){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2;let b=null,bd=1e9;for(const m of ND.marks){const d=Math.abs(m.px-c);if(d<bd){bd=d;b=m}}if(!b)return;
   const near=bd<30;ND.under=near?b:null;ND.marks.forEach(m=>m.el.classList.toggle("hit",m===ND.under));
   const R=$("ndRead");R.classList.toggle("between",!near);R.classList.toggle("cur",near&&b.x===current);$("ndSw").classList.toggle("off",!near||b.x===current);
@@ -1323,6 +1327,7 @@ $("ndSc").addEventListener("keydown",e=>{if(!/Arrow(Left|Right)/.test(e.key))ret
   addEventListener("mouseup",()=>{if(x===null)return;x=null;let b=ND.marks[0];const c=sc.scrollLeft+sc.clientWidth/2;for(const m of ND.marks)if(Math.abs(m.px-c)<Math.abs(b.px-c))b=m;sc.style.scrollSnapType="";if(b)sc.scrollTo({left:b.px-sc.clientWidth/2,behavior:"smooth"})})})();
 $("ndSw").onclick=()=>{const m=ND.under;if(!m||m.x===current)return;F=m.x;layout();play(m.x);setTimeout(renderSheet,60)};
 $("npDialT").onclick=()=>ndSet(!ND.on);
+$("npInfoT").onclick=()=>{const i=$("npInfo"),o=i.hidden;i.hidden=!o;$("npInfoT").setAttribute("aria-expanded",o);if(o)setTimeout(()=>i.scrollIntoView({behavior:"smooth",block:"nearest"}),30)};
 addEventListener("resize",()=>{ND.for=null;ndBuild()});
 ndSet(ND.on);
 // Deslizar hacia abajo para cerrar
@@ -1507,7 +1512,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-06d";
+const APP_VERSION="2026-11-06e";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
