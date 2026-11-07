@@ -235,10 +235,11 @@ a{color:inherit}
 .np-it{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid rgba(237,237,242,.16);background:rgba(237,237,242,.06);color:var(--muted);font:500 16px/1 Georgia,"Times New Roman",serif;font-style:italic;cursor:pointer;display:grid;place-items:center}
 .np-it[aria-expanded="true"]{color:var(--ink);border-color:rgba(237,237,242,.32);background:rgba(237,237,242,.1)}
 .np-info[hidden]{display:none}
-.np-links{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center}
-.np-col{display:flex;gap:8px;align-items:center}
-.np-col .np-k{margin-right:2px}
-.np-links a{width:40px;height:40px;padding:0;justify-content:center;border-radius:50%}
+.np-links{display:flex;flex-wrap:nowrap;gap:14px;align-items:center;min-width:0}
+.np-col{display:flex;gap:6px;align-items:center;flex:none}
+.np-col .np-k{margin-right:1px;font-size:9.5px;letter-spacing:.1em}
+.np-links a{width:36px;height:36px;padding:0;justify-content:center;border-radius:50%;flex:none}
+.np-it{width:36px!important;height:36px!important}
 .np-links a i{width:18px;height:18px}
 
 /* Perilla: un disco grande detrás de la portada; asoma por los costados y se gira con cualquiera de los pulgares */
@@ -1564,7 +1565,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07e";
+const APP_VERSION="2026-11-07f";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
