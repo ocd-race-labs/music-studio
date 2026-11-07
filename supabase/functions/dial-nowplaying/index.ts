@@ -100,6 +100,7 @@ async function deezerArtist(artist: string): Promise<string | null> {
   return pic && !/\/artist\/\//.test(pic) ? pic : null; // la imagen genérica de Deezer no sirve
 }
 async function enrich(artist: string, song: string, album?: string | null, artistImage?: string | null): Promise<Art | null> {
+  artist = artist.replace(/\s+live (at|on|in|from)\b.*$/i, "").trim() || artist; // "Quasi live at The WFMU Record Fair!"
   const A = fixThe(artist.trim()), A1 = firstArtist(artist), T = cleanTitle(song) || song;
   // 1) tal como viene, y limpio, en iTunes
   const tries: [string, string][] = [[A, song]];

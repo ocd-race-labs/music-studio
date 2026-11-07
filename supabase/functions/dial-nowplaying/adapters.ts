@@ -83,6 +83,18 @@ export async function adapter(src: string): Promise<NP | null> {
       const art = so.cover_art_url_xl || so.cover_art_url_l || so.cover_art_url_m || null;
       return { song: so.title, artist: ar, album: so.collection_name || null, year: so.release_date ? String(so.release_date).slice(0, 4) : null, artwork: art };
     }
+    if (src === "wfmu") {
+      // WFMU publica la canción al aire (también las bandas en vivo en sus estudios) en su agregador de programas
+      const r = await fetch("https://wfmu.org/currentliveshows_aggregator.php?ch=1", { headers: { "User-Agent": "Mozilla/5.0 (DialEspejo)" }, signal: AbortSignal.timeout(5000) });
+      if (!r.ok) return null;
+      const h = await r.text();
+      const dec = (x: string) => strip(x).replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+      const big = h.match(/<div class="bigline">([\s\S]*?)<\/div>/), small = h.match(/<div class="smallline">([\s\S]*?)<\/div>/);
+      const line = big ? dec(big[1]) : "", program = small ? dec(small[1]).replace(/^on\s+/i, "") : null;
+      const m = line.match(/^"(.+?)"\s+by\s+(.+)$/);
+      if (m) return { song: m[1].trim(), artist: m[2].trim(), program };
+      return program ? { program } : null;
+    }
     if (src === "kcrw") {
       const j = await get("https://tracklist-api.kcrw.com/Simulcast/all/1");
       const it = Array.isArray(j) ? j[0] : null; if (!it) return null;
