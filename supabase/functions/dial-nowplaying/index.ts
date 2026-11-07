@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
   }
   const icy = await readIcy(u.toString());
   // Títulos que no son canciones (nombre de la radio, "Live", promociones): se descartan
-  const junk = (t: string | null) => !t || /^(live|en vivo|online|stream|radio)$/i.test(t.trim()) || (icy.name && t.trim().toLowerCase() === icy.name.trim().toLowerCase()) || /promo|now playing info|playlist videos/i.test(t);
+  const junk = (t: string | null) => !t || /^(live|en vivo|online|stream|radio)$/i.test(t.trim()) || (icy.name && t.trim().toLowerCase() === icy.name.trim().toLowerCase()) || /promo|now playing info|playlist videos/i.test(t) || /^ad\s*\d*$/i.test(t.trim()) || /^(https?:\/\/|www\.)\S+$/i.test(t.trim());
   if (junk(icy.raw)) icy.raw = null;
   Object.assign(out, { raw: icy.raw, stream_name: icy.name, stream_genre: icy.genre, stream_description: icy.description, source: icy.raw ? "icy" : null });
   if (icy.raw) {

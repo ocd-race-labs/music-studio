@@ -50,7 +50,9 @@ export async function adapter(src: string): Promise<NP | null> {
       const j = await get(`https://api.radiofrance.fr/livemeta/pull/${encodeURIComponent(src.slice(3))}`);
       const now = Date.now() / 1000;
       const cur = Object.values(j.steps || {}).filter((s: any) => s.start <= now && s.end > now) as any[];
-      const song = cur.filter((s) => s.embedType === "song").sort((a, b) => b.depth - a.depth)[0];
+      let song = cur.filter((s) => s.embedType === "song").sort((a, b) => b.depth - a.depth)[0];
+      // las webradios a veces no publican el paso en curso: se usa la última canción si terminó hace menos de 8 minutos
+      if (!song) song = (Object.values(j.steps || {}) as any[]).filter((s) => s.embedType === "song" && s.end <= now && now - s.end < 480).sort((a, b) => b.end - a.end)[0];
       const prog = cur.filter((s) => s.embedType !== "song").sort((a, b) => a.depth - b.depth)[0];
       if (!song && !prog) return null;
       return { song: song?.title || null, artist: song ? (song.performers || song.highlightedArtists?.join?.(", ") || song.authors || null) : null, album: song?.titreAlbum || null,
@@ -81,6 +83,7 @@ export async function adapter(src: string): Promise<NP | null> {
       if (end && Date.now() - end > 5 * 60000) return null; // dato viejo
       const ar = so.artist?.entry?.map((a: any) => a.name).filter(Boolean).join(", ") || null;
       const art = so.cover_art_url_xl || so.cover_art_url_l || so.cover_art_url_m || null;
+      if (ar && /\b(radio|show|session|mix)\b/i.test(ar) && !so.collection_name) return { program: `${ar}: ${so.title}` }; // programa con DJ, no canción
       return { song: so.title, artist: ar, album: so.collection_name || null, year: so.release_date ? String(so.release_date).slice(0, 4) : null, artwork: art };
     }
     if (src === "wfmu") {
