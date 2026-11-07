@@ -523,11 +523,42 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   .np-x{width:44px;height:44px}
 }
 @media (prefers-reduced-motion: reduce){.hx{transition:none}.eth,.eq i{animation:none}}
+
+/* Identidad por sección: cada espacio de la app tiene su color, y la parte superior se tiñe con el de la sección abierta.
+   Radio = señal (violeta a rosa), Noticias = tinta (azul a cian), Deportes = cancha (verde a lima).
+   Las pestañas inactivas muestran su punto de color, para que el usuario asocie color y espacio antes de entrar. */
+:root{--sec:#B06BFF;--sec2:#FF4FA3;--sec-ink:#fff}
+html[data-sec="noticias"]{--sec:#4F7CFF;--sec2:#22C3E6}
+html[data-sec="deportes"]{--sec:#22C55E;--sec2:#B5E61D;--sec-ink:#06150B}
+.topbar{position:relative}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;background:linear-gradient(90deg,transparent,var(--sec) 20%,var(--sec2) 80%,transparent);opacity:.55}
+.brand{display:inline-flex;align-items:center;gap:8px}
+.brand::before{content:"";width:14px;height:16px;flex:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(160deg,var(--sec),var(--sec2))}
+.brand b{font-weight:600;background:linear-gradient(90deg,var(--sec),var(--sec2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.uil button[aria-pressed="true"]{background:color-mix(in srgb,var(--sec) 22%,var(--panel-2));color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sec) 55%,transparent)}
+.tabs{box-shadow:inset 0 0 0 1px var(--line)}
+.tab{display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .25s,color .25s}
+.tab::before{content:"";width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,var(--tc),var(--tc2));flex:none}
+.tab[data-v="radio"]{--tc:#B06BFF;--tc2:#FF4FA3}.tab[data-v="noticias"]{--tc:#4F7CFF;--tc2:#22C3E6}.tab[data-v="deportes"]{--tc:#22C55E;--tc2:#B5E61D}
+.tab[aria-selected="true"]{background:linear-gradient(120deg,var(--tc),var(--tc2));color:var(--sec-ink);font-weight:600;box-shadow:0 4px 18px -6px var(--tc)}
+.tab[aria-selected="true"]::before{background:currentColor;opacity:.85}
+.search{transition:border-color .2s,box-shadow .2s}
+.search>span{color:var(--sec)!important}
+.search:focus-within{border-color:color-mix(in srgb,var(--sec) 70%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--sec) 18%,transparent)}
+.ftab[aria-selected="true"]{background:color-mix(in srgb,var(--sec) 16%,var(--panel-2));box-shadow:inset 0 -2px 0 var(--sec)}
+.ftab .n{background:linear-gradient(120deg,var(--sec),var(--sec2));color:var(--sec-ink)}
+.fsum span{color:color-mix(in srgb,var(--sec) 45%,var(--muted))}
+.fsum button{border-color:color-mix(in srgb,var(--sec) 45%,var(--line));color:var(--ink)}
+.vseg button[aria-pressed="true"]{background:linear-gradient(120deg,var(--sec),var(--sec2));color:var(--sec-ink);font-weight:600}
+.vseg button[aria-pressed="true"] small{color:var(--sec-ink);opacity:.75}
+.nhead h1{display:inline-block;background:linear-gradient(90deg,var(--ink) 40%,var(--sec2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.nhead h1::after{content:"";display:block;height:3px;width:44px;margin-top:6px;border-radius:2px;background:linear-gradient(90deg,var(--sec),var(--sec2))}
+.sseg .chip[aria-pressed=true],#nchips .chip[aria-pressed="true"],#nscope .chip[aria-pressed="true"]{background:linear-gradient(120deg,var(--sec),var(--sec2));color:var(--sec-ink);border-color:transparent;font-weight:600}
 </style>
 </head>
 <body>
 <nav class="topbar" aria-label="Secciones">
-  <span class="brand">Dial Espejo</span>
+  <span class="brand">Dial <b>Espejo</b></span>
   <div class="uil" id="uil" role="group" aria-label="Idioma"></div>
   <div class="tabs" id="tabs" role="tablist"></div>
 </nav>
@@ -1637,7 +1668,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07q";
+const APP_VERSION="2026-11-07r";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1665,6 +1696,7 @@ function show(code){
   if(!VIEWS.some(v=>v.code===code)) code="radio";
   VIEWS.forEach(v=>{ const el=$("view-"+(VIEW_EL[v.code]||v.code)); if(el) el.hidden = v.code!==code; });
   [...$("tabs").children].forEach(b=>b.setAttribute("aria-selected",b.dataset.v===code));
+  document.documentElement.dataset.sec=code;
   store.set("dial-view",code);
   if(code==="noticias") loadNews();
   if(code==="deportes") loadSports();
