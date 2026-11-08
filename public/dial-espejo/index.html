@@ -579,6 +579,21 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .pz-tint{display:grid;grid-template-columns:auto 1fr 3.2em;align-items:center;gap:12px;font-size:13px;color:#C9C9D2}
 .pz-tint input{accent-color:var(--sec);width:100%}
 .pz-tint b{font:500 12px var(--mono);text-align:right;color:#EDEDF2}
+
+/* Vista de dial: se apaga la carátula y la perilla queda sola, grande, con la radio al centro */
+.np-knob .k-c{display:none}
+.np-dv{position:absolute;z-index:2;right:max(14px,calc(50% - min(60vw,280px,38vh)/2 + 10px));bottom:calc(min(9vw,40px) + 10px);display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;padding:6px 10px;background:rgba(7,7,10,.55);color:#EDEDF2;font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);cursor:pointer}
+.nd-box.off~.np-stage .np-dv{bottom:10px;right:max(14px,calc(50% - min(78vw,340px,44vh)/2 + 10px))}
+.np.dialv .np-cover,.np.dialv .np-dv{display:none}
+.np.dialv .np-stage{padding-block:min(3vw,14px)}
+.np.dialv .np-knob{display:block!important;position:relative;left:auto;top:auto;transform:none;width:min(88vw,400px,48vh);-webkit-mask:none;mask:none;clip-path:none}
+.np.dialv .np-knob .k-led{filter:drop-shadow(0 0 calc(4px + 10px*var(--vg,0)) var(--npc,#EDEDF2));opacity:calc(.75 + .25*var(--vg,0))}
+.np.dialv .np-knob .k-c{display:grid;inset:27%;place-items:center;align-content:center;gap:6px;padding:8%;text-align:center;pointer-events:none;
+  background:radial-gradient(circle at 40% 30%,#24242b,#0b0b0f 72%);box-shadow:inset 0 3px 14px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.07),0 0 28px -6px var(--npc,#EDEDF2)}
+.np.dialv .k-c span{font:600 clamp(15px,4.4vw,20px)/1.15 var(--sans);color:var(--ink);overflow-wrap:anywhere}
+.np.dialv .k-c span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--fc,transparent);margin-right:7px;vertical-align:2px}
+.np.dialv .k-c small{font:400 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--npc,#EDEDF2)}
+.np.dialv .k-c em{font:400 9px var(--mono);font-style:normal;color:var(--dim);letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -641,7 +656,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
       <section class="nd" aria-label="Dial de radios afines"><div class="nd-sc" id="ndSc" tabindex="0"><div class="nd-tr" id="ndTr"></div></div><div class="nd-fade"></div><div class="nd-laser"></div></section>
       <div class="nd-read" id="ndRead"><div><b id="ndN"></b><span id="ndD"></span></div><button class="nd-sw off" id="ndSw"><span>Cambiar a esta radio</span><span>→</span></button></div>
     </div>
-    <div class="np-stage"><div class="np-knob" id="npKnob" aria-hidden="true"><b class="k-tk"></b><b class="k-led"></b><i></i><b class="k-gl"></b></div><div class="np-cover" id="npCover"></div></div>
+    <div class="np-stage"><div class="np-knob" id="npKnob" aria-hidden="true"><b class="k-tk"></b><b class="k-led"></b><i></i><b class="k-gl"></b><b class="k-c"><span id="kCn"></span><small id="kCs"></small><em>toca para ver la carátula</em></b></div><div class="np-cover" id="npCover"></div><button class="np-dv" id="npDV" aria-label="Ver el dial en vez de la carátula"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Dial</button></div>
     <div class="np-meta">
       <div class="np-song" id="npSong"></div>
       <div class="np-artist" id="npArtist"></div>
@@ -1414,7 +1429,7 @@ function vuTick(now){VU.raf=0;const cv=$("npCover"),svg=cv&&cv.querySelector(".h
     else{// sin análisis (o mientras llega el primer trozo): respiración lenta y visible, sin fingir ritmo
       VU.beat*=.9;const ph=now/2200;VU.lv=VU.lv.map((v,i)=>{const t=.3+.16*Math.sin(ph+vaBand(i)*.8);return v+(t-v)*.06})}
     VU.pk=VU.pk.map((p,i)=>Math.max(VU.lv[i],p-.02));
-    cv.style.setProperty("--vg",(.3+.7*VU.beat).toFixed(2));
+    cv.style.setProperty("--vg",(.3+.7*VU.beat).toFixed(2));npSheet.style.setProperty("--vg",(.3+.7*VU.beat).toFixed(2));
     svg.querySelectorAll("polygon").forEach(p=>{const k=+p.dataset.k,b=+p.dataset.b,v=VU.lv[b];
       let o;if(k===0)o=.75+.25*VU.beat;else{const t=VUT[k],on=Math.max(0,Math.min(1,(v-t)/.16));const peak=Math.abs(VU.pk[b]-t)<.06?.55:0;o=.06+.94*Math.max(on,peak)*(1-k*.15)}
       p.style.fillOpacity=o.toFixed(2)})}
@@ -1433,6 +1448,7 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   const artist=j.song&&j.artist?j.artist:(j.program?(j.program_desc||s.n):(j.raw?s.n:stationDesc(s)));
   $("npSt").textContent=`${flag(s.cc)} ${s.n}${s.f?" · "+s.f.toFixed(1)+" FM":""} · ${statusTxt||""}`;
   $("npSong").textContent=song;$("npArtist").textContent=artist;
+  $("kCn").textContent=s.n;$("kCs").textContent=[s.f?s.f.toFixed(1)+" FM":"",statusTxt].filter(Boolean).join(" · ");npSheet.style.setProperty("--fc",FAM[s.g][2]);npSheet.classList.toggle("dialv",!!store.get("dial-dialview",false));
   $("npAlbum").textContent=j.song&&j.artist?[j.album,j.year,j.genre].filter(Boolean).join(" · "):"";
   const cover=$("npCover");const art=j.artwork||null;
   if(cover._a!==art){cover._a=art;cover.innerHTML=art?`<img src="${esc(art)}" alt="Carátula">`:hexArt(s,true)}
@@ -1497,7 +1513,7 @@ function ndBuild(){if(!ND.on||!current||npSheet.hidden)return;const sc=$("ndSc")
   const place=(arr,dir)=>{let last=0;return arr.map(a=>{const d=Math.max((1-a.v)*PX,last+GAP);last=d;return{...a,d:d*dir}})};
   const all=[{x:cur,v:1,d:0},...place(Lf,-1),...place(Rt,1)];
   const mn=Math.min(...all.map(a=>a.d)),mx=Math.max(...all.map(a=>a.d)),x0=w/2-mn;tr.style.width=(mx-mn+w)+"px";
-  tr.innerHTML=all.map((a,i)=>`<button class="nd-mk${a.x===cur?" now":""}" data-i="${i}" style="left:${x0+a.d}px;--mc:${FAM[a.x.g][2]};--h:${a.x===cur?28:Math.round(6+22*ndK(a.v))}px;--o:${a.x===cur?1:(.35+.65*ndK(a.v)).toFixed(2)}" aria-label="${esc(a.x.n)}"><span>${esc(a.x.sh)}</span></button>`).join("");
+  tr.innerHTML=all.map((a,i)=>`<button class="nd-mk${a.x===cur?" now":""}" data-i="${i}" style="left:${x0+a.d}px;--mc:var(--s-radio);--h:${a.x===cur?28:Math.round(6+22*ndK(a.v))}px;--o:${a.x===cur?1:(.35+.65*ndK(a.v)).toFixed(2)}" aria-label="${esc(a.x.n)}"><span>${esc(a.x.sh)}</span></button>`).join("");
   ND.marks=all.map((a,i)=>({...a,px:x0+a.d,el:tr.children[i]}));
   [...tr.children].forEach(b=>b.onclick=()=>ndGo(ND.marks[+b.dataset.i]));
   sc.style.scrollSnapType="none";sc.scrollLeft=x0-w/2;requestAnimationFrame(()=>sc.style.scrollSnapType="");ND.shown=null;ndRead();ndKnobSync()}
@@ -1523,11 +1539,14 @@ function ndStep(dir){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.ma
   if(ND.kTarget!=null)i=ND.kTarget;const t=Math.max(0,Math.min(o.length-1,i+dir));ND.kTarget=t;ndGo(o[t])}
 (()=>{const k=$("npKnob");let a0=null,id=null,acc=0;
   const ang=e=>{const r=k.getBoundingClientRect();return Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))*180/Math.PI};
-  k.addEventListener("pointerdown",e=>{a0=ang(e);id=e.pointerId;acc=0;kDrag=true;ND.kBusy=false;ND.kTarget=null;$("ndSc").style.scrollSnapType="none";try{k.setPointerCapture(id)}catch(_){}k.classList.add("drag")});
-  k.addEventListener("pointermove",e=>{if(a0===null||e.pointerId!==id)return;const a=ang(e);let d=a-a0;if(d>180)d-=360;if(d<-180)d+=360;a0=a;acc+=d;kSet(kDeg+d);
+  let tot=0,cIn=false;
+  k.addEventListener("pointerdown",e=>{const r=k.getBoundingClientRect();cIn=Math.hypot(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2))<r.width*.24;tot=0;a0=ang(e);id=e.pointerId;acc=0;kDrag=true;ND.kBusy=false;ND.kTarget=null;$("ndSc").style.scrollSnapType="none";try{k.setPointerCapture(id)}catch(_){}k.classList.add("drag")});
+  k.addEventListener("pointermove",e=>{if(a0===null||e.pointerId!==id)return;const a=ang(e);let d=a-a0;if(d>180)d-=360;if(d<-180)d+=360;a0=a;acc+=d;tot+=Math.abs(d);kSet(kDeg+d);
     while(acc>=KSTEP){ndStep(1);acc-=KSTEP}while(acc<=-KSTEP){ndStep(-1);acc+=KSTEP}});
-  const end=()=>{if(a0===null)return;a0=null;k.classList.remove("drag");ND.kBusy=true;setTimeout(()=>{kDrag=false;ND.kTarget=null;ND.kBusy=false;kOff=kDeg-$("ndSc").scrollLeft/4;const sc=$("ndSc");if(!ndAnim)sc.style.scrollSnapType=""},320)};
+  const end=()=>{if(a0===null)return;a0=null;if(cIn&&tot<4&&npSheet.classList.contains("dialv"))dialView(false);k.classList.remove("drag");ND.kBusy=true;setTimeout(()=>{kDrag=false;ND.kTarget=null;ND.kBusy=false;kOff=kDeg-$("ndSc").scrollLeft/4;const sc=$("ndSc");if(!ndAnim)sc.style.scrollSnapType=""},320)};
   k.addEventListener("pointerup",end);k.addEventListener("pointercancel",end)})();
+function dialView(on){store.set("dial-dialview",on);npSheet.classList.toggle("dialv",on)}
+$("npDV").onclick=e=>{e.stopPropagation();dialView(true)};$("npCover").addEventListener("click",()=>dialView(true));
 $("npInfoT").onclick=()=>{const i=$("npInfo"),o=i.hidden;i.hidden=!o;$("npInfoT").setAttribute("aria-expanded",o);if(o)setTimeout(()=>i.scrollIntoView({behavior:"smooth",block:"nearest"}),30)};
 addEventListener("resize",()=>{ND.for=null;ndBuild()});
 ndSet(ND.on);
@@ -1830,7 +1849,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-08k";
+const APP_VERSION="2026-11-08l";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
