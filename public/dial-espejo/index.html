@@ -523,11 +523,54 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   .np-x{width:44px;height:44px}
 }
 @media (prefers-reduced-motion: reduce){.hx{transition:none}.eth,.eq i{animation:none}}
+
+/* Casita y panel "Tu Dial": cada usuario elige color o patrón, sección y radio de inicio (se guarda en su dispositivo).
+   Los colores de la sección abierta los escribe applyTheme() en #pzTheme. */
+.topbar{position:relative}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;background:linear-gradient(90deg,transparent,var(--sec,#888) 20%,var(--sec,#888) 80%,transparent);opacity:.5}
+.home{width:34px;height:34px;border-radius:11px;border:1px solid color-mix(in srgb,var(--sec) 55%,var(--line));background:color-mix(in srgb,var(--sec) 14%,var(--panel));display:grid;place-items:center;color:var(--sec);flex:none;padding:0;cursor:pointer}
+.home svg{width:18px;height:18px}
+.brand{display:inline-flex;align-items:center;gap:10px}
+.brand b{font-weight:600;color:var(--sec)}
+.topbar .home+.brand{margin-left:-2px}
+.pz-scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:80}
+.pz{position:fixed;left:0;right:0;bottom:0;z-index:81;max-width:640px;margin:0 auto;background:#0E0E13;border-top:1px solid #24242C;border-radius:22px 22px 0 0;
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(26px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:88vh;overflow:auto;display:grid;gap:14px;overscroll-behavior:contain}
+.pz::before{content:"";justify-self:center;width:38px;height:4px;border-radius:2px;background:#3A3A44}
+.pz-h{display:flex;justify-content:space-between;align-items:center}
+.pz-h h2{margin:0;font-size:20px;font-weight:600}.pz-h h2 b{color:var(--sec);font-weight:600}
+.pz-x{width:40px;height:40px;border-radius:11px;border:1px solid #24242C;background:#15151B;color:#EDEDF2;font-size:18px;cursor:pointer}
+.pz-k{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#8B8B96;display:flex;justify-content:space-between;gap:10px;margin-top:4px}
+.pz-k span:last-child{color:#C9C9D2;text-transform:none;letter-spacing:0;font-size:11px;text-align:right}
+.pz-ask{display:grid;gap:10px;padding:12px;border:1px solid color-mix(in srgb,var(--sec) 50%,#24242C);border-radius:14px;background:color-mix(in srgb,var(--sec) 8%,#111116)}
+.pz-ask p{margin:0;font-size:14px}
+.pz-row{display:flex;gap:8px;flex-wrap:wrap}
+.pz-b{border:1px solid #2A2A33;background:#15151B;color:#EDEDF2;border-radius:10px;padding:9px 14px;font-size:13px;cursor:pointer}
+.pz-b.pri{background:var(--sec);color:var(--sec-ink);border-color:transparent;font-weight:600}
+.pz-in{width:100%;box-sizing:border-box;background:#111116;border:1px solid #24242C;border-radius:12px;padding:11px 12px;font-size:16px;color:#EDEDF2;outline:none}
+.pz-in:focus{border-color:var(--sec)}
+.pz-res{display:grid;gap:4px}
+.pz-res button{display:flex;justify-content:space-between;gap:10px;text-align:left;border:0;border-bottom:1px solid #1A1A21;background:transparent;color:#EDEDF2;padding:10px 4px;font-size:14px;cursor:pointer}
+.pz-res button small{color:#8B8B96;font:400 11px var(--mono);white-space:nowrap}
+.pz-res button.on{color:var(--sec)}
+.pz-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;background:#111116;border:1px solid #24242C;border-radius:12px;padding:3px}
+.pz-seg button{border:0;background:transparent;color:#8B8B96;border-radius:9px;padding:10px 2px;font-size:13px;cursor:pointer}
+.pz-seg button[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink);font-weight:600}
+.pz-seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pz-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pz-sw{border:1px solid #23232B;background:#111116;border-radius:12px;padding:7px 6px 6px;display:grid;gap:5px;justify-items:center;color:#C9C9D2;cursor:pointer;min-width:0}
+.pz-sw[aria-pressed="true"]{border-color:var(--sec);box-shadow:0 0 0 2px color-mix(in srgb,var(--sec) 40%,transparent);color:#EDEDF2}
+.pz-g{display:grid;grid-template-columns:2fr 1fr 1fr;gap:2px;width:100%;height:18px;border-radius:6px;overflow:hidden}
+.pz-g i,.pz-p{display:block}
+.pz-p{width:100%;height:18px;border-radius:6px}
+.pz-n{font-size:10.5px;line-height:1.2;text-align:center;max-width:100%;min-height:2.4em;display:grid;place-items:center;overflow-wrap:anywhere}
+.pz-note{font:400 11px var(--mono);color:#6E6E79}
 </style>
 </head>
 <body>
 <nav class="topbar" aria-label="Secciones">
-  <span class="brand">Dial Espejo</span>
+  <button class="home" id="homeBtn" aria-label="Personalizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button>
+  <span class="brand">Dial <b>Espejo</b></span>
   <div class="uil" id="uil" role="group" aria-label="Idioma"></div>
   <div class="tabs" id="tabs" role="tablist"></div>
 </nav>
@@ -1480,7 +1523,98 @@ function renderSync(mode){const box=$("sync");const short=DKEY.slice(0,4).toUppe
   $("syncLink").onclick=()=>renderSync("link");
 }
 /* ---------- Arranque ---------- */
-resetView();layout();openShared();syncFavs().then(()=>renderSync());renderSync();
+
+/* ---------- Tu Dial: casita con colores, patrones, sección y radio de inicio (se guarda en este dispositivo) ---------- */
+const PZ_SOL=[["Azul marino","#1E3A8A","#64748B","#0F766E"],["Verde militar","#4B5D23","#8A7F5A","#6B8E23"],["Lima","#A3E635","#22D3EE","#FACC15"],["Rojo","#DC2626","#1D4ED8","#F4F4F5"],["Naranja","#F97316","#0EA5E9","#84CC16"],["Amarillo","#FACC15","#3B82F6","#22C55E"],["Turquesa","#14B8A6","#6366F1","#F59E0B"],["Celeste","#38BDF8","#1E40AF","#34D399"],["Violeta","#7C3AED","#06B6D4","#F43F5E"],["Fucsia","#EC4899","#8B5CF6","#F97316"],["Rosa","#F9A8D4","#A5B4FC","#86EFAC"],["Lavanda","#C4B5FD","#93C5FD","#F0ABFC"],["Burdeo","#881337","#475569","#B45309"],["Café","#7C4A1E","#A16207","#4D7C0F"],["Arena","#D6C29A","#8B9DAF","#A3B18A"],["Oliva","#84803A","#5F7161","#B8A04A"],["Petróleo","#0F4C5C","#1F7A8C","#7FB7BE"],["Esmeralda","#059669","#0284C7","#CA8A04"],["Coral","#FB7185","#38BDF8","#FBBF24"],["Menta","#6EE7B7","#93C5FD","#FDE68A"],["Índigo","#4338CA","#0891B2","#DB2777"],["Cian","#06B6D4","#2563EB","#10B981"],["Grafito","#52525B","#71717A","#A1A1AA"],["Blanco","#F4F4F5","#D4D4D8","#A1A1AA"]];
+const PZ_PAT=[["Neón en el borde","#0A0A0C","#39FF14","#39FF14","neon"],["Camuflaje bosque","radial-gradient(circle at 20% 30%,#3B4A1F 0 18%,transparent 19%),radial-gradient(circle at 70% 60%,#5A4A2A 0 22%,transparent 23%),radial-gradient(circle at 45% 80%,#1F2A12 0 15%,transparent 16%),radial-gradient(circle at 85% 20%,#2E3B18 0 14%,transparent 15%),#6B7A3A","#F4F1E0","#6B7A3A",""],["Camuflaje desierto","radial-gradient(circle at 25% 35%,#B89B6E 0 20%,transparent 21%),radial-gradient(circle at 70% 65%,#8C7350 0 18%,transparent 19%),radial-gradient(circle at 55% 15%,#E3D2AE 0 14%,transparent 15%),#CDB68A","#2A2010","#CDB68A",""],["Camuflaje urbano","radial-gradient(circle at 25% 35%,#3F3F46 0 20%,transparent 21%),radial-gradient(circle at 70% 65%,#A1A1AA 0 18%,transparent 19%),radial-gradient(circle at 55% 15%,#18181B 0 14%,transparent 15%),#71717A","#fff","#A1A1AA",""],["Camuflaje digital","conic-gradient(#3B4A1F 25%,#6B7A3A 0 50%,#2A3315 0 75%,#8A9A50 0) 0 0/10px 10px","#fff","#6B7A3A",""],["Leopardo","radial-gradient(circle at 30% 40%,#2A1A0A 0 3px,transparent 4px),radial-gradient(circle at 70% 70%,#2A1A0A 0 4px,#6B3F12 5px,transparent 7px),radial-gradient(circle at 80% 25%,#2A1A0A 0 3px,transparent 4px),#D9A35B","#fff","#D9A35B","bgs:22px 18px"],["Tigre","repeating-linear-gradient(115deg,#F28C28 0 9px,#141008 9px 13px,#F28C28 13px 22px)","#fff","#F28C28",""],["Cebra","repeating-linear-gradient(100deg,#F4F4F5 0 7px,#0A0A0C 7px 13px)","#fff","#F4F4F5","txt"],["Serpiente","radial-gradient(circle at 50% 0,#14532D 0 5px,transparent 6px),radial-gradient(circle at 0 50%,#14532D 0 5px,transparent 6px),#4D7C0F","#fff","#65A30D","bgs:10px 10px"],["Demonio K-pop","repeating-linear-gradient(135deg,transparent 0 10px,rgba(225,29,72,.55) 10px 12px),linear-gradient(120deg,#4C1D95,#86198F)","#fff","#C026D3",""],["Guerrera K-pop","radial-gradient(circle at 20% 30%,#fff 0 1px,transparent 2px),radial-gradient(circle at 70% 70%,#fff 0 1px,transparent 2px),linear-gradient(120deg,#FF4FD8,#8B5CF6 55%,#22D3EE)","#fff","#FF4FD8",""],["Bioluminiscente","radial-gradient(circle,#7DF9FF 0 1.5px,transparent 2.5px) 0 0/12px 9px,linear-gradient(120deg,#1E3A8A,#0E7490)","#fff","#22D3EE",""],["Holográfico","conic-gradient(from 200deg,#FF7AF5,#7AE1FF,#B6FF7A,#FFE27A,#FF7AF5)","#0A0A0C","#B892FF",""],["Fibra de carbono","conic-gradient(#1F1F23 25%,#2E2E34 0 50%,#1F1F23 0 75%,#2E2E34 0) 0 0/6px 6px","#fff","#71717A",""],["Escocés","repeating-linear-gradient(90deg,rgba(250,204,21,.35) 0 2px,transparent 2px 14px),repeating-linear-gradient(0deg,rgba(0,0,0,.35) 0 6px,transparent 6px 14px),#B91C1C","#fff","#DC2626",""],["Bandera a cuadros","conic-gradient(#0A0A0C 25%,#F4F4F5 0 50%,#0A0A0C 0 75%,#F4F4F5 0) 0 0/12px 12px","#fff","#F4F4F5","txt"],["Marinero","repeating-linear-gradient(0deg,#1E3A8A 0 5px,#F4F4F5 5px 10px)","#fff","#1E40AF","txt"],["Lunares","radial-gradient(circle,#F4F4F5 0 3px,transparent 4px) 0 0/14px 14px,#DC2626","#fff","#DC2626",""],["Matriz","repeating-linear-gradient(0deg,rgba(57,255,20,.25) 0 1px,transparent 1px 6px),repeating-linear-gradient(90deg,rgba(57,255,20,.15) 0 1px,transparent 1px 8px),#03140A","#39FF14","#22C55E",""],["Ondas de radio","repeating-radial-gradient(circle at 10% 50%,#F59E0B 0 3px,#0A0A0C 3px 7px)","#fff","#F59E0B","txt"],["Mármol","radial-gradient(ellipse at 20% 30%,#D4D4D8 0 20%,transparent 40%),linear-gradient(115deg,transparent 40%,rgba(113,113,122,.5) 42%,transparent 45%),linear-gradient(60deg,#F4F4F5,#E4E4E7)","#18181B","#D4D4D8",""],["Galaxia","radial-gradient(circle at 15% 40%,#fff 0 1px,transparent 1.5px),radial-gradient(circle at 60% 20%,#fff 0 1px,transparent 1.5px),radial-gradient(circle at 85% 70%,#fff 0 1px,transparent 1.5px),radial-gradient(ellipse at 40% 60%,#7C3AED,transparent 60%),#0B0626","#fff","#7C3AED",""],["Arcoíris","linear-gradient(90deg,#EF4444,#F59E0B,#EAB308,#22C55E,#3B82F6,#8B5CF6)","#fff","#8B5CF6","txt"],["Dálmata","radial-gradient(circle at 25% 30%,#0A0A0C 0 3px,transparent 4px),radial-gradient(circle at 70% 75%,#0A0A0C 0 2.5px,transparent 3.5px),#F4F4F5","#fff","#F4F4F5","bgs:20px 16px"]];
+
+const lumi=h=>{const n=parseInt(h.slice(1),16),c=[n>>16,n>>8&255,n&255].map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+const inkFor=h=>lumi(h)>.36?"#0A0A0C":"#FFFFFF";
+let PZ=store.get("dial-theme",{k:"sol",n:"Lima"});
+function applyTheme(){
+  let st=document.getElementById("pzTheme");if(!st){st=document.createElement("style");st.id="pzTheme";document.head.appendChild(st)}
+  let c={},pat=null;
+  if(PZ.k==="pat"){pat=PZ_PAT.find(x=>x[0]===PZ.n)}
+  if(!pat){const t=PZ_SOL.find(x=>x[0]===PZ.n)||PZ_SOL.find(x=>x[0]==="Lima");c={radio:t[1],noticias:t[2],deportes:t[3]}}
+  else c={radio:pat[3],noticias:pat[3],deportes:pat[3]};
+  let css=`:root{${Object.entries(c).map(([k,v])=>`--s-${k}:${v};--i-${k}:${inkFor(v)}`).join(";")}}
+:root{--sec:var(--s-radio);--sec-ink:var(--i-radio)}
+html[data-sec="noticias"]{--sec:var(--s-noticias);--sec-ink:var(--i-noticias)}
+html[data-sec="deportes"]{--sec:var(--s-deportes);--sec-ink:var(--i-deportes)}
+.uil button[aria-pressed="true"]{background:color-mix(in srgb,var(--sec) 22%,var(--panel-2));color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sec) 60%,transparent)}
+.tabs{box-shadow:inset 0 0 0 1px var(--line)}
+.tab{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.tab::before{content:"";width:7px;height:7px;border-radius:50%;flex:none}
+.tab[data-v="radio"]::before{background:var(--s-radio)}.tab[data-v="noticias"]::before{background:var(--s-noticias)}.tab[data-v="deportes"]::before{background:var(--s-deportes)}
+.tab[aria-selected="true"]::before{background:currentColor;opacity:.8}
+.search>span{color:var(--sec)!important}
+.search{border-color:color-mix(in srgb,var(--sec) 50%,var(--line))}
+.search:focus-within{border-color:var(--sec);box-shadow:0 0 0 3px color-mix(in srgb,var(--sec) 20%,transparent)}
+.ftab[aria-selected="true"]{background:color-mix(in srgb,var(--sec) 16%,var(--panel-2));box-shadow:inset 0 -2px 0 var(--sec)}
+.ftab .n{background:var(--sec);color:var(--sec-ink)}
+.fsum span{color:color-mix(in srgb,var(--sec) 50%,var(--muted))}
+.fsum button{border-color:color-mix(in srgb,var(--sec) 50%,var(--line));color:var(--ink)}
+.nhead h1::after{content:"";display:block;height:3px;width:44px;margin-top:6px;border-radius:2px;background:var(--sec)}
+`;
+  const fill=pat?(pat[4]==="neon"?`background:#0A0A0C;color:${pat[3]};box-shadow:0 0 0 1.5px ${pat[3]},0 0 14px ${pat[3]},inset 0 0 10px color-mix(in srgb,${pat[3]} 35%,transparent)`
+      :`background:${pat[1]};${pat[4].startsWith("bgs:")?`background-size:${pat[4].slice(4)};`:""}color:${pat[2]};font-weight:700;text-shadow:${["0 0 2px","0 0 4px","0 0 7px"].map(x=>x+" "+(inkFor(pat[2])==="#0A0A0C"?"#000":"#fff")).join(",")}`):"";
+  const on=sel=>pat?`${sel}{${fill}}`:"";
+  css+=pat?on(`.tab[aria-selected="true"],.vseg button[aria-pressed="true"],.sseg .chip[aria-pressed=true],#nchips .chip[aria-pressed="true"],#nscope .chip[aria-pressed="true"]`)+`.vseg button[aria-pressed="true"] small{color:inherit!important;opacity:.85}`
+    :`.tab[aria-selected="true"]{font-weight:600}.tab[data-v="radio"][aria-selected="true"]{background:var(--s-radio);color:var(--i-radio)}.tab[data-v="noticias"][aria-selected="true"]{background:var(--s-noticias);color:var(--i-noticias)}.tab[data-v="deportes"][aria-selected="true"]{background:var(--s-deportes);color:var(--i-deportes)}
+.vseg button[aria-pressed="true"],.sseg .chip[aria-pressed=true],#nchips .chip[aria-pressed="true"],#nscope .chip[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink);border-color:transparent;font-weight:600}
+.vseg button[aria-pressed="true"] small{color:var(--sec-ink);opacity:.75}`;
+  st.textContent=css;
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content="#07070A";
+}
+applyTheme();
+function pzStartStation(){const n=store.get("dial-start-radio",null);return n?S.find(x=>x.n===n)||null:null}
+// Al abrir la app sin enlace compartido, la radio de inicio queda lista para sonar (el iPhone exige un toque para empezar)
+function armStart(){if(current)return;const s=pzStartStation();if(!s)return;current=s;F=s;layout();npReset(s);setBand(s);mset("bT",s.n);mset("bA",stationDesc(s));setStatus("toca ▶");setBtn(false);if(window.altSync)altSync()}
+let PZT=PZ.k||"sol",PZQ="",PZASK=true;
+function pzOpen(){PZT=PZ.k||"sol";PZQ="";PZASK=true;let sc=document.getElementById("pzScrim");
+  if(!sc){sc=document.createElement("div");sc.id="pzScrim";sc.className="pz-scrim";sc.onclick=pzClose;document.body.appendChild(sc);
+    const d=document.createElement("section");d.id="pz";d.className="pz";d.setAttribute("role","dialog");d.setAttribute("aria-label","Tu Dial");document.body.appendChild(d)}
+  sc.hidden=false;document.getElementById("pz").hidden=false;pzRender();document.addEventListener("keydown",pzKey)}
+function pzClose(){const a=document.getElementById("pzScrim"),b=document.getElementById("pz");if(a)a.hidden=true;if(b)b.hidden=true;document.removeEventListener("keydown",pzKey)}
+function pzKey(e){if(e.key==="Escape")pzClose()}
+function pzRes(){const start=pzStartStation(),norm=t=>t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""),q=norm(PZQ.trim());if(!q)return "";
+  const res=S.filter(x=>norm(x.n+" "+(CN[x.cc]||x.cc)+" "+[...x.tags].join(" ")).includes(q)).slice(0,6);
+  return res.length?`<div class="pz-res">${res.map(x=>`<button data-r="${esc(x.n)}" class="${start===x?"on":""}"><span>${flag(x.cc)} ${esc(x.n)}</span><small>${esc(CN[x.cc]||x.cc)} · ${esc(FAM[x.g][0])}</small></button>`).join("")}</div>`:`<div class="pz-note">Sin resultados.</div>`}
+function pzRender(){const d=document.getElementById("pz");if(!d||d.hidden)return;
+  const start=pzStartStation(),open=store.get("dial-open","radio");
+  const ask=current&&current!==start&&PZASK?`<div class="pz-ask"><p>¿Partir siempre con <b>${esc(current.n)}</b> al abrir Dial Espejo?</p><div class="pz-row"><button class="pz-b pri" data-a="yes">Sí, partir con esta</button><button class="pz-b" data-a="no">No</button></div></div>`:"";
+  const list=PZT==="pat"?PZ_PAT:PZ_SOL,curN=PZ.k===PZT?PZ.n:null;
+  const sw=list.map(t=>{const onp=t[0]===curN;
+    const vis=PZT==="pat"?`<span class="pz-p" style="${esc(t[4]==="neon"?`background:#0A0A0C;box-shadow:inset 0 0 0 2px ${t[3]},0 0 8px ${t[3]}`:`background:${t[1]};${t[4].startsWith("bgs:")?`background-size:${t[4].slice(4)}`:""}`)}"></span>`
+      :`<span class="pz-g"><i style="background:${t[1]}"></i><i style="background:${t[2]}"></i><i style="background:${t[3]}"></i></span>`;
+    return `<button class="pz-sw" data-t="${esc(t[0])}" aria-pressed="${onp}">${vis}<span class="pz-n">${esc(t[0])}</span></button>`}).join("");
+  d.innerHTML=`<div class="pz-h"><h2>Tu <b>Dial</b></h2><button class="pz-x" data-a="x" aria-label="Cerrar">×</button></div>${ask}
+<div class="pz-k"><span>Radio de inicio</span><span>${start?esc(flag(start.cc)+" "+start.n):"ninguna"}</span></div>
+<input class="pz-in" id="pzQ" type="search" placeholder="Buscar radio por nombre, país o estilo" autocomplete="off" enterkeyhint="search" value="${esc(PZQ)}">
+<div id="pzRes">${pzRes()}</div>
+${start?`<div class="pz-row"><button class="pz-b" data-a="nostart">Quitar radio de inicio</button></div>`:""}
+<div class="pz-k"><span>Paleta</span><span>${esc(PZ.n)}</span></div>
+<div class="pz-seg two"><button data-pt="sol" aria-pressed="${PZT==="sol"}">Colores</button><button data-pt="pat" aria-pressed="${PZT==="pat"}">Patrones</button></div>
+<div class="pz-grid">${sw}</div>
+<div class="pz-k"><span>Abrir en</span></div>
+<div class="pz-seg">${[["radio","Radio"],["noticias","Noticias"],["deportes","Deportes"]].map(([k,l])=>`<button data-o="${k}" aria-pressed="${open===k}">${l}</button>`).join("")}</div>
+<div class="pz-k"><span>Idioma</span></div>
+<div class="pz-seg">${[["es","Español"],["en","English"],["pt","Português"]].map(([k,l])=>`<button data-l="${k}" aria-pressed="${UIL===k}" data-noi18n>${l}</button>`).join("")}</div>
+<div class="pz-note">Se guarda solo en este dispositivo.</div>`;
+  const inp=d.querySelector("#pzQ");inp.oninput=()=>{PZQ=inp.value;d.querySelector("#pzRes").innerHTML=pzRes()};
+  d.onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    if(b.dataset.a==="x")return pzClose();
+    if(b.dataset.a==="yes"){store.set("dial-start-radio",current.n);PZASK=false;return pzRender()}
+    if(b.dataset.a==="no"){PZASK=false;return pzRender()}
+    if(b.dataset.a==="nostart"){store.set("dial-start-radio",null);return pzRender()}
+    if(b.dataset.r){store.set("dial-start-radio",b.dataset.r);PZQ="";return pzRender()}
+    if(b.dataset.pt){PZT=b.dataset.pt;return pzRender()}
+    if(b.dataset.t){PZ={k:PZT,n:b.dataset.t};store.set("dial-theme",PZ);applyTheme();return pzRender()}
+    if(b.dataset.o){store.set("dial-open",b.dataset.o);return pzRender()}
+    if(b.dataset.l&&b.dataset.l!==UIL){const u=document.querySelector(`#uil button[aria-label="${{es:"Español",en:"English",pt:"Português"}[b.dataset.l]}"]`);if(u)u.click()}
+  }}
+$("homeBtn").onclick=pzOpen;
+resetView();layout();openShared();armStart();syncFavs().then(()=>renderSync());renderSync();
 setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 
 </script>
@@ -1643,7 +1777,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07t";
+const APP_VERSION="2026-11-07u";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -1672,6 +1806,7 @@ function show(code){
   VIEWS.forEach(v=>{ const el=$("view-"+(VIEW_EL[v.code]||v.code)); if(el) el.hidden = v.code!==code; });
   [...$("tabs").children].forEach(b=>b.setAttribute("aria-selected",b.dataset.v===code));
   store.set("dial-view",code);
+  document.documentElement.dataset.sec=code;
   if(code==="noticias") loadNews();
   if(code==="deportes") loadSports();
   window.scrollTo(0,0);
@@ -2300,7 +2435,7 @@ async function soccer(b,tok){b.innerHTML=`<div class="ssel" id="ssel"></div><div
       return `<div class="ld"><span>${i+1}. ${esc(x.athlete?.displayName||"")} <em>${esc(x.athlete?.team?.abbreviation||x.athlete?.team?.displayName||"")}</em></span><b>${esc(x.value??g?.value??"")}</b></div>`}).join("")+`</div>`).join("")+`</div>`:note("Sin estadísticas disponibles por ahora."))+`</section>`;
   out.innerHTML=h;socPickers();fillUpcoming(`apis/site/v2/sports/soccer/${slug}/scoreboard`,tok,true)}
 
-show(location.hash ? location.hash.slice(1) : store.get("dial-view","radio"));
+show(location.hash ? location.hash.slice(1) : store.get("dial-open",null) || store.get("dial-view","radio"));
 })();
 </script>
 </body>
