@@ -439,6 +439,51 @@ a{color:inherit}
 .upl{display:grid;gap:8px;padding:10px 0 4px}
 #upc{display:grid;gap:6px}
 
+/* Pronósticos NBA (piloto) */
+.sp-pills{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.phase.fcb{cursor:pointer;background:none;color:var(--s-deportes,#15803D);border-color:var(--s-deportes,#15803D);filter:brightness(1.35)}
+.phase.fcb[aria-pressed="true"]{background:var(--s-deportes,#15803D);color:#fff;filter:none}
+#fcWrap{display:grid;gap:32px}#fcWrap[hidden]{display:none}
+.fc-grid{display:grid;gap:10px;align-items:start;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.fc-g{padding:12px 14px 10px;display:grid;gap:8px}
+.fc-when{font:500 11.5px var(--mono);color:var(--dim);display:flex;justify-content:space-between;gap:8px}
+.fc-teams{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.fc-tm{display:flex;align-items:center;gap:7px;min-width:0;font-weight:600;font-size:14px}
+.fc-tm.r{justify-content:flex-end;text-align:right}
+.fc-tm img{width:22px;height:22px;object-fit:contain}
+.fc-tm em{font:400 10.5px var(--mono);color:var(--dim);font-style:normal}
+.fc-at{font:400 11px var(--mono);color:var(--dim)}
+.fc-bar{position:relative;height:8px;border-radius:99px;background:#24242C;overflow:hidden}
+.fc-bar i{position:absolute;inset:0 auto 0 0;background:var(--s-deportes,#15803D);border-radius:99px}
+.fc-bar.fc-hm i{left:auto;right:0}
+.fc-pct{display:flex;justify-content:space-between;font:600 13px var(--mono)}
+.fc-pct .w{color:var(--ink)}.fc-pct .l{color:var(--dim);font-weight:400}
+.fc-mk{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.fc-mk div{border:1px solid var(--line);border-radius:10px;padding:6px 9px;display:grid;gap:1px}
+.fc-mk span{font:400 10.5px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.fc-mk b{font:600 14px var(--mono)}
+.fc-why>summary{cursor:pointer;list-style:none;font-size:12.5px;color:var(--muted)}
+.fc-why>summary::-webkit-details-marker{display:none}
+.fc-why>summary::before{content:"+ ";color:var(--dim)}.fc-why[open]>summary::before{content:"– "}
+.fc-why ul{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:4px;font-size:12.5px}
+.fc-why li{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #1A1A21;padding-top:4px}
+.fc-why li b{font:500 12px var(--mono);white-space:nowrap}
+.fc-why .fc-out{display:block;color:var(--dim);font-size:11.5px;line-height:1.4}
+.fc-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fc-kpi>div{padding:12px 12px 10px;display:grid;gap:2px}
+.fc-kpi span{font:400 10.5px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.fc-kpi b{font:600 22px var(--mono);color:var(--ink)}
+.fc-kpi em{font:400 11.5px var(--mono);color:var(--muted);font-style:normal}
+.fc-kpi em.up{color:#86EFAC}.fc-kpi em.dn{color:#FF8FA3}
+.fc-src{font-size:12px;color:var(--dim);margin:8px 2px 0}
+.fc-miss{display:grid;gap:0}
+.fc-miss>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 2px;border-top:1px solid #1A1A21;font-size:13px}
+.fc-miss b{font:500 12.5px var(--mono)}
+.fc-miss span{grid-column:1/-1;font-size:11.5px;color:var(--dim)}
+.fc-hist{font-size:12.5px;color:var(--muted);line-height:1.5;margin:10px 2px 0}
+.fc-disc{margin:6px 2px 0;font-size:11.5px;color:var(--dim)}
+@media (max-width:520px){.fc-kpi b{font-size:18px}}
+
 .ssel{display:grid;gap:12px;margin-bottom:4px}
 #stabs.sseg{display:flex;flex-wrap:nowrap;margin-inline:0;max-width:640px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:3px;gap:2px;overflow:visible}
 #stabs.sseg .chip{flex:1;min-width:0;justify-content:center;border:0;border-radius:11px;padding:9px 2px;color:var(--muted)}
@@ -2135,7 +2180,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09q";
+const APP_VERSION="2026-11-09r";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2728,7 +2773,8 @@ async function usSport(b,kind,tok){
     daily?espnSpan(`apis/site/v2/sports/${sp}/${kind}/scoreboard`,new Date(new Date().setHours(0,0,0,0)-2*864e5),new Date()).catch(()=>sb):Promise.resolve(sb)]);
   if(type===3&&!(ld?.leaders?.categories||[]).length)ld=await espn(`apis/site/v3/sports/${sp}/${kind}/leaders`,{season:season.year,seasontype:2},true).catch(()=>null);
   if(tok!==sportTok)return;
-  let h=`<section class="sp-head"><h2>${kind.toUpperCase()} · ${esc(season.displayName||season.year||"")}</h2><span class="phase ph${type}">${esc(phase)}</span></section>`;
+  let h=`<section class="sp-head"><h2>${kind.toUpperCase()} · ${esc(season.displayName||season.year||"")}</h2><span class="sp-pills">${kind==="nba"?`<button type="button" class="phase fcb" id="fcBtn" aria-pressed="false">Forecast</button>`:""}<span class="phase ph${type}">${esc(phase)}</span></span></section>`;
+  if(kind==="nba")h+=FCBOX;
   // Posiciones por división (y mapa equipo → división para agrupar resultados)
   const divOf={};let tables="";
   (st?.children||[]).forEach(conf=>{tables+=`<h3 class="sp-conf">${esc(conf.name)}</h3><div class="sp-grid">`;
@@ -2758,7 +2804,69 @@ async function usSport(b,kind,tok){
   const cats=(ld?.leaders?.categories||[]).slice(0,kind==="nfl"?8:6);
   h+=`<section class="topic"><div class="topic-head"><div><h2 class="sph">${esc("Líderes")}</h2><p class="meta">${esc(ld?.requestedSeason?.displayName||"")}</p></div></div>`+
     (cats.length?`<div class="sp-grid">`+cats.map(c=>`<div class="sp-card"><div class="sp-ct">${esc(c.displayName)}</div>`+(c.leaders||[]).slice(0,5).map((x,i)=>`<div class="ld"><span>${i+1}. ${esc(x.athlete?.displayName||"")} <em>${esc(x.athlete?.team?.abbreviation||x.team?.abbreviation||"")}</em></span><b>${esc(ldv(x))}</b></div>`).join("")+`</div>`).join("")+`</div>`:note("Sin estadísticas disponibles por ahora."))+`</section>`;
-  b.innerHTML=h;fillUpcoming(`apis/site/v2/sports/${sp}/${kind}/scoreboard`,tok,false)}
+  b.innerHTML=h;fillUpcoming(`apis/site/v2/sports/${sp}/${kind}/scoreboard`,tok,false);if(kind==="nba")fcSetup(tok)}
+
+/* ---- Pronósticos NBA (piloto): lee lo que guarda la función dial-forecast; la app no escribe nada ---- */
+const FCBOX=`<div id="fcWrap" hidden><section class="topic" id="fcN"></section><section class="topic" id="fcH"></section><p class="fc-disc">Pronósticos estadísticos con fines informativos. No son una recomendación para apostar y pueden fallar.</p></div>`;
+function fcSetup(tok){const btn=$("fcBtn"),w=$("fcWrap");if(!btn||!w)return;let loaded=false;
+  const set=(open,scroll)=>{w.hidden=!open;btn.setAttribute("aria-pressed",open);store.set("dial-fc-open",open);if(open&&!loaded){loaded=true;nbaForecast(tok)}if(open&&scroll)w.scrollIntoView({behavior:"smooth",block:"start"})};
+  btn.onclick=()=>set(w.hidden,true);set(!!store.get("dial-fc-open",false),false)}
+const fcN1=x=>Number(x).toLocaleString("es-CL",{minimumFractionDigits:1,maximumFractionDigits:1});
+const fcPct=x=>Math.round(x*100)+"%";
+const fcLogo=a=>`<img src="https://a.espncdn.com/i/teamlogos/nba/500/${esc(String(a).toLowerCase())}.png" alt="" loading="lazy" onerror="this.remove()">`;
+async function fcRest(q){const r=await fetch(`${SB}/rest/v1/${q}`,{headers:H});if(!r.ok)throw new Error("rest");return r.json()}
+function fcWhen(t){const d=new Date(t),n=new Date();const day=x=>x.toLocaleDateString("es-CL",{...TZCL,year:"numeric",month:"2-digit",day:"2-digit"});
+  const tm=d.toLocaleTimeString("es-CL",{...TZCL,hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+  const lbl=day(d)===day(n)?"Hoy":day(d)===day(new Date(+n+864e5))?"Mañana":d.toLocaleDateString("es-CL",{...TZCL,weekday:"short",day:"numeric"});
+  return `${lbl} ${tm}`}
+function fcCard(p,names){const ph=p.p_home,pa=1-ph,f=p.factors||{},c=f.contrib||{};const hn=names[p.home]||p.home,an=names[p.away]||p.away;
+  const fav=p.pred_margin>=0?p.home:p.away,live=Date.parse(p.start_time)<=Date.now();
+  const side=v=>v>=0?p.home:p.away;
+  const why=[["Fuerza de cada equipo (rating Elo)",c.d],["Localía",c.const],[`${p.home} jugó ayer`,f.hb2b?c.hb2b:null],[`${p.away} jugó ayer`,f.ab2b?c.ab2b:null],["Forma, últimos 10 partidos",c.form]]
+    .filter(x=>x[1]!=null&&Math.abs(x[1])>=0.05).map(([k,v])=>`<li><span>${esc(k)}</span><b>${esc(side(v))} +${fcN1(Math.abs(v))}</b></li>`).join("");
+  const outs=(f.bajas_local||f.bajas_visita)?`<li><span class="fc-out">Bajas declaradas · ${esc(p.home)}: ${esc((f.bajas_local||[]).join(", ")||"ninguna")} · ${esc(p.away)}: ${esc((f.bajas_visita||[]).join(", ")||"ninguna")}. Aún no entran al cálculo; se registran para medir su efecto.</span></li>`:"";
+  return `<div class="sp-card fc-g"><div class="fc-when"><span>${esc(fcWhen(p.start_time))}</span><span>${live?"en juego":"Elo "+Math.round(f.elo_a||0)+" · "+Math.round(f.elo_h||0)}</span></div>
+    <div class="fc-teams"><div class="fc-tm">${fcLogo(p.away)}<span>${esc(an)}</span></div><span class="fc-at">en</span><div class="fc-tm r"><span>${esc(hn)}</span>${fcLogo(p.home)}</div></div>
+    <div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i></div>
+    <div class="fc-pct"><span class="${pa>ph?"w":"l"}">${fcPct(pa)}</span><span class="${ph>=pa?"w":"l"}">${fcPct(ph)}</span></div>
+    <div class="fc-mk"><div><span>Hándicap</span><b>${esc(fav)} −${fcN1(Math.abs(p.pred_margin))}</b></div><div><span>Total de puntos</span><b>${fcN1(p.pred_total)}</b></div></div>
+    <details class="fc-why"><summary>Qué explica el pronóstico</summary><ul>${why}${outs}</ul></details></div>`}
+function fcStats(rows,baseMargin){const n=rows.length;if(!n)return null;const a=(fn)=>rows.reduce((s,r)=>s+fn(r),0)/n;
+  return {n,acc:a(r=>r.correct?1:0),ref:a(r=>r.actual_margin>0?1:0),mm:a(r=>Math.abs(r.err_margin)),mmr:a(r=>Math.abs(r.actual_margin-baseMargin)),
+    mt:a(r=>Math.abs(r.err_total)),mtr:a(r=>Math.abs(r.actual_total-((r.factors||{}).league||r.pred_total)))}}
+function fcKpi(s){const d=(v,r,lower)=>{const better=lower?v<r:v>r;return `<em class="${better?"up":"dn"}">ref. ${lower?fcN1(r):fcPct(r)}</em>`};
+  return `<div class="fc-kpi"><div class="sp-card"><span>Ganador</span><b>${fcPct(s.acc)}</b>${d(s.acc,s.ref,false)}</div>
+    <div class="sp-card"><span>Error hándicap</span><b>${fcN1(s.mm)}</b>${d(s.mm,s.mmr,true)}</div>
+    <div class="sp-card"><span>Error total</span><b>${fcN1(s.mt)}</b>${d(s.mt,s.mtr,true)}</div></div>`}
+let fcKick=-1;
+async function nbaForecast(tok){const bN=$("fcN"),bH=$("fcH");if(!bN||!bH)return;
+  bN.innerHTML=`<div class="topic-head"><div><h2 class="sph">Pronósticos</h2><p class="meta">Próximos partidos</p></div></div>${note("Cargando…")}`;bH.innerHTML="";
+  const now=Date.now(),since=new Date(now-30*864e5).toISOString();
+  try{const [up,live,bt,mdl,rt]=await Promise.all([
+      fcRest(`dial_fc_predictions?sport=eq.nba&kind=eq.live&evaluated_at=is.null&start_time=gte.${new Date(now-3*36e5).toISOString()}&order=start_time&limit=40`),
+      fcRest(`dial_fc_predictions?sport=eq.nba&kind=eq.live&evaluated_at=not.is.null&start_time=gte.${since}&order=start_time.desc&limit=400`),
+      fcRest(`dial_fc_predictions?sport=eq.nba&kind=eq.backtest&start_time=gte.${since}&order=start_time.desc&limit=400`),
+      fcRest(`dial_fc_model?sport=eq.nba&order=created_at.desc&limit=5`),
+      fcRest(`dial_fc_ratings?sport=eq.nba&select=team,team_name`)]);
+    if(tok!==sportTok)return;
+    const names={};rt.forEach(r=>names[r.team]=(r.team_name||r.team).replace(/^.* (?=\S+$)/,""));
+    const act=mdl.find(m=>m.active)||mdl[0]||{},base=mdl.find(m=>m.version==="baseline-2018-2023")||{},bm=(act.params||{}).base_margin??2;
+    const soon=up.filter(p=>Date.parse(p.start_time)<now+36*36e5);
+    bN.innerHTML=`<div class="topic-head"><div><h2 class="sph">Pronósticos</h2><p class="meta">Próximas 36 horas · probabilidad de ganar, hándicap y total</p></div></div>`+
+      (soon.length?`<div class="fc-grid">${soon.map(p=>fcCard(p,names)).join("")}</div>`:note("No hay partidos en las próximas 36 horas."));
+    // Cómo nos ha ido: primero lo guardado antes de cada partido; mientras se junta, la reconstrucción de esta temporada
+    const sL=fcStats(live,bm),sB=fcStats(bt,(base.params||{}).base_margin??bm);
+    const main=sL&&sL.n>=20?sL:sB,isLive=main===sL;
+    const misses=(isLive?live:live.concat(bt)).filter(r=>!r.correct).sort((a,b)=>Date.parse(b.start_time)-Date.parse(a.start_time)).slice(0,8);
+    const m=base.metrics||{};
+    bH.innerHTML=`<div class="topic-head"><div><h2 class="sph">Cómo nos ha ido</h2><p class="meta">Últimos 30 días, contra la referencia simple</p></div></div>`+
+      (main?fcKpi(main)+`<p class="fc-src">${isLive?`${main.n} pronósticos guardados antes de cada partido.`:`Aún hay ${sL?sL.n:0} pronósticos guardados antes del partido; mientras se juntan 20, se muestra la reconstrucción de ${main.n} partidos de esta temporada con el mismo método.`} Referencia: ganador = siempre el local; hándicap = ventaja media del local; total = promedio reciente de la liga.</p>`:note("Todavía no hay partidos evaluados."))+
+      (misses.length?`<div class="sp-card" style="margin-top:10px;padding:10px 14px"><div class="sp-ct">Errores recientes y su causa probable</div><div class="fc-miss">`+misses.map(r=>{const wh=r.actual_margin>0,fav=r.p_home>=.5?r.home:r.away,pf=Math.max(r.p_home,1-r.p_home);
+        return `<div><span style="grid-column:auto;color:var(--ink);font-size:13px">${esc(r.away)} ${r.actual_total!=null?Math.round((r.actual_total-r.actual_margin)/2):""} · ${esc(r.home)} ${r.actual_total!=null?Math.round((r.actual_total+r.actual_margin)/2):""}</span><b>${esc(fav)} ${fcPct(pf)}</b><span>${esc(new Date(r.start_time).toLocaleDateString("es-CL",{...TZCL,day:"numeric",month:"short"}))} · ${esc((r.causes||[]).join(" · "))}${r.kind==="backtest"?" · reconstruido":""}</span></div>`}).join("")+`</div></div>`:"")+
+      (m.n?`<p class="fc-hist">Prueba histórica: con el modelo ajustado en 2017-18 a 2022-23 y aplicado a ${m.n.toLocaleString("es-CL")} partidos que no vio (2023-24 a hoy), acertó el ganador ${fcPct(m.acierto)} de las veces contra ${fcPct(m.acierto_local)} de la referencia; el error medio fue ${fcN1(m.mae_margen)} puntos en el hándicap (ref. ${fcN1(m.mae_margen_ref)}) y ${fcN1(m.mae_total)} en el total (ref. ${fcN1(m.mae_total_ref)}). Acierta menos en octubre (${fcPct(m.octubre?.acierto||0)}) y en playoffs (${fcPct(m.playoffs?.acierto||0)}). Modelo activo: ${esc(act.version||"")}.</p>`:"");
+    // si los datos tienen más de una hora, pide actualizar y vuelve a dibujar
+    if(fcKick!==tok){fcKick=tok;fetch(`${SB}/functions/v1/dial-forecast?action=auto`,{headers:H}).then(r=>r.json()).then(j=>{if(j&&!j.skipped&&!j.error&&tok===sportTok)nbaForecast(tok)}).catch(()=>{})}
+  }catch(e){if(tok===sportTok)bN.innerHTML=`<div class="topic-head"><div><h2 class="sph">Pronósticos</h2></div></div>`+note("No se pudieron traer los pronósticos ahora.")}}
 /* Fútbol: selector continente/país/liga, tablas por grupo, llaves de eliminación directa y goleadores */
 function socPickers(){const box=$("ssel");const conts=Object.keys(SOC);if(!SOC[socSel.c])socSel={c:"Sudamérica",p:"Chile",l:"chi.1"};
   const countries=Object.keys(SOC[socSel.c]);if(!countries.includes(socSel.p))socSel.p=countries[0];
