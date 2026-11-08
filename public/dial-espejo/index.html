@@ -123,7 +123,7 @@ a{color:inherit}
 
 /* Vistas de la radio: Constelación, Globo y Sonido */
 .vtop{display:grid;gap:10px}
-.vseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:3px}
+.vseg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:3px}
 .vseg button{border:0;background:transparent;border-radius:11px;padding:8px 2px;font-size:13px;color:var(--muted);display:grid;gap:1px;justify-items:center;cursor:pointer}
 .vseg button small{font:400 10px var(--mono);color:var(--dim)}
 .vseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
@@ -2108,7 +2108,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09e";
+const APP_VERSION="2026-11-09f";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
