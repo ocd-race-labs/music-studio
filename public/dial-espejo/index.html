@@ -589,6 +589,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .np-dv{position:absolute;z-index:2;right:max(14px,calc(50% - min(60vw,280px,38vh)/2 + 10px));bottom:calc(min(9vw,40px) + 10px);display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;padding:6px 10px;background:rgba(7,7,10,.55);color:#EDEDF2;font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);cursor:pointer}
 .nd-box.off~.np-stage .np-dv{bottom:10px;right:max(14px,calc(50% - min(78vw,340px,44vh)/2 + 10px))}
 .np.dialv .np-cover,.np.dialv .np-dv{display:none}
+.np.dialv .np-in{padding-top:calc(22px + env(safe-area-inset-top,0px))}
 .np.dialv .np-stage{padding-block:min(3vw,14px)}
 .np.dialv .np-knob{display:block!important;position:relative;left:auto;top:auto;transform:none;width:min(88vw,400px,48vh);-webkit-mask:none;mask:none;clip-path:none}
 .np.dialv .np-knob .k-led{filter:drop-shadow(0 0 calc(4px + 10px*var(--vg,0)) var(--npc,#EDEDF2));opacity:calc(.75 + .25*var(--vg,0))}
@@ -1875,7 +1876,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-08t";
+const APP_VERSION="2026-11-08u";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
