@@ -289,6 +289,10 @@ a{color:inherit}
 .nd-fade{position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(90deg,#09090C,transparent 18%,transparent 82%,#09090C)}
 .nd-read{display:grid;gap:8px;padding-inline:max(20px,env(safe-area-inset-left,0px))}
 .nd-read div{display:grid;gap:3px;min-width:0;transition:opacity .12s}.nd-read.between div{opacity:.35}
+.np.dialv #npLinks,.np.dialv #npInfoT,.np.dialv #npInfo{display:none!important}
+.np.dialv .np-lrow:not(:has(#npShare)){display:none}
+.nd-read{position:relative}.nd-read:has(#npShare)>div{padding-right:50px}
+.nd-read #npShare{position:absolute;top:-6px;right:max(20px,env(safe-area-inset-right,0px));z-index:2}
 .nd-read b{font-size:15px;line-height:20px;height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nd-read.cur b::after{content:" · sonando";font:400 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .nd-read div span{font:400 10.5px var(--mono);line-height:14px;height:14px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -516,7 +520,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 @media (min-width:900px){
   .np-in{max-width:1120px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:56px;row-gap:18px;align-content:center;min-height:100%}
   .np-top{grid-column:1/-1}
-  .nd-box{grid-column:1/-1;margin-inline:0}.nd-read{padding-inline:0;max-width:640px}
+  .nd-box{grid-column:1/-1;margin-inline:0}.nd-read{padding-inline:0;max-width:640px}.nd-read #npShare{right:0}
   .np-stage{grid-column:1;grid-row:3/span 4;align-self:center}.np-knob{display:none}
   .np-cover{width:min(44vw,64vh,540px);height:min(44vw,64vh,540px);align-self:center;border-radius:28px}
   .np-meta,.np-lrow,.np-links,.np-ctl,.np-info{grid-column:2}
@@ -600,7 +604,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .np.dialv .np-knob .k-c::after{content:"";position:absolute;inset:4% 12% 52%;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.02) 60%,transparent);pointer-events:none}
 .np.dialv .k-c small{order:-1;margin-bottom:9px;padding:2px 6px 1px;border:1px solid color-mix(in srgb,var(--lc2) 45%,transparent);border-radius:3px;font:400 9.5px/1.2 "Share Tech Mono",var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--lc2);text-shadow:0 0 6px color-mix(in srgb,var(--lc2) 55%,transparent);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .np.dialv .k-c small:empty{display:none}
-.np.dialv .k-c span{font:800 clamp(16px,4.7vw,22px)/1.06 "Doto",var(--mono);letter-spacing:.01em;text-transform:uppercase;color:var(--lc);text-shadow:0 0 1px var(--lc),0 0 9px color-mix(in srgb,var(--lc) 60%,transparent),0 0 22px color-mix(in srgb,var(--lc) 25%,transparent);overflow-wrap:break-word;text-wrap:balance;max-width:100%}
+.np.dialv .k-c span{font:800 calc(clamp(16px,4.7vw,22px)*var(--kz,1))/1.06 "Doto",var(--mono);letter-spacing:.01em;text-transform:uppercase;color:var(--lc);text-shadow:0 0 1px var(--lc),0 0 9px color-mix(in srgb,var(--lc) 60%,transparent),0 0 22px color-mix(in srgb,var(--lc) 25%,transparent);overflow-wrap:break-word;text-wrap:balance;max-width:100%}
 .np.dialv .k-c em{margin-top:11px;padding-top:7px;border-top:1px dashed color-mix(in srgb,var(--lc3) 40%,transparent);font:400 9px/1.35 "Share Tech Mono",var(--mono);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb,var(--lc3) 75%,#9a9aa3);max-width:84%}
 
 /* Sin barra superior: el nombre ya aparece en el dial, en la perilla y abajo. Se cierra con el asa (o deslizando hacia abajo) */
@@ -1468,7 +1472,7 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   $("npSt").textContent=`${flag(s.cc)} ${s.n}${s.f?" · "+s.f.toFixed(1)+" FM":""} · ${statusTxt||""}`;
   $("npSong").textContent=song;$("npArtist").textContent=artist;
   {const st=$("npStat");st.textContent=statusTxt||"";st.hidden=!statusTxt||/^en vivo/i.test(statusTxt)}
-  $("kCn").textContent=s.n;$("kCs").textContent=[s.f?s.f.toFixed(1)+" FM":"",statusTxt].filter(Boolean).join(" · ").replace(/ · /g,"·");npSheet.style.setProperty("--fc",FAM[s.g][2]);npSheet.classList.toggle("dialv",!!store.get("dial-dialview",false));
+  $("kCn").textContent=s.n;{const lw=Math.max(...s.n.split(/\s+/).map(w=>w.length));$("kCn").style.setProperty("--kz",lw>10?Math.max(.6,10/lw).toFixed(3):1)}$("kCs").textContent=[s.f?s.f.toFixed(1)+" FM":"",statusTxt].filter(Boolean).join(" · ").replace(/ · /g,"·");npSheet.style.setProperty("--fc",FAM[s.g][2]);npSheet.classList.toggle("dialv",!!store.get("dial-dialview",false));
   $("npAlbum").textContent=j.song&&j.artist?[j.album,j.year,j.genre].filter(Boolean).join(" · "):"";
   const cover=$("npCover");const art=j.artwork||null;
   if(cover._a!==art){cover._a=art;cover.innerHTML=art?`<img src="${esc(art)}" alt="Carátula">`:hexArt(s,true)}
@@ -1566,6 +1570,8 @@ function ndStep(dir){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.ma
   const end=()=>{if(a0===null)return;a0=null;if(cIn&&tot<4&&npSheet.classList.contains("dialv"))dialView(false);k.classList.remove("drag");ND.kBusy=true;setTimeout(()=>{kDrag=false;ND.kTarget=null;ND.kBusy=false;kOff=kDeg-$("ndSc").scrollLeft/4;const sc=$("ndSc");if(!ndAnim)sc.style.scrollSnapType=""},320)};
   k.addEventListener("pointerup",end);k.addEventListener("pointercancel",end)})();
 function dialView(on){store.set("dial-dialview",on);npSheet.classList.toggle("dialv",on)}
+function placeShare(){const b=$("npShare"),dv=npSheet.classList.contains("dialv")&&!$("ndBox").classList.contains("off"),t=dv?$("ndRead"):document.querySelector(".np-lrow");if(b.parentNode!==t)dv?t.appendChild(b):t.insertBefore(b,$("npInfoT"))}
+new MutationObserver(placeShare).observe(npSheet,{attributes:true,attributeFilter:["class"]});new MutationObserver(placeShare).observe($("ndBox"),{attributes:true,attributeFilter:["class"]});
 $("npDV").onclick=e=>{e.stopPropagation();dialView(true)};$("npCover").addEventListener("click",()=>dialView(true));
 $("npInfoT").onclick=()=>{const i=$("npInfo"),o=i.hidden;i.hidden=!o;$("npInfoT").setAttribute("aria-expanded",o);if(o)setTimeout(()=>i.scrollIntoView({behavior:"smooth",block:"nearest"}),30)};
 addEventListener("resize",()=>{ND.for=null;ndBuild()});
@@ -1869,7 +1875,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-08s";
+const APP_VERSION="2026-11-08t";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
