@@ -258,6 +258,7 @@ a{color:inherit}
 /* En vista carátula, el escenario mide lo que el dial menos la fila de enlaces: así los controles quedan a la misma altura en ambas vistas */
 @media (max-width:899px){.np{--dst:calc(min(88vw,400px,48vh) + 2*min(3vw,14px));--lr:50px;--cv:min(60vw,280px,38vh,calc((var(--dst) - var(--lr))/1.3))}
 .np:not(.dialv) .nd-box:not(.off)~.np-stage{height:calc(var(--dst) - var(--lr));padding-block:0;box-sizing:border-box}}
+@media (max-width:899px) and (pointer:fine){.np{--lr:0px}}
 @media (max-width:899px){.nd-box:not(.off)~.np-stage .np-dv{right:auto;bottom:auto;left:calc(50% + var(--cv)/2 - 10px);top:calc(50% + var(--cv)/2 - 10px);transform:translate(-100%,-100%)}
 .nd-box:not(.off)~.np-stage .np-stat{left:calc(50% - var(--cv)/2 + 10px);top:calc(50% - var(--cv)/2 + 10px)}}
 .nd-box.off~.np-stage{padding-block:0}
@@ -298,8 +299,10 @@ a{color:inherit}
 .nd-fade{position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(90deg,#09090C,transparent 18%,transparent 82%,#09090C)}
 .nd-read{display:grid;gap:8px;padding-inline:max(20px,env(safe-area-inset-left,0px))}
 .nd-read div{display:grid;gap:3px;min-width:0;transition:opacity .12s}.nd-read.between div{opacity:.35}
-.np.dialv #npLinks,.np.dialv #npInfoT,.np.dialv #npInfo{display:none!important}
-.np.dialv .np-lrow:not(:has(#npShare)){display:none}
+@media (pointer:coarse){.np.dialv #npLinks,.np.dialv #npInfoT,.np.dialv #npInfo{display:none!important}
+.np.dialv .np-lrow:not(:has(#npShare)){display:none}}
+/* En computador la vista dial conserva compartir e info en su fila; los enlaces de Spotify/YouTube se ocultan pero guardan su espacio */
+@media (pointer:fine){.np.dialv #npLinks{visibility:hidden}}
 .nd-read{position:relative}.nd-read:has(#npShare)>div{padding-right:50px}
 .nd-read #npShare{position:absolute;top:-6px;right:max(20px,env(safe-area-inset-right,0px));z-index:2}
 .nd-read b{font-size:15px;line-height:20px;height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -622,7 +625,6 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   html .np .np-info{grid-column:2;grid-row:8}
   /* Mismas alturas en vista dial y carátula: igual margen arriba y la fila de enlaces reserva su espacio aunque esté oculta */
   html .np.dialv .np-in{padding-top:calc(18px + env(safe-area-inset-top,0px))}
-  html .np.dialv .np-lrow{display:flex!important;visibility:hidden;min-height:36px}
 }
 
 .np.dialv .np-stage{padding-block:min(3vw,14px)}
@@ -1827,7 +1829,7 @@ function ktSong(){KT.t=null;const e=$("kCn");if(!KT.sg)return;if(npSheet.hidden|
   i.style.setProperty("--kx0",w+"px");i.style.setProperty("--kx1",-tw+"px");i.style.setProperty("--ks",n);i.style.setProperty("--kd",(n*.13).toFixed(2)+"s");
   i.addEventListener("animationend",()=>{if(KT.busy)ktStation()},{once:true})}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&KT.busy&&!$("kCn").classList.contains("tk"))ktStation()});
-function placeShare(){requestAnimationFrame(fitK);const b=$("npShare"),dv=npSheet.classList.contains("dialv")&&!$("ndBox").classList.contains("off"),t=dv?$("ndRead"):document.querySelector(".np-lrow");if(b.parentNode!==t)dv?t.appendChild(b):t.insertBefore(b,$("npInfoT"))}
+function placeShare(){requestAnimationFrame(fitK);const b=$("npShare"),dv=npSheet.classList.contains("dialv")&&!$("ndBox").classList.contains("off")&&!matchMedia("(pointer:fine)").matches,t=dv?$("ndRead"):document.querySelector(".np-lrow");if(b.parentNode!==t)dv?t.appendChild(b):t.insertBefore(b,$("npInfoT"))}
 new MutationObserver(placeShare).observe(npSheet,{attributes:true,attributeFilter:["class"]});new MutationObserver(placeShare).observe($("ndBox"),{attributes:true,attributeFilter:["class"]});
 $("npDV").onclick=e=>{e.stopPropagation();dialView(true)};$("npCover").addEventListener("click",()=>dialView(true));
 $("npInfoT").onclick=()=>{const i=$("npInfo"),o=i.hidden;i.hidden=!o;$("npInfoT").setAttribute("aria-expanded",o);if(o)setTimeout(()=>i.scrollIntoView({behavior:"smooth",block:"nearest"}),30)};
@@ -2133,7 +2135,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09p";
+const APP_VERSION="2026-11-09q";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
