@@ -541,7 +541,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .pz-h h2{margin:0;font-size:20px;font-weight:600}.pz-h h2 b{color:var(--sec);font-weight:600}
 .pz-x{width:40px;height:40px;border-radius:11px;border:1px solid #24242C;background:#15151B;color:#EDEDF2;font-size:18px;cursor:pointer}
 .pz-k{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#8B8B96;display:flex;justify-content:space-between;gap:10px;margin-top:4px}
-.pz-k span:last-child{color:#C9C9D2;text-transform:none;letter-spacing:0;font-size:11px;text-align:right}
+.pz-k span+span{color:#C9C9D2;text-transform:none;letter-spacing:0;font-size:11px;text-align:right}
 .pz-ask{display:grid;gap:10px;padding:12px;border:1px solid color-mix(in srgb,var(--sec) 50%,#24242C);border-radius:14px;background:color-mix(in srgb,var(--sec) 8%,#111116)}
 .pz-ask p{margin:0;font-size:14px}
 .pz-row{display:flex;gap:8px;flex-wrap:wrap}
@@ -565,6 +565,12 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .pz-p{width:100%;height:18px;border-radius:6px}
 .pz-n{font-size:10.5px;line-height:1.2;text-align:center;max-width:100%;min-height:2.4em;display:grid;place-items:center;overflow-wrap:anywhere}
 .pz-note{font:400 11px var(--mono);color:#6E6E79}
+.pz-bgs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.pz-bg{height:58px;border-radius:12px;border:1px solid #2A2A33;display:flex;align-items:flex-end;justify-content:center;padding:6px 2px;color:#C9C9D2;font-size:10.5px;cursor:pointer;min-width:0}
+.pz-bg[aria-pressed="true"]{border-color:var(--sec);box-shadow:0 0 0 2px color-mix(in srgb,var(--sec) 40%,transparent);color:#EDEDF2}
+.pz-tint{display:grid;grid-template-columns:auto 1fr 3.2em;align-items:center;gap:12px;font-size:13px;color:#C9C9D2}
+.pz-tint input{accent-color:var(--sec);width:100%}
+.pz-tint b{font:500 12px var(--mono);text-align:right;color:#EDEDF2}
 </style>
 </head>
 <body>
@@ -892,13 +898,13 @@ let favT=null;
 // La configuración de "Tu Dial" viaja junto a las favoritas, como un elemento marcado de la misma lista, para que sobreviva
 // aunque el navegador borre su almacenamiento (o se abra desde el ícono de inicio, que guarda aparte de Safari)
 const CFGP="\u0001cfg:";
-function cfgNow(){return{t:store.get("dial-cfg-t",0),theme:store.get("dial-theme",null),start:store.get("dial-start-radio",null),open:store.get("dial-open",null)}}
+function cfgNow(){return{t:store.get("dial-cfg-t",0),theme:store.get("dial-theme",null),start:store.get("dial-start-radio",null),open:store.get("dial-open",null),bg:store.get("dial-bg",null),txt:store.get("dial-txt",null)}}
 function cfgTouch(){store.set("dial-cfg-t",Date.now());saveFavs()}
 function saveFavs(){store.set("dial-favs",[...favs]);try{renderSync()}catch(e){}clearTimeout(favT);favT=setTimeout(()=>rpc("dial_prefs_put",{p_key:DKEY,p_favs:[...favs,CFGP+JSON.stringify(cfgNow())]}).catch(()=>{}),600)}
 async function rpc(fn,body){const r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SBKEY,Authorization:"Bearer "+SBKEY,"Content-Type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);return r.status===204?null:r.json()}
 async function syncFavs(){try{const srv=await rpc("dial_prefs_get",{p_key:DKEY});const before=favs.size;let cfg=null;
   if(Array.isArray(srv))srv.forEach(n=>{if(String(n).startsWith(CFGP)){try{cfg=JSON.parse(n.slice(CFGP.length))}catch(e){}}else favs.add(n)});store.set("dial-favs",[...favs]);
-  if(cfg&&(cfg.t||0)>store.get("dial-cfg-t",0)){store.set("dial-cfg-t",cfg.t);store.set("dial-theme",cfg.theme);store.set("dial-start-radio",cfg.start);store.set("dial-open",cfg.open);
+  if(cfg&&(cfg.t||0)>store.get("dial-cfg-t",0)){store.set("dial-cfg-t",cfg.t);store.set("dial-theme",cfg.theme);store.set("dial-start-radio",cfg.start);store.set("dial-open",cfg.open);store.set("dial-bg",cfg.bg??null);store.set("dial-txt",cfg.txt??null);
     if(typeof pzReload==="function")pzReload()}
   if(!Array.isArray(srv)||srv.length!==favs.size+1||(!cfg&&store.get("dial-cfg-t",0)))saveFavs();
   if(favs.size!==before){layout()}}catch(e){}}
@@ -1538,6 +1544,7 @@ const PZ_PAT=[["Neón en el borde","#0A0A0C","#39FF14","#39FF14","neon"],["Camuf
 const lumi=h=>{const n=parseInt(h.slice(1),16),c=[n>>16,n>>8&255,n&255].map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]};
 const inkFor=h=>lumi(h)>.36?"#0A0A0C":"#FFFFFF";
 let PZ=store.get("dial-theme",null)||{k:"sol",n:"Lima"};
+const PZ_BG=[["Negro","#07070A"],["Grafito","#141418"],["Azul noche","#0A1022"],["Café oscuro","#150E09"],["Verde noche","#08130D"]];
 function applyTheme(){
   let st=document.getElementById("pzTheme");if(!st){st=document.createElement("style");st.id="pzTheme";document.head.appendChild(st)}
   let c={},pat=null;
@@ -1570,6 +1577,11 @@ html[data-sec="deportes"]{--sec:var(--s-deportes);--sec-ink:var(--i-deportes)}
     :`.tab[aria-selected="true"]{font-weight:600}.tab[data-v="radio"][aria-selected="true"]{background:var(--s-radio);color:var(--i-radio)}.tab[data-v="noticias"][aria-selected="true"]{background:var(--s-noticias);color:var(--i-noticias)}.tab[data-v="deportes"][aria-selected="true"]{background:var(--s-deportes);color:var(--i-deportes)}
 .vseg button[aria-pressed="true"],.sseg .chip[aria-pressed=true],#nchips .chip[aria-pressed="true"],#nscope .chip[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink);border-color:transparent;font-weight:600}
 .vseg button[aria-pressed="true"] small{color:var(--sec-ink);opacity:.75}`;
+  // Fondo: un oscuro base y un tinte opcional del color de la sección (0 a 15%); letra: tamaño del texto en el iPhone
+  const BG=PZ_BG.find(x=>x[0]===(store.get("dial-bg",null)||{}).b)||PZ_BG[0],tint=Math.max(0,Math.min(15,+((store.get("dial-bg",null)||{}).t||0)));
+  css+=`:root{--bg:${tint?`color-mix(in srgb,var(--sec) ${tint}%,${BG[1]})`:BG[1]};--panel:color-mix(in srgb,#fff 4%,var(--bg));--panel-2:color-mix(in srgb,#fff 7%,var(--bg))}`;
+  const TX={n:100,g:112,xg:125}[store.get("dial-txt","n")]||100;
+  css+=`html{-webkit-text-size-adjust:${TX}%;text-size-adjust:${TX}%}`;
   st.textContent=css;
   const m=document.querySelector('meta[name="theme-color"]');if(m)m.content="#07070A";
 }
@@ -1603,11 +1615,17 @@ ${start?`<div class="pz-row"><button class="pz-b" data-a="nostart">Quitar radio 
 <div class="pz-k"><span>Paleta</span><span>${esc(PZ.n)}</span></div>
 <div class="pz-seg two"><button data-pt="sol" aria-pressed="${PZT==="sol"}">Colores</button><button data-pt="pat" aria-pressed="${PZT==="pat"}">Patrones</button></div>
 <div class="pz-grid">${sw}</div>
+<div class="pz-k"><span>Fondo</span><span>${esc(((store.get("dial-bg",null)||{}).b)||"Negro")}${(store.get("dial-bg",null)||{}).t?" · tinte "+(store.get("dial-bg",null)||{}).t+"%":""}</span></div>
+<div class="pz-bgs">${PZ_BG.map(([n,c])=>`<button class="pz-bg" data-bg="${esc(n)}" aria-pressed="${(((store.get("dial-bg",null)||{}).b)||"Negro")===n}" style="background:${c}"><span>${esc(n)}</span></button>`).join("")}</div>
+<label class="pz-tint"><span>Tinte de tu paleta</span><input id="pzTint" type="range" min="0" max="15" step="1" value="${+((store.get("dial-bg",null)||{}).t||0)}"><b id="pzTintV">${+((store.get("dial-bg",null)||{}).t||0)}%</b></label>
+<div class="pz-k"><span>Tamaño de letra</span><span>se nota en el iPhone</span></div>
+<div class="pz-seg">${[["n","Normal"],["g","Grande"],["xg","Muy grande"]].map(([k,l])=>`<button data-tx="${k}" aria-pressed="${store.get("dial-txt","n")===k}">${l}</button>`).join("")}</div>
 <div class="pz-k"><span>Abrir en</span></div>
 <div class="pz-seg">${[["radio","Radio"],["noticias","Noticias"],["deportes","Deportes"]].map(([k,l])=>`<button data-o="${k}" aria-pressed="${open===k}">${l}</button>`).join("")}</div>
 <div class="pz-k"><span>Idioma</span></div>
 <div class="pz-seg">${[["es","Español"],["en","English"],["pt","Português"]].map(([k,l])=>`<button data-l="${k}" aria-pressed="${UIL===k}" data-noi18n>${l}</button>`).join("")}</div>
 <div class="pz-note">Se guarda solo en este dispositivo.</div>`;
+  const ti=d.querySelector("#pzTint");ti.oninput=()=>{const b=store.get("dial-bg",null)||{b:"Negro"};b.t=+ti.value;store.set("dial-bg",b);d.querySelector("#pzTintV").textContent=ti.value+"%";applyTheme()};ti.onchange=()=>{cfgTouch();pzRender()};
   const inp=d.querySelector("#pzQ");inp.oninput=()=>{PZQ=inp.value;d.querySelector("#pzRes").innerHTML=pzRes()};
   d.onclick=e=>{const b=e.target.closest("button");if(!b)return;
     if(b.dataset.a==="x")return pzClose();
@@ -1617,6 +1635,8 @@ ${start?`<div class="pz-row"><button class="pz-b" data-a="nostart">Quitar radio 
     if(b.dataset.r){store.set("dial-start-radio",b.dataset.r);cfgTouch();PZQ="";return pzRender()}
     if(b.dataset.pt){PZT=b.dataset.pt;return pzRender()}
     if(b.dataset.t){PZ={k:PZT,n:b.dataset.t};store.set("dial-theme",PZ);cfgTouch();applyTheme();return pzRender()}
+    if(b.dataset.bg){const o=store.get("dial-bg",null)||{t:0};store.set("dial-bg",{b:b.dataset.bg,t:o.t||0});cfgTouch();applyTheme();return pzRender()}
+    if(b.dataset.tx){store.set("dial-txt",b.dataset.tx);cfgTouch();applyTheme();return pzRender()}
     if(b.dataset.o){store.set("dial-open",b.dataset.o);cfgTouch();return pzRender()}
     if(b.dataset.l&&b.dataset.l!==UIL){const u=document.querySelector(`#uil button[aria-label="${{es:"Español",en:"English",pt:"Português"}[b.dataset.l]}"]`);if(u)u.click()}
   }}
@@ -1785,7 +1805,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-08b";
+const APP_VERSION="2026-11-08c";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
