@@ -709,6 +709,35 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   #view-radio>.afc{grid-column:1;grid-row:2}
   #view-radio>.srch{grid-column:2;grid-row:1/span 2;position:sticky;top:12px}
 }
+
+.lcd{all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr);padding:8px;border-radius:18px;background:linear-gradient(180deg,#1b1c20,#0c0d10);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.6),0 10px 28px -14px rgba(0,0,0,.9)}
+.lcd-art{flex:none;border:0;padding:0;cursor:pointer;width:60px;height:60px;border-radius:12px;overflow:hidden;background:#000;display:grid;place-items:center;align-self:center;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+.lcd-art img{width:100%;height:100%;object-fit:cover}.lcd-art svg{width:84%;height:84%}.lcd-art .eq{transform:scale(1.4)}
+.lcd-scr{--lc:var(--s-radio,#B06BFF);--lc2:var(--s-noticias,#86EFAC);--lc3:var(--s-deportes,#15803D);position:relative;isolation:isolate;overflow:hidden;min-width:0;display:grid;align-content:center;gap:4px;min-height:118px;padding:12px 14px;border-radius:11px;
+  background:radial-gradient(120% 140% at 30% 20%,color-mix(in srgb,var(--lc) 12%,#0a0c0b),#040405 80%);box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px rgba(255,255,255,.05),inset 0 4px 14px rgba(0,0,0,.85),0 0 22px -10px color-mix(in srgb,var(--lc) 70%,transparent)}
+.lcd-scr::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle,color-mix(in srgb,var(--lc) 10%,transparent) .7px,transparent 1.1px) 0 0/3px 3px,repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0 1px,transparent 1px 3px)}
+.lcd-scr::after{content:"";position:absolute;left:0;right:0;top:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,.07),transparent);pointer-events:none}
+.lcd-chip{justify-self:start;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 6px;border:1px solid color-mix(in srgb,var(--lc2) 45%,transparent);border-radius:3px;font:400 10px/1.3 "Share Tech Mono",var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--lc2);text-shadow:0 0 6px color-mix(in srgb,var(--lc2) 55%,transparent)}
+.lcd-chip:empty{display:none}
+.lcd-l1,.lcd-l2{display:block;overflow:hidden;white-space:nowrap}
+.lcd-l1 i,.lcd-l2 i{display:inline-block;font-style:normal;text-transform:uppercase;white-space:nowrap}
+.lcd-l1 i{font:800 27px/1.15 "Doto",var(--mono);color:var(--lc);text-shadow:0 0 1px var(--lc),0 0 9px color-mix(in srgb,var(--lc) 60%,transparent)}
+.lcd-l2 i{font:800 17px/1.2 "Doto",var(--mono);color:var(--lc2);text-shadow:0 0 7px color-mix(in srgb,var(--lc2) 45%,transparent)}
+.lcd i.run{animation:lcdmq var(--md,6s) steps(var(--ms,10)) infinite}
+@keyframes lcdmq{0%,22%{transform:translateX(0)}78%,100%{transform:translateX(var(--mx,0))}}
+@media (prefers-reduced-motion:reduce){.lcd i.run{animation:none}}
+.lcd-l3{font:400 10.5px "Share Tech Mono",var(--mono);letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--lc3) 70%,#9a9aa3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.npc-ctl{display:flex;align-items:center;gap:12px}
+.npc-ctl .npc-more{justify-self:auto}
+.npc-ctl .npc-pp{margin-left:auto}
+.tp-it{display:grid;grid-template-columns:8px auto minmax(0,1fr) 34px;gap:9px;align-items:center;min-height:40px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.tp-it:last-child{border-bottom:0}
+.tp-it b{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
+.tp-it small{font:400 11px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-it.cur b{color:var(--sec)}
+.tp-pl{width:34px;height:34px;border-radius:50%;border:1px solid color-mix(in srgb,var(--sec) 40%,var(--line));background:color-mix(in srgb,var(--sec) 14%,transparent);color:var(--ink);font-size:12px;cursor:pointer}
+.tp-pl.on{background:var(--sec);color:var(--sec-ink)}
+.npc-top{gap:2px}
 html[data-sec="radio"]:not(.adv-open) #player{display:none}
 html[data-sec="radio"]:not(.adv-open) #view-radio{padding-bottom:40px}
 .adv{position:fixed;inset:0;z-index:30;overflow:auto;overscroll-behavior:contain;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:env(safe-area-inset-top,0px) var(--gut-r) 0 var(--gut-l)}
@@ -730,10 +759,10 @@ html.adv-open #player{z-index:35}
 <div class="wrap" id="view-radio">
   <section class="hcard npc" id="npCard" aria-label="Sonando ahora">
     <div class="hk">Sonando ahora</div>
-    <div class="npc-row"><button class="npc-art" id="npcArt" aria-label="Abrir la pantalla de la radio"></button>
-      <button class="npc-txt" id="npcOpen" aria-label="Abrir la pantalla de la radio"><b id="npcT"></b><span id="npcA"></span><small id="npcM"></small></button>
-      <button class="npc-pp" id="npcPP" aria-label="Reproducir">▶</button></div>
-    <button class="npc-more" id="npcMore">Ver la radio <span aria-hidden="true">›</span></button>
+    <button class="lcd" id="npcOpen" aria-label="Abrir la pantalla de la radio">
+      <span class="lcd-scr"><span class="lcd-chip" id="npcM"></span><span class="lcd-l1"><i id="npcT"></i></span><span class="lcd-l2"><i id="npcA"></i></span><span class="lcd-l3" id="npcS"></span></span>
+    </button>
+    <div class="npc-ctl"><button class="lcd-art" id="npcArt" aria-label="Abrir la pantalla de la radio"></button><button class="npc-more" id="npcMore">Ver la radio <span aria-hidden="true">›</span></button><button class="npc-pp" id="npcPP" aria-label="Reproducir">▶</button></div>
     <div class="npc-top"><div class="hk">Tus top 3</div><div class="sq-r" id="topR"></div>
       <button class="fav-all" id="favAll" aria-expanded="false" aria-controls="favMg"><span>Todas tus favoritas <b id="favN"></b></span><span class="fav-chev" aria-hidden="true">›</span></button>
       <div class="fav-mg" id="favMg" hidden><div class="sq-h" id="favH"></div><div class="sq-r" id="favR"></div></div></div>
@@ -869,7 +898,7 @@ function trSeg(x){const k=x.trim();if(!k)return x;const d=I18N[UIL];if(d[k]!=nul
   return x}
 function trText(s){if(UIL==="es"||!s||!/[A-Za-zÁÉÍÓÚáéíóúñ]/.test(s))return s;const d=I18N[UIL],k=s.trim();if(d[k]!=null)return s.replace(k,d[k]);
   return s.includes(" · ")?s.split(" · ").map(trSeg).join(" · "):trSeg(s)}
-const NOI18N="[data-noi18n],#npcT,#npcA,.sq-tx b,.af-b b,script,style,#kCn,.pz-res,.story h3,.hl a,.concept .cl:not(.amb),#bT,#npSong,#npArtist,#npAlbum,.topic-head h2:not(.sph),.thive text";
+const NOI18N="[data-noi18n],#npcT,#npcA,#npcS,.tp-it b,.sq-tx b,.af-b b,script,style,#kCn,.pz-res,.story h3,.hl a,.concept .cl:not(.amb),#bT,#npSong,#npArtist,#npAlbum,.topic-head h2:not(.sph),.thive text";
 function trNode(n){
   if(n.nodeType===3){const p=n.parentElement;if(!p||p.closest(NOI18N))return;const v=n.nodeValue,w=trText(v);if(w!==v)n.nodeValue=w;return}
   if(n.nodeType!==1||n.closest(NOI18N))return;
@@ -1471,13 +1500,20 @@ $("bPP").onclick=toggle;
 /* ---------- Inicio simple de Radio: sonando ahora + búsqueda por texto; lo avanzado se abre aparte ---------- */
 const nrm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 function homePick(){return current||pzStartStation()||(typeof topList==="function"&&topList()[0])||S.find(x=>favs.has(x.n))||S.find(x=>x.cc==="CL"&&x.l>=4)||S[0]}
-function renderHome(){const s=homePick();if(!s)return;const live=!!current,on=live&&!audio.paused;
-  const t=live?($("bT")._t||s.n):s.n,a=live?($("bA")._t||stationDesc(s)):stationDesc(s);
-  $("npcT").textContent=t;$("npcA").textContent=a;
-  $("npcM").textContent=live?[t!==s.n?`${flag(s.cc)} ${s.n}`:flag(s.cc),statusTxt].filter(Boolean).join(" · "):"Toca ▶ para escucharla";
+function renderHome(){const s=homePick();if(!s)return;const live=!!current,on=live&&!audio.paused,j=live?(np.cur||{}):{};
+  const song=j.song&&j.artist;const t=song?cleanSong(j.song):(live&&j.program)?j.program:s.n;
+  const a=song?j.artist:(live&&j.program)?s.n:[FAM[s.g][0],[...s.tags].slice(0,2).map(x=>x.replace("-"," ")).join(", ")].filter(Boolean).join(" · ");
+  lcdSet($("npcT"),t);lcdSet($("npcA"),a);
+  $("npcM").textContent=live?[s.f?s.f.toFixed(1)+" FM":"",statusTxt].filter(Boolean).join("·"):"Toca ▶ para escucharla";
+  $("npcS").textContent=`${flag(s.cc)} ${song||(live&&j.program)?s.n+" · ":""}${CN[s.cc]||s.cc}`;
   $("npcArt").innerHTML=live&&np.art?$("art").innerHTML:hexArt(s);$("npcArt").style.color=FAM[s.g][2];
   const pp=$("npcPP");pp.textContent=on?"❚❚":"▶";pp.setAttribute("aria-label",on?"Pausar":"Reproducir");
   $("npCard").classList.toggle("on",on);$("npcMore").hidden=!live;sqRender()}
+// Texto del visor: si no cabe, corre a saltos de un carácter como las pantallas de los 90
+function lcdSet(el,txt){if(el._t===txt){lcdFit(el);return}el._t=txt;el.textContent=txt;el.classList.remove("run");requestAnimationFrame(()=>lcdFit(el))}
+function lcdFit(el){const box=el.parentNode;if(!box.clientWidth)return;el.classList.remove("run");const over=el.scrollWidth-box.clientWidth;
+  if(over>4){const cw=el.scrollWidth/Math.max(1,el._t.length),n=Math.max(1,Math.round(over/cw));el.style.setProperty("--mx",-over-6+"px");el.style.setProperty("--ms",n);el.style.setProperty("--md",(n*.22+3.2).toFixed(1)+"s");el.classList.add("run")}}
+addEventListener("resize",()=>{document.querySelectorAll(".lcd i").forEach(lcdFit)});document.fonts&&document.fonts.ready.then(()=>document.querySelectorAll(".lcd i").forEach(lcdFit));
 function homeOpen(){if(!current){const s=homePick();if(!s)return;F=s;layout();play(s)}openSheet()}
 $("npcOpen").onclick=homeOpen;$("npcArt").onclick=homeOpen;$("npcMore").onclick=homeOpen;
 $("npcPP").onclick=()=>{if(current)toggle();else{const s=homePick();F=s;layout();play(s)}};
@@ -1488,7 +1524,7 @@ function sqFind(q){q=nrm(q).trim();if(!q)return[];const w=q.split(/\s+/);
     if(!w.every(k=>hay.includes(k)))return null;return{x,sc:(n.startsWith(q)?3:n.includes(q)?2:0)+(x.l||0)/10}}).filter(Boolean).sort((a,b)=>b.sc-a.sc).slice(0,30).map(o=>o.x)}
 const topGet=()=>{const t=(store.get("dial-top3",null)||[]).filter(n=>favs.has(n));return t};
 function topList(){const t=topGet().map(n=>S.find(x=>x.n===n)).filter(Boolean);for(const x of S){if(t.length>=3)break;if(favs.has(x.n)&&!t.includes(x))t.push(x)}return t.slice(0,3)}
-function rowHTML(list,pin){const tp=topGet();return list.map(x=>{const on=current===x&&!audio.paused,fv=favs.has(x.n),it=tp.includes(x.n);
+function rowHTML(list,pin,mini){const tp=topGet();return list.map(x=>{if(mini){const on=current===x&&!audio.paused;return `<div class="tp-it${current===x?" cur":""}" style="--cc:${FAM[x.g][2]}"><span class="sq-dot" aria-hidden="true"></span><b>${esc(x.n)}</b><small>${esc(flag(x.cc)+" "+(CN[x.cc]||x.cc))}</small><button class="tp-pl${on?" on":""}" data-n="${esc(x.n)}" data-a="p" aria-label="${on?"Pausar":"Escuchar"}">${on?"❚❚":"▶"}</button></div>`}const on=current===x&&!audio.paused,fv=favs.has(x.n),it=tp.includes(x.n);
     return `<div class="sq-it${current===x?" cur":""}" style="--cc:${FAM[x.g][2]}"><span class="sq-dot" aria-hidden="true"></span><div class="sq-tx"><b>${esc(x.n)}</b><small>${esc([flag(x.cc)+" "+(CN[x.cc]||x.cc),FAM[x.g][0],x.f?x.f.toFixed(1)+" FM":""].filter(Boolean).join(" · "))}</small></div>
       ${pin?`<button class="sq-b sq-tp${it?" on":""}" data-n="${esc(x.n)}" data-a="t" aria-pressed="${it}" aria-label="${it?"Quitar del top 3":"Poner en el top 3"}">${it?"Top":"+Top"}</button>`:""}<button class="sq-b sq-fv${fv?" on":""}" data-n="${esc(x.n)}" data-a="f" aria-label="${fv?"Quitar de favoritas":"Agregar a favoritas"}">${fv?"★":"☆"}</button><button class="sq-b sq-pl${on?" on":""}" data-n="${esc(x.n)}" data-a="p" aria-label="${on?"Pausar":"Escuchar"}">${on?"❚❚":"▶"}</button></div>`}).join("")}
 function homeAct(b){const x=S.find(y=>y.n===b.dataset.n);if(!x)return;
@@ -1502,7 +1538,7 @@ function sqRender(){const q=$("sq").value;
   if(q.trim()){const list=sqFind(q);$("sqH").textContent=list.length?`${list.length===30?"30+":list.length} ${list.length===1?"resultado":"resultados"}`:"Sin resultados. Prueba con otra palabra o usa la búsqueda avanzada.";$("sqR").innerHTML=rowHTML(list)}
   else{$("sqH").textContent="";$("sqR").innerHTML=""}
   const fl=S.filter(x=>favs.has(x.n));$("favN").textContent=fl.length?"("+fl.length+")":"";
-  const tl=topList();$("topR").innerHTML=rowHTML(tl.length?tl:popular().slice(0,3));
+  const tl=topList();$("topR").innerHTML=rowHTML(tl.length?tl:popular().slice(0,3),false,true);
   $("favAll").hidden=!fl.length;
   $("favH").textContent=fl.length>3?"Toca Top para elegir las 3 que aparecen arriba.":"";
   $("favR").innerHTML=rowHTML(fl,true);
@@ -2069,7 +2105,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09c";
+const APP_VERSION="2026-11-09d";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
