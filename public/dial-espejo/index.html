@@ -1315,19 +1315,26 @@ function vaAnalyze(buf){const sr=buf.sampleRate,ch=buf.getChannelData(0),ch2=buf
     const low=e[0]+e[1],beat=Math.max(0,Math.min(1,(low-VA.prevLow*1.15)/(VA.prevLow+1e-3)));VA.prevLow=VA.prevLow*.85+low*.15;
     out.push({lv,beat})}
   return {frames:out,dur:hop/sr}}
-function vaStop(){if(VA.ctl)try{VA.ctl.abort()}catch(e){}VA.ctl=null;VA.url=null;VA.frames=[];VA.play=0;VA.live=false}
-function vaDelay(){try{const b=audio.buffered;if(b.length)return Math.max(0,Math.min(15,b.end(b.length-1)-audio.currentTime))}catch(e){}return 2}
+function vaStop(){if(VA.ctl)try{VA.ctl.abort()}catch(e){}VA.ctl=null;VA.url=null;VA.frames=[];VA.play=0;VA.live=false;VA.d=null}
+function vaDelay(){try{const b=audio.buffered;if(b.length){const x=b.end(b.length-1)-audio.currentTime;if(isFinite(x))return Math.max(0,Math.min(12,x))}}catch(e){}return 2}
 async function vaStart(){const c=np.src;if(!c)return;const u=c.url;if(VA.url===u)return;vaStop();
   if(c.hls||/\.m3u8(\?|$)/i.test(u)||VA.fail[u]||!window.OfflineAudioContext)return;
   VA.url=u;const ctl=VA.ctl=new AbortController();const dec=new OfflineAudioContext(2,1,44100);
   try{const r=await fetch(u,{signal:ctl.signal,cache:"no-store"});if(!r.ok||!r.body)throw 0;const rd=r.body.getReader();let parts=[],n=0,bad=0;
+    // Safari no decodifica un trozo que parte a mitad de un cuadro: se corta en el inicio de cuadro (0xFFF… en MP3 y AAC/ADTS)
+    // y el resto queda para el trozo siguiente
+    const sync=(x,from)=>{for(let i=from;i<x.length-1;i++)if(x[i]===255&&(x[i+1]&224)===224)return i;return -1};
+    const lastSync=x=>{for(let i=x.length-2;i>0;i--)if(x[i]===255&&(x[i+1]&224)===224)return i;return -1};
     while(VA.ctl===ctl){const {value,done}=await rd.read();if(done)break;parts.push(value);n+=value.length;
-      if(n<20000)continue;const all=new Uint8Array(n);let o=0;for(const p of parts){all.set(p,o);o+=p.length}parts=[];n=0;
-      let buf;try{buf=await dec.decodeAudioData(all.buffer)}catch(e){if(++bad>3)throw 0;continue}bad=0;
+      if(n<24000)continue;const all=new Uint8Array(n);let o=0;for(const p of parts){all.set(p,o);o+=p.length}
+      const s0=sync(all,0),s1=lastSync(all);if(s0<0||s1<=s0){parts=[];n=0;continue}
+      const rest=all.slice(s1);parts=[rest];n=rest.length;
+      let buf;try{buf=await dec.decodeAudioData(all.slice(s0,s1).buffer)}catch(e){if(++bad>4)throw 0;continue}bad=0;
       // Lo que llega ahora es lo último transmitido y suena cuando el reproductor consuma su búfer: el trozo termina en ahora + atraso.
-      // Si la cola se desfasa (ráfaga inicial del servidor, cortes), se descarta y se reancla.
-      const {frames,dur}=vaAnalyze(buf),len=frames.length*dur*1000,end=performance.now()+vaDelay()*1000;
-      if(!VA.play||Math.abs(VA.play+len-end)>700){VA.frames=[];VA.play=end-len}
+      // El atraso se suaviza (el iPhone llena su búfer a saltos) y solo se reancla ante un desfase grande, sin botar la cola
+      const cur=vaDelay();VA.d=VA.d==null?cur:VA.d*.85+cur*.15;
+      const {frames,dur}=vaAnalyze(buf),len=frames.length*dur*1000,end=performance.now()+VA.d*1000;
+      if(!VA.play||Math.abs(VA.play+len-end)>2500){VA.frames=VA.frames.filter(f=>f.t<end-len);VA.play=end-len}
       frames.forEach((f,i)=>{f.t=VA.play+i*dur*1000});VA.play+=len;VA.frames.push(...frames);VA.live=true;
       if(VA.frames.length>900)VA.frames.splice(0,VA.frames.length-900)}
     if(VA.ctl===ctl)throw 0; // la señal se cortó
@@ -1338,9 +1345,8 @@ function vuTick(now){VU.raf=0;const cv=$("npCover"),svg=cv&&cv.querySelector(".h
   if(now-VU.t>33){VU.t=now;let f=null;while(VA.frames.length&&VA.frames[0].t<=now)f=VA.frames.shift();
     if(f){VU.beat=Math.max(VU.beat*.8,f.beat);
       VU.lv=VU.lv.map((v,i)=>{const t=.06+.9*f.lv[vaBand(i)];return v+(t-v)*(t>v?.8:.3)})}
-    else if(!VA.live){// sin análisis: respiración lenta, sin fingir ritmo
-      VU.beat*=.9;const ph=now/2400;VU.lv=VU.lv.map((v,i)=>{const t=.16+.1*Math.sin(ph+vaBand(i)*.7);return v+(t-v)*.08})}
-    else{VU.beat*=.85;VU.lv=VU.lv.map(v=>v*.9)}
+    else{// sin análisis (o mientras llega el primer trozo): respiración lenta y visible, sin fingir ritmo
+      VU.beat*=.9;const ph=now/2200;VU.lv=VU.lv.map((v,i)=>{const t=.3+.16*Math.sin(ph+vaBand(i)*.8);return v+(t-v)*.06})}
     VU.pk=VU.pk.map((p,i)=>Math.max(VU.lv[i],p-.02));
     cv.style.setProperty("--vg",(.3+.7*VU.beat).toFixed(2));
     svg.querySelectorAll("polygon").forEach(p=>{const k=+p.dataset.k,b=+p.dataset.b,v=VU.lv[b];
@@ -1637,7 +1643,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07s";
+const APP_VERSION="2026-11-07t";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};

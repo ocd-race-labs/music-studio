@@ -161,7 +161,12 @@ Deno.serve(async (req) => {
   if (icy.raw) {
     const s = split(icy.raw);
     out.artist = s.artist; out.song = s.song;
-    if (s.artist && s.song) merge(out, await enrich(s.artist, s.song));
+    if (s.artist && s.song) {
+      // Algunas radios mandan "Canción - Artista" al revés (Absolute Radio: "Beautiful Ones - Suede"): si no hay carátula, se prueba invertido
+      const a1 = await enrich(s.artist, s.song);
+      const a2 = !a1 || a1.artwork_kind === "artist" ? await enrich(s.song, s.artist) : null;
+      if (a2 && a2.artwork_kind !== "artist") { out.artist = s.song; out.song = s.artist; merge(out, a2); } else merge(out, a1);
+    }
   }
   return json(out);
 });
