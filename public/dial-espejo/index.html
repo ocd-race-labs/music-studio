@@ -206,7 +206,7 @@ a{color:inherit}
 .np-bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(40px) saturate(1.4);opacity:.55;transform:scale(1.1)}
 .np-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,7,10,.3),rgba(7,7,10,.7) 70%,rgba(7,7,10,.8))}
 .np-in{position:relative;height:100%;overflow-y:auto;display:grid;grid-auto-rows:max-content;align-content:start;gap:16px;max-width:520px;margin:0 auto;
-  padding:calc(4px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+  padding:calc(22px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
 .np-top{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center}
 .np-x{width:40px;height:40px;border-radius:12px;border:0;background:rgba(237,237,242,.08);font-size:22px;line-height:1;cursor:pointer}
 .np-sh{display:grid;place-items:center;color:inherit;position:relative}.np-sh[data-ok]::after{content:attr(data-ok);position:absolute;right:0;top:46px;white-space:nowrap;font:500 11px var(--mono);background:rgba(237,237,242,.92);color:#07070A;padding:5px 8px;border-radius:8px}
@@ -253,7 +253,7 @@ a{color:inherit}
 .np-stage .np-cover{position:relative;z-index:1}
 /* con el dial encendido la portada se achica para que la perilla se vea y se alcance con el pulgar */
 .nd-box:not(.off)~.np-stage .np-cover{width:var(--cv);height:var(--cv);transition:width .3s,height .3s}
-.np{--cv:clamp(150px,calc((100vh - 444px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))/1.3),min(60vw,280px,38vh))}@supports (height:100dvh){.np{--cv:clamp(150px,calc((100dvh - 444px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))/1.3),min(60vw,280px,38vh))}}
+.np{--cv:clamp(150px,calc((100vh - 462px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))/1.3),min(60vw,280px,38vh))}@supports (height:100dvh){.np{--cv:clamp(150px,calc((100dvh - 462px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))/1.3),min(60vw,280px,38vh))}}
 .np-stage{padding-block:calc(var(--cv)*.15)}
 .nd-box.off~.np-stage{padding-block:0}
 .np-knob{position:absolute;left:50%;top:50%;width:min(calc(100vw - 6px),calc(var(--cv)*1.62));aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;clip-path:circle(50%);isolation:isolate;touch-action:none;cursor:grab;z-index:0;
@@ -2108,7 +2108,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09f";
+const APP_VERSION="2026-11-09g";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
