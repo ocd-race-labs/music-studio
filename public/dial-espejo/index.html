@@ -746,9 +746,11 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .npc-top{gap:2px}
 .dvr{display:inline-flex;align-items:center;gap:6px;min-width:0}
 .dvn{display:grid;gap:1px;min-width:0;line-height:1.2}
-.tmn{display:inline-flex;align-items:center;gap:5px;font:400 10.5px var(--mono);color:var(--muted);letter-spacing:.02em;white-space:nowrap}
-.tmn .tdot{width:7px;height:7px;margin:0}
+.tmn{display:inline-flex;align-items:center;gap:0;font:400 10.5px var(--mono);color:var(--muted);letter-spacing:.02em;white-space:nowrap}
+.tmn .tdot{width:7px;height:7px;margin:0 7px 0 0;flex:none}
 .chn .tmn{display:flex;font-size:12px;margin-top:2px}
+.femo{font-size:15px;line-height:1;flex:none}.chn .femo{font-size:24px}
+.chn .dvr{gap:10px}
 .chn:has(.tmn){align-items:flex-start}
 html[data-sec="radio"]:not(.adv-open) #player{display:none}
 html[data-sec="radio"]:not(.adv-open) #view-radio{padding-bottom:40px}
@@ -2121,7 +2123,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09l";
+const APP_VERSION="2026-11-09m";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2629,8 +2631,8 @@ async function f1(b,tok){
     return {L,gap,left,won:gap>left,at}};
   const tD=title(dr,false),tC=title(co,true);const yr2=yr;
   const champ=tD?(()=>{const n=tD.L.athlete?.displayName||"";
-    const big=tD.won?`<div class="chk">${esc("Campeón del mundo "+yr2)}</div><div class="chn">${flagImg(tD.L.athlete?.flag?.href,tD.L.athlete?.flag?.alt)}${esc(n)}${tmOf(tD.L.athlete?.id)}</div><p class="chd">${esc(`${pts(tD.L)} puntos · ${tD.gap} de ventaja${tD.at?` · asegurado en el ${gpName(tD.at.name)}`:""}`)}</p>`
-      :`<div class="chk">${esc("Líder del campeonato")}</div><div class="chn">${flagImg(tD.L.athlete?.flag?.href,tD.L.athlete?.flag?.alt)}${esc(n)}${tmOf(tD.L.athlete?.id)}</div><p class="chd">${esc(`${tD.gap} puntos de ventaja · quedan ${tD.left} en juego`)}</p>`;
+    const big=tD.won?`<div class="chk">${esc("Campeón del mundo "+yr2)}</div><div class="chn">${flagImg(tD.L.athlete?.flag?.href,tD.L.athlete?.flag?.alt)}<span class="dvn">${esc(n)}${tmOf(tD.L.athlete?.id)}</span></div><p class="chd">${esc(`${pts(tD.L)} puntos · ${tD.gap} de ventaja${tD.at?` · asegurado en el ${gpName(tD.at.name)}`:""}`)}</p>`
+      :`<div class="chk">${esc("Líder del campeonato")}</div><div class="chn">${flagImg(tD.L.athlete?.flag?.href,tD.L.athlete?.flag?.alt)}<span class="dvn">${esc(n)}${tmOf(tD.L.athlete?.id)}</span></div><p class="chd">${esc(`${tD.gap} puntos de ventaja · quedan ${tD.left} en juego`)}</p>`;
     const cons=tC?`<p class="chc"><span class="tdot" style="background:#${esc(tC.L.team?.color||"555")}"></span>${esc(tC.won?`${tC.L.team?.displayName} campeón de escuderías${tC.at?` desde el ${gpName(tC.at.name)}`:""}`:`Escuderías: ${tC.L.team?.displayName} lidera por ${tC.gap}; quedan ${tC.left} en juego, aún sin campeón`)}</p>`:"";
     return `<div class="sp-card champ${tD.won?" won":""}">${big}${cons}</div>`})():"";
   let rn=0;const calHTML=`<div class="sp-card"><div class="sp-ct">${esc("Calendario")}</div>${evs.map(e=>{const can=/CANCEL/.test(e.status?.type?.name||"");if(!can)rn++;const w=sorted(comp(e,"Race"))[0];
@@ -2654,16 +2656,19 @@ async function motogp(b,tok){
   if(tok!==sportTok)return;
   const MS={FP1:"Práctica 1",FP2:"Práctica 2",PR:"Práctica",Q1:"Q1",Q2:"Q2",SPR:"Sprint",WUP:"Warm up",RAC:"Carrera",Q:"Clasificación",FP:"Práctica"};
   const nm=e=>String(e.name||"").replace(/^GRAND PRIX OF (THE )?/i,"GP ").replace(/\s+$/,"").toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase()).replace(/^Gp /,"GP ");
-  const rider=r=>`${esc(r?.full_name||"")}<small class="cc">${esc(r?.country?.iso||"")}</small>`;
+  const MCOL={Ducati:"D0021B",KTM:"FF6600",Aprilia:"9CA3AF",Yamaha:"2563EB",Honda:"F5F5F5",Kalex:"FFC20E",Boscoscuro:"E11D48",Triumph:"14B8A6",Forward:"64748B",Husqvarna:"1E3A8A",GASGAS:"DC2626",CFMOTO:"0EA5E9",Leopard:"84CC16"};
+  const femo=iso=>/^[A-Za-z]{2}$/.test(iso||"")?String.fromCodePoint(...[...iso.toUpperCase()].map(c=>127397+c.charCodeAt(0))):"";
+  const tmTag=x=>{const t=x?.team?.name||x?.constructor?.name||"";if(!t)return"";const k=Object.keys(MCOL).find(k=>new RegExp(k,"i").test((x?.constructor?.name||"")+" "+t));return `<small class="tmn"><span class="tdot" style="background:#${k?MCOL[k]:"888"}"></span>${esc(t)}</small>`};
+  const rider=(r,x)=>`<span class="dvr"><span class="femo" aria-label="${esc(r?.country?.name||"")}">${femo(r?.country?.iso)}</span><span class="dvn">${esc(r?.full_name||"")}${x?tmTag(x):""}</span></span>`;
   const tabs=`<div class="mseg mgcat" id="mgpCat">${MGP_CATS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k===mgpCat}">${l}</button>`).join("")}</div>`;
   const nextHTML=now?`<div class="sp-card"><div class="sp-ct">${esc(now.status==="CURRENT"?"Este fin de semana":"Próximo GP")}</div><div class="mgh"><b>${esc(nm(now))}</b><span>${esc([now.circuit?.name,now.country?.name].filter(Boolean).join(" · "))}</span></div>
     ${nses.map(s=>`<div class="ld"><span>${esc((MS[s.type]||s.type)+(s.number&&!/Q1|Q2/.test(s.type)?" "+s.number:""))}</span><em>${esc(s.status==="FINISHED"?"Terminada":whenCL(s.date))}</em></div>`).join("")}</div>`:"";
-  const clsT=(cl,n)=>`<div class="tw"><table class="st"><tbody>${(cl?.classification||[]).filter(x=>x.position).slice(0,n).map(x=>`<tr><td class="sd">${x.position}</td><td class="l${x.position===1?" wl":""}">${rider(x.rider)}<small>${esc(x.team?.name||"")}</small></td><td>${esc(x.position===1?x.time||"":x.gap?.first?"+"+x.gap.first:"")}</td></tr>`).join("")}</tbody></table></div>`;
+  const clsT=(cl,n)=>`<div class="tw"><table class="st"><tbody>${(cl?.classification||[]).filter(x=>x.position).slice(0,n).map(x=>`<tr><td class="sd">${x.position}</td><td class="l${x.position===1?" wl":""}">${rider(x.rider,x)}</td><td>${esc(x.position===1?x.time||"":x.gap?.first?"+"+x.gap.first:"")}</td></tr>`).join("")}</tbody></table></div>`;
   const lastHTML=last&&rc?`<div class="sp-card"><div class="sp-ct">${esc("Último GP · "+nm(last))}</div>${clsT(rc,10)}${sc?.classification?.length?`<p class="mgn">${esc("Sprint")}: ${esc(sc.classification.find(x=>x.position===1)?.rider?.full_name||"")}</p>`:""}</div>`:"";
   const sr=stand?.classification||[];
   const mLeft=all.filter(e=>e.status!=="FINISHED").length*37,mGap=sr.length>1?sr[0].points-sr[1].points:0,mWon=sr.length>1&&mGap>mLeft;
-  const mChamp=sr.length>1?`<div class="sp-card champ${mWon?" won":""}"><div class="chk">${esc(mWon?`Campeón del mundo ${mgpCat} ${cur.year}`:`Líder de ${mgpCat}`)}</div><div class="chn">${esc(sr[0].rider?.full_name||"")}<small class="cc">${esc(sr[0].rider?.country?.iso||"")}</small></div><p class="chd">${esc(`${sr[0].points} puntos · ${mGap} de ventaja · ${mWon?"título asegurado":`quedan ${mLeft} en juego`}`)}</p><p class="chc">${esc(sr[0].team?.name||"")}</p></div>`:"";
-  const srow=x=>`<tr><td class="sd">${x.position}</td><td class="l">${rider(x.rider)}<small>${esc(x.team?.name||x.constructor?.name||"")}</small></td><td>${x.race_wins??""}</td><td><b>${x.points}</b></td></tr>`;
+  const mChamp=sr.length>1?`<div class="sp-card champ${mWon?" won":""}"><div class="chk">${esc(mWon?`Campeón del mundo ${mgpCat} ${cur.year}`:`Líder de ${mgpCat}`)}</div><div class="chn">${rider(sr[0].rider,sr[0])}</div><p class="chd">${esc(`${sr[0].points} puntos · ${mGap} de ventaja · ${mWon?"título asegurado":`quedan ${mLeft} en juego`}`)}</p></div>`:"";
+  const srow=x=>`<tr><td class="sd">${x.position}</td><td class="l">${rider(x.rider,x)}</td><td>${x.race_wins??""}</td><td><b>${x.points}</b></td></tr>`;
   const stT=rows=>`<div class="tw"><table class="st"><thead><tr><th class="sd">#</th><th class="l"></th><th>${esc("Vict.")}</th><th>${esc("Pts")}</th></tr></thead><tbody>${rows.map(srow).join("")}</tbody></table></div>`;
   const stHTML=sr.length?`<div class="sp-card"><div class="sp-ct">${esc("Campeonato de pilotos")}</div>${stT(sr.slice(0,10))}${sr.length>10?`<details class="mprev"><summary><span>${esc("Resto")}</span><em>${sr.length-10}</em></summary>${stT(sr.slice(10))}</details>`:""}</div>`:"";
   const calHTML=`<div class="sp-card"><div class="sp-ct">${esc("Calendario")}</div>${all.map((e,i)=>`<div class="ld${e===now?" isnx":""}"><span><i class="rnd">${i+1}</i>${esc(nm(e))}</span><em${e===now?' class="nx"':""}>${esc(e.status==="FINISHED"?"Corrido":e===now?(e.status==="CURRENT"?"En curso":"Próximo"):dayCL(e.date_start+"T12:00:00Z"))}</em></div>`).join("")}</div>`;
