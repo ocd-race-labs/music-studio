@@ -594,6 +594,14 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .np.dialv .k-c span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--fc,transparent);margin-right:7px;vertical-align:2px}
 .np.dialv .k-c small{font:400 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--npc,#EDEDF2)}
 .np.dialv .k-c em{font:400 9px var(--mono);font-style:normal;color:var(--dim);letter-spacing:.04em}
+
+/* Sin barra superior: el nombre ya aparece en el dial, en la perilla y abajo. Se cierra con el asa (o deslizando hacia abajo) */
+.np-grab{grid-column:1/-1;justify-self:center;width:72px;height:22px;margin-top:-4px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer}
+.np-grab i{display:block;width:40px;height:5px;border-radius:3px;background:rgba(237,237,242,.32)}
+.np-it.np-sh{display:grid;place-items:center;font:inherit;color:var(--ink)}
+.np-stat{position:absolute;z-index:2;left:max(14px,calc(50% - min(60vw,280px,38vh)/2 + 10px));top:calc(min(9vw,40px) + 10px);border-radius:999px;padding:5px 9px;background:rgba(7,7,10,.6);color:var(--npc,#EDEDF2);font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.nd-box.off~.np-stage .np-stat{top:10px;left:max(14px,calc(50% - min(78vw,340px,44vh)/2 + 10px))}
+.np.dialv .np-stat{display:none}
 </style>
 </head>
 <body>
@@ -651,18 +659,18 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 <div class="np" id="npSheet" hidden role="dialog" aria-modal="true" aria-label="Sonando ahora">
   <div class="np-bg" id="npBg"></div>
   <div class="np-in">
-    <div class="np-top"><button class="np-x" id="npClose" aria-label="Cerrar">⌄</button><span class="np-st" id="npSt"></span><button class="np-x np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div>
+    <button class="np-grab" id="npClose" aria-label="Cerrar"><i></i></button><span class="np-st" id="npSt" hidden></span>
     <div class="nd-box" id="ndBox">
       <section class="nd" aria-label="Dial de radios afines"><div class="nd-sc" id="ndSc" tabindex="0"><div class="nd-tr" id="ndTr"></div></div><div class="nd-fade"></div><div class="nd-laser"></div></section>
       <div class="nd-read" id="ndRead"><div><b id="ndN"></b><span id="ndD"></span></div><button class="nd-sw off" id="ndSw"><span>Cambiar a esta radio</span><span>→</span></button></div>
     </div>
-    <div class="np-stage"><div class="np-knob" id="npKnob" aria-hidden="true"><b class="k-tk"></b><b class="k-led"></b><i></i><b class="k-gl"></b><b class="k-c"><span id="kCn"></span><small id="kCs"></small><em>toca para ver la carátula</em></b></div><div class="np-cover" id="npCover"></div><button class="np-dv" id="npDV" aria-label="Ver el dial en vez de la carátula"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Dial</button></div>
+    <div class="np-stage"><div class="np-knob" id="npKnob" aria-hidden="true"><b class="k-tk"></b><b class="k-led"></b><i></i><b class="k-gl"></b><b class="k-c"><span id="kCn"></span><small id="kCs"></small><em>toca para ver la carátula</em></b></div><div class="np-cover" id="npCover"></div><span class="np-stat" id="npStat" hidden></span><button class="np-dv" id="npDV" aria-label="Ver el dial en vez de la carátula"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Dial</button></div>
     <div class="np-meta">
       <div class="np-song" id="npSong"></div>
       <div class="np-artist" id="npArtist"></div>
       <div class="np-album" id="npAlbum"></div>
     </div>
-    <div class="np-lrow"><div class="np-links" id="npLinks"></div><button class="np-it" id="npInfoT" aria-label="Información de la radio" aria-expanded="false">i</button></div>
+    <div class="np-lrow"><div class="np-links" id="npLinks"></div><button class="np-it np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button><button class="np-it" id="npInfoT" aria-label="Información de la radio" aria-expanded="false">i</button></div>
     <div class="np-ctl">
       <button class="np-b" id="npFav" aria-label="Favorita">☆</button>
       <button class="np-b" id="npAlt" aria-label="Probar otra señal">⇄</button>
@@ -1448,6 +1456,7 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   const artist=j.song&&j.artist?j.artist:(j.program?(j.program_desc||s.n):(j.raw?s.n:stationDesc(s)));
   $("npSt").textContent=`${flag(s.cc)} ${s.n}${s.f?" · "+s.f.toFixed(1)+" FM":""} · ${statusTxt||""}`;
   $("npSong").textContent=song;$("npArtist").textContent=artist;
+  {const st=$("npStat");st.textContent=statusTxt||"";st.hidden=!statusTxt||/^en vivo/i.test(statusTxt)}
   $("kCn").textContent=s.n;$("kCs").textContent=[s.f?s.f.toFixed(1)+" FM":"",statusTxt].filter(Boolean).join(" · ");npSheet.style.setProperty("--fc",FAM[s.g][2]);npSheet.classList.toggle("dialv",!!store.get("dial-dialview",false));
   $("npAlbum").textContent=j.song&&j.artist?[j.album,j.year,j.genre].filter(Boolean).join(" · "):"";
   const cover=$("npCover");const art=j.artwork||null;
@@ -1499,7 +1508,7 @@ $("npAlt").onclick=()=>$("bAlt").click();
 /* Dial de afines: la radio que suena al centro; a la izquierda las más calmas, a la derecha las más intensas; la distancia y la altura de la marca dicen cuánto se parecen */
 var ND={for:null,marks:[],under:null,on:store.get("dial-dial",true)};
 const ndK=v=>Math.max(0,Math.min(1,(v-.55)/.38));
-const ndDesc=x=>`${esc(CN[x.cc]||x.cc)} · <em>${esc(FAM[x.g][0])}</em> · ${esc([...x.tags].slice(0,2).map(t=>t.replace(/-/g," ")).join(" · "))}`;
+const ndDesc=x=>`${flag(x.cc)} ${esc(CN[x.cc]||x.cc)} · <em>${esc(FAM[x.g][0])}</em> · ${esc([...x.tags].slice(0,2).map(t=>t.replace(/-/g," ")).join(" · "))}`;
 function ndSet(on){ND.on=on;store.set("dial-dial",on);$("ndBox").classList.toggle("off",!on);$("npDialT").setAttribute("aria-pressed",on);if(on){ND.for=null;requestAnimationFrame(ndBuild)}}
 /* Movimiento propio de la franja: el scroll suave nativo sobre un contenedor con snap se revierte en iOS, por eso se anima a mano y el snap se apaga mientras dura */
 let ndAnim=null;
@@ -1849,7 +1858,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-08o";
+const APP_VERSION="2026-11-08p";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
