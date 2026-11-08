@@ -128,6 +128,7 @@ a{color:inherit}
 .vseg button small{font:400 10px var(--mono);color:var(--dim)}
 .vseg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .vseg button[aria-pressed="true"] small{color:#55555F}
+.alt~.card,.card{z-index:12}
 .alt{position:absolute;inset:0;z-index:8;background:var(--bg);display:flex;flex-direction:column}
 .hive .alt svg{height:100%}
 .alt>svg{flex:1;min-height:0}
@@ -1363,7 +1364,9 @@ function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProper
 }
 function closeCard(){cardS=null;$("card").hidden=true}
 // Ubica la ficha arriba, abajo o a un costado del hexágono, donde quepa; la sigue mientras orbita
-function placeCard(){if(!cardS)return;const c=$("card"),hv=c.parentElement.getBoundingClientRect(),r=cardS.el.getBoundingClientRect();
+function placeCard(){if(!cardS)return;const c=$("card"),hv=c.parentElement.getBoundingClientRect();
+  if(!$("alt").hidden||!cardS.el){const want=Math.round(Math.min(280,hv.width-16))+"px";if(c.style.width!==want)c.style.width=want;c.style.left=Math.round((hv.width-c.offsetWidth)/2)+"px";c.style.top=Math.max(8,Math.round(hv.height-c.offsetHeight-14))+"px";return}
+  const r=cardS.el.getBoundingClientRect();
   const want=Math.round(Math.min(250,hv.width-16))+"px";if(c.style.width!==want)c.style.width=want;
   const cw=c.offsetWidth,ch=c.offsetHeight,m=8,cx=r.left+r.width/2-hv.left,top=r.top-hv.top,bot=r.bottom-hv.top;
   let x=cx-cw/2,y;
@@ -1959,7 +1962,7 @@ const hsh=s=>{let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16
 const perCC={};S.forEach(s=>{(perCC[s.cc]=perCC[s.cc]||[]).push(s)});
 Object.values(perCC).forEach(l=>l.forEach((s,i)=>{const a=i*2.399,r=l.length>1?1.2+1.6*Math.sqrt(i):0;s.geo=[s.ll[1]+r*Math.cos(a)*1.3,s.ll[0]+r*Math.sin(a)];const h=hsh(s.n);s.jx=(h%1000)/1000-.5;s.jy=((h>>>10)%1000)/1000-.5}));
 const aff=(s,n)=>S.filter(x=>x!==s&&!x.dead&&onF(x)).map(x=>({x,v:sim(s,x).v})).sort((a,b)=>b.v-a.v).slice(0,n);
-const choose=s=>{pick(s)};
+const choose=s=>{openCard(s)};
 const onF=s=>!filtering()||match(s);
 
 let libs=null;
@@ -2105,7 +2108,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09d";
+const APP_VERSION="2026-11-09e";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
