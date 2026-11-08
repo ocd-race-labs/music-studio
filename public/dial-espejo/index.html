@@ -591,18 +591,28 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .np.dialv .np-cover,.np.dialv .np-dv{display:none}
 .np.dialv .np-in{padding-top:calc(22px + env(safe-area-inset-top,0px))}
 @media (min-width:900px){
-  html .np.dialv .np-in{padding-top:calc(18px + env(safe-area-inset-top,0px));grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);column-gap:64px;row-gap:22px;grid-template-rows:auto auto 1fr auto auto auto 1fr}
-  html .np.dialv .np-grab{grid-row:1}
-  html .np.dialv .nd-box{display:contents}
-  html .np.dialv .nd{grid-column:1/-1;grid-row:2;border:1px solid rgba(237,237,242,.12);border-radius:14px;overflow:hidden;margin-bottom:10px}
-  html .np.dialv .nd-box.off .nd{display:none}
-  html .np.dialv .np-stage{grid-column:1;grid-row:3/span 5;align-self:center;justify-self:center;padding-block:0}
-  html .np.dialv .np-knob{width:min(40vw,62vh,580px)}
-  html .np.dialv .nd-read{grid-column:2;grid-row:4;align-self:end;max-width:none;padding-bottom:18px;border-bottom:1px solid rgba(237,237,242,.1)}
-  html .np.dialv .nd-read b{font-size:17px}
-  html .np.dialv .np-meta{grid-column:2;grid-row:5;align-self:center}
-  html .np.dialv .np-ctl{grid-column:2;grid-row:6;align-self:start}
+  html .np .np-in{padding-top:calc(18px + env(safe-area-inset-top,0px));grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);column-gap:64px;row-gap:20px;grid-template-rows:auto auto 1fr auto auto auto auto auto 1fr}
+  html .np .np-grab{grid-row:1}
+  html .np .nd-box{display:contents}
+  html .np .nd{grid-column:1/-1;grid-row:2;border:1px solid rgba(237,237,242,.12);border-radius:16px;overflow:hidden;margin-bottom:12px}
+  html .np .nd-box.off .nd,html .np .nd-box.off .nd-read{display:none}
+  html .np .nd-tr{height:98px;background-size:100% 13px,100% 26px}
+  html .np .nd-mk::after{height:calc(var(--h)*1.6)}
+  html .np .nd-mk span{bottom:54px;font-size:13px;letter-spacing:.12em}
+  html .np .nd-laser::before{left:-6px;width:13px;height:2px}
+  html .np .np-in .np-stage{grid-column:1;grid-row:3/span 7;align-self:center;justify-self:center;padding-block:0;overflow:visible}
+  html .np .np-in .np-stage .np-cover{width:min(40vw,60vh,560px);height:min(40vw,60vh,560px);border-radius:30px}
+  html .np.dialv .np-in .np-knob{width:min(40vw,60vh,560px)}
+  html .np .np-dv{right:calc(50% - min(40vw,60vh,560px)/2 + 16px);bottom:16px}
+  html .np .np-stat{left:calc(50% - min(40vw,60vh,560px)/2 + 16px);top:16px}
+  html .np .nd-read{grid-column:2;grid-row:4;align-self:end;max-width:none;padding-bottom:18px;border-bottom:1px solid rgba(237,237,242,.1)}
+  html .np .nd-read b{font-size:17px}
+  html .np .np-meta{grid-column:2;grid-row:5}
+  html .np .np-lrow{grid-column:2;grid-row:6}
+  html .np .np-ctl{grid-column:2;grid-row:7}
+  html .np .np-info{grid-column:2;grid-row:8}
 }
+
 .np.dialv .np-stage{padding-block:min(3vw,14px)}
 .np.dialv .np-knob{display:block!important;position:relative;left:auto;top:auto;transform:none;width:min(88vw,400px,48vh);-webkit-mask:none;mask:none;clip-path:none}
 .np.dialv .np-knob .k-led{filter:drop-shadow(0 0 calc(4px + 10px*var(--vg,0)) var(--npc,#EDEDF2));opacity:calc(.75 + .25*var(--vg,0))}
@@ -1891,7 +1901,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-08w";
+const APP_VERSION="2026-11-08x";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
