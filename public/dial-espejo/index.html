@@ -205,7 +205,7 @@ a{color:inherit}
 .np-bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(40px) saturate(1.4);opacity:.55;transform:scale(1.1)}
 .np-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,7,10,.3),rgba(7,7,10,.7) 70%,rgba(7,7,10,.8))}
 .np-in{position:relative;height:100%;overflow-y:auto;display:grid;grid-auto-rows:max-content;align-content:start;gap:16px;max-width:520px;margin:0 auto;
-  padding:calc(10px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+  padding:calc(4px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
 .np-top{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center}
 .np-x{width:40px;height:40px;border-radius:12px;border:0;background:rgba(237,237,242,.08);font-size:22px;line-height:1;cursor:pointer}
 .np-sh{display:grid;place-items:center;color:inherit;position:relative}.np-sh[data-ok]::after{content:attr(data-ok);position:absolute;right:0;top:46px;white-space:nowrap;font:500 11px var(--mono);background:rgba(237,237,242,.92);color:#07070A;padding:5px 8px;border-radius:8px}
@@ -598,6 +598,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 /* Sin barra superior: el nombre ya aparece en el dial, en la perilla y abajo. Se cierra con el asa (o deslizando hacia abajo) */
 .np-grab{grid-column:1/-1;justify-self:center;width:72px;height:22px;margin-top:-4px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer}
 .np-grab i{display:block;width:40px;height:5px;border-radius:3px;background:rgba(237,237,242,.32)}
+@media (pointer:coarse),(max-width:760px){.np-grab{display:none}}
 .np-it.np-sh{display:grid;place-items:center;font:inherit;color:var(--ink)}
 .np-stat{position:absolute;z-index:2;left:max(14px,calc(50% - min(60vw,280px,38vh)/2 + 10px));top:calc(min(9vw,40px) + 10px);border-radius:999px;padding:5px 9px;background:rgba(7,7,10,.6);color:var(--npc,#EDEDF2);font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .nd-box.off~.np-stage .np-stat{top:10px;left:max(14px,calc(50% - min(78vw,340px,44vh)/2 + 10px))}
@@ -1860,7 +1861,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-08q";
+const APP_VERSION="2026-11-08r";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
