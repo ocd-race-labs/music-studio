@@ -889,11 +889,18 @@ let DKEY=(()=>{const u=new URLSearchParams(location.search).get("k");if(u&&KRE.t
 function keyInUrl(){try{const q=new URLSearchParams(location.search);if(q.get("k")!==DKEY){q.set("k",DKEY);history.replaceState(null,"",location.pathname+"?"+q.toString()+location.hash)}}catch(e){}}
 keyInUrl();
 let favT=null;
-function saveFavs(){store.set("dial-favs",[...favs]);try{renderSync()}catch(e){}clearTimeout(favT);favT=setTimeout(()=>rpc("dial_prefs_put",{p_key:DKEY,p_favs:[...favs]}).catch(()=>{}),600)}
+// La configuración de "Tu Dial" viaja junto a las favoritas, como un elemento marcado de la misma lista, para que sobreviva
+// aunque el navegador borre su almacenamiento (o se abra desde el ícono de inicio, que guarda aparte de Safari)
+const CFGP="\u0001cfg:";
+function cfgNow(){return{t:store.get("dial-cfg-t",0),theme:store.get("dial-theme",null),start:store.get("dial-start-radio",null),open:store.get("dial-open",null)}}
+function cfgTouch(){store.set("dial-cfg-t",Date.now());saveFavs()}
+function saveFavs(){store.set("dial-favs",[...favs]);try{renderSync()}catch(e){}clearTimeout(favT);favT=setTimeout(()=>rpc("dial_prefs_put",{p_key:DKEY,p_favs:[...favs,CFGP+JSON.stringify(cfgNow())]}).catch(()=>{}),600)}
 async function rpc(fn,body){const r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SBKEY,Authorization:"Bearer "+SBKEY,"Content-Type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);return r.status===204?null:r.json()}
-async function syncFavs(){try{const srv=await rpc("dial_prefs_get",{p_key:DKEY});const before=favs.size;
-  if(Array.isArray(srv))srv.forEach(n=>favs.add(n));store.set("dial-favs",[...favs]);
-  if(!Array.isArray(srv)||srv.length!==favs.size)saveFavs();
+async function syncFavs(){try{const srv=await rpc("dial_prefs_get",{p_key:DKEY});const before=favs.size;let cfg=null;
+  if(Array.isArray(srv))srv.forEach(n=>{if(String(n).startsWith(CFGP)){try{cfg=JSON.parse(n.slice(CFGP.length))}catch(e){}}else favs.add(n)});store.set("dial-favs",[...favs]);
+  if(cfg&&(cfg.t||0)>store.get("dial-cfg-t",0)){store.set("dial-cfg-t",cfg.t);store.set("dial-theme",cfg.theme);store.set("dial-start-radio",cfg.start);store.set("dial-open",cfg.open);
+    if(typeof pzReload==="function")pzReload()}
+  if(!Array.isArray(srv)||srv.length!==favs.size+1||(!cfg&&store.get("dial-cfg-t",0)))saveFavs();
   if(favs.size!==before){layout()}}catch(e){}}
 function profileOf(list){
   if(!list.length) return null;
@@ -1530,7 +1537,7 @@ const PZ_PAT=[["Neón en el borde","#0A0A0C","#39FF14","#39FF14","neon"],["Camuf
 
 const lumi=h=>{const n=parseInt(h.slice(1),16),c=[n>>16,n>>8&255,n&255].map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]};
 const inkFor=h=>lumi(h)>.36?"#0A0A0C":"#FFFFFF";
-let PZ=store.get("dial-theme",{k:"sol",n:"Lima"});
+let PZ=store.get("dial-theme",null)||{k:"sol",n:"Lima"};
 function applyTheme(){
   let st=document.getElementById("pzTheme");if(!st){st=document.createElement("style");st.id="pzTheme";document.head.appendChild(st)}
   let c={},pat=null;
@@ -1604,16 +1611,17 @@ ${start?`<div class="pz-row"><button class="pz-b" data-a="nostart">Quitar radio 
   const inp=d.querySelector("#pzQ");inp.oninput=()=>{PZQ=inp.value;d.querySelector("#pzRes").innerHTML=pzRes()};
   d.onclick=e=>{const b=e.target.closest("button");if(!b)return;
     if(b.dataset.a==="x")return pzClose();
-    if(b.dataset.a==="yes"){store.set("dial-start-radio",current.n);PZASK=false;return pzRender()}
+    if(b.dataset.a==="yes"){store.set("dial-start-radio",current.n);cfgTouch();PZASK=false;return pzRender()}
     if(b.dataset.a==="no"){PZASK=false;return pzRender()}
-    if(b.dataset.a==="nostart"){store.set("dial-start-radio",null);return pzRender()}
-    if(b.dataset.r){store.set("dial-start-radio",b.dataset.r);PZQ="";return pzRender()}
+    if(b.dataset.a==="nostart"){store.set("dial-start-radio",null);cfgTouch();return pzRender()}
+    if(b.dataset.r){store.set("dial-start-radio",b.dataset.r);cfgTouch();PZQ="";return pzRender()}
     if(b.dataset.pt){PZT=b.dataset.pt;return pzRender()}
-    if(b.dataset.t){PZ={k:PZT,n:b.dataset.t};store.set("dial-theme",PZ);applyTheme();return pzRender()}
-    if(b.dataset.o){store.set("dial-open",b.dataset.o);return pzRender()}
+    if(b.dataset.t){PZ={k:PZT,n:b.dataset.t};store.set("dial-theme",PZ);cfgTouch();applyTheme();return pzRender()}
+    if(b.dataset.o){store.set("dial-open",b.dataset.o);cfgTouch();return pzRender()}
     if(b.dataset.l&&b.dataset.l!==UIL){const u=document.querySelector(`#uil button[aria-label="${{es:"Español",en:"English",pt:"Português"}[b.dataset.l]}"]`);if(u)u.click()}
   }}
 $("homeBtn").onclick=pzOpen;
+function pzReload(){PZ=store.get("dial-theme",null)||{k:"sol",n:"Lima"};applyTheme();armStart();pzRender();const o=store.get("dial-open",null);if(o&&!location.hash)location.hash=o}
 resetView();layout();openShared();armStart();syncFavs().then(()=>renderSync());renderSync();
 setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 
@@ -1777,7 +1785,7 @@ show(store.get("dial-vista","constelacion"));
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-07u";
+const APP_VERSION="2026-11-07v";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
