@@ -482,6 +482,8 @@ a{color:inherit}
 .fc-miss span{grid-column:1/-1;font-size:11.5px;color:var(--dim)}
 .fc-hist{font-size:12.5px;color:var(--muted);line-height:1.5;margin:10px 2px 0}
 .fc-disc{margin:6px 2px 0;font-size:11.5px;color:var(--dim)}
+.fc-bar .fc-rg{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,#F2B544 0 4px,rgba(242,181,68,.45) 4px 8px)}
+.fc-pct .fc-rgl{font:500 11px var(--mono);color:#F2B544;align-self:center}
 .fc-doubt{font:500 11px var(--mono);color:#F2B544;border:1px dashed #F2B544;border-radius:8px;padding:4px 8px}
 @media (max-width:520px){.fc-kpi b{font-size:18px}}
 
@@ -2181,7 +2183,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09t";
+const APP_VERSION="2026-11-09u";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2828,14 +2830,14 @@ function fcCard(p,names){const ph=p.p_home,pa=1-ph,f=p.factors||{},c=f.contrib||
   const TIER={s:"estrella",a:"muy bueno",b:"bueno"},ST=x=>/out/i.test(x||"")?"fuera":/doubt/i.test(x||"")?"probable baja":/question/i.test(x||"")?"en duda":/day/i.test(x||"")?"día a día":/probable/i.test(x||"")?"probable que juegue":"";
   const bc=f.bajas_calc||[],dud=bc.filter(b=>b.w<1);
   const calc=bc.length?`<li><span class="fc-out"><b style="font-weight:600;color:var(--ink)">Bajas que entran al cálculo</b>${bc.map(b=>`<br>${esc(b.n)} (${esc(b.eq)}) · ${TIER[b.t]||""} · ${esc(ST(b.st)||"fuera")} · −${fcN1(b.pts*b.w)} pts${b.w<1?` de ${fcN1(b.pts)} si no juega`:""}`).join("")}</span></li>`:"";
-  let rng="";if(dud.length){const sd=f.sd_base||13.6,P=m=>0.5*(1+Math.tanh(0.7978845608*(m/sd)*(1+0.044715*(m/sd)**2)));let mp=p.pred_margin,mn=p.pred_margin;
-    dud.forEach(b=>{const s=b.eq===p.home?1:-1;mp+=s*b.w*b.pts;mn-=s*(1-b.w)*b.pts});const a=P(mp),z=P(mn);
+  let rng="",lo=null,hi=null;if(dud.length){const sd=f.sd_base||13.6,P=m=>0.5*(1+Math.tanh(0.7978845608*(m/sd)*(1+0.044715*(m/sd)**2)));let mp=p.pred_margin,mn=p.pred_margin;
+    dud.forEach(b=>{const s=b.eq===p.home?1:-1;mp+=s*b.w*b.pts;mn-=s*(1-b.w)*b.pts});const a=P(mp),z=P(mn);lo=Math.min(a,z);hi=Math.max(a,z);
     rng=`<li><span class="fc-out"><b style="font-weight:600;color:var(--ink)">Pronóstico menos seguro</b>: hay ${dud.length} jugador${dud.length>1?"es":""} en duda. Según quién juegue, ${esc(p.home)} gana entre ${fcPct(Math.min(a,z))} y ${fcPct(Math.max(a,z))}.</span></li>`}
   const outs=(f.bajas_local||f.bajas_visita)?`<li><span class="fc-out">Reporte de bajas · ${esc(p.home)}: ${esc((f.bajas_local||[]).join(", ")||"ninguna")} · ${esc(p.away)}: ${esc((f.bajas_visita||[]).join(", ")||"ninguna")}.</span></li>`:"";
   return `<div class="sp-card fc-g"><div class="fc-when"><span>${esc(fcWhen(p.start_time))}</span><span>${live?"en juego":"Elo "+Math.round(f.elo_a||0)+" · "+Math.round(f.elo_h||0)}</span></div>
     <div class="fc-teams"><div class="fc-tm">${fcLogo(p.away)}<span>${esc(an)}</span></div><span class="fc-at">en</span><div class="fc-tm r"><span>${esc(hn)}</span>${fcLogo(p.home)}</div></div>
-    <div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i></div>
-    <div class="fc-pct"><span class="${pa>ph?"w":"l"}">${fcPct(pa)}</span><span class="${ph>=pa?"w":"l"}">${fcPct(ph)}</span></div>
+    <div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i>${lo!=null?`<b class="fc-rg" style="left:${((1-hi)*100).toFixed(1)}%;width:${Math.max((hi-lo)*100,1.5).toFixed(1)}%"></b>`:""}</div>
+    <div class="fc-pct"><span class="${pa>ph?"w":"l"}">${fcPct(pa)}</span>${lo!=null?`<span class="fc-rgl">en duda: ${ph>=.5?`${fcPct(lo)}–${fcPct(hi)}`:`${fcPct(1-hi)}–${fcPct(1-lo)}`}</span>`:""}<span class="${ph>=pa?"w":"l"}">${fcPct(ph)}</span></div>
     <div class="fc-mk"><div><span>Hándicap</span><b>${esc(fav)} −${fcN1(Math.abs(p.pred_margin))}</b></div><div><span>Total de puntos</span><b>${fcN1(p.pred_total)}</b></div></div>
     ${dud.length?`<div class="fc-doubt">Hay jugadores en duda; este pronóstico es menos seguro</div>`:""}<details class="fc-why"><summary>Qué explica el pronóstico</summary><ul>${why}${calc}${rng}${outs}</ul></details></div>`}
 function fcStats(rows,baseMargin){const n=rows.length;if(!n)return null;const a=(fn)=>rows.reduce((s,r)=>s+fn(r),0)/n;
