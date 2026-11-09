@@ -276,9 +276,17 @@ const VARIANTS: Record<string, string[]> = {
   "ausencias": ABS_VARS,
   "jugadores": [...ABS_VARS, "plm"],
   "jugadores+incertidumbre": [...ABS_VARS, "plm"],
+  // fase de temporada: la diferencia de fuerza pesa más al cierre de la regular; localía propia de playoffs
+  "fase": [...ABS_VARS, "plm", "dl"],
+  "fase+playoffs": [...ABS_VARS, "plm", "dl", "poh"],
 };
+// totales por variante (por defecto T_VARS); "late" = segunda mitad de la temporada regular
+// (total por fase, segunda mitad y enero, probado el 2026-11-09: sin mejora, descartado)
+const T_BY: Record<string, string[]> = {};
+// sin incertidumbre extra en el cierre de temporada
+const NO_FIN = new Set<string>();
 // variantes cuya dispersión depende del partido: erraticidad de los jugadores y cierre de temporada
-const VAR_TERMS = new Set(["jugadores+incertidumbre"]);
+const VAR_TERMS = new Set(["jugadores+incertidumbre", "fase", "fase+playoffs"]);
 // ausencias: suma ponderada (w = probabilidad de no jugar; 1 si ya se sabe), visita menos local
 const absW = (l: any[], fn: (x: any) => boolean) => (l || []).reduce((s, x) => s + (fn(x) ? (x.w ?? 1) : 0), 0);
 const absD = (f: any, fn: (x: any) => boolean) => absW(f.abs_a, fn) - absW(f.abs_h, fn);
@@ -292,6 +300,10 @@ function val(f: any, v: string, P?: any) {
   if (v === "team") return P?.team_g ? (f.hca ?? 1) * ((P.team_g[f.h] || 0) + (P.team_g[f.a] || 0)) / 2 : 0;
   if (v === "pair") return P?.pair_g ? (f.hca ?? 1) * (P.pair_g[`${f.h}-${f.a}`] || 0) : 0;
   if (v === "hca") return f.hca ?? 1;
+  if (v === "dl") return f.po ? 0 : f.d * Math.min(Math.max(((f.gp_h ?? 0) + (f.gp_a ?? 0)) / 2 - 50, 0) / 32, 1);
+  if (v === "poh") return (f.po || 0) * (f.hca ?? 1);
+  if (v === "late") return !f.po && ((f.gp_h ?? 0) + (f.gp_a ?? 0)) / 2 >= 50 ? 1 : 0;
+  if (v === "jan") return !f.po && f.month === 1 ? 1 : 0;
   if (v === "xs") return absD(f, (x) => x.t === "s");
   if (v === "xs1") return absD(f, (x) => x.t === "s" && x.k <= 2);
   if (v === "xa") return absD(f, (x) => x.t === "a");
@@ -323,9 +335,10 @@ function fit(rows: Row[], mvars: string[], eff: any = {}) {
   const last = Math.max(...rows.map((r) => r.g.season));
   const w = rows.map((r) => 0.5 ** ((last - r.g.season) / HALF_LIFE));
   const mc = ols(rows.map((r) => mvars.map((v) => val(r.f, v, P0))), rows.map((r) => r.margin), 1e-6, w);
-  const tc = ols(rows.map((r) => T_VARS.map((v) => val(r.f, v))), rows.map((r) => r.total), 1e-6, w);
+  const TV: string[] = eff.tvars || T_VARS;
+  const tc = ols(rows.map((r) => TV.map((v) => val(r.f, v))), rows.map((r) => r.total), 1e-6, w);
   const margin = Object.fromEntries(mvars.map((v, i) => [v, r3(mc[i])]));
-  const total = Object.fromEntries(T_VARS.map((v, i) => [v, r3(tc[i])]));
+  const total = Object.fromEntries(TV.map((v, i) => [v, r3(tc[i])]));
   const P: any = { margin, total, ...eff };
   const res = rows.map((r) => r.margin - predM(r.f, P));
   P.sigma = r3(Math.sqrt(avg(res.map((x) => x * x))));
@@ -340,13 +353,13 @@ function fit(rows: Row[], mvars: string[], eff: any = {}) {
   if (eff.var_terms) { // s² + a·erraticidad + b·cierre de temporada, elegidos por log loss
     const rr = rows.map((r, i) => ({ m: r.margin - res[i], y: r.margin > 0 ? 1 : 0, s: r.g.season, v: r.f.plv || 0, fin: r.f.fin || 0 })).filter((x) => x.s >= last - 1);
     let best = [bestLL, bestS, 0, 0];
-    for (let sg = 8; sg <= 14.01; sg += 0.25) for (const a of [0, 0.05, 0.1, 0.2, 0.3, 0.4]) for (const b of [0, 10, 25, 45]) {
+    for (let sg = 5; sg <= 14.01; sg += 0.25) for (const a of [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8]) for (const b of (eff.no_fin ? [0] : [0, 10, 25, 45])) {
       const ll = avg(rr.map((x) => { const p = Math.min(Math.max(Phi(x.m / Math.sqrt(sg * sg + a * x.v + b * x.fin)), 1e-4), 1 - 1e-4); return -(x.y * Math.log(p) + (1 - x.y) * Math.log(1 - p)); }));
       if (ll < best[0]) best = [ll, sg, a, b];
     }
     P.sigma_p = best[1]; P.var_a = best[2]; P.var_fin = best[3];
   }
-  delete P.var_terms;
+  delete P.var_terms; delete P.tvars; delete P.no_fin;
   P.base_margin = r3(avg(rows.filter((r) => r.f.hca !== 0).map((r) => r.margin)));
   P.elo = DEF_ELO; P.n_train = rows.length;
   return P;
@@ -398,7 +411,7 @@ function playerEffects(rows: Row[], P: any) {
 function fitVariant(rows: Row[], name: string) {
   const vars = VARIANTS[name];
   const simple = vars.filter((v) => v !== "team" && v !== "pair" && v !== "pl");
-  let P = fit(rows, simple, VAR_TERMS.has(name) ? { var_terms: true } : {});
+  let P = fit(rows, simple, { ...(VAR_TERMS.has(name) ? { var_terms: true } : {}), ...(T_BY[name] ? { tvars: T_BY[name] } : {}), ...(NO_FIN.has(name) ? { no_fin: true } : {}) });
   if (vars.includes("pl")) P = fit(rows, vars, playerEffects(rows, P));
   else if (vars.length !== simple.length) P = fit(rows, vars, effects(rows, P, vars.includes("pair")));
   P.variant = name;
@@ -512,7 +525,7 @@ function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: 
 
 // Recalcula todo: variables, prueba histórica de cada variante (ajuste 2017-18 a 2022-23, prueba desde 2023-24)
 // y modelo activo con la variante ganadora y toda la historia.
-async function rebuild(force?: string | null) {
+async function rebuild(force?: string | null, dry = false) {
   const games = await loadGames();
   const [abs, pl] = await Promise.all([loadAbs(), loadPl()]);
   const { feats, teams } = features(games, DEF_ELO, abs, pl);
@@ -529,17 +542,24 @@ async function rebuild(force?: string | null) {
       const pr: any = predRow(g, f, PB, "baseline-2018-2023", "backtest");
       Object.assign(pr, evaluate(pr, g, f));
       btRows.push(pr);
-      mrows.push({ p: pr.p_home, m: pr.pred_margin, t: pr.pred_total, am: pr.actual_margin, at: pr.actual_total, league: f.league, po: f.po, month: f.month });
+      mrows.push({ p: pr.p_home, m: pr.pred_margin, t: pr.pred_total, am: pr.actual_margin, at: pr.actual_total, league: f.league, po: f.po, month: f.month, season: g.season });
     }
     const brier = avg(mrows.map((r) => (r.p - (r.am > 0 ? 1 : 0)) ** 2));
     const mae = avg(mrows.map((r) => Math.abs(r.am - r.m)));
     const mt = metrics(mrows, PB.base_margin);
+    const grp = (fn: (r: any) => string) => { const o: any = {}; for (const r of mrows) (o[fn(r)] ??= []).push(r);
+      return Object.fromEntries(Object.entries(o).map(([k, b]: any) => [k, { n: b.length, acierto: r3(avg(b.map((r: any) => ((r.p >= 0.5) === (r.am > 0) ? 1 : 0)))),
+        brier: Math.round(avg(b.map((r: any) => (r.p - (r.am > 0 ? 1 : 0)) ** 2)) * 1e5) / 1e5, conf: r3(avg(b.map((r: any) => Math.max(r.p, 1 - r.p)))),
+        mae_total: Math.round(avg(b.map((r: any) => Math.abs(r.at - r.t))) * 100) / 100 }])); };
     variantes[name] = { brier: Math.round(brier * 1e5) / 1e5, mae_margen: Math.round(mae * 1000) / 1000, acierto: mt.acierto,
+      mae_total: Math.round(avg(mrows.map((r) => Math.abs(r.at - r.t))) * 100) / 100, sigma_p: PB.sigma_p, var_a: PB.var_a, var_fin: PB.var_fin,
+      por_temporada: grp((r) => String(r.season)), por_fase: grp((r) => r.po ? "playoffs" : [10, 11, 12].includes(r.month) ? "oct-dic" : [1, 2].includes(r.month) ? "ene-feb" : "mar-abr"),
       coef: PB.margin, equipos: PB.team_g, cruces: PB.pair_g ? Object.keys(PB.pair_g).length : undefined };
     // gana la de menor Brier; una variante más compleja debe mejorar de verdad (parsimonia)
     const cand = { name, PB, btRows, mt, brier };
     if (force ? name === force : (!best || brier < best.brier - 0.0002)) best = cand;
   }
+  if (dry) return { elegido: best.name, variantes };
   const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), best.name);
   const version = `nba-${best.name}-${new Date().toISOString().slice(0, 10)}`;
   await db.from("dial_fc_model").update({ active: false }).eq("sport", SPORT);
@@ -698,7 +718,7 @@ Deno.serve(async (req) => {
     let out: any;
     if (action === "backfill") {
       out = { ingested: await ingestKeys(monthKeys(u.searchParams.get("from")!, u.searchParams.get("to")!)) };
-    } else if (action === "rebuild") out = await rebuild(u.searchParams.get("variant"));
+    } else if (action === "rebuild") out = await rebuild(u.searchParams.get("variant"), u.searchParams.get("dry") === "1");
     else if (action === "probe") {
       const j = await espn(u.searchParams.get("p") || "injuries");
       out = { sample: JSON.stringify(j).slice(0, 4000) };
