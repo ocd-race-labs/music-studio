@@ -1,0 +1,423 @@
+{
+ "busqueda_top": [
+  {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.8,
+   "p_season": 4.0,
+   "adapt": true,
+   "ll_v1": 0.60763
+  },
+  {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.8,
+   "p_season": 12.0,
+   "adapt": true,
+   "ll_v1": 0.60826
+  },
+  {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.6,
+   "p_season": 4.0,
+   "adapt": true,
+   "ll_v1": 0.60833
+  },
+  {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.8,
+   "p_season": 4.0,
+   "adapt": false,
+   "ll_v1": 0.60847
+  },
+  {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.6,
+   "p_season": 12.0,
+   "adapt": true,
+   "ll_v1": 0.60887
+  },
+  {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.8,
+   "p_season": 12.0,
+   "adapt": false,
+   "ll_v1": 0.60905
+  },
+  {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.6,
+   "p_season": 4.0,
+   "adapt": false,
+   "ll_v1": 0.60908
+  },
+  {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.6,
+   "p_season": 12.0,
+   "adapt": false,
+   "ll_v1": 0.60962
+  }
+ ],
+ "modelos": {
+  "actual": {
+   "coef": {
+    "const": 1.926,
+    "f_d": 1.017,
+    "f_hb2b": -1.708,
+    "f_ab2b": 2.229,
+    "f_form": 0.042,
+    "xs": 1.494,
+    "xs1": 0.882,
+    "xa": 1.247,
+    "xb": 0.867
+   },
+   "sigma": 11.25
+  },
+  "kalman_fijo": {
+   "coef": {
+    "const": 0.361,
+    "kalman_fijo_m": 0.801,
+    "f_hb2b": -1.734,
+    "f_ab2b": 2.109,
+    "xs": 0.547,
+    "xs1": -0.127,
+    "xa": 0.277,
+    "xb": 0.321
+   },
+   "sigma": 11.25
+  },
+  "kalman_fijo+incertidumbre": {
+   "coef": {
+    "const": 0.361,
+    "kalman_fijo_m": 0.801,
+    "f_hb2b": -1.734,
+    "f_ab2b": 2.109,
+    "xs": 0.547,
+    "xs1": -0.127,
+    "xa": 0.277,
+    "xb": 0.321
+   },
+   "sigma": 9.75
+  },
+  "kalman_adaptativo": {
+   "coef": {
+    "const": 0.332,
+    "kalman_adaptativo_m": 0.814,
+    "f_hb2b": -1.719,
+    "f_ab2b": 2.11,
+    "xs": 0.566,
+    "xs1": -0.132,
+    "xa": 0.262,
+    "xb": 0.317
+   },
+   "sigma": 11.25
+  },
+  "kalman_adaptativo+incertidumbre": {
+   "coef": {
+    "const": 0.332,
+    "kalman_adaptativo_m": 0.814,
+    "f_hb2b": -1.719,
+    "f_ab2b": 2.11,
+    "xs": 0.566,
+    "xs1": -0.132,
+    "xa": 0.262,
+    "xb": 0.317
+   },
+   "sigma": 9.75
+  }
+ },
+ "validacion_2024_25": {
+  "actual": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6745,
+    "mae": 10.967,
+    "brier": 0.20598,
+    "logloss": 0.59712
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6807,
+    "mae": 10.844,
+    "brier": 0.20416,
+    "logloss": 0.59308
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5833,
+    "mae": 12.786,
+    "brier": 0.23288,
+    "logloss": 0.65649
+   }
+  },
+  "kalman_fijo": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6752,
+    "mae": 10.978,
+    "brier": 0.20664,
+    "logloss": 0.59898
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6831,
+    "mae": 10.836,
+    "brier": 0.20412,
+    "logloss": 0.59347
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5595,
+    "mae": 13.074,
+    "brier": 0.24377,
+    "logloss": 0.68006
+   }
+  },
+  "kalman_adaptativo": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6768,
+    "mae": 10.983,
+    "brier": 0.20674,
+    "logloss": 0.59917
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6839,
+    "mae": 10.844,
+    "brier": 0.20432,
+    "logloss": 0.59387
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5714,
+    "mae": 13.026,
+    "brier": 0.24248,
+    "logloss": 0.67719
+   }
+  },
+  "kalman_adaptativo+incertidumbre": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6768,
+    "mae": 10.983,
+    "brier": 0.20665,
+    "logloss": 0.59897
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6839,
+    "mae": 10.844,
+    "brier": 0.20422,
+    "logloss": 0.59367
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5714,
+    "mae": 13.026,
+    "brier": 0.24244,
+    "logloss": 0.67709
+   }
+  }
+ },
+ "validacion_inicio_temporada": {
+  "actual": {
+   "n": 148,
+   "acierto": 0.6351,
+   "mae": 9.908,
+   "brier": 0.2136,
+   "logloss": 0.61034
+  },
+  "kalman_adaptativo": {
+   "n": 148,
+   "acierto": 0.6351,
+   "mae": 9.926,
+   "brier": 0.21564,
+   "logloss": 0.61583
+  }
+ },
+ "totales_val_mae": {
+  "actual": 14.96,
+  "kalman_adaptativo": 14.78
+ },
+ "volatilidad_equipos_fin_2024_25": [
+  {
+   "equipo": "NO",
+   "volatilidad": 1.27
+  },
+  {
+   "equipo": "DEN",
+   "volatilidad": 1.23
+  },
+  {
+   "equipo": "NY",
+   "volatilidad": 1.17
+  },
+  {
+   "equipo": "LAL",
+   "volatilidad": 1.16
+  },
+  {
+   "equipo": "HOU",
+   "volatilidad": 1.14
+  },
+  {
+   "equipo": "MIN",
+   "volatilidad": 1.12
+  },
+  {
+   "equipo": "OKC",
+   "volatilidad": 1.07
+  },
+  {
+   "equipo": "MIA",
+   "volatilidad": 1.04
+  }
+ ],
+ "bajo_llave_2025_26": {
+  "actual": {
+   "todo": {
+    "n": 1322,
+    "acierto": 0.6785,
+    "mae": 11.366,
+    "brier": 0.20453,
+    "logloss": 0.59488
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6831,
+    "mae": 11.26,
+    "brier": 0.20301,
+    "logloss": 0.59124
+   },
+   "playoffs": {
+    "n": 85,
+    "acierto": 0.6118,
+    "mae": 12.915,
+    "brier": 0.22662,
+    "logloss": 0.6478
+   }
+  },
+  "kalman_fijo": {
+   "todo": {
+    "n": 1322,
+    "acierto": 0.6778,
+    "mae": 11.322,
+    "brier": 0.2031,
+    "logloss": 0.59155
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6799,
+    "mae": 11.224,
+    "brier": 0.20184,
+    "logloss": 0.58847
+   },
+   "playoffs": {
+    "n": 85,
+    "acierto": 0.6471,
+    "mae": 12.747,
+    "brier": 0.22149,
+    "logloss": 0.63644
+   }
+  },
+  "kalman_adaptativo": {
+   "todo": {
+    "n": 1322,
+    "acierto": 0.6785,
+    "mae": 11.323,
+    "brier": 0.20303,
+    "logloss": 0.59135
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6807,
+    "mae": 11.226,
+    "brier": 0.20179,
+    "logloss": 0.58831
+   },
+   "playoffs": {
+    "n": 85,
+    "acierto": 0.6471,
+    "mae": 12.732,
+    "brier": 0.22101,
+    "logloss": 0.63569
+   }
+  },
+  "kalman_adaptativo+incertidumbre": {
+   "todo": {
+    "n": 1322,
+    "acierto": 0.6785,
+    "mae": 11.323,
+    "brier": 0.20301,
+    "logloss": 0.59134
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6807,
+    "mae": 11.226,
+    "brier": 0.20178,
+    "logloss": 0.58831
+   },
+   "playoffs": {
+    "n": 85,
+    "acierto": 0.6471,
+    "mae": 12.732,
+    "brier": 0.22098,
+    "logloss": 0.63549
+   }
+  }
+ },
+ "bajo_llave_inicio_temporada": {
+  "actual": {
+   "n": 151,
+   "acierto": 0.6689,
+   "mae": 10.677,
+   "brier": 0.20839,
+   "logloss": 0.60165
+  },
+  "kalman_adaptativo": {
+   "n": 151,
+   "acierto": 0.6689,
+   "mae": 10.632,
+   "brier": 0.20573,
+   "logloss": 0.5961
+  }
+ },
+ "totales_bajo_llave_mae": {
+  "actual": 15.23,
+  "kalman_adaptativo": 15.05
+ },
+ "hiperparametros": {
+  "kalman_fijo": {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.8,
+   "p_season": 4.0,
+   "adapt": false,
+   "ll_v1": 0.60847
+  },
+  "kalman_adaptativo": {
+   "R": 140.0,
+   "q": 0.3,
+   "shrink": 0.8,
+   "p_season": 4.0,
+   "adapt": true,
+   "ll_v1": 0.60763
+  }
+ },
+ "log": [
+  "dial_fc_games: 12998 filas",
+  "dial_fc_game_abs: 11685 filas",
+  "dial_fc_box: 244364 filas",
+  "dial_fc_thr: 3 filas",
+  "mejor fijo {'R': 140.0, 'q': 0.3, 'shrink': 0.8, 'p_season': 4.0, 'adapt': False, 'll_v1': 0.60847} mejor adaptativo {'R': 140.0, 'q': 0.3, 'shrink': 0.8, 'p_season': 4.0, 'adapt': True, 'll_v1': 0.60763}"
+ ]
+}
