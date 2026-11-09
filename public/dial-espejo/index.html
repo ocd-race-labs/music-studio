@@ -441,6 +441,9 @@ a{color:inherit}
 
 /* Pronósticos NBA (piloto) */
 .sp-pills{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fc-on>:not(.sp-head):not(#fcWrap){display:none!important}
+button.phase.spb{cursor:pointer;background:none;opacity:.6}
+button.phase.spb[aria-pressed="true"]{opacity:1;background:color-mix(in srgb,currentColor 16%,transparent)}
 .phase.fcb{cursor:pointer;background:none;color:var(--s-deportes,#15803D);border-color:var(--s-deportes,#15803D);filter:brightness(1.35)}
 .phase.fcb[aria-pressed="true"]{background:var(--s-deportes,#15803D);color:#fff;filter:none}
 #fcWrap{display:grid;gap:32px}#fcWrap[hidden]{display:none}
@@ -2187,7 +2190,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09x";
+const APP_VERSION="2026-11-09y";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2780,7 +2783,7 @@ async function usSport(b,kind,tok){
     daily?espnSpan(`apis/site/v2/sports/${sp}/${kind}/scoreboard`,new Date(new Date().setHours(0,0,0,0)-2*864e5),new Date()).catch(()=>sb):Promise.resolve(sb)]);
   if(type===3&&!(ld?.leaders?.categories||[]).length)ld=await espn(`apis/site/v3/sports/${sp}/${kind}/leaders`,{season:season.year,seasontype:2},true).catch(()=>null);
   if(tok!==sportTok)return;
-  let h=`<section class="sp-head"><h2>${kind.toUpperCase()} · ${esc(season.displayName||season.year||"")}</h2><span class="sp-pills">${kind==="nba"?`<button type="button" class="phase fcb" id="fcBtn" aria-pressed="false">Forecast</button>`:""}<span class="phase ph${type}">${esc(phase)}</span></span></section>`;
+  let h=`<section class="sp-head"><h2>${kind.toUpperCase()} · ${esc(season.displayName||season.year||"")}</h2><span class="sp-pills">${kind==="nba"?`<button type="button" class="phase fcb" id="fcBtn" aria-pressed="false">Forecast</button>`:""}${kind==="nba"?`<button type="button" class="phase ph${type} spb" id="spBtn" aria-pressed="true">${esc(phase)}</button>`:`<span class="phase ph${type}">${esc(phase)}</span>`}</span></section>`;
   if(kind==="nba")h+=FCBOX;
   // Posiciones por división (y mapa equipo → división para agrupar resultados)
   const divOf={};let tables="";
@@ -2815,9 +2818,11 @@ async function usSport(b,kind,tok){
 
 /* ---- Pronósticos NBA (piloto): lee lo que guarda la función dial-forecast; la app no escribe nada ---- */
 const FCBOX=`<div id="fcWrap" hidden><section class="topic" id="fcN"></section><section class="topic" id="fcH"></section><p class="fc-disc">Pronósticos estadísticos con fines informativos. No son una recomendación para apostar y pueden fallar.</p></div>`;
-function fcSetup(tok){const btn=$("fcBtn"),w=$("fcWrap");if(!btn||!w)return;let loaded=false;
-  const set=(open,scroll)=>{w.hidden=!open;btn.setAttribute("aria-pressed",open);store.set("dial-fc-open",open);if(open&&!loaded){loaded=true;nbaForecast(tok)}if(open&&scroll)w.scrollIntoView({behavior:"smooth",block:"start"})};
-  btn.onclick=()=>set(w.hidden,true);set(!!store.get("dial-fc-open",false),false)}
+// Forecast y la fase de la temporada funcionan como pestañas: se ve una vista a la vez
+function fcSetup(tok){const btn=$("fcBtn"),sp=$("spBtn"),w=$("fcWrap");if(!btn||!w)return;const box=w.parentElement;let loaded=false;
+  const set=open=>{w.hidden=!open;box.classList.toggle("fc-on",open);btn.setAttribute("aria-pressed",open);if(sp)sp.setAttribute("aria-pressed",!open);
+    store.set("dial-fc-open",open);if(open&&!loaded){loaded=true;nbaForecast(tok)}};
+  btn.onclick=()=>set(true);if(sp)sp.onclick=()=>set(false);set(!!store.get("dial-fc-open",false))}
 const fcN1=x=>Number(x).toLocaleString("es-CL",{minimumFractionDigits:1,maximumFractionDigits:1});
 const fcPct=x=>Math.round(x*100)+"%";
 const fcLogo=a=>`<img src="https://a.espncdn.com/i/teamlogos/nba/500/${esc(String(a).toLowerCase())}.png" alt="" loading="lazy" onerror="this.remove()">`;
