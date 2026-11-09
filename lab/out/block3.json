@@ -1,0 +1,560 @@
+{
+ "segmentos": {
+  "AX": {
+   "n": 554,
+   "var": 54.518492242401116,
+   "r": 0.8206597084396459,
+   "lvl": 15.478343989142763
+  },
+  "AY": {
+   "n": 6,
+   "var": 77.58641348867481,
+   "r": 0.8922805007747868,
+   "lvl": 11.858506364578624
+  },
+  "BX": {
+   "n": 367,
+   "var": 32.971391841584854,
+   "r": 0.33795468317711796,
+   "lvl": 9.373123352513907
+  },
+  "BY": {
+   "n": 460,
+   "var": 38.98878986910527,
+   "r": -0.19581395237418978,
+   "lvl": 7.8272639721370405
+  },
+  "BZ": {
+   "n": 11,
+   "var": 59.58503998227615,
+   "r": -1.1816525231501112,
+   "lvl": 6.678074135230366
+  },
+  "CX": {
+   "n": 11,
+   "var": 14.8335143348493,
+   "r": 1.3746390316096047,
+   "lvl": 5.84802145094957
+  },
+  "CY": {
+   "n": 466,
+   "var": 23.203700012182537,
+   "r": -0.09673091794941895,
+   "lvl": 5.227353969563901
+  },
+  "CZ": {
+   "n": 921,
+   "var": 19.383081148707156,
+   "r": -0.4987769265163583,
+   "lvl": 3.222269554916122
+  },
+  "_thr": {
+   "a": 11.166016976271647,
+   "b": 6.348654871275311,
+   "x": 0.6859945689480335,
+   "y": 1.038059577926417
+  }
+ },
+ "prior_por_perfil": {
+  "const": -0.989,
+  "nivel": 0.276,
+  "volumen": -22.262,
+  "minutos": 0.04
+ },
+ "modelos": {
+  "actual": {
+   "coef": {
+    "const": 1.916,
+    "f_d": 1.017,
+    "f_hb2b": -1.693,
+    "f_ab2b": 2.213,
+    "f_form": 0.042,
+    "xs": 1.516,
+    "xs1": 0.939,
+    "xa": 1.284,
+    "xb": 0.928
+   },
+   "sigma": 11.25,
+   "a_var": 0.0,
+   "b_fin": 0.0
+  },
+  "jugadores": {
+   "coef": {
+    "const": 1.929,
+    "f_d": 0.495,
+    "f_hb2b": -1.699,
+    "f_ab2b": 1.965,
+    "f_form": -0.12,
+    "xs": 1.007,
+    "xs1": 0.785,
+    "xa": 0.935,
+    "xb": 0.751,
+    "pl_margin": 0.59
+   },
+   "sigma": 11.25,
+   "a_var": 0.0,
+   "b_fin": 0.0
+  },
+  "jugadores_sin_niveles": {
+   "coef": {
+    "const": 2.015,
+    "f_d": 0.332,
+    "f_hb2b": -1.967,
+    "f_ab2b": 2.324,
+    "pl_margin": 0.565
+   },
+   "sigma": 11.25,
+   "a_var": 0.0,
+   "b_fin": 0.0
+  },
+  "jugadores+playoffs": {
+   "coef": {
+    "const": 1.929,
+    "f_d": 0.495,
+    "f_hb2b": -1.699,
+    "f_ab2b": 1.965,
+    "f_form": -0.12,
+    "xs": 1.008,
+    "xs1": 0.785,
+    "xa": 0.935,
+    "xb": 0.753,
+    "pl_margin": 0.589,
+    "po_x": 0.091
+   },
+   "sigma": 11.25,
+   "a_var": 0.0,
+   "b_fin": 0.0
+  },
+  "jugadores+incertidumbre": {
+   "coef": {
+    "const": 1.929,
+    "f_d": 0.495,
+    "f_hb2b": -1.699,
+    "f_ab2b": 1.965,
+    "f_form": -0.12,
+    "xs": 1.007,
+    "xs1": 0.785,
+    "xa": 0.935,
+    "xb": 0.751,
+    "pl_margin": 0.59
+   },
+   "sigma": 9.5,
+   "a_var": 0.2,
+   "b_fin": 25.0
+  },
+  "completo": {
+   "coef": {
+    "const": 1.929,
+    "f_d": 0.495,
+    "f_hb2b": -1.699,
+    "f_ab2b": 1.965,
+    "f_form": -0.12,
+    "xs": 1.008,
+    "xs1": 0.785,
+    "xa": 0.935,
+    "xb": 0.753,
+    "pl_margin": 0.589,
+    "po_x": 0.091
+   },
+   "sigma": 9.5,
+   "a_var": 0.2,
+   "b_fin": 25.0
+  }
+ },
+ "validacion_2024_25": {
+  "actual": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6752,
+    "mae": 10.969,
+    "brier": 0.20591,
+    "logloss": 0.59697
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6815,
+    "mae": 10.845,
+    "brier": 0.20408,
+    "logloss": 0.59292
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5833,
+    "mae": 12.789,
+    "brier": 0.2329,
+    "logloss": 0.65655
+   }
+  },
+  "jugadores": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6821,
+    "mae": 10.871,
+    "brier": 0.20433,
+    "logloss": 0.59361
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6912,
+    "mae": 10.736,
+    "brier": 0.20208,
+    "logloss": 0.58873
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5476,
+    "mae": 12.862,
+    "brier": 0.23745,
+    "logloss": 0.66547
+   }
+  },
+  "jugadores_sin_niveles": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6692,
+    "mae": 10.959,
+    "brier": 0.2073,
+    "logloss": 0.60076
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6758,
+    "mae": 10.827,
+    "brier": 0.20508,
+    "logloss": 0.59592
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5714,
+    "mae": 12.894,
+    "brier": 0.24001,
+    "logloss": 0.67201
+   }
+  },
+  "jugadores+playoffs": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6821,
+    "mae": 10.869,
+    "brier": 0.20434,
+    "logloss": 0.59361
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6904,
+    "mae": 10.736,
+    "brier": 0.20208,
+    "logloss": 0.58873
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5595,
+    "mae": 12.82,
+    "brier": 0.23752,
+    "logloss": 0.66547
+   }
+  },
+  "jugadores+incertidumbre": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6821,
+    "mae": 10.871,
+    "brier": 0.20398,
+    "logloss": 0.59254
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6912,
+    "mae": 10.736,
+    "brier": 0.20181,
+    "logloss": 0.58782
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5476,
+    "mae": 12.862,
+    "brier": 0.23587,
+    "logloss": 0.66201
+   }
+  },
+  "completo": {
+   "todo": {
+    "n": 1321,
+    "acierto": 0.6821,
+    "mae": 10.869,
+    "brier": 0.20398,
+    "logloss": 0.59253
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6904,
+    "mae": 10.736,
+    "brier": 0.20182,
+    "logloss": 0.58783
+   },
+   "playoffs": {
+    "n": 84,
+    "acierto": 0.5595,
+    "mae": 12.82,
+    "brier": 0.23586,
+    "logloss": 0.66175
+   }
+  }
+ },
+ "totales_mae": {
+  "validacion": {
+   "actual": 14.72,
+   "con_kalman": 14.66
+  },
+  "bajo_llave": {
+   "actual": 14.99,
+   "con_kalman": 14.92
+  }
+ },
+ "segmentos_figuras_2022_23": [
+  {
+   "jugador": "Luka Doncic",
+   "segmento": "AX",
+   "nivel": 25.1,
+   "volumen": 0.281,
+   "erraticidad": 9.8,
+   "impacto_por_48": 0.55
+  },
+  {
+   "jugador": "Kawhi Leonard",
+   "segmento": "AX",
+   "nivel": 21.4,
+   "volumen": 0.201,
+   "erraticidad": 8.3,
+   "impacto_por_48": 5.14
+  },
+  {
+   "jugador": "Rudy Gobert",
+   "segmento": "AX",
+   "nivel": 13.9,
+   "volumen": 0.109,
+   "erraticidad": 5.7,
+   "impacto_por_48": 0.4
+  },
+  {
+   "jugador": "Giannis Antetokounmpo",
+   "segmento": "AX",
+   "nivel": 23.9,
+   "volumen": 0.244,
+   "erraticidad": 9.6,
+   "impacto_por_48": 2.85
+  },
+  {
+   "jugador": "Devin Booker",
+   "segmento": "AX",
+   "nivel": 22.9,
+   "volumen": 0.24,
+   "erraticidad": 10.4,
+   "impacto_por_48": 2.07
+  },
+  {
+   "jugador": "Stephen Curry",
+   "segmento": "AX",
+   "nivel": 21.6,
+   "volumen": 0.231,
+   "erraticidad": 7.9,
+   "impacto_por_48": 3.06
+  },
+  {
+   "jugador": "Joel Embiid",
+   "segmento": "AX",
+   "nivel": 24.9,
+   "volumen": 0.259,
+   "erraticidad": 9.0,
+   "impacto_por_48": 2.57
+  },
+  {
+   "jugador": "James Harden",
+   "segmento": "AX",
+   "nivel": 18.8,
+   "volumen": 0.2,
+   "erraticidad": 8.8,
+   "impacto_por_48": 1.55
+  },
+  {
+   "jugador": "LeBron James",
+   "segmento": "AX",
+   "nivel": 21.7,
+   "volumen": 0.23,
+   "erraticidad": 7.5,
+   "impacto_por_48": 1.89
+  },
+  {
+   "jugador": "Anthony Davis",
+   "segmento": "AX",
+   "nivel": 22.3,
+   "volumen": 0.196,
+   "erraticidad": 9.0,
+   "impacto_por_48": 2.43
+  },
+  {
+   "jugador": "Jayson Tatum",
+   "segmento": "AX",
+   "nivel": 22.3,
+   "volumen": 0.248,
+   "erraticidad": 9.2,
+   "impacto_por_48": 2.08
+  },
+  {
+   "jugador": "Nikola Jokic",
+   "segmento": "AX",
+   "nivel": 27.4,
+   "volumen": 0.227,
+   "erraticidad": 8.1,
+   "impacto_por_48": 3.71
+  }
+ ],
+ "bajo_llave_2025_26": {
+  "actual": {
+   "todo": {
+    "n": 1318,
+    "acierto": 0.6768,
+    "mae": 11.375,
+    "brier": 0.20444,
+    "logloss": 0.59462
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6807,
+    "mae": 11.26,
+    "brier": 0.20299,
+    "logloss": 0.59114
+   },
+   "playoffs": {
+    "n": 81,
+    "acierto": 0.6173,
+    "mae": 13.13,
+    "brier": 0.22654,
+    "logloss": 0.64777
+   }
+  },
+  "jugadores": {
+   "todo": {
+    "n": 1318,
+    "acierto": 0.692,
+    "mae": 11.267,
+    "brier": 0.20162,
+    "logloss": 0.58824
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6936,
+    "mae": 11.174,
+    "brier": 0.20049,
+    "logloss": 0.58552
+   },
+   "playoffs": {
+    "n": 81,
+    "acierto": 0.6667,
+    "mae": 12.68,
+    "brier": 0.2188,
+    "logloss": 0.62965
+   }
+  },
+  "jugadores_sin_niveles": {
+   "todo": {
+    "n": 1318,
+    "acierto": 0.692,
+    "mae": 11.323,
+    "brier": 0.20233,
+    "logloss": 0.59023
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6928,
+    "mae": 11.243,
+    "brier": 0.20158,
+    "logloss": 0.58837
+   },
+   "playoffs": {
+    "n": 81,
+    "acierto": 0.679,
+    "mae": 12.541,
+    "brier": 0.21388,
+    "logloss": 0.61858
+   }
+  },
+  "jugadores+playoffs": {
+   "todo": {
+    "n": 1318,
+    "acierto": 0.6912,
+    "mae": 11.262,
+    "brier": 0.20157,
+    "logloss": 0.58814
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6936,
+    "mae": 11.175,
+    "brier": 0.2005,
+    "logloss": 0.58554
+   },
+   "playoffs": {
+    "n": 81,
+    "acierto": 0.6543,
+    "mae": 12.583,
+    "brier": 0.21791,
+    "logloss": 0.62792
+   }
+  },
+  "jugadores+incertidumbre": {
+   "todo": {
+    "n": 1318,
+    "acierto": 0.692,
+    "mae": 11.267,
+    "brier": 0.20156,
+    "logloss": 0.58802
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6936,
+    "mae": 11.174,
+    "brier": 0.2005,
+    "logloss": 0.58547
+   },
+   "playoffs": {
+    "n": 81,
+    "acierto": 0.6667,
+    "mae": 12.68,
+    "brier": 0.21787,
+    "logloss": 0.62695
+   }
+  },
+  "completo": {
+   "todo": {
+    "n": 1318,
+    "acierto": 0.6912,
+    "mae": 11.262,
+    "brier": 0.20151,
+    "logloss": 0.58792
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6936,
+    "mae": 11.175,
+    "brier": 0.2005,
+    "logloss": 0.58549
+   },
+   "playoffs": {
+    "n": 81,
+    "acierto": 0.6543,
+    "mae": 12.583,
+    "brier": 0.21692,
+    "logloss": 0.62498
+   }
+  }
+ },
+ "log": [
+  "dial_fc_games: 12998 filas",
+  "dial_fc_game_abs: 11685 filas",
+  "dial_fc_box: 244364 filas",
+  "dial_fc_thr: 3 filas",
+  "planilla: 244364",
+  "segmentos {'AX': 554, 'AY': 6, 'BX': 367, 'BY': 460, 'BZ': 11, 'CX': 11, 'CY': 466, 'CZ': 921}"
+ ]
+}
