@@ -2183,7 +2183,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09v";
+const APP_VERSION="2026-11-09w";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2837,7 +2837,7 @@ function fcCard(p,names){const ph=p.p_home,pa=1-ph,f=p.factors||{},c=f.contrib||
   return `<div class="sp-card fc-g"><div class="fc-when"><span>${esc(fcWhen(p.start_time))}</span><span>${live?"en juego":"Elo "+Math.round(f.elo_a||0)+" · "+Math.round(f.elo_h||0)}</span></div>
     <div class="fc-teams"><div class="fc-tm">${fcLogo(p.away)}<span>${esc(an)}</span></div><span class="fc-at">en</span><div class="fc-tm r"><span>${esc(hn)}</span>${fcLogo(p.home)}</div></div>
     <div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i>${lo!=null?`<b class="fc-rg" style="left:${((1-hi)*100).toFixed(1)}%;width:${Math.max((hi-lo)*100,1.5).toFixed(1)}%"></b>`:""}</div>
-    <div class="fc-pct"><span class="${pa>ph?"w":"l"}">${fcPct(pa)}</span>${lo!=null?`<span class="fc-rgl">en duda: ${ph>=.5?`${fcPct(lo)}–${fcPct(hi)}`:`${fcPct(1-hi)}–${fcPct(1-lo)}`}</span>`:""}<span class="${ph>=pa?"w":"l"}">${fcPct(ph)}</span></div>
+    <div class="fc-pct"><span class="${pa>ph?"w":"l"}">${fcPct(pa)}</span>${lo!=null?`<span class="fc-rgl">rango por dudas ${ph>=.5?`${fcPct(lo)}–${fcPct(hi)}`:`${fcPct(1-hi)}–${fcPct(1-lo)}`}</span>`:""}<span class="${ph>=pa?"w":"l"}">${fcPct(ph)}</span></div>
     <div class="fc-mk"><div><span>Hándicap</span><b>${esc(fav)} −${fcN1(Math.abs(p.pred_margin))}</b></div><div><span>Total de puntos</span><b>${fcN1(p.pred_total)}</b></div></div>
     ${dud.length?`<div class="fc-doubt">Hay jugadores en duda; este pronóstico es menos seguro</div>`:""}<details class="fc-why"><summary>Qué explica el pronóstico</summary><ul>${why}${calc}${rng}${outs}</ul></details></div>`}
 function fcStats(rows,baseMargin){const n=rows.length;if(!n)return null;const a=(fn)=>rows.reduce((s,r)=>s+fn(r),0)/n;
