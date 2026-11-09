@@ -258,11 +258,12 @@ const VARIANTS: Record<string, string[]> = {
 const absW = (l: any[], fn: (x: any) => boolean) => (l || []).reduce((s, x) => s + (fn(x) ? (x.w ?? 1) : 0), 0);
 const absD = (f: any, fn: (x: any) => boolean) => absW(f.abs_a, fn) - absW(f.abs_h, fn);
 const plW = (l: any[], P: any) => (l || []).reduce((s, x) => s + (x.w ?? 1) * (P.player_g[x.id] || 0), 0);
-const T_VARS = ["const", "exp_total", "league", "po", "b2b"];
+const T_VARS = ["const", "exp_total", "league", "po", "b2b", "early"];
 const SIG = 13.4; // desviación típica del margen de un partido
 function val(f: any, v: string, P?: any) {
   if (v === "const") return 1;
   if (v === "b2b") return f.hb2b + f.ab2b;
+  if (v === "early") return (f.gp_h ?? 99) + (f.gp_a ?? 99) < 8 ? 1 : 0;
   if (v === "team") return P?.team_g ? (f.hca ?? 1) * ((P.team_g[f.h] || 0) + (P.team_g[f.a] || 0)) / 2 : 0;
   if (v === "pair") return P?.pair_g ? (f.hca ?? 1) * (P.pair_g[`${f.h}-${f.a}`] || 0) : 0;
   if (v === "hca") return f.hca ?? 1;
@@ -273,12 +274,12 @@ function val(f: any, v: string, P?: any) {
   if (v === "pl") return P?.player_g ? plW(f.abs_a, P) - plW(f.abs_h, P) : 0;
   return Number(f[v] ?? 0);
 }
-function ols(X: number[][], y: number[], ridge = 1e-6) {
+function ols(X: number[][], y: number[], ridge = 1e-6, w?: number[]) {
   const p = X[0].length;
   const A = Array.from({ length: p }, () => new Array(p + 1).fill(0));
   for (let i = 0; i < X.length; i++) {
-    const x = X[i];
-    for (let r = 0; r < p; r++) { A[r][p] += x[r] * y[i]; for (let c = 0; c < p; c++) A[r][c] += x[r] * x[c]; }
+    const x = X[i], wi = w ? w[i] : 1;
+    for (let r = 0; r < p; r++) { A[r][p] += wi * x[r] * y[i]; for (let c = 0; c < p; c++) A[r][c] += wi * x[r] * x[c]; }
   }
   for (let r = 0; r < p; r++) A[r][r] += ridge * X.length;
   for (let c = 0; c < p; c++) {
@@ -290,15 +291,27 @@ function ols(X: number[][], y: number[], ridge = 1e-6) {
 }
 type Row = { g: Game; f: any; margin: number; total: number };
 const predM = (f: any, P: any) => Object.keys(P.margin).reduce((s, v) => s + P.margin[v] * val(f, v, P), 0);
+// Peso a lo reciente: cada temporada hacia atrás pesa la mitad (media vida de 1 temporada, elegida en validación)
+const HALF_LIFE = 1;
 function fit(rows: Row[], mvars: string[], eff: any = {}) {
   const P0 = { ...eff };
-  const mc = ols(rows.map((r) => mvars.map((v) => val(r.f, v, P0))), rows.map((r) => r.margin));
-  const tc = ols(rows.map((r) => T_VARS.map((v) => val(r.f, v))), rows.map((r) => r.total));
+  const last = Math.max(...rows.map((r) => r.g.season));
+  const w = rows.map((r) => 0.5 ** ((last - r.g.season) / HALF_LIFE));
+  const mc = ols(rows.map((r) => mvars.map((v) => val(r.f, v, P0))), rows.map((r) => r.margin), 1e-6, w);
+  const tc = ols(rows.map((r) => T_VARS.map((v) => val(r.f, v))), rows.map((r) => r.total), 1e-6, w);
   const margin = Object.fromEntries(mvars.map((v, i) => [v, r3(mc[i])]));
   const total = Object.fromEntries(T_VARS.map((v, i) => [v, r3(tc[i])]));
   const P: any = { margin, total, ...eff };
   const res = rows.map((r) => r.margin - predM(r.f, P));
   P.sigma = r3(Math.sqrt(avg(res.map((x) => x * x))));
+  // dispersión para la probabilidad: la que mejor predice quién gana (log loss) en las dos últimas temporadas del ajuste
+  const recent = rows.map((r, i) => ({ m: r.margin - res[i], y: r.margin > 0 ? 1 : 0, s: r.g.season })).filter((x) => x.s >= last - 1);
+  let bestS = P.sigma, bestLL = Infinity;
+  for (let sg = 9.5; sg <= 16.01; sg += 0.25) {
+    const ll = avg(recent.map((x) => { const p = Math.min(Math.max(Phi(x.m / sg), 1e-4), 1 - 1e-4); return -(x.y * Math.log(p) + (1 - x.y) * Math.log(1 - p)); }));
+    if (ll < bestLL) { bestLL = ll; bestS = sg; }
+  }
+  P.sigma_p = bestS;
   P.base_margin = r3(avg(rows.filter((r) => r.f.hca !== 0).map((r) => r.margin)));
   P.elo = DEF_ELO; P.n_train = rows.length;
   return P;
@@ -362,7 +375,8 @@ function predict(f: any, P: any) {
   for (const v of Object.keys(P.margin)) { const c = P.margin[v] * val(f, v, P); contrib[v] = r1(c); m += c; }
   let t = 0;
   for (const v of Object.keys(P.total)) t += P.total[v] * val(f, v);
-  const sd = Math.sqrt(P.sigma * P.sigma + (f.extra_var || 0)); // dudas del reporte: pronóstico menos seguro
+  const s0 = P.sigma_p || P.sigma;
+  const sd = Math.sqrt(s0 * s0 + (f.extra_var || 0)); // dudas del reporte: pronóstico menos seguro
   return { p: Phi(m / sd), margin: m, total: t, contrib, sd };
 }
 
@@ -452,7 +466,7 @@ function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: 
       exp_total: r1(f.exp_total), league: r1(f.league),
       ...(ho || ao ? { bajas_local: ho?.names || [], bajas_visita: ao?.names || [] } : {}),
       ...(bajas.length ? { bajas_calc: bajas } : {}),
-      ...(f.extra_var ? { sd: r1(x.sd), sd_base: r1(P.sigma) } : {}),
+      ...(f.extra_var ? { sd: r1(x.sd), sd_base: r1(P.sigma_p || P.sigma) } : {}),
     },
     home_out: outs ? (ho?.out ?? 0) : null, away_out: outs ? (ao?.out ?? 0) : null,
     updated_at: new Date().toISOString(),
