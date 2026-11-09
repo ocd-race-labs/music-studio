@@ -1,0 +1,357 @@
+{
+ "base_coef": {
+  "f_hca": 1.914,
+  "f_d": 0.996,
+  "f_hb2b": -1.523,
+  "f_ab2b": 2.213,
+  "f_form": 0.078,
+  "xs": 2.05,
+  "xs1": 0.258,
+  "xa": 1.211,
+  "xb": 0.238
+ },
+ "sigma_base": 13.312,
+ "perfiles": {
+  "poblacion": {
+   "vol2": 58.79026417691845,
+   "exit": 0.01770332857204692,
+   "loc": 0.6417101639689609,
+   "slope": -0.6529256102711738,
+   "exit_dev": -10.7152734786037
+  },
+  "n0": {
+   "bias": 250.1422865566585,
+   "vol": 57.17623853046233,
+   "exit": 74.33556648075887,
+   "loc": 1000.569146226634,
+   "slope": 500.284573113317,
+   "po": 250.1422865566585
+  }
+ },
+ "figura": {
+  "pts_margen_por_desvio_esperado": 1.017,
+  "varianza": {
+   "base": 185.54,
+   "por_volatilidad": -0.0605,
+   "playoffs": 31.73
+  }
+ },
+ "validacion": {
+  "base": {
+   "todo": {
+    "n": 2640,
+    "acierto": 0.6682,
+    "mae": 10.973,
+    "brier": 0.20853,
+    "logloss": 0.60382
+   },
+   "regular": {
+    "n": 2474,
+    "acierto": 0.6722,
+    "mae": 10.86,
+    "brier": 0.20709,
+    "logloss": 0.60058
+   },
+   "playoffs": {
+    "n": 166,
+    "acierto": 0.6084,
+    "mae": 12.651,
+    "brier": 0.22997,
+    "logloss": 0.65214
+   }
+  },
+  "figura": {
+   "todo": {
+    "n": 2640,
+    "acierto": 0.6716,
+    "mae": 10.946,
+    "brier": 0.20754,
+    "logloss": 0.60123
+   },
+   "regular": {
+    "n": 2474,
+    "acierto": 0.6754,
+    "mae": 10.834,
+    "brier": 0.20613,
+    "logloss": 0.59802
+   },
+   "playoffs": {
+    "n": 166,
+    "acierto": 0.6145,
+    "mae": 12.617,
+    "brier": 0.22866,
+    "logloss": 0.64903
+   }
+  },
+  "boosting": {
+   "todo": {
+    "n": 2640,
+    "acierto": 0.6693,
+    "mae": 10.906,
+    "brier": 0.20688,
+    "logloss": 0.59964
+   },
+   "regular": {
+    "n": 2474,
+    "acierto": 0.6734,
+    "mae": 10.796,
+    "brier": 0.2055,
+    "logloss": 0.59648
+   },
+   "playoffs": {
+    "n": 166,
+    "acierto": 0.6084,
+    "mae": 12.551,
+    "brier": 0.22757,
+    "logloss": 0.64674
+   }
+  }
+ },
+ "boosting": {
+  "rondas_margen": 106,
+  "factor_validacion": 1.0,
+  "rondas_incertidumbre": 101
+ },
+ "importancia_margen": [
+  {
+   "variable": "f_elo_a",
+   "ganancia": 132044.8
+  },
+  {
+   "variable": "f_elo_h",
+   "ganancia": 99988.2
+  },
+  {
+   "variable": "a_m3",
+   "ganancia": 93315.5
+  },
+  {
+   "variable": "a_star_exitp",
+   "ganancia": 76687.4
+  },
+  {
+   "variable": "h_star_exitp",
+   "ganancia": 75271.2
+  },
+  {
+   "variable": "f_d",
+   "ganancia": 50186.5
+  },
+  {
+   "variable": "f_gp_h",
+   "ganancia": 46383.8
+  },
+  {
+   "variable": "star_dev",
+   "ganancia": 42598.4
+  },
+  {
+   "variable": "f_exp_total",
+   "ganancia": 41244.9
+  },
+  {
+   "variable": "star_vmax",
+   "ganancia": 39448.6
+  },
+  {
+   "variable": "h_star_n",
+   "ganancia": 38193.7
+  },
+  {
+   "variable": "f_gp_a",
+   "ganancia": 38170.8
+  }
+ ],
+ "interacciones": [
+  {
+   "a": "f_gp_h",
+   "b": "f_elo_h",
+   "fuerza": 0.0282
+  },
+  {
+   "a": "f_d",
+   "b": "f_elo_a",
+   "fuerza": 0.0257
+  },
+  {
+   "a": "f_elo_a",
+   "b": "a_star_exitp",
+   "fuerza": 0.0228
+  },
+  {
+   "a": "f_elo_h",
+   "b": "a_m3",
+   "fuerza": 0.0216
+  },
+  {
+   "a": "f_elo_h",
+   "b": "f_elo_a",
+   "fuerza": 0.0206
+  },
+  {
+   "a": "f_elo_a",
+   "b": "h_star_n",
+   "fuerza": 0.02
+  },
+  {
+   "a": "f_month",
+   "b": "f_elo_a",
+   "fuerza": 0.0193
+  },
+  {
+   "a": "h_star_n",
+   "b": "star_vmax",
+   "fuerza": 0.0182
+  },
+  {
+   "a": "f_elo_a",
+   "b": "h_star_exitp",
+   "fuerza": 0.0178
+  },
+  {
+   "a": "a_m3",
+   "b": "h_star_exitp",
+   "fuerza": 0.0166
+  }
+ ],
+ "importancia_incertidumbre": [
+  {
+   "variable": "f_d",
+   "ganancia": 2335.1
+  },
+  {
+   "variable": "f_exp_total",
+   "ganancia": 2136.8
+  },
+  {
+   "variable": "f_form",
+   "ganancia": 1664.2
+  },
+  {
+   "variable": "a_travel",
+   "ganancia": 1217.3
+  },
+  {
+   "variable": "a_star_exitp",
+   "ganancia": 1015.5
+  },
+  {
+   "variable": "f_elo_h",
+   "ganancia": 1001.0
+  },
+  {
+   "variable": "f_elo_a",
+   "ganancia": 867.2
+  },
+  {
+   "variable": "f_gp_h",
+   "ganancia": 825.7
+  },
+  {
+   "variable": "a_m3",
+   "ganancia": 807.0
+  },
+  {
+   "variable": "star_vmax",
+   "ganancia": 789.3
+  }
+ ],
+ "patrones_por_tramo": [
+  {
+   "variable": "f_elo_h",
+   "tramo": [
+    1208.5,
+    1417.2
+   ],
+   "efecto_entrenamiento": -1.12,
+   "efecto_validacion": -1.39,
+   "efecto_bajo_llave": -1.23,
+   "n_validacion": 534
+  }
+ ],
+ "bajo_llave": {
+  "base": {
+   "todo": {
+    "n": 1322,
+    "acierto": 0.6755,
+    "mae": 11.361,
+    "brier": 0.20594,
+    "logloss": 0.59845
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6799,
+    "mae": 11.259,
+    "brier": 0.20459,
+    "logloss": 0.59527
+   },
+   "playoffs": {
+    "n": 85,
+    "acierto": 0.6118,
+    "mae": 12.847,
+    "brier": 0.22561,
+    "logloss": 0.64478
+   }
+  },
+  "figura": {
+   "todo": {
+    "n": 1322,
+    "acierto": 0.6679,
+    "mae": 11.352,
+    "brier": 0.20604,
+    "logloss": 0.5986
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.671,
+    "mae": 11.252,
+    "brier": 0.20452,
+    "logloss": 0.59508
+   },
+   "playoffs": {
+    "n": 85,
+    "acierto": 0.6235,
+    "mae": 12.815,
+    "brier": 0.22813,
+    "logloss": 0.64985
+   }
+  },
+  "boosting": {
+   "todo": {
+    "n": 1322,
+    "acierto": 0.6747,
+    "mae": 11.31,
+    "brier": 0.20536,
+    "logloss": 0.59656
+   },
+   "regular": {
+    "n": 1237,
+    "acierto": 0.6766,
+    "mae": 11.214,
+    "brier": 0.20382,
+    "logloss": 0.59298
+   },
+   "playoffs": {
+    "n": 85,
+    "acierto": 0.6471,
+    "mae": 12.703,
+    "brier": 0.22769,
+    "logloss": 0.64859
+   }
+  }
+ },
+ "log": [
+  "dial_fc_games: 12998 filas",
+  "dial_fc_game_abs: 11685 filas",
+  "dial_fc_box: 244364 filas",
+  "dial_fc_thr: 3 filas",
+  "partidos: 11689 entrenamiento: 7581 validación: 2640 bajo llave: 1322",
+  "actuaciones de figuras: 39038 jugadores: 227",
+  "n0 (partidos para confiar 50% en lo propio): {'bias': np.float64(250.1), 'vol': np.float64(57.2), 'exit': np.float64(74.3), 'loc': np.float64(1000.6), 'slope': np.float64(500.3), 'po': np.float64(250.1)} población: {'vol2': 58.79, 'exit': 0.018, 'loc': 0.642, 'slope': -0.653, 'exit_dev': -10.715}",
+  "validación base    {'todo': {'n': 2640, 'acierto': 0.6682, 'mae': 10.973, 'brier': 0.20853, 'logloss': 0.60382}, 'regular': {'n': 2474, 'acierto': 0.6722, 'mae': 10.86, 'brier': 0.20709, 'logloss': 0.60058}, 'playoffs': {'n': 166, 'acierto': 0.6084, 'mae': 12.651, 'brier': 0.22997, 'logloss': 0.65214}}",
+  "validación figura  {'todo': {'n': 2640, 'acierto': 0.6716, 'mae': 10.946, 'brier': 0.20754, 'logloss': 0.60123}, 'regular': {'n': 2474, 'acierto': 0.6754, 'mae': 10.834, 'brier': 0.20613, 'logloss': 0.59802}, 'playoffs': {'n': 166, 'acierto': 0.6145, 'mae': 12.617, 'brier': 0.22866, 'logloss': 0.64903}}",
+  "boosting: mejores rondas 106",
+  "validación boost   {'todo': {'n': 2640, 'acierto': 0.6693, 'mae': 10.906, 'brier': 0.20688, 'logloss': 0.59964}, 'regular': {'n': 2474, 'acierto': 0.6734, 'mae': 10.796, 'brier': 0.2055, 'logloss': 0.59648}, 'playoffs': {'n': 166, 'acierto': 0.6084, 'mae': 12.551, 'brier': 0.22757, 'logloss': 0.64674}}",
+  "bajo llave {\"base\": {\"todo\": {\"n\": 1322, \"acierto\": 0.6755, \"mae\": 11.361, \"brier\": 0.20594, \"logloss\": 0.59845}, \"regular\": {\"n\": 1237, \"acierto\": 0.6799, \"mae\": 11.259, \"brier\": 0.20459, \"logloss\": 0.59527}, \"playoffs\": {\"n\": 85, \"acierto\": 0.6118, \"mae\": 12.847, \"brier\": 0.22561, \"logloss\": 0.64478}}, \"figura\": {\"todo\": {\"n\": 1322, \"acierto\": 0.6679, \"mae\": 11.352, \"brier\": 0.20604, \"logloss\": 0.5986}, \"regular\": {\"n\": 1237, \"acierto\": 0.671, \"mae\": 11.252, \"brier\": 0.20452, \"logloss\": 0.59508}, \"playoffs\": {\"n\": 85, \"acierto\": 0.6235, \"mae\": 12.815, \"brier\": 0.22813, \"logloss\": 0.64985}}, \"boosting\": {\"todo\": {\"n\": 1322, \"acierto\": 0.6747, \"mae\": 11.31, \"brier\": 0.20536, \"logloss\": 0.59656}, \"regular\": {\"n\": 1237, \"acierto\": 0.6766, \"mae\": 11.214, \"brier\": 0.20382, \"logloss\": 0.59298}, \"playoffs\": {\"n\": 85, \"acierto\": 0.6471, \"mae\": 12.703, \"brier\": 0.22769, \"logloss\": 0.64859}}}"
+ ]
+}
