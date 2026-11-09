@@ -482,6 +482,7 @@ a{color:inherit}
 .fc-miss span{grid-column:1/-1;font-size:11.5px;color:var(--dim)}
 .fc-hist{font-size:12.5px;color:var(--muted);line-height:1.5;margin:10px 2px 0}
 .fc-disc{margin:6px 2px 0;font-size:11.5px;color:var(--dim)}
+.fc-doubt{font:500 11px var(--mono);color:#F2B544;border:1px dashed #F2B544;border-radius:8px;padding:4px 8px}
 @media (max-width:520px){.fc-kpi b{font-size:18px}}
 
 .ssel{display:grid;gap:12px;margin-bottom:4px}
@@ -2180,7 +2181,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09s";
+const APP_VERSION="2026-11-09t";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2822,15 +2823,21 @@ function fcWhen(t){const d=new Date(t),n=new Date();const day=x=>x.toLocaleDateS
 function fcCard(p,names){const ph=p.p_home,pa=1-ph,f=p.factors||{},c=f.contrib||{};const hn=names[p.home]||p.home,an=names[p.away]||p.away;
   const fav=p.pred_margin>=0?p.home:p.away,live=Date.parse(p.start_time)<=Date.now();
   const side=v=>v>=0?p.home:p.away;
-  const why=[["Fuerza de cada equipo (rating Elo)",c.d],["Localía",c.hca??c.const],["Altura (Denver y Utah)",c.alt],["Clásico de la misma ciudad",c.derby],["Rival de división",c.div],["Localía propia del equipo",c.team],["Historial de este cruce",c.pair],[`${p.home} jugó ayer`,f.hb2b?c.hb2b:null],[`${p.away} jugó ayer`,f.ab2b?c.ab2b:null],["Forma, últimos 10 partidos",c.form]]
+  const why=[["Fuerza de cada equipo (rating Elo)",c.d],["Localía",c.hca??c.const],["Altura (Denver y Utah)",c.alt],["Clásico de la misma ciudad",c.derby],["Rival de división",c.div],["Localía propia del equipo",c.team],["Historial de este cruce",c.pair],["Estrellas que no juegan",c.xs],["Inicio de la ausencia de una estrella",c.xs1],["Jugadores muy buenos que no juegan",c.xa],["Jugadores buenos que no juegan",c.xb],["Peso propio de los ausentes",c.pl],[`${p.home} jugó ayer`,f.hb2b?c.hb2b:null],[`${p.away} jugó ayer`,f.ab2b?c.ab2b:null],["Forma, últimos 10 partidos",c.form]]
     .filter(x=>x[1]!=null&&Math.abs(x[1])>=0.05).map(([k,v])=>`<li><span>${esc(k)}</span><b>${esc(side(v))} +${fcN1(Math.abs(v))}</b></li>`).join("");
-  const outs=(f.bajas_local||f.bajas_visita)?`<li><span class="fc-out">Bajas declaradas · ${esc(p.home)}: ${esc((f.bajas_local||[]).join(", ")||"ninguna")} · ${esc(p.away)}: ${esc((f.bajas_visita||[]).join(", ")||"ninguna")}. Aún no entran al cálculo; se registran para medir su efecto.</span></li>`:"";
+  const TIER={s:"estrella",a:"muy bueno",b:"bueno"},ST=x=>/out/i.test(x||"")?"fuera":/doubt/i.test(x||"")?"probable baja":/question/i.test(x||"")?"en duda":/day/i.test(x||"")?"día a día":/probable/i.test(x||"")?"probable que juegue":"";
+  const bc=f.bajas_calc||[],dud=bc.filter(b=>b.w<1);
+  const calc=bc.length?`<li><span class="fc-out"><b style="font-weight:600;color:var(--ink)">Bajas que entran al cálculo</b>${bc.map(b=>`<br>${esc(b.n)} (${esc(b.eq)}) · ${TIER[b.t]||""} · ${esc(ST(b.st)||"fuera")} · −${fcN1(b.pts*b.w)} pts${b.w<1?` de ${fcN1(b.pts)} si no juega`:""}`).join("")}</span></li>`:"";
+  let rng="";if(dud.length){const sd=f.sd_base||13.6,P=m=>0.5*(1+Math.tanh(0.7978845608*(m/sd)*(1+0.044715*(m/sd)**2)));let mp=p.pred_margin,mn=p.pred_margin;
+    dud.forEach(b=>{const s=b.eq===p.home?1:-1;mp+=s*b.w*b.pts;mn-=s*(1-b.w)*b.pts});const a=P(mp),z=P(mn);
+    rng=`<li><span class="fc-out"><b style="font-weight:600;color:var(--ink)">Pronóstico menos seguro</b>: hay ${dud.length} jugador${dud.length>1?"es":""} en duda. Según quién juegue, ${esc(p.home)} gana entre ${fcPct(Math.min(a,z))} y ${fcPct(Math.max(a,z))}.</span></li>`}
+  const outs=(f.bajas_local||f.bajas_visita)?`<li><span class="fc-out">Reporte de bajas · ${esc(p.home)}: ${esc((f.bajas_local||[]).join(", ")||"ninguna")} · ${esc(p.away)}: ${esc((f.bajas_visita||[]).join(", ")||"ninguna")}.</span></li>`:"";
   return `<div class="sp-card fc-g"><div class="fc-when"><span>${esc(fcWhen(p.start_time))}</span><span>${live?"en juego":"Elo "+Math.round(f.elo_a||0)+" · "+Math.round(f.elo_h||0)}</span></div>
     <div class="fc-teams"><div class="fc-tm">${fcLogo(p.away)}<span>${esc(an)}</span></div><span class="fc-at">en</span><div class="fc-tm r"><span>${esc(hn)}</span>${fcLogo(p.home)}</div></div>
     <div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i></div>
     <div class="fc-pct"><span class="${pa>ph?"w":"l"}">${fcPct(pa)}</span><span class="${ph>=pa?"w":"l"}">${fcPct(ph)}</span></div>
     <div class="fc-mk"><div><span>Hándicap</span><b>${esc(fav)} −${fcN1(Math.abs(p.pred_margin))}</b></div><div><span>Total de puntos</span><b>${fcN1(p.pred_total)}</b></div></div>
-    <details class="fc-why"><summary>Qué explica el pronóstico</summary><ul>${why}${outs}</ul></details></div>`}
+    ${dud.length?`<div class="fc-doubt">Hay jugadores en duda; este pronóstico es menos seguro</div>`:""}<details class="fc-why"><summary>Qué explica el pronóstico</summary><ul>${why}${calc}${rng}${outs}</ul></details></div>`}
 function fcStats(rows,baseMargin){const n=rows.length;if(!n)return null;const a=(fn)=>rows.reduce((s,r)=>s+fn(r),0)/n;
   return {n,acc:a(r=>r.correct?1:0),ref:a(r=>r.actual_margin>0?1:0),mm:a(r=>Math.abs(r.err_margin)),mmr:a(r=>Math.abs(r.actual_margin-baseMargin)),
     mt:a(r=>Math.abs(r.err_total)),mtr:a(r=>Math.abs(r.actual_total-((r.factors||{}).league||r.pred_total)))}}

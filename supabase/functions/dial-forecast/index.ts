@@ -104,20 +104,76 @@ async function loadGames(): Promise<Game[]> {
   }
   return out;
 }
-// bajas: jugadores declarados "Out" por equipo
+// reporte de bajas: estado de cada jugador por equipo (Out, Doubtful, Questionable, Day-To-Day…)
 async function injuries(nameToAbbr: Map<string, string>) {
-  const out = new Map<string, { out: number; names: string[] }>();
+  const out = new Map<string, { out: number; names: string[]; list: { name: string; status: string }[] }>();
   try {
     const j = await espn("injuries");
     for (const tb of j?.injuries || []) {
       const abbr = tb.team?.abbreviation || nameToAbbr.get(tb.displayName) ||
         tb.injuries?.[0]?.athlete?.team?.abbreviation;
       if (!abbr) continue;
-      const outs = (tb.injuries || []).filter((x: any) => /^out$/i.test(String(x.status || x.type?.description || "")));
-      out.set(abbr, { out: outs.length, names: outs.map((x: any) => x.athlete?.displayName).filter(Boolean).slice(0, 6) });
+      const list = (tb.injuries || []).map((x: any) => ({ name: x.athlete?.displayName, status: String(x.status || x.type?.description || "") })).filter((x: any) => x.name);
+      const outs = list.filter((x: any) => /^out$/i.test(x.status));
+      out.set(abbr, { out: outs.length, names: outs.map((x: any) => x.name).slice(0, 6), list });
     }
   } catch (_) { /* sin datos de bajas: el pronóstico sigue */ }
   return out;
+}
+// probabilidad de jugar según el estado del reporte
+const playProb = (st: string) => /out|suspen/i.test(st) ? 0 : /doubt/i.test(st) ? 0.25 : /question/i.test(st) ? 0.5 : /day/i.test(st) ? 0.6 : /probable/i.test(st) ? 0.9 : 1;
+
+// planilla de un partido (ESPN) → filas de dial_fc_box
+const numx = (x: any) => { const n = parseInt(String(x ?? ""), 10); return Number.isFinite(n) ? n : null; };
+const pairx = (x: any) => { const [a, b] = String(x ?? "").split("-"); return [numx(a), numx(b)]; };
+function parseBox(gameId: string, j: any) {
+  const rows: any[] = [];
+  for (const tp of j?.boxscore?.players || []) {
+    const team = tp.team?.abbreviation, st = tp.statistics?.[0];
+    if (!team || !st) continue;
+    const lab: string[] = (st.labels || st.names || []).map((x: string) => String(x).toUpperCase());
+    for (const a of st.athletes || []) {
+      const s = a.stats || [], g = (k: string) => (lab.indexOf(k) >= 0 ? s[lab.indexOf(k)] : null);
+      const [fgm, fga] = pairx(g("FG")), [fg3m, fg3a] = pairx(g("3PT")), [ftm, fta] = pairx(g("FT"));
+      const dnp = !!a.didNotPlay || !s.length || numx(g("MIN")) === 0;
+      if (!a.athlete?.id) continue;
+      rows.push({ game_id: gameId, team, athlete_id: String(a.athlete.id), name: a.athlete.displayName ?? null,
+        pos: a.athlete.position?.abbreviation ?? null, starter: !!a.starter, dnp, reason: a.reason ?? null,
+        min: dnp ? 0 : numx(g("MIN")), pts: numx(g("PTS")), reb: numx(g("REB")), ast: numx(g("AST")), stl: numx(g("STL")),
+        blk: numx(g("BLK")), tov: numx(g("TO")), fgm, fga, fg3m, fg3a, ftm, fta, oreb: numx(g("OREB")), pf: numx(g("PF")),
+        pm: numx(String(g("+/-") ?? "").replace("+", "")) });
+    }
+  }
+  return rows;
+}
+// planillas de los partidos recién terminados y recálculo de jugadores y ausencias de la temporada
+async function refreshBoxes(season: number) {
+  const { data: gs } = await db.from("dial_fc_games").select("id").eq("sport", SPORT).eq("status", "post").eq("box", false)
+    .gte("start_time", new Date(Date.now() - 6 * DAY).toISOString()).limit(40);
+  let n = 0;
+  for (let i = 0; i < (gs || []).length; i += 8) {
+    const res = await Promise.all(gs!.slice(i, i + 8).map(async (g) => {
+      try { return { id: g.id, rows: parseBox(g.id, await espn(`summary?event=${g.id}`)) }; } catch (_) { return null; }
+    }));
+    for (const r of res) {
+      if (!r || r.rows.length < 10) continue;
+      const { error } = await db.from("dial_fc_box").upsert(r.rows, { onConflict: "game_id,athlete_id" });
+      if (!error) { await db.from("dial_fc_games").update({ box: true }).eq("id", r.id); n++; }
+    }
+  }
+  const { error } = await db.rpc("dial_fc_refresh", { p_from: season });
+  if (error) throw error;
+  return n;
+}
+async function loadAbs() {
+  const m = new Map<string, any>();
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from("dial_fc_game_abs").select("game_id,home_abs,away_abs").order("game_id").range(from, from + 999);
+    if (error) throw error;
+    for (const r of data!) m.set(r.game_id, r);
+    if (data!.length < 1000) break;
+  }
+  return m;
 }
 
 // ---------- variables previas al partido ----------
@@ -128,7 +184,7 @@ for (const [d, ts] of Object.entries({ atl: "BOS BKN NY PHI TOR", cen: "CHI CLE 
   for (const t of ts.split(" ")) DIV[t] = d;
 const DEF_ELO = { k: 20, hca: 70, revert: 0.75, mean: 1505, pts_per_elo: 28 };
 type Team = { elo: number; season: number; pf: number; pa: number; lastDay: number; recent: number[]; gp: number; w: number; l: number; name: string | null };
-function features(games: Game[], eloP = DEF_ELO) {
+function features(games: Game[], eloP = DEF_ELO, abs?: Map<string, any>) {
   const S = new Map<string, Team>();
   let league = 215; // promedio móvil del total de puntos de la liga
   const feats = new Map<string, any>();
@@ -160,6 +216,7 @@ function features(games: Game[], eloP = DEF_ELO) {
       exp_total: (h.pf + a.pa) / 2 + (a.pf + h.pa) / 2,
       league, po: g.season_type === 3 ? 1 : 0,
       gp_h: h.gp, gp_a: a.gp, month: new Date(g.start_time).getUTCMonth() + 1,
+      abs_h: abs?.get(g.id)?.home_abs || [], abs_a: abs?.get(g.id)?.away_abs || [],
     };
     feats.set(g.id, f);
     h.lastDay = day; a.lastDay = day;
@@ -194,7 +251,13 @@ const VARIANTS: Record<string, string[]> = {
   "altura+rivalidad": [...BASE_VARS, "alt", "derby", "div"],
   "altura+rivalidad+equipo": [...BASE_VARS, "alt", "derby", "div", "team"],
   "altura+rivalidad+equipo+cruce": [...BASE_VARS, "alt", "derby", "div", "team", "pair"],
+  "ausencias": [...BASE_VARS, "xs", "xs1", "xa", "xb"],
+  "ausencias+jugador": [...BASE_VARS, "xs", "xs1", "xa", "xb", "pl"],
 };
+// ausencias: suma ponderada (w = probabilidad de no jugar; 1 si ya se sabe), visita menos local
+const absW = (l: any[], fn: (x: any) => boolean) => (l || []).reduce((s, x) => s + (fn(x) ? (x.w ?? 1) : 0), 0);
+const absD = (f: any, fn: (x: any) => boolean) => absW(f.abs_a, fn) - absW(f.abs_h, fn);
+const plW = (l: any[], P: any) => (l || []).reduce((s, x) => s + (x.w ?? 1) * (P.player_g[x.id] || 0), 0);
 const T_VARS = ["const", "exp_total", "league", "po", "b2b"];
 const SIG = 13.4; // desviación típica del margen de un partido
 function val(f: any, v: string, P?: any) {
@@ -203,6 +266,11 @@ function val(f: any, v: string, P?: any) {
   if (v === "team") return P?.team_g ? (f.hca ?? 1) * ((P.team_g[f.h] || 0) + (P.team_g[f.a] || 0)) / 2 : 0;
   if (v === "pair") return P?.pair_g ? (f.hca ?? 1) * (P.pair_g[`${f.h}-${f.a}`] || 0) : 0;
   if (v === "hca") return f.hca ?? 1;
+  if (v === "xs") return absD(f, (x) => x.t === "s");
+  if (v === "xs1") return absD(f, (x) => x.t === "s" && x.k <= 2);
+  if (v === "xa") return absD(f, (x) => x.t === "a");
+  if (v === "xb") return absD(f, (x) => x.t === "b");
+  if (v === "pl") return P?.player_g ? plW(f.abs_a, P) - plW(f.abs_h, P) : 0;
   return Number(f[v] ?? 0);
 }
 function ols(X: number[][], y: number[], ridge = 1e-6) {
@@ -264,11 +332,27 @@ function effects(rows: Row[], P: any, wantPair: boolean) {
   }
   return out;
 }
+// Peso propio de cada jugador sobre el promedio de su nivel: solo con 30+ ausencias y |z| ≥ 2, encogido según el ruido.
+function playerEffects(rows: Row[], P: any) {
+  const acc: Record<string, { s: number; n: number; name: string }> = {};
+  for (const r of rows) {
+    if (!r.f.abs_h.length && !r.f.abs_a.length) continue;
+    const e = r.margin - predM(r.f, P);
+    for (const x of r.f.abs_h) { (acc[x.id] ??= { s: 0, n: 0, name: x.n }); acc[x.id].s += e; acc[x.id].n++; }
+    for (const x of r.f.abs_a) { (acc[x.id] ??= { s: 0, n: 0, name: x.n }); acc[x.id].s -= e; acc[x.id].n++; }
+  }
+  const pr = Object.entries(acc).filter(([, a]) => a.n >= 30).map(([id, a]) => ({ id, name: a.name, n: a.n, m: a.s / a.n, se2: SIG * SIG / a.n }));
+  const tau2 = Math.max(0, avg(pr.map((x) => x.m * x.m)) - avg(pr.map((x) => x.se2)));
+  const player_g: Record<string, number> = {}, player_n: Record<string, string> = {};
+  for (const x of pr) if (tau2 > 0 && Math.abs(x.m) / Math.sqrt(x.se2) >= 2) { player_g[x.id] = r3(-x.m * tau2 / (tau2 + x.se2)); player_n[x.id] = x.name; }
+  return { player_g, player_n, player_tau: r3(Math.sqrt(tau2)) };
+}
 function fitVariant(rows: Row[], name: string) {
   const vars = VARIANTS[name];
-  const simple = vars.filter((v) => v !== "team" && v !== "pair");
+  const simple = vars.filter((v) => v !== "team" && v !== "pair" && v !== "pl");
   let P = fit(rows, simple);
-  if (vars.length !== simple.length) P = fit(rows, vars, effects(rows, P, vars.includes("pair")));
+  if (vars.includes("pl")) P = fit(rows, vars, playerEffects(rows, P));
+  else if (vars.length !== simple.length) P = fit(rows, vars, effects(rows, P, vars.includes("pair")));
   P.variant = name;
   return P;
 }
@@ -278,7 +362,8 @@ function predict(f: any, P: any) {
   for (const v of Object.keys(P.margin)) { const c = P.margin[v] * val(f, v, P); contrib[v] = r1(c); m += c; }
   let t = 0;
   for (const v of Object.keys(P.total)) t += P.total[v] * val(f, v);
-  return { p: Phi(m / P.sigma), margin: m, total: t, contrib };
+  const sd = Math.sqrt(P.sigma * P.sigma + (f.extra_var || 0)); // dudas del reporte: pronóstico menos seguro
+  return { p: Phi(m / sd), margin: m, total: t, contrib, sd };
 }
 
 // ---------- evaluación ----------
@@ -345,9 +430,19 @@ function ratingsRows(teams: Map<string, Team>) {
 }
 const completed = (g: Game) => g.status === "post" && g.home_score != null && g.away_score != null;
 const toRow = (g: Game, f: any): Row => ({ g, f, margin: g.home_score! - g.away_score!, total: g.home_score! + g.away_score! });
+// puntos que resta cada baja según el modelo (nivel, inicio de la ausencia y peso propio)
+function absPts(x: any, P: any) {
+  const c = P.margin || {};
+  const v = (x.t === "s" ? c.xs || 0 : x.t === "a" ? c.xa || 0 : x.t === "b" ? c.xb || 0 : 0) + (x.t === "s" && x.k <= 2 ? c.xs1 || 0 : 0) +
+    (c.pl && P.player_g ? c.pl * (P.player_g[x.id] || 0) : 0);
+  return r1(v);
+}
 function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: Map<string, any>) {
   const x = predict(f, P);
   const ho = outs?.get(g.home), ao = outs?.get(g.away);
+  const usesAbs = "xs" in (P.margin || {});
+  const bajas = usesAbs ? [...(f.abs_h || []).map((b: any) => ({ ...b, eq: g.home })), ...(f.abs_a || []).map((b: any) => ({ ...b, eq: g.away }))]
+    .map((b: any) => ({ n: b.n, eq: b.eq, t: b.t, k: b.k, w: b.w ?? 1, st: b.st ?? null, pts: absPts(b, P) })).filter((b: any) => b.pts > 0) : [];
   return {
     game_id: g.id, sport: SPORT, kind, model_version: version, start_time: g.start_time, season: g.season,
     season_type: g.season_type, home: g.home, away: g.away,
@@ -356,6 +451,8 @@ function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: 
       contrib: x.contrib, elo_h: f.elo_h, elo_a: f.elo_a, hb2b: f.hb2b, ab2b: f.ab2b, form: r1(f.form),
       exp_total: r1(f.exp_total), league: r1(f.league),
       ...(ho || ao ? { bajas_local: ho?.names || [], bajas_visita: ao?.names || [] } : {}),
+      ...(bajas.length ? { bajas_calc: bajas } : {}),
+      ...(f.extra_var ? { sd: r1(x.sd), sd_base: r1(P.sigma) } : {}),
     },
     home_out: outs ? (ho?.out ?? 0) : null, away_out: outs ? (ao?.out ?? 0) : null,
     updated_at: new Date().toISOString(),
@@ -366,8 +463,9 @@ function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: 
 // y modelo activo con la variante ganadora y toda la historia.
 async function rebuild(force?: string | null) {
   const games = await loadGames();
-  const { feats, teams } = features(games);
-  const done = games.filter(completed).filter((g) => g.season >= 2018);
+  const abs = await loadAbs();
+  const { feats, teams } = features(games, DEF_ELO, abs);
+  const done = games.filter(completed).filter((g) => g.season >= 2018 && abs.has(g.id)); // solo partidos con planilla
   const train = done.filter((g) => g.season <= 2023).map((g) => toRow(g, feats.get(g.id)));
   const test = done.filter((g) => g.season >= 2024);
   const variantes: any = {};
@@ -405,7 +503,7 @@ async function rebuild(force?: string | null) {
   await upsertChunks("dial_fc_ratings", ratingsRows(teams), "sport,team");
   return { games: games.length, train: train.length, test: test.length, elegido: best.name, variantes, metrics: best.mt, active: version, params: P };
 }
-const roundFeat = (f: any) => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, typeof v === "number" ? r3(v as number) : v]));
+const roundFeat = (f: any) => Object.fromEntries(Object.entries(f).filter(([k]) => k !== "abs_h" && k !== "abs_a").map(([k, v]) => [k, typeof v === "number" ? r3(v as number) : v]));
 
 async function activeModel() {
   const { data, error } = await db.from("dial_fc_model").select("*").eq("sport", SPORT).eq("active", true)
@@ -420,8 +518,12 @@ async function auto() {
   const ingested = Object.values(await ingestKeys(dayKeys(now - 3 * DAY, now + 2 * DAY))).reduce((a, b) => a + b, 0);
   let model = await activeModel();
   if (!model) { await rebuild(); model = await activeModel(); }
-  const games = await loadGames();
-  const { feats, teams } = features(games, model.params.elo || DEF_ELO);
+  let games = await loadGames();
+  const season = Math.max(...games.map((g) => g.season));
+  let boxes = 0;
+  try { boxes = await refreshBoxes(season); } catch (_) { /* sin planillas nuevas: se sigue con lo que hay */ }
+  const abs = await loadAbs();
+  const { feats, teams } = features(games, model.params.elo || DEF_ELO, abs);
   const byId = new Map(games.map((g) => [g.id, g]));
 
   // 1) evaluar pronósticos vencidos
@@ -442,7 +544,25 @@ async function auto() {
     const nameToAbbr = new Map<string, string>();
     for (const g of games) { if (g.home_name) nameToAbbr.set(g.home_name, g.home); if (g.away_name) nameToAbbr.set(g.away_name, g.away); }
     const outs = await injuries(nameToAbbr);
-    preds = upcoming.map((g) => predRow(g, feats.get(g.id), model.params, model.version, "live", outs.size ? outs : undefined));
+    // bajas del reporte → jugadores con su nivel; las dudas entran con su probabilidad y agregan incertidumbre
+    const { data: pls } = await db.from("dial_fc_players").select("athlete_id,name,team,tier,mpg,last_game").eq("season", season).in("tier", ["s", "a", "b"]).gte("mpg", 15);
+    const byName = new Map((pls || []).map((p: any) => [`${p.team}|${p.name}`, p]));
+    const P = model.params;
+    const liveAbs = (team: string) => {
+      const list: any[] = [];
+      for (const it of outs.get(team)?.list || []) {
+        const p = playProb(it.status), pl = byName.get(`${team}|${it.name}`);
+        if (p >= 1 || !pl) continue;
+        const missed = games.filter((x) => completed(x) && (x.home === team || x.away === team) && x.start_time > pl.last_game).length;
+        list.push({ id: pl.athlete_id, n: pl.name, t: pl.tier, k: missed + 1, w: r3(1 - p), st: it.status, p });
+      }
+      return list;
+    };
+    preds = upcoming.map((g) => {
+      const f = { ...feats.get(g.id), abs_h: liveAbs(g.home), abs_a: liveAbs(g.away) };
+      f.extra_var = [...f.abs_h, ...f.abs_a].filter((b: any) => b.p > 0).reduce((s: number, b: any) => s + absPts({ ...b }, P) ** 2 * b.p * (1 - b.p), 0);
+      return predRow(g, f, P, model.version, "live", outs.size ? outs : undefined);
+    });
     await upsertChunks("dial_fc_predictions", preds, "game_id,kind");
   }
 
@@ -455,14 +575,14 @@ async function auto() {
   // 4) una vez al mes, recalcular coeficientes con toda la historia
   let refit = null;
   if (now - Date.parse(model.created_at) > 30 * DAY) {
-    const done = games.filter(completed).filter((g) => g.season >= 2018);
+    const done = games.filter(completed).filter((g) => g.season >= 2018 && abs.has(g.id));
     const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), model.params.variant || "base");
     const version = `nba-${P.variant}-${new Date().toISOString().slice(0, 10)}`;
     await db.from("dial_fc_model").update({ active: false }).eq("sport", SPORT);
     await db.from("dial_fc_model").upsert({ version, sport: SPORT, active: true, params: P, metrics: model.metrics, notes: "Recalibración mensual." }, { onConflict: "version" });
     refit = version;
   }
-  return { ingested, evaluated: evals.length, predicted: preds.length, model: model.version, refit };
+  return { ingested, boxes, evaluated: evals.length, predicted: preds.length, model: model.version, refit };
 }
 
 Deno.serve(async (req) => {
