@@ -482,9 +482,9 @@ a{color:inherit}
 .fc-miss span{grid-column:1/-1;font-size:11.5px;color:var(--dim)}
 .fc-hist{font-size:12.5px;color:var(--muted);line-height:1.5;margin:10px 2px 0}
 .fc-disc{margin:6px 2px 0;font-size:11.5px;color:var(--dim)}
-.fc-bar .fc-rg{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,#F2B544 0 4px,rgba(242,181,68,.45) 4px 8px)}
-.fc-pct .fc-rgl{font:500 11px var(--mono);color:#F2B544;align-self:center}
-.fc-doubt{font:500 11px var(--mono);color:#F2B544;border:1px dashed #F2B544;border-radius:8px;padding:4px 8px}
+.fc-bar .fc-rg{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--s-deportes,#15803D) 70%,#fff) 0 4px,color-mix(in srgb,var(--s-deportes,#15803D) 35%,transparent) 4px 8px)}
+.fc-pct .fc-rgl{font:500 11px var(--mono);color:color-mix(in srgb,var(--s-deportes,#15803D) 65%,#fff);align-self:center}
+.fc-doubt{font:500 11px var(--mono);color:color-mix(in srgb,var(--s-deportes,#15803D) 65%,#fff);border:1px dashed color-mix(in srgb,var(--s-deportes,#15803D) 60%,transparent);background:linear-gradient(90deg,color-mix(in srgb,var(--s-deportes,#15803D) 18%,transparent),transparent);border-radius:8px;padding:4px 8px}
 @media (max-width:520px){.fc-kpi b{font-size:18px}}
 
 .ssel{display:grid;gap:12px;margin-bottom:4px}
@@ -2183,7 +2183,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09u";
+const APP_VERSION="2026-11-09v";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
