@@ -484,6 +484,10 @@ a{color:inherit}
 .fc-disc{margin:6px 2px 0;font-size:11.5px;color:var(--dim)}
 .fc-bar .fc-rg{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--s-deportes,#15803D) 70%,#fff) 0 4px,color-mix(in srgb,var(--s-deportes,#15803D) 35%,transparent) 4px 8px)}
 .fc-pct .fc-rgl{font:500 11px var(--mono);color:color-mix(in srgb,var(--s-deportes,#15803D) 65%,#fff);align-self:center}
+.fc-res{display:grid;gap:8px;border:1px solid transparent;border-radius:12px;margin:-2px -6px;padding:2px 6px}
+.fc-res.fc-dud{border:1px dashed color-mix(in srgb,var(--s-deportes,#15803D) 65%,transparent);padding:8px 8px;margin:0 -2px}
+.fc-leg{display:flex;align-items:center;gap:8px;margin:12px 2px 0;font-size:12px;color:var(--dim)}
+.fc-leg-box{flex:none;width:22px;height:14px;border:1px dashed color-mix(in srgb,var(--s-deportes,#15803D) 65%,transparent);border-radius:4px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--s-deportes,#15803D) 45%,transparent) 0 3px,transparent 3px 6px)}
 .fc-doubt{font:500 11px var(--mono);color:color-mix(in srgb,var(--s-deportes,#15803D) 65%,#fff);border:1px dashed color-mix(in srgb,var(--s-deportes,#15803D) 60%,transparent);background:linear-gradient(90deg,color-mix(in srgb,var(--s-deportes,#15803D) 18%,transparent),transparent);border-radius:8px;padding:4px 8px}
 @media (max-width:520px){.fc-kpi b{font-size:18px}}
 
@@ -2183,7 +2187,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09w";
+const APP_VERSION="2026-11-09x";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2836,10 +2840,10 @@ function fcCard(p,names){const ph=p.p_home,pa=1-ph,f=p.factors||{},c=f.contrib||
   const outs=(f.bajas_local||f.bajas_visita)?`<li><span class="fc-out">Reporte de bajas · ${esc(p.home)}: ${esc((f.bajas_local||[]).join(", ")||"ninguna")} · ${esc(p.away)}: ${esc((f.bajas_visita||[]).join(", ")||"ninguna")}.</span></li>`:"";
   return `<div class="sp-card fc-g"><div class="fc-when"><span>${esc(fcWhen(p.start_time))}</span><span>${live?"en juego":"Elo "+Math.round(f.elo_a||0)+" · "+Math.round(f.elo_h||0)}</span></div>
     <div class="fc-teams"><div class="fc-tm">${fcLogo(p.away)}<span>${esc(an)}</span></div><span class="fc-at">en</span><div class="fc-tm r"><span>${esc(hn)}</span>${fcLogo(p.home)}</div></div>
-    <div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i>${lo!=null?`<b class="fc-rg" style="left:${((1-hi)*100).toFixed(1)}%;width:${Math.max((hi-lo)*100,1.5).toFixed(1)}%"></b>`:""}</div>
+    <div class="fc-res${dud.length?" fc-dud":""}"><div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i>${lo!=null?`<b class="fc-rg" style="left:${((1-hi)*100).toFixed(1)}%;width:${Math.max((hi-lo)*100,1.5).toFixed(1)}%"></b>`:""}</div>
     <div class="fc-pct"><span class="${pa>ph?"w":"l"}">${fcPct(pa)}</span>${lo!=null?`<span class="fc-rgl">rango por dudas ${ph>=.5?`${fcPct(lo)}–${fcPct(hi)}`:`${fcPct(1-hi)}–${fcPct(1-lo)}`}</span>`:""}<span class="${ph>=pa?"w":"l"}">${fcPct(ph)}</span></div>
-    <div class="fc-mk"><div><span>Hándicap</span><b>${esc(fav)} −${fcN1(Math.abs(p.pred_margin))}</b></div><div><span>Total de puntos</span><b>${fcN1(p.pred_total)}</b></div></div>
-    ${dud.length?`<div class="fc-doubt">Hay jugadores en duda; este pronóstico es menos seguro</div>`:""}<details class="fc-why"><summary>Qué explica el pronóstico</summary><ul>${why}${calc}${rng}${outs}</ul></details></div>`}
+    <div class="fc-mk"><div><span>Hándicap</span><b>${esc(fav)} −${fcN1(Math.abs(p.pred_margin))}</b></div><div><span>Total de puntos</span><b>${fcN1(p.pred_total)}</b></div></div></div>
+    <details class="fc-why"><summary>Qué explica el pronóstico</summary><ul>${why}${calc}${rng}${outs}</ul></details></div>`}
 function fcStats(rows,baseMargin){const n=rows.length;if(!n)return null;const a=(fn)=>rows.reduce((s,r)=>s+fn(r),0)/n;
   return {n,acc:a(r=>r.correct?1:0),ref:a(r=>r.actual_margin>0?1:0),mm:a(r=>Math.abs(r.err_margin)),mmr:a(r=>Math.abs(r.actual_margin-baseMargin)),
     mt:a(r=>Math.abs(r.err_total)),mtr:a(r=>Math.abs(r.actual_total-((r.factors||{}).league||r.pred_total)))}}
@@ -2862,7 +2866,7 @@ async function nbaForecast(tok){const bN=$("fcN"),bH=$("fcH");if(!bN||!bH)return
     const act=mdl.find(m=>m.active)||mdl[0]||{},base=mdl.find(m=>m.version==="baseline-2018-2023")||{},bm=(act.params||{}).base_margin??2;
     const soon=up.filter(p=>Date.parse(p.start_time)<now+36*36e5);
     bN.innerHTML=`<div class="topic-head"><div><h2 class="sph">Pronósticos</h2><p class="meta">Próximas 36 horas · probabilidad de ganar, hándicap y total</p></div></div>`+
-      (soon.length?`<div class="fc-grid">${soon.map(p=>fcCard(p,names)).join("")}</div>`:note("No hay partidos en las próximas 36 horas."));
+      (soon.length?`<div class="fc-grid">${soon.map(p=>fcCard(p,names)).join("")}</div>${soon.some(p=>((p.factors||{}).bajas_calc||[]).some(b=>b.w<1))?`<p class="fc-leg"><span class="fc-leg-box"></span>Recuadro punteado: hay jugadores en duda y el pronóstico es menos seguro. La franja rayada marca el rango de probabilidad según quién juegue.</p>`:""}`:note("No hay partidos en las próximas 36 horas."));
     // Cómo nos ha ido: primero lo guardado antes de cada partido; mientras se junta, la reconstrucción de esta temporada
     const sL=fcStats(live,bm),sB=fcStats(bt,(base.params||{}).base_margin??bm);
     const main=sL&&sL.n>=20?sL:sB,isLive=main===sL;
