@@ -772,9 +772,10 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .sq-tp.on{background:var(--sec);color:var(--sec-ink);border-color:var(--sec)}
 @media (min-width:900px){
   #view-radio{max-width:1100px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;column-gap:18px}
-  #view-radio>.npc{grid-column:1;grid-row:1}
-  #view-radio>.afc{grid-column:1;grid-row:2}
-  #view-radio>.srch{grid-column:2;grid-row:1/span 2;position:sticky;top:12px}
+  #view-radio>.npc{grid-column:1;grid-row:1/span 2;align-self:stretch}
+  #view-radio>.srch{grid-column:2;grid-row:1}
+  #view-radio>.afc{grid-column:2;grid-row:2}
+  #view-radio{grid-template-rows:auto 1fr}
 }
 
 .lcd{all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr);padding:8px;border-radius:18px;background:linear-gradient(180deg,#1b1c20,#0c0d10);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.6),0 10px 28px -14px rgba(0,0,0,.9)}
@@ -1612,6 +1613,7 @@ function homeAct(b){const x=S.find(y=>y.n===b.dataset.n);if(!x)return;
   else{if(current===x)toggle();else{F=x;layout();play(x)}}}
 $("view-radio").addEventListener("click",e=>{const b=e.target.closest("button[data-n]");if(b)homeAct(b)});
 $("favAll").onclick=()=>{const m=$("favMg"),o=m.hidden;m.hidden=!o;$("favAll").setAttribute("aria-expanded",o)};
+if(matchMedia("(min-width:900px)").matches){$("favMg").hidden=false;$("favAll").setAttribute("aria-expanded","true")}
 const popular=()=>S.filter(x=>x.cc==="CL").sort((a,b)=>(b.l||0)-(a.l||0)).slice(0,6);
 function sqRender(){const q=$("sq").value;
   if(q.trim()){const list=sqFind(q);$("sqH").textContent=list.length?`${list.length===30?"30+":list.length} ${list.length===1?"resultado":"resultados"}`:"Sin resultados. Prueba con otra palabra o usa la búsqueda avanzada.";$("sqR").innerHTML=rowHTML(list)}
@@ -2190,7 +2192,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09z";
+const APP_VERSION="2026-11-09z2";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
