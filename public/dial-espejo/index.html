@@ -775,6 +775,7 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   #view-radio>.npc{grid-column:1;grid-row:1}
   #view-radio>.afc{grid-column:1;grid-row:2}
   #view-radio>.srch{grid-column:2;grid-row:1/span 2;position:sticky;top:12px}
+  #view-radio{grid-template-rows:auto 1fr}#view-radio>.afc{align-self:start}
 }
 
 .lcd{all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr);padding:8px;border-radius:18px;background:linear-gradient(180deg,#1b1c20,#0c0d10);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.6),0 10px 28px -14px rgba(0,0,0,.9)}
@@ -824,7 +825,20 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   .hl-c.me polygon{fill:color-mix(in srgb,var(--sec) 22%,transparent);stroke:var(--sec);stroke-width:1.6}
   .hl-c.me text{fill:var(--ink);font-weight:600}.hl-c .hl-s{font-size:8px;fill:var(--sec)}
   .hl-c.on polygon{stroke:var(--sec);stroke-width:2}
-  .hl-tip{font:400 11px var(--mono);color:var(--muted);min-height:16px;text-align:center}}
+  .hl-tip{font:400 11px var(--mono);color:var(--muted);min-height:16px;text-align:center}
+  .hl-f{display:grid;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+  .hl-ft{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px}
+  .hl-tb{border:0;background:transparent;color:var(--muted);font-family:inherit;font-weight:500;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:12.5px;display:inline-flex;gap:6px;justify-content:center;align-items:center}
+  .hl-tb.sel{background:var(--panel-2,#1A1A21);color:var(--ink)}.hl-tb.on{color:#F5C542}
+  .hl-tb b{font:600 10px var(--mono);background:var(--sec);color:var(--sec-ink);border-radius:99px;padding:1px 6px}
+  .hl-fc{display:flex;flex-wrap:wrap;gap:6px}
+  .hl-ch{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:99px;padding:5px 10px;font-family:inherit;font-size:12px;cursor:pointer}
+  .hl-ch i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+  .hl-ch small{font:400 10.5px var(--mono);color:var(--muted)}
+  .hl-ch.on{border-color:var(--sec);background:color-mix(in srgb,var(--sec) 18%,transparent)}
+  .hl-fs{display:flex;justify-content:space-between;align-items:center;font:400 11px var(--mono);color:var(--muted)}
+  .hl-clr{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:99px;padding:4px 10px;font:inherit;cursor:pointer}
+}
 html[data-sec="radio"]:not(.adv-open) #player{display:none}
 html[data-sec="radio"]:not(.adv-open) #view-radio{padding-bottom:40px}
 .adv{position:fixed;inset:0;z-index:30;overflow:auto;overscroll-behavior:contain;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:env(safe-area-inset-top,0px) var(--gut-r) 0 var(--gut-l)}
@@ -859,7 +873,7 @@ html.adv-open #player{z-index:35}
     <form class="sq" id="sqF" role="search"><input id="sq" type="search" placeholder="Radio, ciudad, país o estilo" autocomplete="off" enterkeyhint="search" aria-label="Buscar radio"><button class="sq-go" aria-label="Buscar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button></form>
     <div class="sq-h" id="sqH"></div>
     <div class="sq-r" id="sqR"></div>
-    <div class="hlite" id="hLite" aria-label="Panal de afinidad"><div class="hk">Explorar por afinidad <span id="hlN"></span></div><svg id="hlSvg" role="group"></svg><div class="hl-tip" id="hlTip" aria-live="polite"></div></div>
+    <div class="hlite" id="hLite" aria-label="Panal de afinidad"><div class="hk">Explorar por afinidad <span id="hlN"></span></div><svg id="hlSvg" role="group"></svg><div class="hl-tip" id="hlTip" aria-live="polite"></div><div class="hl-f" id="hlF"></div></div>
     <button class="adv-open" id="advOpen"><span><b>Búsqueda avanzada</b><small>Panal de afinidad, globo y filtros</small></span><span aria-hidden="true">›</span></button>
   </section>
   <section class="hcard afc" aria-label="Radios afines">
@@ -1297,6 +1311,7 @@ function renderFilters(){if(window.altSync)setTimeout(window.altSync,0);
   const desc=(FAV?["Favoritas"]:[]).concat([...SEL.fam].map(k=>FAM[k][0])).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],query?[`“${query}”`]:[]);
   $("fsumT").textContent=act?`${m} de ${S.length} radios · ${desc.join(" + ")}`:`${S.length} radios`;
   $("fclr").hidden=!act;
+  if(typeof hlRender==="function")hlRender();
 }
 $("fclr").onclick=()=>{FAV=false;store.set("dial-f-fav",false);Object.values(SEL).forEach(x=>x.clear());["fam","lang","reg"].forEach(k=>store.set("dial-f-"+k,[]));query="";$("rq").value="";if(MOVE==="vivo")F=null;layout()};
 $("rq").addEventListener("input",e=>{query=e.target.value.trim();if(MOVE==="vivo")F=null;layout()});
@@ -1625,9 +1640,25 @@ function homeAct(b){const x=S.find(y=>y.n===b.dataset.n);if(!x)return;
   if(b.dataset.a==="f"){favs.has(x.n)?favs.delete(x.n):favs.add(x.n);saveFavs();if(current===x)$("bFav").textContent=favs.has(x.n)?"★":"☆";renderFilters();sqRender()}
   else{if(current===x)toggle();else{F=x;layout();play(x)}}}
 $("view-radio").addEventListener("click",e=>{const b=e.target.closest("button[data-n]");if(b)homeAct(b)});
+
+// Filtros del panal liviano: los mismos de la búsqueda avanzada (se comparten), en versión compacta
+let hlTab=store.get("dial-hltab","fam");
+function hlFilters(){const box=$("hlF");if(!box)return;
+  const tabs=[["fav",`${FAV?"★":"☆"} Favoritas`],...FTABS];
+  const act=(FAV?1:0)+SEL.fam.size+SEL.lang.size+SEL.reg.size;
+  let h=`<div class="hl-ft" role="tablist">`+tabs.map(([k,l])=>{const n=k==="fav"?0:SEL[k].size;return `<button class="hl-tb${k==="fav"?(FAV?" on":""):(hlTab===k?" sel":"")}" data-t="${k}" ${k==="fav"?`aria-pressed="${FAV}"`:`role="tab" aria-selected="${hlTab===k}"`}>${esc(l)}${n?`<b>${n}</b>`:""}</button>`}).join("")+`</div>`;
+  h+=`<div class="hl-fc">`+optsOf(hlTab).map(([k,label,col])=>{const on=SEL[hlTab].has(k),cnt=S.filter(x=>matchExcept(x,hlTab)&&HAS[hlTab](x,k)).length;if(!cnt&&!on)return"";
+    return `<button class="hl-ch${on?" on":""}" data-k="${esc(k)}" aria-pressed="${on}" ${col?`style="--c:${col}"`:""}>${col?`<i></i>`:""}${esc(label)}<small>${cnt}</small></button>`}).join("")+`</div>`;
+  const m=S.filter(match).length;
+  h+=`<div class="hl-fs"><span>${act?`${m} de ${S.length} radios`:`${S.length} radios`}</span>${act?`<button class="hl-clr" data-clr="1">Limpiar</button>`:""}</div>`;
+  box.innerHTML=h;
+  box.onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    if(b.dataset.clr){$("fclr").click();return}
+    if(b.dataset.t){if(b.dataset.t==="fav"){FAV=!FAV;store.set("dial-f-fav",FAV);if(MOVE==="vivo")F=null;layout()}else{hlTab=b.dataset.t;store.set("dial-hltab",hlTab);hlRender()}return}
+    if(b.dataset.k){const k=b.dataset.k;SEL[hlTab].has(k)?SEL[hlTab].delete(k):SEL[hlTab].add(k);store.set("dial-f-"+hlTab,[...SEL[hlTab]]);if(MOVE==="vivo")F=null;layout()}}}
 /* Panal liviano (solo computador): la radio actual al centro y sus afines alrededor; toca para escuchar, el panal completo sigue en Búsqueda avanzada */
 function hlRender(){const box=$("hLite");if(!box||!matchMedia("(min-width:900px)").matches)return;const c=homePick();if(!c)return;
-  const af=S.filter(x=>x!==c&&!x.dead).map(x=>({x,v:sim(c,x).v})).sort((a,b)=>b.v-a.v).slice(0,18);
+  const af=S.filter(x=>x!==c&&!x.dead&&match(x)).map(x=>({x,v:sim(c,x).v})).sort((a,b)=>b.v-a.v).slice(0,18);hlFilters();
   const R=30,W=Math.sqrt(3)*R,dirs=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]],cells=[[0,0]];
   for(const rad of [1,2]){let q=-rad,r=rad;for(let d=0;d<6;d++)for(let k=0;k<rad;k++){cells.push([q,r]);q+=dirs[d][0];r+=dirs[d][1]}}
   const pos=([q,r])=>[W*(q+r/2),1.5*R*r],pts=Array.from({length:6},(_,i)=>{const a=Math.PI/180*(60*i-30);return `${(R-2)*Math.cos(a)},${(R-2)*Math.sin(a)}`}).join(" ");
@@ -2220,7 +2251,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09z4";
+const APP_VERSION="2026-11-09z5";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
