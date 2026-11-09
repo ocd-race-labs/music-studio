@@ -16,13 +16,13 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pandas numpy lightgbm scikit-learn shap requests
-      - run: python lab/nba_lab.py
+      - run: python lab/block1.py
         env:
           SB_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM
       - if: always()
         run: |
           git config user.name "dial-lab"
           git config user.email "dial-lab@users.noreply.github.com"
-          git add -f lab/out
+          git add -f lab/out lab/data
           git commit -m "lab: resultados [lab-out]" || echo "sin cambios"
           git push
