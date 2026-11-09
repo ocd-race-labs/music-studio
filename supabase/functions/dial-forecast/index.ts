@@ -176,6 +176,28 @@ async function loadAbs() {
   return m;
 }
 
+// fuerza de jugadores previa a cada partido (local - visita) y su erraticidad, de dial-fc-players
+async function loadPl() {
+  const m = new Map<string, { m: number; v: number }>();
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from("dial_fc_game_pl").select("game_id,pl_margin,pl_var,n_players").order("game_id").range(from, from + 999);
+    if (error) throw error;
+    for (const r of data!) if (r.n_players >= 10) m.set(r.game_id, { m: r.pl_margin, v: r.pl_var });
+    if (data!.length < 1000) break;
+  }
+  return m;
+}
+// actualiza el rating de jugadores con los partidos recién terminados (función dial-fc-players)
+async function stepPlayers(adminKey: string) {
+  try {
+    const r = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/dial-fc-players?n=200&loops=2`, {
+      headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`, "x-admin-key": adminKey },
+      signal: AbortSignal.timeout(60000),
+    });
+    return r.ok ? (await r.json()).total : -1;
+  } catch (_) { return -1; }
+}
+
 // ---------- variables previas al partido ----------
 const ALT = new Set(["DEN", "UTAH"]); // canchas en altura
 const CITY: Record<string, string> = { LAL: "LA", LAC: "LA", NY: "NY", BKN: "NY" }; // clásicos de la misma ciudad
@@ -184,7 +206,7 @@ for (const [d, ts] of Object.entries({ atl: "BOS BKN NY PHI TOR", cen: "CHI CLE 
   for (const t of ts.split(" ")) DIV[t] = d;
 const DEF_ELO = { k: 20, hca: 70, revert: 0.75, mean: 1505, pts_per_elo: 28 };
 type Team = { elo: number; season: number; pf: number; pa: number; lastDay: number; recent: number[]; gp: number; w: number; l: number; name: string | null };
-function features(games: Game[], eloP = DEF_ELO, abs?: Map<string, any>) {
+function features(games: Game[], eloP = DEF_ELO, abs?: Map<string, any>, pl?: Map<string, { m: number; v: number }>) {
   const S = new Map<string, Team>();
   let league = 215; // promedio móvil del total de puntos de la liga
   const feats = new Map<string, any>();
@@ -217,6 +239,8 @@ function features(games: Game[], eloP = DEF_ELO, abs?: Map<string, any>) {
       league, po: g.season_type === 3 ? 1 : 0,
       gp_h: h.gp, gp_a: a.gp, month: new Date(g.start_time).getUTCMonth() + 1,
       abs_h: abs?.get(g.id)?.home_abs || [], abs_a: abs?.get(g.id)?.away_abs || [],
+      plm: pl?.get(g.id)?.m ?? 0, plv: pl?.get(g.id)?.v ?? 0, has_pl: pl?.has(g.id) ? 1 : 0,
+      fin: g.season_type === 2 && Math.max(h.gp, a.gp) >= 72 ? 1 : 0,   // cierre de temporada regular: más incierto
     };
     feats.set(g.id, f);
     h.lastDay = day; a.lastDay = day;
@@ -245,15 +269,16 @@ function features(games: Game[], eloP = DEF_ELO, abs?: Map<string, any>) {
 // ---------- modelo ----------
 // Variantes que compiten en la prueba histórica; gana la que mejor pronostica partidos que no vio.
 const BASE_VARS = ["hca", "d", "hb2b", "ab2b", "form"];
+// (las variantes de localía específica, altura, rivalidad y peso propio por figura ya fueron descartadas en pruebas anteriores)
+const ABS_VARS = [...BASE_VARS, "xs", "xs1", "xa", "xb"];
 const VARIANTS: Record<string, string[]> = {
   "base": BASE_VARS,
-  "altura": [...BASE_VARS, "alt"],
-  "altura+rivalidad": [...BASE_VARS, "alt", "derby", "div"],
-  "altura+rivalidad+equipo": [...BASE_VARS, "alt", "derby", "div", "team"],
-  "altura+rivalidad+equipo+cruce": [...BASE_VARS, "alt", "derby", "div", "team", "pair"],
-  "ausencias": [...BASE_VARS, "xs", "xs1", "xa", "xb"],
-  "ausencias+jugador": [...BASE_VARS, "xs", "xs1", "xa", "xb", "pl"],
+  "ausencias": ABS_VARS,
+  "jugadores": [...ABS_VARS, "plm"],
+  "jugadores+incertidumbre": [...ABS_VARS, "plm"],
 };
+// variantes cuya dispersión depende del partido: erraticidad de los jugadores y cierre de temporada
+const VAR_TERMS = new Set(["jugadores+incertidumbre"]);
 // ausencias: suma ponderada (w = probabilidad de no jugar; 1 si ya se sabe), visita menos local
 const absW = (l: any[], fn: (x: any) => boolean) => (l || []).reduce((s, x) => s + (fn(x) ? (x.w ?? 1) : 0), 0);
 const absD = (f: any, fn: (x: any) => boolean) => absW(f.abs_a, fn) - absW(f.abs_h, fn);
@@ -312,6 +337,16 @@ function fit(rows: Row[], mvars: string[], eff: any = {}) {
     if (ll < bestLL) { bestLL = ll; bestS = sg; }
   }
   P.sigma_p = bestS;
+  if (eff.var_terms) { // s² + a·erraticidad + b·cierre de temporada, elegidos por log loss
+    const rr = rows.map((r, i) => ({ m: r.margin - res[i], y: r.margin > 0 ? 1 : 0, s: r.g.season, v: r.f.plv || 0, fin: r.f.fin || 0 })).filter((x) => x.s >= last - 1);
+    let best = [bestLL, bestS, 0, 0];
+    for (let sg = 8; sg <= 14.01; sg += 0.25) for (const a of [0, 0.05, 0.1, 0.2, 0.3, 0.4]) for (const b of [0, 10, 25, 45]) {
+      const ll = avg(rr.map((x) => { const p = Math.min(Math.max(Phi(x.m / Math.sqrt(sg * sg + a * x.v + b * x.fin)), 1e-4), 1 - 1e-4); return -(x.y * Math.log(p) + (1 - x.y) * Math.log(1 - p)); }));
+      if (ll < best[0]) best = [ll, sg, a, b];
+    }
+    P.sigma_p = best[1]; P.var_a = best[2]; P.var_fin = best[3];
+  }
+  delete P.var_terms;
   P.base_margin = r3(avg(rows.filter((r) => r.f.hca !== 0).map((r) => r.margin)));
   P.elo = DEF_ELO; P.n_train = rows.length;
   return P;
@@ -363,7 +398,7 @@ function playerEffects(rows: Row[], P: any) {
 function fitVariant(rows: Row[], name: string) {
   const vars = VARIANTS[name];
   const simple = vars.filter((v) => v !== "team" && v !== "pair" && v !== "pl");
-  let P = fit(rows, simple);
+  let P = fit(rows, simple, VAR_TERMS.has(name) ? { var_terms: true } : {});
   if (vars.includes("pl")) P = fit(rows, vars, playerEffects(rows, P));
   else if (vars.length !== simple.length) P = fit(rows, vars, effects(rows, P, vars.includes("pair")));
   P.variant = name;
@@ -376,8 +411,9 @@ function predict(f: any, P: any) {
   let t = 0;
   for (const v of Object.keys(P.total)) t += P.total[v] * val(f, v);
   const s0 = P.sigma_p || P.sigma;
-  const sd = Math.sqrt(s0 * s0 + (f.extra_var || 0)); // dudas del reporte: pronóstico menos seguro
-  return { p: Phi(m / sd), margin: m, total: t, contrib, sd };
+  const sd0 = Math.sqrt(s0 * s0 + (P.var_a || 0) * (f.plv || 0) + (P.var_fin || 0) * (f.fin || 0)); // erraticidad y cierre de temporada
+  const sd = Math.sqrt(sd0 * sd0 + (f.extra_var || 0)); // dudas del reporte: pronóstico menos seguro
+  return { p: Phi(m / sd), margin: m, total: t, contrib, sd, sd0 };
 }
 
 // ---------- evaluación ----------
@@ -466,7 +502,8 @@ function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: 
       exp_total: r1(f.exp_total), league: r1(f.league),
       ...(ho || ao ? { bajas_local: ho?.names || [], bajas_visita: ao?.names || [] } : {}),
       ...(bajas.length ? { bajas_calc: bajas } : {}),
-      ...(f.extra_var ? { sd: r1(x.sd), sd_base: r1(P.sigma_p || P.sigma) } : {}),
+      ...(f.extra_var ? { sd: r1(x.sd), sd_base: r1(x.sd0) } : {}),
+      ...(f.pl_live ? { jugadores: f.pl_live } : {}),
     },
     home_out: outs ? (ho?.out ?? 0) : null, away_out: outs ? (ao?.out ?? 0) : null,
     updated_at: new Date().toISOString(),
@@ -477,9 +514,9 @@ function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: 
 // y modelo activo con la variante ganadora y toda la historia.
 async function rebuild(force?: string | null) {
   const games = await loadGames();
-  const abs = await loadAbs();
-  const { feats, teams } = features(games, DEF_ELO, abs);
-  const done = games.filter(completed).filter((g) => g.season >= 2018 && abs.has(g.id)); // solo partidos con planilla
+  const [abs, pl] = await Promise.all([loadAbs(), loadPl()]);
+  const { feats, teams } = features(games, DEF_ELO, abs, pl);
+  const done = games.filter(completed).filter((g) => g.season >= 2018 && abs.has(g.id) && pl.has(g.id)); // solo partidos con planilla
   const train = done.filter((g) => g.season <= 2023).map((g) => toRow(g, feats.get(g.id)));
   const test = done.filter((g) => g.season >= 2024);
   const variantes: any = {};
@@ -527,7 +564,7 @@ async function activeModel() {
 }
 
 // Ciclo normal: trae resultados y calendario, evalúa lo vencido, pronostica las próximas 36 horas.
-async function auto() {
+async function auto(adminKey: string) {
   const now = Date.now();
   const ingested = Object.values(await ingestKeys(dayKeys(now - 3 * DAY, now + 2 * DAY))).reduce((a, b) => a + b, 0);
   let model = await activeModel();
@@ -536,8 +573,9 @@ async function auto() {
   const season = Math.max(...games.map((g) => g.season));
   let boxes = 0;
   try { boxes = await refreshBoxes(season); } catch (_) { /* sin planillas nuevas: se sigue con lo que hay */ }
-  const abs = await loadAbs();
-  const { feats, teams } = features(games, model.params.elo || DEF_ELO, abs);
+  const plSteps = await stepPlayers(adminKey);
+  const [abs, pl] = await Promise.all([loadAbs(), loadPl()]);
+  const { feats, teams } = features(games, model.params.elo || DEF_ELO, abs, pl);
   const byId = new Map(games.map((g) => [g.id, g]));
 
   // 1) evaluar pronósticos vencidos
@@ -572,9 +610,47 @@ async function auto() {
       }
       return list;
     };
+    // plantel de cada equipo con su rating de impacto (jugadores activos en las últimas 3 semanas)
+    const { data: roster } = await db.from("dial_fc_pstate").select("athlete_id,name,team,r,lvl,m2,mpg,n")
+      .gte("last_game", new Date(now - 21 * DAY).toISOString());
+    const rosterOf = (team: string) => (roster || []).filter((p: any) => p.team === team);
+    const injOf = (team: string) => new Map((outs.get(team)?.list || []).map((it: any) => [it.name, it.status]));
+    const cPl = P.margin?.plm || 0;
+    // fuerza esperada: minutos habituales por probabilidad de jugar, reescalados a 240; idem erraticidad
+    const teamStr = (team: string, skip?: string, force?: string) => {
+      const inj = injOf(team);
+      const lst = rosterOf(team).map((p: any) => {
+        const st = inj.get(p.name);
+        let q = st ? playProb(String(st)) : 1;
+        if (p.athlete_id === skip) q = 0; else if (p.athlete_id === force) q = 1;
+        return { p, e: Math.max(p.n >= 3 ? p.mpg : 20, 1) * q, st, q: st ? playProb(String(st)) : 1 };
+      });
+      const sum = lst.reduce((a: number, x: any) => a + x.e, 0) || 1;
+      let s = 0, v = 0;
+      for (const x of lst) { const e = x.e * 240 / sum; s += e / 48 * x.p.r; v += (e / 48) ** 2 * Math.max(x.p.n >= 3 ? x.p.m2 - x.p.lvl ** 2 : 50, 1); }
+      return { s, v, lst };
+    };
     preds = upcoming.map((g) => {
-      const f = { ...feats.get(g.id), abs_h: liveAbs(g.home), abs_a: liveAbs(g.away) };
-      f.extra_var = [...f.abs_h, ...f.abs_a].filter((b: any) => b.p > 0).reduce((s: number, b: any) => s + absPts({ ...b }, P) ** 2 * b.p * (1 - b.p), 0);
+      const f: any = { ...feats.get(g.id), abs_h: liveAbs(g.home), abs_a: liveAbs(g.away) };
+      const H = teamStr(g.home), A = teamStr(g.away);
+      if (H.lst.length >= 8 && A.lst.length >= 8) {
+        f.plm = H.s - A.s; f.plv = H.v + A.v;
+        // cuánto cambia la fuerza si cada jugador en duda juega o no
+        const dud = (T: any, team: string, sign: number) => T.lst.filter((x: any) => x.q > 0 && x.q < 1).map((x: any) =>
+          ({ id: x.p.athlete_id, name: x.p.name, p: x.q, d: sign * (teamStr(team, undefined, x.p.athlete_id).s - teamStr(team, x.p.athlete_id).s) }));
+        f.pl_dud = [...dud(H, g.home, 1), ...dud(A, g.away, -1)];
+        f.pl_live = { local: r1(H.s), visita: r1(A.s), n_local: H.lst.length, n_visita: A.lst.length };
+      }
+      // incertidumbre por dudas: efecto de la baja según el modelo (nivel y rating de impacto), con su probabilidad
+      const dmap = new Map((f.pl_dud || []).map((x: any) => [x.id, x]));
+      let ev = 0;
+      for (const b of [...f.abs_h, ...f.abs_a].filter((b: any) => b.p > 0)) {
+        const pd: any = dmap.get(b.id); dmap.delete(b.id);
+        const d = absPts({ ...b }, P) + Math.abs(cPl * (pd?.d || 0));
+        ev += d * d * b.p * (1 - b.p);
+      }
+      for (const pd of dmap.values() as any) ev += (cPl * pd.d) ** 2 * pd.p * (1 - pd.p);
+      f.extra_var = ev;
       return predRow(g, f, P, model.version, "live", outs.size ? outs : undefined);
     });
     await upsertChunks("dial_fc_predictions", preds, "game_id,kind");
@@ -589,14 +665,14 @@ async function auto() {
   // 4) una vez al mes, recalcular coeficientes con toda la historia
   let refit = null;
   if (now - Date.parse(model.created_at) > 30 * DAY) {
-    const done = games.filter(completed).filter((g) => g.season >= 2018 && abs.has(g.id));
+    const done = games.filter(completed).filter((g) => g.season >= 2018 && abs.has(g.id) && (!("plm" in (model.params.margin || {})) || pl.has(g.id)));
     const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), model.params.variant || "base");
     const version = `nba-${P.variant}-${new Date().toISOString().slice(0, 10)}`;
     await db.from("dial_fc_model").update({ active: false }).eq("sport", SPORT);
     await db.from("dial_fc_model").upsert({ version, sport: SPORT, active: true, params: P, metrics: model.metrics, notes: "Recalibración mensual." }, { onConflict: "version" });
     refit = version;
   }
-  return { ingested, boxes, evaluated: evals.length, predicted: preds.length, model: model.version, refit };
+  return { ingested, boxes, jugadores: plSteps, evaluated: evals.length, predicted: preds.length, model: model.version, refit };
 }
 
 Deno.serve(async (req) => {
@@ -626,7 +702,7 @@ Deno.serve(async (req) => {
     else if (action === "probe") {
       const j = await espn(u.searchParams.get("p") || "injuries");
       out = { sample: JSON.stringify(j).slice(0, 4000) };
-    } else if (action === "auto") out = await auto();
+    } else if (action === "auto") out = await auto(sec!.value);
     else return json({ error: "acción desconocida" }, 400);
     await finish(true, action === "probe" ? null : out);
     return json(out);
