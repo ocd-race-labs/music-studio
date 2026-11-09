@@ -2180,7 +2180,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-09r";
+const APP_VERSION="2026-11-09s";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2822,7 +2822,7 @@ function fcWhen(t){const d=new Date(t),n=new Date();const day=x=>x.toLocaleDateS
 function fcCard(p,names){const ph=p.p_home,pa=1-ph,f=p.factors||{},c=f.contrib||{};const hn=names[p.home]||p.home,an=names[p.away]||p.away;
   const fav=p.pred_margin>=0?p.home:p.away,live=Date.parse(p.start_time)<=Date.now();
   const side=v=>v>=0?p.home:p.away;
-  const why=[["Fuerza de cada equipo (rating Elo)",c.d],["Localía",c.const],[`${p.home} jugó ayer`,f.hb2b?c.hb2b:null],[`${p.away} jugó ayer`,f.ab2b?c.ab2b:null],["Forma, últimos 10 partidos",c.form]]
+  const why=[["Fuerza de cada equipo (rating Elo)",c.d],["Localía",c.hca??c.const],["Altura (Denver y Utah)",c.alt],["Clásico de la misma ciudad",c.derby],["Rival de división",c.div],["Localía propia del equipo",c.team],["Historial de este cruce",c.pair],[`${p.home} jugó ayer`,f.hb2b?c.hb2b:null],[`${p.away} jugó ayer`,f.ab2b?c.ab2b:null],["Forma, últimos 10 partidos",c.form]]
     .filter(x=>x[1]!=null&&Math.abs(x[1])>=0.05).map(([k,v])=>`<li><span>${esc(k)}</span><b>${esc(side(v))} +${fcN1(Math.abs(v))}</b></li>`).join("");
   const outs=(f.bajas_local||f.bajas_visita)?`<li><span class="fc-out">Bajas declaradas · ${esc(p.home)}: ${esc((f.bajas_local||[]).join(", ")||"ninguna")} · ${esc(p.away)}: ${esc((f.bajas_visita||[]).join(", ")||"ninguna")}. Aún no entran al cálculo; se registran para medir su efecto.</span></li>`:"";
   return `<div class="sp-card fc-g"><div class="fc-when"><span>${esc(fcWhen(p.start_time))}</span><span>${live?"en juego":"Elo "+Math.round(f.elo_a||0)+" · "+Math.round(f.elo_h||0)}</span></div>

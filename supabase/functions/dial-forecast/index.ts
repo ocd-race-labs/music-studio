@@ -46,7 +46,7 @@ async function espn(path: string) {
 type Game = {
   id: string; sport: string; season: number; season_type: number; start_time: string;
   home: string; away: string; home_name: string | null; away_name: string | null;
-  home_score: number | null; away_score: number | null; status: string; feat?: any; updated_at?: string;
+  home_score: number | null; away_score: number | null; status: string; neutral?: boolean; feat?: any; updated_at?: string;
 };
 function parseEvents(j: any): Game[] {
   const out: Game[] = [];
@@ -67,7 +67,8 @@ function parseEvents(j: any): Game[] {
       home_name: h.team.displayName ?? null, away_name: a.team.displayName ?? null,
       home_score: status === "pre" ? null : Number(h.score ?? 0),
       away_score: status === "pre" ? null : Number(a.score ?? 0),
-      status, updated_at: new Date().toISOString(),
+      status, neutral: !!c.neutralSite || (e.date >= "2020-07-25" && e.date <= "2020-10-15"), // burbuja 2020: sin local real
+      updated_at: new Date().toISOString(),
     });
   }
   return out;
@@ -95,7 +96,7 @@ async function loadGames(): Promise<Game[]> {
   const out: Game[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await db.from("dial_fc_games")
-      .select("id,sport,season,season_type,start_time,home,away,home_name,away_name,home_score,away_score,status")
+      .select("id,sport,season,season_type,start_time,home,away,home_name,away_name,home_score,away_score,status,neutral")
       .eq("sport", SPORT).order("start_time").order("id").range(from, from + 999);
     if (error) throw error;
     out.push(...(data as Game[]));
@@ -120,6 +121,11 @@ async function injuries(nameToAbbr: Map<string, string>) {
 }
 
 // ---------- variables previas al partido ----------
+const ALT = new Set(["DEN", "UTAH"]); // canchas en altura
+const CITY: Record<string, string> = { LAL: "LA", LAC: "LA", NY: "NY", BKN: "NY" }; // clásicos de la misma ciudad
+const DIV: Record<string, string> = {};
+for (const [d, ts] of Object.entries({ atl: "BOS BKN NY PHI TOR", cen: "CHI CLE DET IND MIL", se: "ATL CHA MIA ORL WSH", nw: "DEN MIN OKC POR UTAH", pac: "GS LAC LAL PHX SAC", sw: "DAL HOU MEM NO SA" }))
+  for (const t of ts.split(" ")) DIV[t] = d;
 const DEF_ELO = { k: 20, hca: 70, revert: 0.75, mean: 1505, pts_per_elo: 28 };
 type Team = { elo: number; season: number; pf: number; pa: number; lastDay: number; recent: number[]; gp: number; w: number; l: number; name: string | null };
 function features(games: Game[], eloP = DEF_ELO) {
@@ -141,7 +147,12 @@ function features(games: Game[], eloP = DEF_ELO) {
     if (g.status === "ppd") continue;
     const day = dayNum(g.start_time);
     const h = team(g.home, g.season, g.home_name), a = team(g.away, g.season, g.away_name);
+    const hca = g.neutral ? 0 : 1;
     const f = {
+      h: g.home, a: g.away, hca,
+      alt: hca && ALT.has(g.home) ? 1 : 0,
+      derby: hca && CITY[g.home] && CITY[g.home] === CITY[g.away] ? 1 : 0,
+      div: hca && DIV[g.home] === DIV[g.away] ? 1 : 0,
       elo_h: r1(h.elo), elo_a: r1(a.elo),
       d: (h.elo - a.elo) / eloP.pts_per_elo,                  // diferencia de fuerza, en puntos
       hb2b: h.lastDay === day - 1 ? 1 : 0, ab2b: a.lastDay === day - 1 ? 1 : 0,
@@ -154,7 +165,7 @@ function features(games: Game[], eloP = DEF_ELO) {
     h.lastDay = day; a.lastDay = day;
     if (g.status === "post" && g.home_score != null && g.away_score != null) {
       const mov = g.home_score - g.away_score, tot = g.home_score + g.away_score;
-      const dr = h.elo + eloP.hca - a.elo;
+      const dr = h.elo + (g.neutral ? 0 : eloP.hca) - a.elo;
       const pH = 1 / (1 + 10 ** (-dr / 400));
       const wd = mov > 0 ? dr : -dr;
       const mult = ((Math.abs(mov) + 3) ** 0.8) / (7.5 + 0.006 * wd);
@@ -175,9 +186,25 @@ function features(games: Game[], eloP = DEF_ELO) {
 }
 
 // ---------- modelo ----------
-const M_VARS = ["const", "d", "hb2b", "ab2b", "form"];
+// Variantes que compiten en la prueba histórica; gana la que mejor pronostica partidos que no vio.
+const BASE_VARS = ["hca", "d", "hb2b", "ab2b", "form"];
+const VARIANTS: Record<string, string[]> = {
+  "base": BASE_VARS,
+  "altura": [...BASE_VARS, "alt"],
+  "altura+rivalidad": [...BASE_VARS, "alt", "derby", "div"],
+  "altura+rivalidad+equipo": [...BASE_VARS, "alt", "derby", "div", "team"],
+  "altura+rivalidad+equipo+cruce": [...BASE_VARS, "alt", "derby", "div", "team", "pair"],
+};
 const T_VARS = ["const", "exp_total", "league", "po", "b2b"];
-const val = (f: any, v: string) => (v === "const" ? 1 : v === "b2b" ? f.hb2b + f.ab2b : Number(f[v] ?? 0));
+const SIG = 13.4; // desviación típica del margen de un partido
+function val(f: any, v: string, P?: any) {
+  if (v === "const") return 1;
+  if (v === "b2b") return f.hb2b + f.ab2b;
+  if (v === "team") return P?.team_g ? (f.hca ?? 1) * ((P.team_g[f.h] || 0) + (P.team_g[f.a] || 0)) / 2 : 0;
+  if (v === "pair") return P?.pair_g ? (f.hca ?? 1) * (P.pair_g[`${f.h}-${f.a}`] || 0) : 0;
+  if (v === "hca") return f.hca ?? 1;
+  return Number(f[v] ?? 0);
+}
 function ols(X: number[][], y: number[], ridge = 1e-6) {
   const p = X[0].length;
   const A = Array.from({ length: p }, () => new Array(p + 1).fill(0));
@@ -185,7 +212,7 @@ function ols(X: number[][], y: number[], ridge = 1e-6) {
     const x = X[i];
     for (let r = 0; r < p; r++) { A[r][p] += x[r] * y[i]; for (let c = 0; c < p; c++) A[r][c] += x[r] * x[c]; }
   }
-  for (let r = 1; r < p; r++) A[r][r] += ridge * X.length;
+  for (let r = 0; r < p; r++) A[r][r] += ridge * X.length;
   for (let c = 0; c < p; c++) {
     let piv = c; for (let r = c + 1; r < p; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
     [A[c], A[piv]] = [A[piv], A[c]];
@@ -194,20 +221,61 @@ function ols(X: number[][], y: number[], ridge = 1e-6) {
   return A.map((row, i) => row[p] / row[i]);
 }
 type Row = { g: Game; f: any; margin: number; total: number };
-function fit(rows: Row[]) {
-  const mc = ols(rows.map((r) => M_VARS.map((v) => val(r.f, v))), rows.map((r) => r.margin));
+const predM = (f: any, P: any) => Object.keys(P.margin).reduce((s, v) => s + P.margin[v] * val(f, v, P), 0);
+function fit(rows: Row[], mvars: string[], eff: any = {}) {
+  const P0 = { ...eff };
+  const mc = ols(rows.map((r) => mvars.map((v) => val(r.f, v, P0))), rows.map((r) => r.margin));
   const tc = ols(rows.map((r) => T_VARS.map((v) => val(r.f, v))), rows.map((r) => r.total));
-  const margin = Object.fromEntries(M_VARS.map((v, i) => [v, r3(mc[i])]));
+  const margin = Object.fromEntries(mvars.map((v, i) => [v, r3(mc[i])]));
   const total = Object.fromEntries(T_VARS.map((v, i) => [v, r3(tc[i])]));
-  const res = rows.map((r) => r.margin - M_VARS.reduce((s, v) => s + margin[v] * val(r.f, v), 0));
-  const sigma = Math.sqrt(avg(res.map((x) => x * x)));
-  const meanMargin = avg(rows.map((r) => r.margin));
-  return { margin, total, sigma: r3(sigma), base_margin: r3(meanMargin), elo: DEF_ELO, n_train: rows.length };
+  const P: any = { margin, total, ...eff };
+  const res = rows.map((r) => r.margin - predM(r.f, P));
+  P.sigma = r3(Math.sqrt(avg(res.map((x) => x * x))));
+  P.base_margin = r3(avg(rows.filter((r) => r.f.hca !== 0).map((r) => r.margin)));
+  P.elo = DEF_ELO; P.n_train = rows.length;
+  return P;
+}
+// Localía específica: solo entra donde es significativa (|z| ≥ umbral) y encogida según cuánto ruido trae.
+function effects(rows: Row[], P: any, wantPair: boolean) {
+  const home = rows.filter((r) => r.f.hca === 1).map((r) => ({ r, e: r.margin - predM(r.f, P) }));
+  const acc: Record<string, { sh: number; nh: number; sa: number; na: number }> = {};
+  for (const { r, e } of home) {
+    (acc[r.g.home] ??= { sh: 0, nh: 0, sa: 0, na: 0 }); (acc[r.g.away] ??= { sh: 0, nh: 0, sa: 0, na: 0 });
+    acc[r.g.home].sh += e; acc[r.g.home].nh++; acc[r.g.away].sa += -e; acc[r.g.away].na++;
+  }
+  const raw = Object.entries(acc).map(([t, a]) => ({ t, g: a.sh / a.nh - a.sa / a.na, se2: SIG * SIG * (1 / a.nh + 1 / a.na) }));
+  const mg = avg(raw.map((x) => x.g));
+  const tau2 = Math.max(0, avg(raw.map((x) => (x.g - mg) ** 2)) - avg(raw.map((x) => x.se2)));
+  const team_g: Record<string, number> = {}, team_z: Record<string, number> = {};
+  for (const x of raw) {
+    const z = (x.g - mg) / Math.sqrt(x.se2); team_z[x.t] = r1(z);
+    if (Math.abs(z) >= 2 && tau2 > 0) team_g[x.t] = r3((x.g - mg) * tau2 / (tau2 + x.se2));
+  }
+  const out: any = { team_g, team_z, team_tau: r3(Math.sqrt(tau2)) };
+  if (wantPair) {
+    const P1 = { ...P, team_g, margin: { ...P.margin, team: 1 } };
+    const pa: Record<string, { s: number; n: number }> = {};
+    for (const { r } of home) { const k = `${r.g.home}-${r.g.away}`; (pa[k] ??= { s: 0, n: 0 }); pa[k].s += r.margin - predM(r.f, P1); pa[k].n++; }
+    const pr = Object.entries(pa).map(([k, a]) => ({ k, m: a.s / a.n, se2: SIG * SIG / a.n }));
+    const pt2 = Math.max(0, avg(pr.map((x) => x.m * x.m)) - avg(pr.map((x) => x.se2)));
+    const pair_g: Record<string, number> = {};
+    for (const x of pr) if (Math.abs(x.m) / Math.sqrt(x.se2) >= 2.5 && pt2 > 0) pair_g[x.k] = r3(x.m * pt2 / (pt2 + x.se2));
+    out.pair_g = pair_g; out.pair_tau = r3(Math.sqrt(pt2));
+  }
+  return out;
+}
+function fitVariant(rows: Row[], name: string) {
+  const vars = VARIANTS[name];
+  const simple = vars.filter((v) => v !== "team" && v !== "pair");
+  let P = fit(rows, simple);
+  if (vars.length !== simple.length) P = fit(rows, vars, effects(rows, P, vars.includes("pair")));
+  P.variant = name;
+  return P;
 }
 function predict(f: any, P: any) {
   const contrib: Record<string, number> = {};
   let m = 0;
-  for (const v of Object.keys(P.margin)) { const c = P.margin[v] * val(f, v); contrib[v] = r1(c); m += c; }
+  for (const v of Object.keys(P.margin)) { const c = P.margin[v] * val(f, v, P); contrib[v] = r1(c); m += c; }
   let t = 0;
   for (const v of Object.keys(P.total)) t += P.total[v] * val(f, v);
   return { p: Phi(m / P.sigma), margin: m, total: t, contrib };
@@ -294,36 +362,48 @@ function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: 
   };
 }
 
-// Recalcula todo: variables, backtest de referencia (ajuste 2018-2023, prueba desde 2024) y modelo activo con toda la historia.
-async function rebuild() {
+// Recalcula todo: variables, prueba histórica de cada variante (ajuste 2017-18 a 2022-23, prueba desde 2023-24)
+// y modelo activo con la variante ganadora y toda la historia.
+async function rebuild(force?: string | null) {
   const games = await loadGames();
   const { feats, teams } = features(games);
   const done = games.filter(completed).filter((g) => g.season >= 2018);
   const train = done.filter((g) => g.season <= 2023).map((g) => toRow(g, feats.get(g.id)));
   const test = done.filter((g) => g.season >= 2024);
-  const PB = fit(train);
-  const btRows: any[] = [], mrows: any[] = [];
-  for (const g of test) {
-    const f = feats.get(g.id);
-    const pr: any = predRow(g, f, PB, "baseline-2018-2023", "backtest");
-    Object.assign(pr, evaluate(pr, g, f));
-    btRows.push(pr);
-    mrows.push({ p: pr.p_home, m: pr.pred_margin, t: pr.pred_total, am: pr.actual_margin, at: pr.actual_total, league: f.league, po: f.po, month: f.month });
+  const variantes: any = {};
+  let best: any = null;
+  for (const name of Object.keys(VARIANTS)) {
+    const PB = fitVariant(train, name);
+    const btRows: any[] = [], mrows: any[] = [];
+    for (const g of test) {
+      const f = feats.get(g.id);
+      const pr: any = predRow(g, f, PB, "baseline-2018-2023", "backtest");
+      Object.assign(pr, evaluate(pr, g, f));
+      btRows.push(pr);
+      mrows.push({ p: pr.p_home, m: pr.pred_margin, t: pr.pred_total, am: pr.actual_margin, at: pr.actual_total, league: f.league, po: f.po, month: f.month });
+    }
+    const brier = avg(mrows.map((r) => (r.p - (r.am > 0 ? 1 : 0)) ** 2));
+    const mae = avg(mrows.map((r) => Math.abs(r.am - r.m)));
+    const mt = metrics(mrows, PB.base_margin);
+    variantes[name] = { brier: Math.round(brier * 1e5) / 1e5, mae_margen: Math.round(mae * 1000) / 1000, acierto: mt.acierto,
+      coef: PB.margin, equipos: PB.team_g, cruces: PB.pair_g ? Object.keys(PB.pair_g).length : undefined };
+    // gana la de menor Brier; una variante más compleja debe mejorar de verdad (parsimonia)
+    const cand = { name, PB, btRows, mt, brier };
+    if (force ? name === force : (!best || brier < best.brier - 0.0002)) best = cand;
   }
-  const mt = metrics(mrows, PB.base_margin);
-  const P = fit(done.map((g) => toRow(g, feats.get(g.id))));
-  const version = `nba-v1-${new Date().toISOString().slice(0, 10)}`;
+  const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), best.name);
+  const version = `nba-${best.name}-${new Date().toISOString().slice(0, 10)}`;
   await db.from("dial_fc_model").update({ active: false }).eq("sport", SPORT);
   const { error: me } = await db.from("dial_fc_model").upsert([
-    { version: "baseline-2018-2023", sport: SPORT, active: false, params: PB, metrics: mt, notes: "Ajuste 2018-2023, probado desde 2023-24 en partidos que no vio." },
-    { version, sport: SPORT, active: true, params: P, metrics: { backtest: mt }, notes: "Modelo activo: coeficientes con toda la historia desde 2017-18." },
+    { version: "baseline-2018-2023", sport: SPORT, active: false, params: best.PB, metrics: { ...best.mt, variantes }, notes: `Ajuste 2017-18 a 2022-23, probado desde 2023-24 en partidos que no vio. Variante: ${best.name}.` },
+    { version, sport: SPORT, active: true, params: P, metrics: { backtest: best.mt, variantes }, notes: "Modelo activo: variante ganadora con toda la historia desde 2017-18." },
   ], { onConflict: "version" });
   if (me) throw me;
-  await upsertChunks("dial_fc_predictions", btRows, "game_id,kind");
+  await upsertChunks("dial_fc_predictions", best.btRows, "game_id,kind");
   const gRows = games.filter((g) => feats.has(g.id)).map((g) => ({ ...g, feat: roundFeat(feats.get(g.id)) }));
   await upsertChunks("dial_fc_games", gRows, "id", 1000);
   await upsertChunks("dial_fc_ratings", ratingsRows(teams), "sport,team");
-  return { games: games.length, train: train.length, test: test.length, baseline: PB, metrics: mt, active: version, params: P };
+  return { games: games.length, train: train.length, test: test.length, elegido: best.name, variantes, metrics: best.mt, active: version, params: P };
 }
 const roundFeat = (f: any) => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, typeof v === "number" ? r3(v as number) : v]));
 
@@ -376,8 +456,8 @@ async function auto() {
   let refit = null;
   if (now - Date.parse(model.created_at) > 30 * DAY) {
     const done = games.filter(completed).filter((g) => g.season >= 2018);
-    const P = fit(done.map((g) => toRow(g, feats.get(g.id))));
-    const version = `nba-v1-${new Date().toISOString().slice(0, 10)}`;
+    const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), model.params.variant || "base");
+    const version = `nba-${P.variant}-${new Date().toISOString().slice(0, 10)}`;
     await db.from("dial_fc_model").update({ active: false }).eq("sport", SPORT);
     await db.from("dial_fc_model").upsert({ version, sport: SPORT, active: true, params: P, metrics: model.metrics, notes: "Recalibración mensual." }, { onConflict: "version" });
     refit = version;
@@ -408,7 +488,7 @@ Deno.serve(async (req) => {
     let out: any;
     if (action === "backfill") {
       out = { ingested: await ingestKeys(monthKeys(u.searchParams.get("from")!, u.searchParams.get("to")!)) };
-    } else if (action === "rebuild") out = await rebuild();
+    } else if (action === "rebuild") out = await rebuild(u.searchParams.get("variant"));
     else if (action === "probe") {
       const j = await espn(u.searchParams.get("p") || "injuries");
       out = { sample: JSON.stringify(j).slice(0, 4000) };
