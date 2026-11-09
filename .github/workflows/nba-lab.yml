@@ -1,0 +1,28 @@
+# Laboratorio de pronósticos NBA (Dial Espejo). Corre solo al empujar a la rama "lab"; no toca el sitio.
+name: nba-lab
+on:
+  push:
+    branches: [lab]
+permissions:
+  contents: write
+jobs:
+  run:
+    if: "!contains(github.event.head_commit.message, '[lab-out]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pandas numpy lightgbm scikit-learn shap requests
+      - run: python lab/nba_lab.py
+        env:
+          SB_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM
+      - if: always()
+        run: |
+          git config user.name "dial-lab"
+          git config user.email "dial-lab@users.noreply.github.com"
+          git add -f lab/out
+          git commit -m "lab: resultados [lab-out]" || echo "sin cambios"
+          git push
