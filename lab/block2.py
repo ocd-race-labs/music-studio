@@ -91,7 +91,7 @@ def main():
     abs_eff = g[abs_vars].values @ b0[[L.BASE_VARS.index(v) for v in abs_vars]]   # efecto de ausencias en el margen
 
     # --- búsqueda de hiperparámetros del filtro (validación 2023-24: log loss del margen del filtro por sí solo)
-    grid = list(itertools.product([110.0, 140.0], [0.3, 0.8, 1.5], [0.6, 0.8], [4.0, 12.0], [False, True]))
+    grid = list(itertools.product([140.0, 180.0, 230.0], [0.08, 0.15, 0.3], [0.8, 0.9], [0.0, 2.0, 4.0], [False, True]))
     res = []
     for R, q, sh, ps, ad in grid:
         km, kt, kv, _ = kalman(g, R=R, q=q, shrink=sh, p_season=ps, adapt=ad, abs_adj=abs_eff)
@@ -136,7 +136,11 @@ def main():
         return {k: by_phase(g[mask], f"m_{k2}", f"p_{k2}") for k, k2 in
                 (("actual", "actual"), ("kalman_fijo", "kalman_fijo"), ("kalman_adaptativo", "kalman_adaptativo"),
                  ("kalman_adaptativo+incertidumbre", "kalman_adaptativo_inc"))}
+    # combinación: promedio de la probabilidad y del margen del modelo actual y del filtro adaptativo
+    g["m_mix"] = (g["m_actual"] + g["m_kalman_adaptativo"]) / 2
+    g["p_mix"] = (g["p_actual"] + g["p_kalman_adaptativo"]) / 2
     rep["validacion_2024_25"] = evaluate(v2)
+    rep["validacion_2024_25"]["mezcla"] = by_phase(g[v2], "m_mix", "p_mix")
     early = (g["f_gp_h"].fillna(99) < 10).values
     rep["validacion_inicio_temporada"] = {k: metr(y[v2 & early], g[f"m_{k}"].values[v2 & early], g[f"p_{k}"].values[v2 & early])
                                           for k in ("actual", "kalman_adaptativo")}
@@ -150,6 +154,7 @@ def main():
 
     # --- una mirada a la temporada bajo llave
     rep["bajo_llave_2025_26"] = evaluate(ho)
+    rep["bajo_llave_2025_26"]["mezcla"] = by_phase(g[ho], "m_mix", "p_mix")
     rep["bajo_llave_inicio_temporada"] = {k: metr(y[ho & early], g[f"m_{k}"].values[ho & early], g[f"p_{k}"].values[ho & early])
                                           for k in ("actual", "kalman_adaptativo")}
     rep["totales_bajo_llave_mae"] = {"actual": round(float(np.abs(tot[ho] - g["f_exp_total"].values[ho]).mean()), 2),
