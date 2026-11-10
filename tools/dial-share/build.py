@@ -28,6 +28,7 @@ def font(n):
 FONTS = "".join(f"@font-face{{font-family:{f};font-weight:{w};src:url(data:font/woff2;base64,{font(n)})}}" for f, w, n in [
     ("Sora", 600, "sora-latin-600-normal.woff2"), ("Sora", 500, "sora-latin-500-normal.woff2"), ("Doto", 800, "doto-latin-800-normal.woff2"),
     ("STM", 400, "share-tech-mono-latin-400-normal.woff2"), ("GM", 500, "geist-mono-latin-500-normal.woff2")])
+LOGO = (APP / "icon.svg").read_text()
 LC, LC2, LC3 = "#B5F23D", "#4FD9F0", "#FFC94A"   # tema por defecto de la app: radio, noticias, deportes
 
 def hive(color):
@@ -42,7 +43,6 @@ def hive(color):
 
 def card(l1, l2, l3, color, favs):
     e = html.escape
-    rows = "".join(f'<div class="fr"><i style="background:{c}"></i><b>{e(n)}</b><u></u></div>' for n, c in favs)
     return f"""<html><head><style>{FONTS}
 html,body{{margin:0;width:500px;height:500px;overflow:hidden;background:#07070A}}
 .c{{width:500px;height:500px;box-sizing:border-box;padding:26px;display:grid;grid-template-rows:auto auto 1fr;gap:18px;background:radial-gradient(90% 60% at 50% 0%,{LC}14,transparent 70%),#07070A;font-family:Sora;color:#EDEDF2}}
@@ -58,17 +58,19 @@ html,body{{margin:0;width:500px;height:500px;overflow:hidden;background:#07070A}
 .l2{{font:800 25px/1.15 Doto;text-transform:uppercase;color:{LC2};text-shadow:0 0 7px {LC2}73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 .l3{{font:400 15px STM;letter-spacing:.08em;text-transform:uppercase;color:{LC3};white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 .bt{{display:grid;grid-template-columns:1fr 150px;gap:16px;align-items:center;min-height:0}}
-.fv{{border:1px solid rgba(237,237,242,.09);border-radius:18px;padding:12px 14px;display:grid;gap:9px;background:#0E0E12}}
-.fh{{font:500 11.5px GM;letter-spacing:.14em;color:#77778A}}
-.fr{{display:flex;align-items:center;gap:10px;min-width:0}} .fr i{{flex:none;width:9px;height:9px;border-radius:50%}}
-.fr b{{flex:1;min-width:0;font:500 17px Sora;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
-.fr u{{flex:none;width:24px;height:24px;border-radius:50%;border:1px solid rgba(237,237,242,.18);position:relative}}
-.fr u:after{{content:"";position:absolute;left:9px;top:7px;border-left:8px solid #EDEDF2;border-top:5px solid transparent;border-bottom:5px solid transparent}}
+.br{{display:grid;gap:14px}}
+.tb{{display:flex;gap:6px;padding:5px;border-radius:999px;background:#121216;border:1px solid rgba(237,237,242,.08)}}
+.tb span{{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 0;border-radius:999px;font:500 16px Sora;color:#C9C9D2}}
+.tb span:before{{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}}
+.tb span.on{{background:{LC};color:#0B0B0E}} .tb span.on:before{{background:#0B0B0E}}
+.tg{{font:500 19px/1.35 Sora;color:#EDEDF2;text-wrap:balance}} .tg em{{font-style:normal;color:#9A9AA8}}
+.lg{{width:34px;height:34px;border-radius:9px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.08)}} .lg svg{{width:100%;height:100%;display:block}}
+.bw{{display:flex;align-items:center;gap:11px}}
 .hv svg{{width:150px;height:150px}}
 </style></head><body><div class="c">
-<div class="hd"><div class="b">Dial <i>Espejo</i></div><div class="lv">EN VIVO</div></div>
+<div class="hd"><div class="bw"><div class="lg">{LOGO}</div><div class="b">Dial <i>Espejo</i></div></div><div class="lv">EN VIVO</div></div>
 <div class="lcd"><div class="scr"><div class="chip">TOCA ▶ PARA ESCUCHAR</div><div class="l1" id="l1">{e(l1)}</div><div class="l2">{e(l2)}</div><div class="l3">{e(l3)}</div></div></div>
-<div class="bt"><div class="fv"><div class="fh">FAVORITAS</div>{rows}</div><div class="hv">{hive(color)}</div></div>
+<div class="bt"><div class="br"><div class="tb"><span class="on" style="--c:{LC}">Radio</span><span style="--c:{LC2}">Noticias</span><span style="--c:{LC3}">Deportes</span></div><div class="tg">Radios, noticias y deportes <em>de Chile y el mundo.</em></div></div><div class="hv">{hive(color)}</div></div>
 </div></body></html>"""
 FIT = """async()=>{await document.fonts.ready;const t=document.getElementById("l1");let f=54;const set=v=>{f=v;t.style.fontSize=v+"px"};
 while(t.scrollWidth>t.clientWidth&&f>36)set(f-2);
@@ -113,7 +115,7 @@ def pages():
 <meta property="og:description" content="{e(desc)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{url}">
-<meta property="og:image" content="{SITE}og/{sl}.jpg">
+<meta property="og:image" content="{SITE}og/{sl}.jpg?v=2">
 <meta property="og:image:width" content="500"><meta property="og:image:height" content="500">
 <meta name="twitter:card" content="summary">
 <meta http-equiv="refresh" content="0;url={app}">
