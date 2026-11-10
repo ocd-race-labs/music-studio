@@ -1845,10 +1845,10 @@ async function npPoll(){
   if(current===s&&!audio.paused&&document.visibilityState==="visible")np.timer=setTimeout(npPoll,25000);
 }
 /* iHeart (KMEL, WGCI, Power 105.1, Real 92.3) manda title="…",artist="…",url="…" en el texto ICY: se extraen título y artista */
-function npFix(j){if(!j||typeof j!=="object")return j;const raw=[j.song,j.artist,j.title].filter(x=>typeof x==="string").join(" ");
-  if(!/(title|artist)="/i.test(raw))return j;const g=k=>(raw.match(new RegExp(k+'="([^"]*)"',"i"))||[])[1]||"";
-  const t=g("title").trim(),a=g("artist").trim(),spot=/song_spot="T"/i.test(raw);
-  return {...j,song:spot?"":t,artist:spot?"":a,title:spot?"":t,album:/="/.test(j.album||"")?"":j.album}}
+function npFix(j){if(!j||typeof j!=="object")return j;const raw=[j.song,j.artist,j.title,j.raw].filter(x=>typeof x==="string").join(" ");
+  if(!/\b(title|text|artist|song_spot)="/i.test(raw))return j;const g=k=>((raw.match(new RegExp("\\b"+k+'="([^"]*)"',"i"))||[])[1]||"").trim();
+  const t=g("title")||g("text"),a=g("artist")||(/="/.test(j.artist||"")?"":(j.artist||"").trim()),spot=/song_spot="T"/i.test(raw),aw=g("amgArtworkURL").replace(/fit\(200,200\)/,"fit(600,600)");
+  return {...j,song:spot?"":t,artist:spot?"":a,title:spot?"":t,album:/="/.test(j.album||"")?"":j.album,artwork:j.artwork||(/^https:\/\//.test(aw)?aw:j.artwork)}}
 function npShow(s,j){j=npFix(j);np.cur=j;if(!npSheet.hidden)setTimeout(renderSheet,0);
   const song=j&&j.song,artist=j&&j.artist,raw=j&&j.raw;
   const prog=j&&j.program,pdesc=j&&j.program_desc;
@@ -2399,7 +2399,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-10o";
+const APP_VERSION="2026-11-10p";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
