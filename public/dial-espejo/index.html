@@ -835,7 +835,17 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
 .lcd-l3{font:400 10.5px "Share Tech Mono",var(--mono);letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--lc3) 70%,#9a9aa3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .npc-ctl{display:flex;align-items:center;gap:12px}
 .npc-ctl .npc-more{justify-self:auto}
-.npc-ctl .npc-pp{margin-left:auto}
+.npc-ctl .hslp{margin-left:auto}
+.hslp{position:relative}
+.hslb{height:40px;min-width:40px;padding:0 11px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s}
+.hslb:hover{color:var(--ink);border-color:rgba(237,237,242,.28)}
+.hslb svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}
+.hslb span{font:500 12px var(--mono);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.hslb span:empty{display:none}
+.hslp.on .hslb{color:var(--sec);border-color:color-mix(in srgb,var(--sec) 45%,transparent)}
+.hslp.on .hslb svg{fill:currentColor;fill-opacity:.18}
+.hslx{top:auto;bottom:48px;left:auto;right:-68px;z-index:30}
+.hslp.on .np-slc{display:inline-block}
 .tp-it{display:grid;grid-template-columns:8px auto minmax(0,1fr) 34px;gap:9px;align-items:center;min-height:40px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
 .tp-it:last-child{border-bottom:0}
 .tp-it b{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
@@ -917,7 +927,7 @@ html.adv-open #player{z-index:35}
     <button class="lcd" id="npcOpen" aria-label="Abrir la pantalla de la radio">
       <span class="lcd-scr"><span class="lcd-chip" id="npcM"></span><span class="lcd-l1"><i id="npcT"></i></span><span class="lcd-l2"><i id="npcA"></i></span><span class="lcd-l3" id="npcS"></span></span>
     </button>
-    <div class="npc-ctl"><button class="lcd-art" id="npcArt" aria-label="Abrir la pantalla de la radio"></button><button class="npc-more" id="npcMore">Ver la radio <span aria-hidden="true">›</span></button><button class="npc-pp" id="npcPP" aria-label="Reproducir">▶</button></div>
+    <div class="npc-ctl"><button class="lcd-art" id="npcArt" aria-label="Abrir la pantalla de la radio"></button><button class="npc-more" id="npcMore">Ver la radio <span aria-hidden="true">›</span></button><div class="hslp" id="hSlp"><button class="hslb" id="hSlpB" aria-label="Temporizador para dormir" aria-expanded="false" aria-controls="hSlpBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.6 7.6 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1Z"/></svg><span id="hSlpT"></span></button><div class="np-slx hslx" id="hSlpBox" hidden role="group" aria-label="Apagar en"><span>Apagar en</span><button data-m="15">15 min</button><button data-m="30">30 min</button><button data-m="60">60 min</button><button data-m="0" class="np-slc">Cancelar</button></div></div><button class="npc-pp" id="npcPP" aria-label="Reproducir">▶</button></div>
     <div class="npc-top"><div class="hk">Tus top 3</div><div class="sq-r" id="topR"></div>
       <button class="fav-all" id="favAll" aria-expanded="false" aria-controls="favMg"><span>Todas tus favoritas <b id="favN"></b></span><span class="fav-chev" aria-hidden="true">›</span></button>
       <div class="fav-mg" id="favMg" hidden><div class="sq-h" id="favH"></div><div class="sq-r" id="favR"></div></div></div>
@@ -2065,17 +2075,21 @@ function slpPaint(){const on=!!SLP.at,w=$("npSlp");w.classList.toggle("on",on);
   $("npSlpT").textContent=on?`${m}:${String(sec).padStart(2,"0")}`:"";
   w.style.setProperty("--sp",on?(l/SLP.dur*100).toFixed(2):0);
   $("npSlpB").setAttribute("aria-label",on?({en:"Stops in ",pt:"Desliga em "}[UIL]||"Se apaga en ")+Math.max(1,Math.ceil(l/60000))+" min":trText("Temporizador para dormir"));
-  $("npSlpBox").querySelectorAll("button[data-m]").forEach(b=>b.setAttribute("aria-pressed",on&&+b.dataset.m===SLP.min))}
+  document.querySelectorAll("#npSlpBox button[data-m],#hSlpBox button[data-m]").forEach(b=>b.setAttribute("aria-pressed",on&&+b.dataset.m===SLP.min));
+  const h=$("hSlp");if(h){h.classList.toggle("on",on);$("hSlpT").textContent=$("npSlpT").textContent;$("hSlpB").setAttribute("aria-label",$("npSlpB").getAttribute("aria-label"))}}
 function slpTick(){if(!SLP.at)return;const l=slpLeft();
   if(l<=8000&&!audio.paused)audio.volume=Math.max(0,l/8000);
   if(l<=0){slpSet(0);wantPlay=false;audio.pause();setTimeout(()=>{audio.volume=1},400);setStatus("apagada por el temporizador");return}
   slpPaint()}
 function slpSet(m){clearInterval(SLP.t);SLP.min=m;SLP.at=m?Date.now()+m*60000:0;SLP.dur=m*60000;audio.volume=1;if(m)SLP.t=setInterval(slpTick,1000);slpPaint()}
-function slpBox(o){const b=$("npSlpBox");b.hidden=!o;$("npSlpB").setAttribute("aria-expanded",o)}
+function slpBox(o,w){const id=w==="h"?"hSlp":"npSlp";const b=$(id+"Box");b.hidden=!o;$(id+"B").setAttribute("aria-expanded",o)}
 $("npSlpB").onclick=e=>{e.stopPropagation();slpBox($("npSlpBox").hidden)};
 $("npSlpBox").querySelectorAll("button").forEach(b=>b.onclick=e=>{e.stopPropagation();slpSet(+b.dataset.m);slpBox(false)});
 npSheet.addEventListener("click",e=>{if(!$("npSlp").contains(e.target))slpBox(false)});
-addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("npSlpBox").hidden){e.stopPropagation();slpBox(false)}},true);
+$("hSlpB").onclick=e=>{e.stopPropagation();slpBox($("hSlpBox").hidden,"h")};
+$("hSlpBox").querySelectorAll("button").forEach(b=>b.onclick=e=>{e.stopPropagation();slpSet(+b.dataset.m);slpBox(false,"h")});
+document.addEventListener("click",e=>{if(!$("hSlp").contains(e.target))slpBox(false,"h")});
+addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("npSlpBox").hidden){e.stopPropagation();slpBox(false)}if(!$("hSlpBox").hidden){e.stopPropagation();slpBox(false,"h")}},true);
 
 // Deslizar hacia abajo para cerrar
 /* El cierre por deslizar hacia abajo se reemplazó por la X */
@@ -2375,7 +2389,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-10l";
+const APP_VERSION="2026-11-10m";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
