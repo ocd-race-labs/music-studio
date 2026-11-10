@@ -1058,7 +1058,7 @@ function trSeg(x){const k=x.trim();if(!k)return x;const d=I18N[UIL];if(d[k]!=nul
   for(const [re,e,p] of I18P){if(re.test(k))return x.replace(k,k.replace(re,UIL==="en"?e:p))}
   if(k.includes(", ")){const y=k.split(", ").map(z=>d[z]!=null?d[z]:z).join(", ");if(y!==k)return x.replace(k,y)}
   return x}
-Object.assign(I18N.en,{"Temporizador para dormir":"Sleep timer","Apagar en":"Stop in","Cancelar":"Cancel","apagada por el temporizador":"stopped by the sleep timer"});Object.assign(I18N.pt,{"Temporizador para dormir":"Timer para dormir","Apagar en":"Desligar em","Cancelar":"Cancelar","apagada por el temporizador":"desligada pelo timer"});
+Object.assign(I18N.en,{"Todas":"All","Todos":"All","Varones":"Men","Damas":"Women","Sub-23":"Under-23"});Object.assign(I18N.pt,{"Todas":"Todas","Todos":"Todos","Varones":"Masculino","Damas":"Feminino","Junior":"Júnior"});Object.assign(I18N.en,{"Temporizador para dormir":"Sleep timer","Apagar en":"Stop in","Cancelar":"Cancel","apagada por el temporizador":"stopped by the sleep timer"});Object.assign(I18N.pt,{"Temporizador para dormir":"Timer para dormir","Apagar en":"Desligar em","Cancelar":"Cancelar","apagada por el temporizador":"desligada pelo timer"});
 function trText(s){if(UIL==="es"||!s||!/[A-Za-zÁÉÍÓÚáéíóúñ]/.test(s))return s;const d=I18N[UIL],k=s.trim();if(d[k]!=null)return s.replace(k,d[k]);
   return s.includes(" · ")?s.split(" · ").map(trSeg).join(" · "):trSeg(s)}
 const NOI18N="[data-noi18n],.tl-t b,.tl-h,#hlN,#hlSvg,#npcT,#npcA,#npcS,.tp-it b,.sq-tx b,.af-b b,script,style,#kCn,.pz-res,.story h3,.hl a,.concept .cl:not(.amb),#bT,#npSong,#npArtist,#npAlbum,.topic-head h2:not(.sph),.thive text";
@@ -2349,7 +2349,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-10g";
+const APP_VERSION="2026-11-10h";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2769,18 +2769,18 @@ let mtbSel=store.get("dial-mtb",{d:"dh",s:"all",x:""}),mtbData=null;
 const MTB_MES={ENE:1,FEB:2,MAR:3,ABR:4,MAY:5,JUN:6,JUL:7,AGO:8,SEP:9,OCT:10,NOV:11,DIC:12};
 const mtbOk=p=>(mtbSel.s==="all"?p.seg!=="otros":p.seg===mtbSel.s)&&(!mtbSel.x||p.sx===mtbSel.x)&&(mtbSel.s==="all"||p.seg!=="cal");
 function mtbPodium(p){
-  if(!p.r.length)return `<div class="mpod"><div class="mpc">${esc(p.c)}</div>${p.t?`<p class="mnote">${esc(p.t)}</p>`:""}</div>`;
-  const rows=p.r.map(([pos,n,info,nac,t,gap,bike])=>{const sub=[info,bike&&!/sin verificar/i.test(bike)?bike:""].filter(Boolean).join(" · ");
+  if(!p.r.length)return `<div class="mpod"><div class="mpc">${esc(mt(p.c))}</div>${p.t?`<p class="mnote">${esc(mt(p.t))}</p>`:""}</div>`;
+  const rows=p.r.map(([pos,n,info,nac,t,gap,bike])=>{const sub=[mt(info),bike&&!/sin verificar/i.test(bike)?mt(bike):""].filter(Boolean).join(" · ");
     return `<tr><td class="mp${/^P?1$/.test(pos)?" g":""}">${esc(pos.replace(/^P/,""))}</td><td class="l"><b>${esc(n)}</b>${sub?`<small>${esc(sub)}</small>`:""}</td><td class="mn">${esc(nac)}</td><td class="mt">${esc(t)}${gap?`<small>${esc(gap)}</small>`:""}</td></tr>`}).join("");
-  return `<div class="mpod"><div class="mpc">${esc(p.c)}</div><div class="tw"><table class="st mst"><tbody>${rows}</tbody></table></div></div>`}
+  return `<div class="mpod"><div class="mpc">${esc(mt(p.c))}</div><div class="tw"><table class="st mst"><tbody>${rows}</tbody></table></div></div>`}
 function mtbEdition(r,e){const ps=e.p.filter(p=>p.d===mtbSel.d);const ok=ps.filter(mtbOk);
-  const body=ok.length?ok.map(mtbPodium).join(""):ps.some(p=>p.r.length)?`<p class="mnote">${esc("Sin podio de este segmento en esta edición.")}</p>`:(e.note?`<p class="mnote">${esc(e.note)}</p>`:"");
-  const src=e.src.length?`<p class="msrc">${esc(e.src.join(" · "))}</p>`:"";
-  return `<div class="med"><div class="meh"><span>${esc(e.l)}</span><em>${esc(e.s)}</em></div>${body}${ok.length?src:""}</div>`}
+  const body=ok.length?ok.map(mtbPodium).join(""):ps.some(p=>p.r.length)?`<p class="mnote">${esc("Sin podio de este segmento en esta edición.")}</p>`:(e.note?`<p class="mnote">${esc(mt(e.note))}</p>`:"");
+  const src=e.src.length?`<p class="msrc">${esc(e.src.map(mt).join(" · "))}</p>`:"";
+  return `<div class="med"><div class="meh"><span>${esc(mt(e.l))}</span><em>${esc(mt(e.s))}</em></div>${body}${ok.length?src:""}</div>`}
 function mtbRace(r){const eds=r.ed.filter(e=>!e.p.length||e.p.some(p=>p.d===mtbSel.d));if(!eds.length)return"";
   const hit=eds.some(e=>e.p.some(p=>p.d===mtbSel.d&&mtbOk(p)&&p.r.length));
   const [first,...rest]=eds;
-  return `<article class="sp-card mrace${hit?"":" dim"}"><header class="mrh"><div><h3>${esc(r.n)}</h3><p>${esc([r.when,r.where,r.fmt].join(" · "))}</p></div><span class="mlv">${esc(r.lvl)}</span></header>
+  return `<article class="sp-card mrace${hit?"":" dim"}"><header class="mrh"><div><h3>${esc(r.n)}</h3><p>${esc([mt(r.when),mt(r.where),mt(r.fmt)].join(" · "))}</p></div><span class="mlv">${esc(mt(r.lvl))}</span></header>
     ${mtbEdition(r,first)}${rest.length?`<details class="mprev"><summary><span>${esc("Años anteriores")}</span><em>${rest.length}</em></summary>${rest.map(e=>mtbEdition(r,e)).join("")}</details>`:""}</article>`}
 function mtbCtl(){const seg=(id,list,key)=>`<div class="mseg" id="${id}" role="group">${list.map(([k,l,s])=>`<button type="button" data-k="${k}" aria-pressed="${mtbSel[key]===k}">${esc(l)}${s?`<small>${s}</small>`:""}</button>`).join("")}</div>`;
   return seg("mtbD",MTB_D,"d")+`<div class="mrow">${seg("mtbS",MTB_SEG,"s")}${seg("mtbX",MTB_SX,"x")}</div>`}
@@ -2793,13 +2793,26 @@ function mtbRender(){const box=$("mtbBox");if(!box||!mtbData)return;
   $("mtbSum").textContent=`${withHit.length} de ${races.length} carreras con podios para este filtro`}
 function mtbBind(){[["mtbD","d"],["mtbS","s"],["mtbX","x"]].forEach(([id,key])=>$(id).querySelectorAll("button").forEach(b=>b.onclick=()=>{mtbSel[key]=b.dataset.k;store.set("dial-mtb",mtbSel);
   $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));mtbRender()}))}
+/* Traducción de las fichas de MTB (EN/PT): diccionario en mtb-i18n.json; fuentes, meses y fechas por reglas */
+let MTBT=null;
+const MTB_MU={en:{ENE:"JAN",ABR:"APR",AGO:"AUG",DIC:"DEC"},pt:{FEB:"FEV",MAY:"MAI",SEP:"SET",DIC:"DEZ"}};
+const MTB_MS={en:{ene:"Jan",feb:"Feb",mar:"Mar",abr:"Apr",may:"May",jun:"Jun",jul:"Jul",ago:"Aug",sep:"Sep",oct:"Oct",nov:"Nov",dic:"Dec"},pt:{ene:"jan",may:"mai",sep:"set",dic:"dez"}};
+const MTB_SR={en:[[/^Fuente:/,"Source:"],[/\(oficial\)/g,"(official)"],[/datos oficiales/g,"official data"],[/cobertura oficial 3 etapas/g,"official coverage, 3 stages"],[/\(organizador\)/g,"(organizer)"],[/tabla (\d+)/g,"table $1"],[/PDFs oficiales en/g,"official PDFs at"],[/PDF oficial/g,"official PDF"],[/\breferencia\b/g,"reference"],[/\(cambio de reglas a 2025\+\)/g,"(rule change for 2025+)"]],
+  pt:[[/^Fuente:/,"Fonte:"],[/datos oficiales/g,"dados oficiais"],[/tabla (\d+)/g,"tabela $1"],[/PDFs oficiales en/g,"PDFs oficiais em"],[/\breferencia\b/g,"referência"],[/\(cambio de reglas a 2025\+\)/g,"(mudança de regras para 2025+)"]]};
+function mtSrc(x){(MTB_SR[UIL]||[]).forEach(([a,b])=>x=x.replace(a,b));const M=MTB_MS[UIL]||{};
+  return x.replace(/\b(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\b(?=[ –]\d)/g,m=>M[m]||m)}
+function mt(x){if(!x)return x;x=x.replace(/\s*Ver años anteriores ▼\s*$/,"");if(UIL==="es")return x;
+  if(/^(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)[ –]/.test(x))return x.replace(/[A-Z]{3}/g,m=>(MTB_MU[UIL]||{})[m]||m);
+  if(/^Fuente:/.test(x))return mtSrc(x);
+  const d=(MTBT||{})[UIL]||{},i=x.indexOf(" Fuente: "),h=i<0?x:x.slice(0,i);
+  return (d[h]!=null?d[h]:h)+(i<0?"":" "+mtSrc(x.slice(i+1)))}
 async function mtb(b,tok){
   b.innerHTML=`<section class="topic"><div class="topic-head"><div><h2>MTB</h2><p class="meta">${esc("Downhill, enduro y cross country · circuito chileno y Mundial Master")}</p></div></div>
     <div class="mctl">${mtbCtl()}</div><p class="mres" id="mtbSum"></p><div id="mtbBox">${note("Cargando…")}</div>
     <p class="mfoot">${esc("Resultados del archivo de OCD Race Labs, con la fuente de cada edición. Corte: 14 de mayo de 2026.")}</p></section>
     <section class="topic" id="mtbNews"><div class="topic-head"><div><h2 class="sph">${esc("Noticias MTB")}</h2><p class="meta">${esc("Downhill, enduro y XC de los últimos días")}</p></div></div>${note("Cargando…")}</section>`;
   mtbBind();
-  try{mtbData=mtbData||await fetch("mtb.json",{cache:"no-cache"}).then(r=>r.json());if(tok!==sportTok)return;mtbRender()}
+  try{if(UIL!=="es"&&!MTBT)MTBT=await fetch("mtb-i18n.json",{cache:"no-cache"}).then(r=>r.json()).catch(()=>({}));mtbData=mtbData||await fetch("mtb.json",{cache:"no-cache"}).then(r=>r.json());if(tok!==sportTok)return;mtbRender()}
   catch(e){if(tok===sportTok)$("mtbBox").innerHTML=note("No se pudo abrir el archivo de resultados.")}
   const [qn,qi]=Q.deportes_extremos;const items=(await gather(qn,qi,7).catch(()=>[])).filter(it=>XTR.test(it.title||"")&&!XJUNK.test(it.title||""));
   if(tok!==sportTok||!$("mtbNews"))return;
