@@ -6,7 +6,10 @@
 <title>Dial Espejo</title>
 <meta property="og:title" content="Dial Espejo">
 <meta property="og:description" content="Radios de Chile y el mundo, ordenadas por afinidad. Toca y escucha.">
-<meta property="og:image" content="https://ocd-race-labs.github.io/music-studio/dial-espejo/icon-hex-512.png">
+<meta property="og:image" content="https://ocd-race-labs.github.io/music-studio/dial-espejo/og/dial-espejo.jpg">
+<meta property="og:image:width" content="500">
+<meta property="og:image:height" content="500">
+<meta name="twitter:card" content="summary">
 <meta property="og:type" content="website">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1977,7 +1980,9 @@ $("band").addEventListener("click",e=>{if(e.target.closest("button,a")&&!e.targe
 $("npClose").onclick=closeSheet;
 /* Compartir: enlace limpio a la radio (sin la clave personal ?k=); quien lo abre llega a esta misma pantalla */
 const slug=s=>s.n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-const shareURL=s=>location.origin+location.pathname+"?r="+slug(s);
+/* Si la radio tiene página de vista previa (r/<slug>/, generada por tools/dial-share/build.py), se comparte esa: WhatsApp muestra su nombre y una imagen de su estilo */
+let SHSL=null;fetch("r/slugs.json",{cache:"no-cache"}).then(r=>r.json()).then(a=>SHSL=new Set(a)).catch(()=>{});
+const shareURL=s=>{const b=location.origin+location.pathname.replace(/index\.html$/,""),sl=slug(s);return SHSL&&SHSL.has(sl)?b+"r/"+sl+"/":b+"?r="+sl};
 $("npShare").onclick=async()=>{if(!current)return;const s=current,url=shareURL(s),b=$("npShare");
   const text=`${s.n} · ${FAM[s.g][0]} · ${CN[s.cc]||s.cc}`;
   const flash=t=>{b.dataset.ok=t;setTimeout(()=>delete b.dataset.ok,1800)};
@@ -2389,7 +2394,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-10m";
+const APP_VERSION="2026-11-10n";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
