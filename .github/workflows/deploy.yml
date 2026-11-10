@@ -41,3 +41,5 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 1800000   # GitHub Pages a veces tarda más de 10 min en sincronizar el sitio (~75 MB)
