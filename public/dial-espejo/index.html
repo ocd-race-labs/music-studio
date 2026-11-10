@@ -1258,7 +1258,7 @@ Trancechannel|TranceCh|DE|elec|en|.05|.85|1||trance uplifting vocal-trance|https
 Goa Channel One|Goa One|DE|elec|en|.02|.9|1||psytrance goa progressive-trance hipnótico|https://stream.laut.fm/goa-channel-one||https://laut.fm/goa-channel-one
 Progressive Trance Mix|ProgTrnc|DE|elec|en|.02|.8|1||trance progressive-trance psytrance|https://stream.laut.fm/progressive-trance-mix||https://laut.fm/progressive-trance-mix
 Sophisticatedculture|Sophist|DE|elec|en|.02|.6|1||melodic-techno hipnótico deep-tech dub|https://stream.laut.fm/sophisticatedculture||https://laut.fm/sophisticatedculture
-Hot 97|Hot 97|US|hiphop|en|.1|.85|4|97.1|hip-hop rap r&b nueva york comercial|https://18313.live.streamtheworld.com/WQHTFMAAC.aac||https://www.hot97.com/
+Hot 97|Hot 97|US|hiphop|en|.1|.85|4|97.1|hip-hop rap r&b nueva york comercial|https://playerservices.streamtheworld.com/api/livestream-redirect/WQHTFM.mp3||https://www.hot97.com/
 Power 105.1|Power 105|US|hiphop|en|.12|.85|4|105.1|hip-hop rap r&b nueva york breakfast-club|https://stream.revma.ihrhls.com/zc1481||https://power1051.iheart.com/
 Real 92.3|Real 92.3|US|hiphop|en|.1|.85|3|92.3|hip-hop rap r&b los-ángeles west-coast|https://stream.revma.ihrhls.com/zc181||https://real923la.iheart.com/
 181.FM Old School|181 Old Sch|US|hiphop|en|.02|.7|2||old-school hip-hop r&b 90s clásicos|https://listen.181fm.com/181-oldschool_128k.mp3||https://181.fm
@@ -1271,7 +1271,7 @@ BBC Radio 1Xtra|1Xtra|GB|hiphop|en|.2|.85|4||hip-hop rap grime r&b afrobeats pú
 Capital XTRA|Capital XTRA|GB|hiphop|en|.1|.85|3||hip-hop rap r&b grime comercial|https://media-the.musicradio.com/CapitalXTRALondonMP3||https://www.capitalxtra.com/
 Capital XTRA Reloaded|XTRA Reload|GB|hiphop|en|.05|.75|2||old-school hip-hop r&b clásicos|https://media-ice.musicradio.com/CapitalXTRAReloadedMP3||https://www.capitalxtra.com/reloaded/
 Skyrock|Skyrock|FR|hiphop|fr|.1|.85|4||rap francés hip-hop comercial|https://icecast.skyrock.net/s/natio_mp3_128k||https://skyrock.fm/
-Skyrock Klassiks|Sky Klassiks|FR|hiphop|fr|.02|.7|2||rap clásico hip-hop 90s 2000s|https://icecast.skyrock.net/s/klassiks_aac_64k||https://skyrock.fm/
+Skyrock Klassiks|Sky Klassiks|FR|hiphop|fr|.02|.7|2||rap clásico hip-hop 90s 2000s|https://icecast.skyrock.net/s/klassiks_mp3_128k||https://skyrock.fm/
 FIP Hip Hop|FIP HH|FR|hiphop|fr|.02|.6|2||hip-hop rap pública curada|https://icecast.radiofrance.fr/fiphiphop-hifi.aac||https://www.radiofrance.fr/fip/radio-hip-hop
 bigFM Hip-Hop|bigFM HH|DE|hiphop|de|.02|.8|2||hip-hop rap deutschrap|https://stream.bigfm.de/hiphop/mp3-128/radio-browser||https://www.bigfm.de/
 bigFM Oldschool Rap|bigFM Old|DE|hiphop|de|.02|.7|1||old-school rap hip-hop 90s|https://streams.bigfm.de/bigfm-oldschool-128-mp3||https://www.bigfm.de/
@@ -1280,7 +1280,7 @@ Radio 105 Hip Hop & RnB|105 HipHop|IT|hiphop|it|.02|.8|2||hip-hop r&b rap italia
 Rádio Rap Brasil|Rap BR|BR|hiphop|pt|.02|.75|1||rap brasileño hip-hop|https://stream.zeno.fm/7c83b37e32quv||https://www.cxradio.com.br/radio/rap-brasil
 Urbano 106|Urbano 106|CR|hiphop|es|.05|.85|2|105.9|urbano reggaetón hip-hop dancehall|https://usa18.fastcast4u.com/proxy/rmoohhrw?mp=/1||https://www.urbano106.com/
 Rap Lbeldi Maroc|Rap Lbeldi|MA|hiphop|ar|.02|.75|1||rap marroquí darija hip-hop|https://stream.zeno.fm/ivdufrl7q0quv||
-Metro FM|Metro FM|ZA|hiphop|en|.15|.8|3||hip-hop r&b amapiano urbana sudafricana pública|https://playerservices.streamtheworld.com/api/livestream-redirect/METROFMAAC.aac||https://www.metrofm.co.za/
+Metro FM|Metro FM|ZA|hiphop|en|.15|.8|3||hip-hop r&b amapiano urbana sudafricana pública|https://playerservices.streamtheworld.com/api/livestream-redirect/METROFM.mp3||https://www.metrofm.co.za/
 KMEL 106.1|KMEL|US|hiphop|en|.1|.85|3|106.1|hip-hop rap r&b bay-area san-francisco|https://stream.revma.ihrhls.com/zc293||https://kmel.iheart.com/
 WGCI 107.5|WGCI|US|hiphop|en|.1|.85|3|107.5|hip-hop rap r&b chicago|https://stream.revma.ihrhls.com/zc841||https://wgci.iheart.com/
 Rinse FM|Rinse|GB|hiphop|en|.05|.8|3||grime uk-garage dubstep club londres|https://admin.stream.rinse.fm/proxy/rinse_uk/stream||https://www.rinse.fm/`;
@@ -1844,7 +1844,12 @@ async function npPoll(){
   }
   if(current===s&&!audio.paused&&document.visibilityState==="visible")np.timer=setTimeout(npPoll,25000);
 }
-function npShow(s,j){np.cur=j;if(!npSheet.hidden)setTimeout(renderSheet,0);
+/* iHeart (KMEL, WGCI, Power 105.1, Real 92.3) manda title="…",artist="…",url="…" en el texto ICY: se extraen título y artista */
+function npFix(j){if(!j||typeof j!=="object")return j;const raw=[j.song,j.artist,j.title].filter(x=>typeof x==="string").join(" ");
+  if(!/(title|artist)="/i.test(raw))return j;const g=k=>(raw.match(new RegExp(k+'="([^"]*)"',"i"))||[])[1]||"";
+  const t=g("title").trim(),a=g("artist").trim(),spot=/song_spot="T"/i.test(raw);
+  return {...j,song:spot?"":t,artist:spot?"":a,title:spot?"":t,album:/="/.test(j.album||"")?"":j.album}}
+function npShow(s,j){j=npFix(j);np.cur=j;if(!npSheet.hidden)setTimeout(renderSheet,0);
   const song=j&&j.song,artist=j&&j.artist,raw=j&&j.raw;
   const prog=j&&j.program,pdesc=j&&j.program_desc;
   if(raw&&!artist){const f=x=>String(x||"").toLowerCase().replace(/[^a-z0-9]/g,"");const r0=f(raw);if(r0.includes(f(s.sh))||f(s.n).includes(r0)||r0.includes(f(s.n).slice(0,8)))return npShow(s,{...j,raw:null})}
@@ -2394,7 +2399,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-10n";
+const APP_VERSION="2026-11-10o";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
