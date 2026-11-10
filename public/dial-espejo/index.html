@@ -1058,7 +1058,7 @@ function trSeg(x){const k=x.trim();if(!k)return x;const d=I18N[UIL];if(d[k]!=nul
   for(const [re,e,p] of I18P){if(re.test(k))return x.replace(k,k.replace(re,UIL==="en"?e:p))}
   if(k.includes(", ")){const y=k.split(", ").map(z=>d[z]!=null?d[z]:z).join(", ");if(y!==k)return x.replace(k,y)}
   return x}
-Object.assign(I18N.en,{"Hip hop y rap":"Hip hop and rap","Marruecos":"Morocco","Costa Rica":"Costa Rica"});Object.assign(I18N.pt,{"Hip hop y rap":"Hip hop e rap","Marruecos":"Marrocos","Costa Rica":"Costa Rica"});Object.assign(I18N.en,{"Todas":"All","Todos":"All","Varones":"Men","Damas":"Women","Sub-23":"Under-23"});Object.assign(I18N.pt,{"Todas":"Todas","Todos":"Todos","Varones":"Masculino","Damas":"Feminino","Junior":"Júnior"});Object.assign(I18N.en,{"Temporizador para dormir":"Sleep timer","Apagar en":"Stop in","Cancelar":"Cancel","apagada por el temporizador":"stopped by the sleep timer"});Object.assign(I18N.pt,{"Temporizador para dormir":"Timer para dormir","Apagar en":"Desligar em","Cancelar":"Cancelar","apagada por el temporizador":"desligada pelo timer"});
+Object.assign(I18N.en,{"Marruecos":"Morocco","Costa Rica":"Costa Rica"});Object.assign(I18N.pt,{"Marruecos":"Marrocos","Costa Rica":"Costa Rica"});Object.assign(I18N.en,{"Todas":"All","Todos":"All","Varones":"Men","Damas":"Women","Sub-23":"Under-23"});Object.assign(I18N.pt,{"Todas":"Todas","Todos":"Todos","Varones":"Masculino","Damas":"Feminino","Junior":"Júnior"});Object.assign(I18N.en,{"Temporizador para dormir":"Sleep timer","Apagar en":"Stop in","Cancelar":"Cancel","apagada por el temporizador":"stopped by the sleep timer"});Object.assign(I18N.pt,{"Temporizador para dormir":"Timer para dormir","Apagar en":"Desligar em","Cancelar":"Cancelar","apagada por el temporizador":"desligada pelo timer"});
 function trText(s){if(UIL==="es"||!s||!/[A-Za-zÁÉÍÓÚáéíóúñ]/.test(s))return s;const d=I18N[UIL],k=s.trim();if(d[k]!=null)return s.replace(k,d[k]);
   return s.includes(" · ")?s.split(" · ").map(trSeg).join(" · "):trSeg(s)}
 const NOI18N="[data-noi18n],.tl-t b,.tl-h,#hlN,#hlSvg,#npcT,#npcA,#npcS,.tp-it b,.sq-tx b,.af-b b,script,style,#kCn,.pz-res,.story h3,.hl a,.concept .cl:not(.amb),#bT,#npSong,#npArtist,#npAlbum,.topic-head h2:not(.sph),.thive text";
@@ -1084,7 +1084,7 @@ const audio=$("audio");
 /* ---------- Catálogo y perfiles ----------
    nombre|corto|país|familia|idioma|habla(0-1)|energía(0-1)|audiencia(1-5)|FM Santiago|etiquetas|búsqueda|patrón|web */
 const FAM={news:["Noticias 24/7","var(--news)","#5B7BFF",1920],gen:["Noticias y más","var(--gen)","#7AB8FF",1925],culture:["Cultura","var(--culture)","#8FA3FF",1930],classic:["Clásica","var(--classic)","#F2B544",1700],jazz:["Jazz","var(--jazz)","#2FD3A0",1915],
-  rock:["Rock e indie","var(--rock)","#FF5C7A",1955],elec:["Electrónica","#E85CFF","#E85CFF",1990],metal:["Metal","#B9C3D6","#B9C3D6",1980],folk:["Folklore y raíces","#9BCB6A","#9BCB6A",1900],pop:["Pop","var(--pop)","#B98CFF",1960],hiphop:["Hip hop y rap","#C8F03C","#C8F03C",1973],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
+  rock:["Rock e indie","var(--rock)","#FF5C7A",1955],elec:["Electrónica","#E85CFF","#E85CFF",1990],metal:["Metal","#B9C3D6","#B9C3D6",1980],folk:["Folklore y raíces","#9BCB6A","#9BCB6A",1900],pop:["Pop","var(--pop)","#B98CFF",1960],hiphop:["Hip Hop","#C8F03C","#C8F03C",1973],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
 const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán",it:"Italiano",nl:"Neerlandés",ar:"Árabe",ja:"Japonés",ko:"Coreano",hi:"Hindi",pl:"Polaco"};
 const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",MA:"África",CR:"Latinoamérica",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía",PL:"Europa",AE:"Asia",GR:"Europa"};
 const REGIONS=["Chile","Latinoamérica","Norteamérica","Europa","Asia","África","Oceanía"];
@@ -2372,7 +2372,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-10j";
+const APP_VERSION="2026-11-10k";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
