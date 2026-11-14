@@ -280,9 +280,14 @@ const VARIANTS: Record<string, string[]> = {
   "fase": [...ABS_VARS, "plm", "dl"],
   "fase+playoffs": [...ABS_VARS, "plm", "dl", "poh"],
 };
-// totales por variante (por defecto T_VARS); "late" = segunda mitad de la temporada regular
-// (total por fase, segunda mitad y enero, probado el 2026-11-09: sin mejora, descartado)
+// (total por fase, segunda mitad y enero, probado el 2026-11-09: sin mejora, descartado;
+//  total por ritmo × eficiencia, probado el 2026-11-14: no agrega sobre puntos a favor y en contra, descartado)
 const T_BY: Record<string, string[]> = {};
+// conjuntos de variables para el total de puntos: compiten por error medio en temporadas no vistas
+const TOTAL_SETS: Record<string, string[]> = {
+  "actual": ["const", "exp_total", "league", "po", "b2b", "early"],
+  "bajas": ["const", "exp_total", "league", "po", "b2b", "early", "ts", "ta"],   // estrellas y muy buenos que no juegan, de ambos equipos
+};
 // sin incertidumbre extra en el cierre de temporada
 const NO_FIN = new Set<string>();
 // variantes cuya dispersión depende del partido: erraticidad de los jugadores y cierre de temporada
@@ -304,6 +309,8 @@ function val(f: any, v: string, P?: any) {
   if (v === "poh") return (f.po || 0) * (f.hca ?? 1);
   if (v === "late") return !f.po && ((f.gp_h ?? 0) + (f.gp_a ?? 0)) / 2 >= 50 ? 1 : 0;
   if (v === "jan") return !f.po && f.month === 1 ? 1 : 0;
+  if (v === "ts") return absW(f.abs_h, (x) => x.t === "s") + absW(f.abs_a, (x) => x.t === "s");
+  if (v === "ta") return absW(f.abs_h, (x) => x.t === "a") + absW(f.abs_a, (x) => x.t === "a");
   if (v === "xs") return absD(f, (x) => x.t === "s");
   if (v === "xs1") return absD(f, (x) => x.t === "s" && x.k <= 2);
   if (v === "xa") return absD(f, (x) => x.t === "a");
@@ -408,13 +415,14 @@ function playerEffects(rows: Row[], P: any) {
   for (const x of pr) if (tau2 > 0 && Math.abs(x.m) / Math.sqrt(x.se2) >= 2) { player_g[x.id] = r3(-x.m * tau2 / (tau2 + x.se2)); player_n[x.id] = x.name; }
   return { player_g, player_n, player_tau: r3(Math.sqrt(tau2)) };
 }
-function fitVariant(rows: Row[], name: string) {
+function fitVariant(rows: Row[], name: string, tset?: string) {
   const vars = VARIANTS[name];
   const simple = vars.filter((v) => v !== "team" && v !== "pair" && v !== "pl");
-  let P = fit(rows, simple, { ...(VAR_TERMS.has(name) ? { var_terms: true } : {}), ...(T_BY[name] ? { tvars: T_BY[name] } : {}), ...(NO_FIN.has(name) ? { no_fin: true } : {}) });
+  const tv = tset && TOTAL_SETS[tset] ? TOTAL_SETS[tset] : T_BY[name];
+  let P = fit(rows, simple, { ...(VAR_TERMS.has(name) ? { var_terms: true } : {}), ...(tv ? { tvars: tv } : {}), ...(NO_FIN.has(name) ? { no_fin: true } : {}) });
   if (vars.includes("pl")) P = fit(rows, vars, playerEffects(rows, P));
   else if (vars.length !== simple.length) P = fit(rows, vars, effects(rows, P, vars.includes("pair")));
-  P.variant = name;
+  P.variant = name; if (tset) P.tset = tset;
   return P;
 }
 function predict(f: any, P: any) {
@@ -532,10 +540,26 @@ async function rebuild(force?: string | null, dry = false) {
   const done = games.filter(completed).filter((g) => g.season >= 2018 && abs.has(g.id) && pl.has(g.id)); // solo partidos con planilla
   const train = done.filter((g) => g.season <= 2023).map((g) => toRow(g, feats.get(g.id)));
   const test = done.filter((g) => g.season >= 2024);
-  const variantes: any = {};
+  // total de puntos: elegir el conjunto de variables con menor error medio en las temporadas no vistas
+  const lastTr = Math.max(...train.map((r) => r.g.season));
+  const wTr = train.map((r) => 0.5 ** ((lastTr - r.g.season) / HALF_LIFE));
+  const totales: any = {};
+  let tbest: any = null;
+  for (const [tn, tv] of Object.entries(TOTAL_SETS)) {
+    const c = ols(train.map((r) => tv.map((v) => val(r.f, v))), train.map((r) => r.total), 1e-6, wTr);
+    const errs = test.map((g) => { const f = feats.get(g.id); return Math.abs(g.home_score! + g.away_score! - tv.reduce((s, v, i) => s + c[i] * val(f, v), 0)); });
+    const bySeason: any = {};
+    test.forEach((g, i) => { (bySeason[g.season] ??= []).push(errs[i]); });
+    const mae = avg(errs);
+    totales[tn] = { mae: Math.round(mae * 1000) / 1000, por_temporada: Object.fromEntries(Object.entries(bySeason).map(([k, e]: any) => [k, Math.round(avg(e) * 100) / 100])),
+      coef: Object.fromEntries(tv.map((v, i) => [v, r3(c[i])])) };
+    if (!tbest || mae < tbest.mae - 0.03) tbest = { name: tn, mae };   // una variante más compleja debe bajar al menos 0,03 pts
+  }
+  const tset = tbest.name;
+  const variantes: any = { _totales: { elegido: tset, ...totales } };
   let best: any = null;
   for (const name of Object.keys(VARIANTS)) {
-    const PB = fitVariant(train, name);
+    const PB = fitVariant(train, name, tset);
     const btRows: any[] = [], mrows: any[] = [];
     for (const g of test) {
       const f = feats.get(g.id);
@@ -560,7 +584,7 @@ async function rebuild(force?: string | null, dry = false) {
     if (force ? name === force : (!best || brier < best.brier - 0.0002)) best = cand;
   }
   if (dry) return { elegido: best.name, variantes };
-  const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), best.name);
+  const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), best.name, tset);
   const version = `nba-${best.name}-${new Date().toISOString().slice(0, 10)}`;
   await db.from("dial_fc_model").update({ active: false }).eq("sport", SPORT);
   const { error: me } = await db.from("dial_fc_model").upsert([
@@ -686,7 +710,7 @@ async function auto(adminKey: string) {
   let refit = null;
   if (now - Date.parse(model.created_at) > 30 * DAY) {
     const done = games.filter(completed).filter((g) => g.season >= 2018 && abs.has(g.id) && (!("plm" in (model.params.margin || {})) || pl.has(g.id)));
-    const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), model.params.variant || "base");
+    const P = fitVariant(done.map((g) => toRow(g, feats.get(g.id))), model.params.variant || "base", model.params.tset);
     const version = `nba-${P.variant}-${new Date().toISOString().slice(0, 10)}`;
     await db.from("dial_fc_model").update({ active: false }).eq("sport", SPORT);
     await db.from("dial_fc_model").upsert({ version, sport: SPORT, active: true, params: P, metrics: model.metrics, notes: "Recalibración mensual." }, { onConflict: "version" });
