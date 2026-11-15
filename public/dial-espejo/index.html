@@ -289,7 +289,7 @@ a{color:inherit}
 .nd-box{display:grid;gap:10px;margin-inline:calc(-1*max(20px,env(safe-area-inset-left,0px)));overflow:hidden;transition:max-height .32s cubic-bezier(.2,.8,.2,1),opacity .2s,margin .32s;max-height:200px;min-height:max-content;flex:none}
 .nd-box.off{min-height:0;max-height:0;opacity:0;margin-bottom:-16px}
 .nd{position:relative;min-width:0;border-block:1px solid rgba(237,237,242,.14);background:rgba(9,9,12,.72);user-select:none;-webkit-user-select:none}
-.nd-sc{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;cursor:grab;outline:none}
+.nd-sc{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-snap-type:none;-webkit-overflow-scrolling:touch;cursor:grab;outline:none}
 .nd-sc::-webkit-scrollbar{display:none}
 .nd-tr{position:relative;height:62px;background:repeating-linear-gradient(90deg,rgba(237,237,242,.2) 0 1px,transparent 1px 10px) 0 100%/100% 9px no-repeat,repeating-linear-gradient(90deg,rgba(237,237,242,.38) 0 1px,transparent 1px 50px) 0 100%/100% 17px no-repeat}
 .nd-mk{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;scroll-snap-align:center;border:0;padding:0;background:none;cursor:pointer}
@@ -2022,6 +2022,8 @@ let ndAnim=null;
 function ndTo(x){const sc=$("ndSc");cancelAnimationFrame(ndAnim);sc.style.scrollSnapType="none";const x0=sc.scrollLeft,dx=x-x0,t0=performance.now(),T=200;
   const f=t=>{const p=Math.min(1,(t-t0)/T),e=1-Math.pow(1-p,3);sc.scrollLeft=x0+dx*e;if(p<1)ndAnim=requestAnimationFrame(f);else{ndAnim=null;setTimeout(()=>{if(!ndAnim&&!kDrag)sc.style.scrollSnapType=""},120)}};ndAnim=requestAnimationFrame(f)}
 const ndGo=m=>ndTo(m.px-$("ndSc").clientWidth/2);
+function ndToT(x,T){const sc=$("ndSc");cancelAnimationFrame(ndAnim);const x0=sc.scrollLeft,dx=x-x0,t0=performance.now();
+  const f=t=>{const p=Math.min(1,(t-t0)/T),e=1-Math.pow(1-p,3);sc.scrollLeft=x0+dx*e;if(p<1)ndAnim=requestAnimationFrame(f);else ndAnim=null};ndAnim=requestAnimationFrame(f)}
 function ndBuild(){if(!ND.on||!current||npSheet.hidden)return;const sc=$("ndSc"),tr=$("ndTr"),w=sc.clientWidth;if(!w)return;
   const cur=current,PX=1800,GAP=104;ND.for=cur;
   const af=S.filter(x=>x!==cur&&!x.dead).map(x=>({x,v:sim(cur,x).v})).sort((a,b)=>b.v-a.v).slice(0,18);
@@ -2038,6 +2040,15 @@ function ndRead(){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2;let b=null
   const R=$("ndRead");R.classList.toggle("between",!near);R.classList.toggle("cur",near&&b.x===current);$("ndSw").classList.toggle("off",!near||b.x===current);
   if(ND.shown!==b){ND.shown=b;npSheet.style.setProperty("--uc",FAM[b.x.g][2]);$("ndN").textContent=b.x.n;$("ndD").innerHTML=ndDesc(b.x)}}
 $("ndSc").addEventListener("scroll",ndRead,{passive:true});
+/* Asentado propio (sin scroll-snap: en iPhone el snap devolvía la franja hacia atrás). Cuando la franja se detiene sola, sigue suave hasta la radio siguiente en la dirección del gesto */
+(()=>{const sc=$("ndSc");let last=sc.scrollLeft,dir=0,t=null,touch=false;
+  const settle=()=>{if(touch||ndAnim||kDrag||!ND.marks||!ND.marks.length)return;const c=sc.scrollLeft+sc.clientWidth/2,o=ND.marks.slice().sort((a,b)=>a.px-b.px);
+    let n=o[0];for(const m of o)if(Math.abs(m.px-c)<Math.abs(n.px-c))n=m;if(Math.abs(n.px-c)<2)return;
+    let g=n;if(Math.abs(n.px-c)>14){const f=dir>0?o.find(m=>m.px>=c):dir<0?o.slice().reverse().find(m=>m.px<=c):null;if(f)g=f}
+    const d=Math.abs(g.px-c);ndToT(g.px-sc.clientWidth/2,Math.max(160,Math.min(420,d*1.6)))};
+  sc.addEventListener("scroll",()=>{const l=sc.scrollLeft;if(!ndAnim&&Math.abs(l-last)>.5)dir=Math.sign(l-last);last=l;clearTimeout(t);t=setTimeout(settle,110)},{passive:true});
+  sc.addEventListener("touchstart",()=>{touch=true;cancelAnimationFrame(ndAnim);ndAnim=null;clearTimeout(t)},{passive:true});
+  sc.addEventListener("touchend",()=>{touch=false;clearTimeout(t);t=setTimeout(settle,110)},{passive:true})})();
 $("ndSc").addEventListener("keydown",e=>{if(!/Arrow(Left|Right)/.test(e.key))return;e.preventDefault();const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.marks.slice().sort((a,b)=>a.px-b.px);
   const n=e.key==="ArrowRight"?o.find(m=>m.px>c+4):o.reverse().find(m=>m.px<c-4);if(n)ndGo(n)});
 (()=>{const sc=$("ndSc");let x=null,l=0;sc.addEventListener("mousedown",e=>{x=e.clientX;l=sc.scrollLeft;sc.style.scrollSnapType="none"});
@@ -2410,7 +2421,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-15b";
+const APP_VERSION="2026-11-15c";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
