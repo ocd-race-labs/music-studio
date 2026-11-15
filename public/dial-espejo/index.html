@@ -818,6 +818,16 @@ footer{color:var(--dim);font:400 11px/1.6 var(--mono);padding-top:6px}
   #view-radio>.srch>#advOpen{margin-top:auto}
   #view-radio{grid-template-rows:auto auto}#view-radio>.afc{align-self:start}
 }
+@media (max-width:760px){
+  /* La X y la luna flotan sobre los extremos de la franja del dial (no ocupan fila propia): todo sube */
+  .np-in{position:relative}
+  .np-grab,.np-slp{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:6;margin:0}
+  .np-grab{right:calc(max(12px,env(safe-area-inset-right,0px)) - 20px)}
+  .np-slp{left:calc(max(12px,env(safe-area-inset-left,0px)) - 20px);width:40px;height:40px}
+  .np-slp .np-slb{margin-left:0}
+  .np-grab,.np-slp .np-slb{background:radial-gradient(circle at 50% 35%,rgba(44,44,52,.95),rgba(12,12,16,.95));border-color:rgba(237,237,242,.16);box-shadow:0 0 0 5px rgba(9,9,12,.85),inset 0 1px 0 rgba(255,255,255,.08),0 6px 16px -8px #000}
+  .np-slx{top:50px;left:0}
+}
 
 .lcd{all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr);padding:8px;border-radius:18px;background:linear-gradient(180deg,#1b1c20,#0c0d10);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.6),0 10px 28px -14px rgba(0,0,0,.9)}
 .lcd-art{flex:none;border:0;padding:0;cursor:pointer;width:60px;height:60px;border-radius:12px;overflow:hidden;background:#000;display:grid;place-items:center;align-self:center;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
@@ -2399,7 +2409,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-10r";
+const APP_VERSION="2026-11-15a";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
