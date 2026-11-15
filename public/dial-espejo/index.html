@@ -2074,9 +2074,16 @@ function ndStep(dir){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.ma
   const ang=e=>{const r=k.getBoundingClientRect();return Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))*180/Math.PI};
   let tot=0,cIn=false;
   k.addEventListener("pointerdown",e=>{const r=k.getBoundingClientRect();cIn=Math.hypot(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2))<r.width*.24;tot=0;a0=ang(e);id=e.pointerId;acc=0;kDrag=true;ND.kBusy=false;ND.kTarget=null;$("ndSc").style.scrollSnapType="none";try{k.setPointerCapture(id)}catch(_){}k.classList.add("drag")});
-  k.addEventListener("pointermove",e=>{if(a0===null||e.pointerId!==id)return;const a=ang(e);let d=a-a0;if(d>180)d-=360;if(d<-180)d+=360;a0=a;acc+=d;tot+=Math.abs(d);kSet(kDeg+d);
+  k.addEventListener("pointermove",e=>{if(a0===null||e.pointerId!==id)return;const a=ang(e);let d=a-a0;if(d>180)d-=360;if(d<-180)d+=360;a0=a;{const o=ND.marks||[],ci=Math.max(0,o.slice().sort((x,y)=>x.px-y.px).findIndex(m=>m.x===current)),lo=(0-ci)*KSTEP-4,hi=(o.length-1-ci)*KSTEP+4;if(o.length){const nd=Math.max(lo,Math.min(hi,kDeg+d));d=nd-kDeg}}
+    acc+=d;tot+=Math.abs(d);kSet(kDeg+d);
     while(acc>=KSTEP){ndStep(1);acc-=KSTEP}while(acc<=-KSTEP){ndStep(-1);acc+=KSTEP}});
-  const end=()=>{if(a0===null)return;a0=null;if(cIn&&tot<4&&npSheet.classList.contains("dialv"))dialView(false);k.classList.remove("drag");ND.kBusy=true;setTimeout(()=>{kDrag=false;ND.kTarget=null;ND.kBusy=false;k.classList.add("snap");kSet(kFromScroll());setTimeout(()=>k.classList.remove("snap"),300);const sc=$("ndSc");if(!ndAnim)sc.style.scrollSnapType=""},320)};
+  const end=()=>{if(a0===null)return;a0=null;if(cIn&&tot<4&&npSheet.classList.contains("dialv"))dialView(false);k.classList.remove("drag");ND.kBusy=true;
+    /* Al soltar no se devuelve: si pasó un tercio del paso hacia la radio siguiente, avanza a ella; la perilla va de inmediato a su muesca final */
+    if(Math.abs(acc)>=KSTEP/3&&tot>=4){ndStep(Math.sign(acc));acc=0}
+    {const o=(ND.marks||[]).slice().sort((a,b)=>a.px-b.px),ci=Math.max(0,o.findIndex(m=>m.x===current));let t=ND.kTarget;
+     if(t==null&&o.length){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2;t=0;for(let j=1;j<o.length;j++)if(Math.abs(o[j].px-c)<Math.abs(o[t].px-c))t=j}
+     if(t!=null){k.classList.add("snap");kSet((t-ci)*KSTEP)}}
+    setTimeout(()=>{kDrag=false;ND.kTarget=null;ND.kBusy=false;k.classList.add("snap");kSet(kFromScroll());setTimeout(()=>k.classList.remove("snap"),300);const sc=$("ndSc");if(!ndAnim)sc.style.scrollSnapType=""},320)};
   k.addEventListener("pointerup",end);k.addEventListener("pointercancel",end)})();
 function dialView(on){store.set("dial-dialview",on);npSheet.classList.toggle("dialv",on)}
 function fitK(){const e=$("kCn");if(!e||!e.offsetWidth||e.classList.contains("tk"))return;let k=1;e.style.setProperty("--kz",1);while(k>.5&&e.scrollWidth>e.clientWidth+1){k-=.04;e.style.setProperty("--kz",k.toFixed(2))}}
@@ -2421,7 +2428,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-15c";
+const APP_VERSION="2026-11-15d";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
