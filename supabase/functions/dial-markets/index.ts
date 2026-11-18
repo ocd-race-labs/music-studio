@@ -3,6 +3,7 @@
 // (spreads de crédito, condiciones financieras, curva y tasa real; los trae la base con dial_mkt_fred_refresh) y
 // multpl.com (CAPE de Shiller). Todo se calcula aquí y se guarda 20 minutos; la app solo lee.
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { lines, localize, type RD } from "./i18n.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -89,7 +90,7 @@ const EXCH: [string, string, string, string][] = [
   ["^N225", "Nikkei 225", "🇯🇵", "as"], ["000001.SS", "Shanghai", "🇨🇳", "as"], ["^HSI", "Hang Seng", "🇭🇰", "as"], ["^KS11", "KOSPI", "🇰🇷", "as"], ["^NSEI", "Nifty 50", "🇮🇳", "as"], ["^AXJO", "S&P/ASX 200", "🇦🇺", "as"], ["^TWII", "TAIEX", "🇹🇼", "as"],
   ["^TASI.SR", "Tadawul", "🇸🇦", "me"],
 ];
-const REG: Record<string, string> = { na: "EE.UU. y Canadá", la: "Latinoamérica", eu: "Europa", as: "Asia-Pacífico", me: "Medio Oriente" };
+const REG: Record<string, string> = { na: "na", la: "la", eu: "eu", as: "as", me: "me" };
 const MACRO = ["ACWI", "^STOXX50E", "^VIX", "^TNX", "DX-Y.NYB", "CLP=X", "HG=F", "BZ=F", "GC=F", "ECH"];
 // Monedas: [código, nombre, bandera, símbolo Yahoo, true si Yahoo da dólares por unidad (EURUSD) en vez de unidades por dólar]
 const FX: [string, string, string, string, boolean][] = [
@@ -230,15 +231,14 @@ async function compute() {
     const regs = Object.keys(REG).map((r) => { const v = ex.filter((e) => e.r === r && e.d[k] != null).map((e) => e.d[k]!); return v.length ? { r: REG[r], v: mean(v) } : null; }).filter(Boolean) as { r: string; v: number }[];
     regs.sort((a, b) => b.v - a.v);
     const g = glob[k];
-    const L: string[] = [];
-    L.push(`<b>MSCI Mundo ${g ? g.s : "s/d"} ${HZN[k]}.</b> Suben ${ups} de ${nn} bolsas; ${regs.map((x) => `${x.r} ${sg(x.v, 1)}%`).join(", ")}.`);
     const mv = inds.filter((i) => i.d[k]).sort((a, b) => Math.abs(b.d[k]!.z) - Math.abs(a.d[k]!.z))[0];
-    if (mv) { const z = Math.abs(mv.d[k]!.z); L.push(`<b>Lo que más se movió: ${mv.n}</b>, ${mv.d[k]!.s} ${HZN[k]}; ${z >= 2 ? "un movimiento poco habitual (fuera del 95% de los casos de los últimos años)." : z >= 1 ? "un movimiento algo mayor que lo normal." : "dentro de lo normal."}`); }
-    const cv = I.curve, hy = I.hy, rc = I.rec;
-    if (cv && hy && rc) L.push(`<b>Ciclo y crédito:</b> curva 10a-3m en ${cv.v} (${cv.raw < 0 ? "invertida" : "positiva"}), spread high yield en ${hy.v} (${hy.sg === "f" ? "sin estrés" : hy.sg === "a" ? "con estrés" : "zona media"}) y probabilidad de recesión a 12 meses de ${rc.v}.`);
-    const hg = I.hg, cl = I.clp, ch = ex.find((e) => e.s === "CHL");
-    if (hg && cl && ch) L.push(`<b>Chile:</b> cobre ${hg.d[k]?.s ?? "s/d"}, dólar ${cl.d[k]?.s ?? "s/d"} (${cl.v}) y MSCI Chile en pesos ${ch.d[k] != null ? sg(ch.d[k]!, 1) + "%" : "s/d"} ${HZN[k]}.`);
-    return { score: sc, prev: sc0, lines: L };
+    const cv = I.curve, hy = I.hy, rc = I.rec, hg = I.hg, cl = I.clp, ch = ex.find((e) => e.s === "CHL");
+    const D: RD = { k, g: g ? g.s : null, ups, nn, regs: regs.map((x) => [x.r, sg(x.v, 1) + "%"]),
+      mv: mv ? { id: mv.id, n: mv.n, s: mv.d[k]!.s, z: Math.abs(mv.d[k]!.z) } : null,
+      cyc: cv && hy && rc ? { cv: cv.v, inv: cv.raw < 0, hy: hy.v, hs: hy.sg, rc: rc.v } : null,
+      chl: hg && cl && ch ? { hg: hg.d[k]?.s ?? null, cl: cl.d[k]?.s ?? null, clv: cl.v, ch: ch.d[k] != null ? sg(ch.d[k]!, 1) + "%" : null } : null };
+    const L = lines("es", D);
+    return { score: sc, prev: sc0, lines: L, D };
   });
 
   // Puntos de inflexión: días en que el MSCI Mundo se movió más de 2,5 desviaciones según su volatilidad del momento
@@ -263,8 +263,8 @@ async function compute() {
     const w = weekly((Y[s] || []).filter((p) => p.t > T - 3650 - 14)); if (w.length < 200) return null;
     const r: number[] = []; for (let i = 1; i < w.length; i++) r.push(Math.log(w[i].v / w[i - 1].v));
     const g = garch(r); const hist = mean(r) * 52, prior = Math.log(1.07);
-    let mu = 0.5 * hist + 0.5 * prior; let how = "promedio de 10 años mezclado con el retorno de largo plazo de las acciones (7%)";
-    if (s === "^GSPC" && capeNow) { mu = 0.5 * hist + 0.5 * Math.log(1 + 1 / capeNow + 0.025); how = "promedio de 10 años mezclado con el retorno implícito en el CAPE (1/CAPE más inflación)"; }
+    let mu = 0.5 * hist + 0.5 * prior; let how = "lr";
+    if (s === "^GSPC" && capeNow) { mu = 0.5 * hist + 0.5 * Math.log(1 + 1 / capeNow + 0.025); how = "cape"; }
     const y1 = w.length > 53 ? Math.log(last(w).v / w[w.length - 53].v) : 0; mu += y1 > 0 ? 0.01 : -0.01;
     mu = Math.max(-0.05, Math.min(0.15, mu)); const muw = mu / 52;
     // Precisión histórica y calibración: cada 4 semanas desde el segundo año, banda a 1 año con la varianza GARCH
@@ -328,13 +328,14 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   const force = new URL(req.url).searchParams.get("fresh") === "1";
   const { data: st } = await db.from("dial_mkt_state").select("payload,updated_at").eq("key", "payload").maybeSingle();
-  if (st?.payload && !force && Date.now() - Date.parse(st.updated_at) < TTL) return json(st.payload);
+  const lang = (new URL(req.url).searchParams.get("lang") || "es").slice(0, 2);
+  if (st?.payload && !force && Date.now() - Date.parse(st.updated_at) < TTL) return json(localize(st.payload, lang));
   try {
     const p = await compute();
     await db.from("dial_mkt_state").upsert({ key: "payload", payload: p, updated_at: new Date().toISOString() });
-    return json(p);
+    return json(localize(p, lang));
   } catch (e) {
-    if (st?.payload) return json({ ...st.payload, stale: true }, 200, 60);
+    if (st?.payload) return json(localize({ ...st.payload, stale: true }, lang), 200, 60);
     return json({ error: "No se pudieron calcular los mercados: " + String(e).slice(0, 200) }, 502, 15);
   }
 });
