@@ -2450,15 +2450,15 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     const A=aff(cur,6);
     const near=new Set(A.map(a=>a.x));
     /* Panal por ciudad: el centro del panal es la ciudad; al medio la radio más escuchada y las demás en anillos hexagonales con separación fija en pantalla */
-    const D=12*Math.pow(k,.55),grp={};
+    const D=4.5*Math.pow(k,.78),grp={};
     S.forEach(s=>{s._v=false;s._p=null;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;(grp[s.geo.join()]=grp[s.geo.join()]||[]).push(s)});
     Object.values(grp).forEach(l=>{const o=proj(l[0].geo);l.sort((a,b)=>b.l-a.l||a.n.localeCompare(b.n)).forEach((s,i)=>{const h=HEXO[i]||[0,0];
-      s._p=[o[0]+D*(h[0]+h[1]/2),o[1]+D*h[1]*.866]})});
+      s._p=[o[0]+D*(h[0]+h[1]/2),o[1]+D*h[1]*.866];s._t=s._p.slice()})});
     /* Ciudades vecinas (San Francisco y Berkeley, Nueva York y Newark): sus panales se separan empujando los puntos que quedan a menos de la distancia mínima */
     {const P=S.filter(s=>s._p&&grp[s.geo.join()]),m=D*.92;for(let it=0;it<24;it++){const H=new Map(),key=(x,y)=>Math.floor(x/m)+","+Math.floor(y/m);let mv=0;
       P.forEach(s=>{const k=key(s._p[0],s._p[1]);(H.get(k)||H.set(k,[]).get(k)).push(s)});
       P.forEach(a=>{const cx=Math.floor(a._p[0]/m),cy=Math.floor(a._p[1]/m);for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)(H.get((cx+i)+","+(cy+j))||[]).forEach(b=>{if(b.i<=a.i)return;
-        let dx=b._p[0]-a._p[0],dy=b._p[1]-a._p[1],d=Math.hypot(dx,dy);if(d>=m)return;if(d<.01){dx=Math.cos(a.i);dy=Math.sin(a.i);d=1}const f=(m-d)/2/d;a._p=[a._p[0]-dx*f,a._p[1]-dy*f];b._p=[b._p[0]+dx*f,b._p[1]+dy*f];mv++})});if(!mv)break}}
+        let dx=b._p[0]-a._p[0],dy=b._p[1]-a._p[1],d=Math.hypot(dx,dy);if(d>=m)return;if(d<.01){dx=Math.cos(a.i);dy=Math.sin(a.i);d=1}const f=(m-d)/2/d;a._p=[a._p[0]-dx*f,a._p[1]-dy*f];b._p=[b._p[0]+dx*f,b._p[1]+dy*f];mv++})});P.forEach(s=>{const dx=s._p[0]-s._t[0],dy=s._p[1]-s._t[1],d=Math.hypot(dx,dy),L=D*1.2;if(d>L)s._p=[s._t[0]+dx*L/d,s._t[1]+dy*L/d]});if(!mv)break}}
     S.forEach(s=>{if(!s._p||!grp[s.geo.join()])return;s._v=s._p[0]>-10&&s._p[0]<370&&s._p[1]>-10&&s._p[1]<370;s._g=proj.invert(s._p)||s.geo});
     const vis=S.filter(s=>s._v);
     gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
@@ -2466,7 +2466,7 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     // Los puntos crecen un poco al acercar, pero mucho menos que el mapa: así las radios de una misma zona se separan
     const g=Math.min(2.2,Math.pow(k,.33)),fz=Math.min(1.55,Math.pow(k,.19));
     gDot.selectAll("circle").data(vis,d=>d.i).join("circle")
-      .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>d===cur?Math.min(7*g,D*.46):near.has(d)?Math.min(5*g,D*.4):Math.min((2.2+d.l*.55)*g,D*.36))
+      .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>d===cur?Math.max(6,Math.min(7*g,D*.5)):near.has(d)?Math.max(3.5,Math.min(5*g,D*.42)):Math.max(1.8,Math.min((2.2+d.l*.55)*g,D*.38)))
       .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur?1:!onF(d)?.12:near.has(d)?1:d.dead?.2:.75).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
     // Nombres: la que suena y sus afines siempre; al acercar, también las demás que quepan sin taparse
     const pri=[cur,...A.map(a=>a.x)].filter(s=>s._v&&(s===cur||onF(s)));
@@ -2567,7 +2567,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-17j";
+const APP_VERSION="2026-11-17k";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
