@@ -61,7 +61,7 @@ async function cape(): Promise<Ser> {
   try {
     const r = await fetch("https://www.multpl.com/shiller-pe/table/by-month", { headers: UA, signal: AbortSignal.timeout(10000) });
     const h = await r.text(); const out: Ser = [];
-    for (const m of h.matchAll(/<td>([A-Z][a-z]{2} \d{1,2}, \d{4})<\/td>\s*<td>[^0-9<]*([0-9]+\.[0-9]+)/g)) {
+    for (const m of h.matchAll(/<td>([A-Z][a-z]{2} \d{1,2}, \d{4})<\/td>\s*<td>\s*(?:&#x2002;|&ensp;)?\s*([0-9]+\.[0-9]+)/g)) {
       const t = Math.floor(Date.parse(m[1] + " UTC") / DAYMS); if (isFinite(t)) out.push({ t, v: +m[2] });
     }
     return out.sort((a, b) => a.t - b.t).filter((p) => p.t > today() - 365 * 11);
@@ -240,8 +240,9 @@ async function compute() {
   for (let i = 0; i < ar.length; i++) {
     const z = ar[i] / Math.sqrt(gd.hs[i]); const t = aw[i + 1].t; if (Math.abs(z) < 2.5 || t < T - 366) continue;
     const co: string[] = [];
-    const add = (lbl: string, s: Ser, kind: Kind) => { const c = chg(s, t, 1, kind); if (c && at(s, t) != null && (s.find((p) => p.t === t))) co.push(`${lbl} ${c.s}`); };
-    add("VIX", Y["^VIX"], "pt"); add("Treasury 10a", Y["^TNX"], "pb"); add("Dólar", Y["DX-Y.NYB"], "pct"); add("Petróleo", Y["BZ=F"], "pct"); add("Cobre", Y["HG=F"], "pct"); add("Oro", Y["GC=F"], "pct");
+    // solo lo que se movió fuerte ese mismo día
+    const add = (lbl: string, s: Ser, kind: Kind, min: number) => { const c = chg(s, t, 1, kind); if (c && s.find((p) => p.t === t) && Math.abs(c.x) >= min) co.push(`${lbl} ${c.s}`); };
+    add("VIX", Y["^VIX"], "pt", 2); add("Treasury 10a", Y["^TNX"], "pb", 6); add("Dólar", Y["DX-Y.NYB"], "pct", 0.6); add("Petróleo", Y["BZ=F"], "pct", 2.5); add("Cobre", Y["HG=F"], "pct", 2); add("Oro", Y["GC=F"], "pct", 1.5);
     const rg = ex.map((e) => ({ n: e.f + " " + e.n, c: chg(Y[e.s] || [], t, 1, "pct") })).filter((x) => x.c).sort((a, b) => (z < 0 ? a.c!.x - b.c!.x : b.c!.x - a.c!.x)).slice(0, 3).map((x) => `${x.n} ${x.c!.s}`);
     const k = T - t <= 1 ? 0 : T - t <= 7 ? 1 : T - t <= 30 ? 2 : T - t <= 91 ? 3 : 4;
     evs.push({ t: iso(t), r: Math.round((Math.exp(ar[i]) - 1) * 1000) / 10, z: Math.round(z * 10) / 10, co: [...co, ...rg], k });
@@ -258,25 +259,28 @@ async function compute() {
     if (s === "^GSPC" && capeNow) { mu = 0.5 * hist + 0.5 * Math.log(1 + 1 / capeNow + 0.025); how = "promedio de 10 años mezclado con el retorno implícito en el CAPE (1/CAPE más inflación)"; }
     const y1 = w.length > 53 ? Math.log(last(w).v / w[w.length - 53].v) : 0; mu += y1 > 0 ? 0.01 : -0.01;
     mu = Math.max(-0.05, Math.min(0.15, mu)); const muw = mu / 52;
+    // Precisión histórica y calibración: cada 4 semanas desde el segundo año, banda a 1 año con la varianza GARCH
+    // pronosticada en ese momento; el ancho del cono se escala para que el 80% contenga el 80% de los resultados reales
+    const lvar = g.w / (1 - g.a - g.b); const errs: number[] = [];
+    for (let i = 104; i + 52 < r.length; i += 4) {
+      const h1 = g.w + g.a * r[i] ** 2 + g.b * g.hs[i]; let hs = 0; for (let k = 1; k <= 52; k++) hs += lvar + (g.a + g.b) ** (k - 1) * (h1 - lvar);
+      errs.push((Math.log(w[i + 53].v / w[i + 1].v) - muw * 52) / Math.sqrt(hs));
+    }
+    const raw80 = errs.length ? Math.round((errs.filter((e) => Math.abs(e) <= 1.2816).length / errs.length) * 100) : null;
+    const kS = errs.length >= 30 ? Math.max(0.6, Math.min(1.4, quant(errs.map(Math.abs), 0.8) / 1.2816)) : 1;
+    const cal95 = errs.length ? Math.round((errs.filter((e) => Math.abs(e) <= 1.96 * kS).length / errs.length) * 100) : null;
     const S0 = last(w).v, N = 3000, W = 104, rnd = mulberry(hash(s + iso(T)));
     const lv: number[][] = Array.from({ length: 8 }, () => []); let below = 0;
     for (let p = 0; p < N; p++) {
       let h = g.hNext, x = 0, mn = 0;
-      for (let k = 1; k <= W; k++) { const z = g.z[Math.floor(rnd() * g.z.length)]; const e = Math.sqrt(h) * z; x += muw + e; h = g.w + g.a * e * e + g.b * h; if (k <= 52) mn = Math.min(mn, x); if (k % 13 === 0) lv[k / 13 - 1].push(x); }
+      for (let k = 1; k <= W; k++) { const z = g.z[Math.floor(rnd() * g.z.length)]; const e = Math.sqrt(h) * z; x += muw + kS * e; h = g.w + g.a * e * e + g.b * h; if (k <= 52) mn = Math.min(mn, x); if (k % 13 === 0) lv[k / 13 - 1].push(x); }
       if (mn < Math.log(0.8)) below++;
     }
     const P = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95];
     const fc = lv.map((a, q) => { const td = T + Math.round((q + 1) * 91.3); const d = new Date(td * DAYMS); return { q: q + 1, target: iso(td), lbl: `${Math.floor(d.getUTCMonth() / 3) + 1}T${String(d.getUTCFullYear()).slice(2)}`, p: P.map((pp) => Math.round(S0 * Math.exp(quant(a, pp)) * 100) / 100) }; });
     const up = (q: number) => Math.round((lv[q - 1].filter((x) => x > 0).length / N) * 100);
-    // Precisión histórica: banda del 80% a 1 año, recalculada cada 4 semanas en los últimos años
-    const lr = Math.log(1); let inn = 0, tot = 0, in95 = 0; const lvar = g.w / (1 - g.a - g.b);
-    for (let i = 104; i + 52 < r.length; i += 4) {
-      const h1 = g.w + g.a * r[i] ** 2 + g.b * g.hs[i]; let hs = 0; for (let k = 1; k <= 52; k++) hs += lvar + (g.a + g.b) ** (k - 1) * (h1 - lvar);
-      const real = Math.log(w[i + 53].v / w[i + 1].v), c = muw * 52 + lr; const sdv = Math.sqrt(hs);
-      tot++; if (Math.abs(real - c) <= 1.2816 * sdv) inn++; if (Math.abs(real - c) <= 1.96 * sdv) in95++;
-    }
     const hw = w.filter((p) => p.t > T - 7 * 78).map((p) => ({ t: iso(p.t), v: Math.round(p.v * 100) / 100 }));
-    return { s, n, S0, asof: iso(last(w).t), hist: hw, fc, pUp4: up(4), pUp8: up(8), pDD: Math.round((below / N) * 100), med1: Math.round((Math.exp(quant(lv[3], 0.5)) - 1) * 1000) / 10, mu: Math.round(mu * 1000) / 10, volA: Math.round(Math.sqrt(lvar * 52) * 1000) / 10, how, bt: { n: tot, c80: tot ? Math.round((inn / tot) * 100) : null, c95: tot ? Math.round((in95 / tot) * 100) : null }, garch: { a: Math.round(g.a * 100) / 100, b: Math.round(g.b * 100) / 100 } };
+    return { s, n, S0, asof: iso(last(w).t), hist: hw, fc, pUp4: up(4), pUp8: up(8), pDD: Math.round((below / N) * 100), med1: Math.round((Math.exp(quant(lv[3], 0.5)) - 1) * 1000) / 10, mu: Math.round(mu * 1000) / 10, volA: Math.round(Math.sqrt(lvar * 52) * 1000) / 10, how, bt: { n: errs.length, raw80, k: Math.round(kS * 100) / 100, c95: cal95, from: iso(w[105]?.t || T) }, garch: { a: Math.round(g.a * 100) / 100, b: Math.round(g.b * 100) / 100 } };
   }).filter(Boolean) as any[];
 
   // Seguimiento: guarda el pronóstico de hoy y evalúa los que ya vencieron
