@@ -2438,7 +2438,7 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
           if(t.k===last.k){const f=.32/k;rot=[rot[0]+dx*f,Math.max(-85,Math.min(85,rot[1]-dy*f)),0]}}
         last=t;k=t.k;draw()});
     svg.call(zoom).on("dblclick.zoom",null);
-    svg.on("click",e=>{const [px,py]=d3.pointer(e);let b=null,bd=22;
+    svg.on("click",e=>{const [px,py]=d3.pointer(e);let b=null,bd=Math.max(12,12*Math.pow(k,.45)*.6);
       S.forEach(s=>{if(!s._v)return;const p=s._p,d=Math.hypot(p[0]-px,p[1]-py);if(d<bd){bd=d;b=s}});if(b)choose(b)});
     // Los botones acercan sobre la radio que suena, no sobre el centro del globo
     const by=f=>{const c=ref();if(c._v&&f>1){anim&&anim.stop();rot=[-c.geo[0],-c.geo[1],0];proj.rotate(rot)}return svg.transition().duration(RMV?0:350).call(zoom.scaleBy,f,[180,184])};
@@ -2451,9 +2451,15 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     const near=new Set(A.map(a=>a.x));
     /* Panal por ciudad: el centro del panal es la ciudad; al medio la radio más escuchada y las demás en anillos hexagonales con separación fija en pantalla */
     const D=12*Math.pow(k,.45),grp={};
-    S.forEach(s=>{s._v=false;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;(grp[s.geo.join()]=grp[s.geo.join()]||[]).push(s)});
+    S.forEach(s=>{s._v=false;s._p=null;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;(grp[s.geo.join()]=grp[s.geo.join()]||[]).push(s)});
     Object.values(grp).forEach(l=>{const o=proj(l[0].geo);l.sort((a,b)=>b.l-a.l||a.n.localeCompare(b.n)).forEach((s,i)=>{const h=HEXO[i]||[0,0];
-      s._p=[o[0]+D*(h[0]+h[1]/2),o[1]+D*h[1]*.866];s._v=s._p[0]>-10&&s._p[0]<370&&s._p[1]>-10&&s._p[1]<370;s._g=proj.invert(s._p)||s.geo})});
+      s._p=[o[0]+D*(h[0]+h[1]/2),o[1]+D*h[1]*.866]})});
+    /* Ciudades vecinas (San Francisco y Berkeley, Nueva York y Newark): sus panales se separan empujando los puntos que quedan a menos de la distancia mínima */
+    {const P=S.filter(s=>s._p&&grp[s.geo.join()]),m=D*.92;for(let it=0;it<24;it++){const H=new Map(),key=(x,y)=>Math.floor(x/m)+","+Math.floor(y/m);let mv=0;
+      P.forEach(s=>{const k=key(s._p[0],s._p[1]);(H.get(k)||H.set(k,[]).get(k)).push(s)});
+      P.forEach(a=>{const cx=Math.floor(a._p[0]/m),cy=Math.floor(a._p[1]/m);for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)(H.get((cx+i)+","+(cy+j))||[]).forEach(b=>{if(b.i<=a.i)return;
+        let dx=b._p[0]-a._p[0],dy=b._p[1]-a._p[1],d=Math.hypot(dx,dy);if(d>=m)return;if(d<.01){dx=Math.cos(a.i);dy=Math.sin(a.i);d=1}const f=(m-d)/2/d;a._p=[a._p[0]-dx*f,a._p[1]-dy*f];b._p=[b._p[0]+dx*f,b._p[1]+dy*f];mv++})});if(!mv)break}}
+    S.forEach(s=>{if(!s._p||!grp[s.geo.join()])return;s._v=s._p[0]>-10&&s._p[0]<370&&s._p[1]>-10&&s._p[1]<370;s._g=proj.invert(s._p)||s.geo});
     const vis=S.filter(s=>s._v);
     gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
       .attr("d",d=>path({type:"LineString",coordinates:[cur._g||cur.geo,d.x._g||d.x.geo]}));
@@ -2561,7 +2567,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-17h";
+const APP_VERSION="2026-11-17i";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
