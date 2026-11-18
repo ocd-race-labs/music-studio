@@ -2837,7 +2837,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-18c";
+const APP_VERSION="2026-11-18d";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2853,7 +2853,7 @@ async function checkVersion(){
     if(m && m[1]!==APP_VERSION){
       // La marca es por par (versión vieja → nueva): así cada pestaña o ventana vieja se actualiza aunque otra ya lo haya hecho
       const mk=APP_VERSION+">"+m[1];
-      if(store.get("dial-reloaded-for","")!==mk){ store.set("dial-reloaded-for",mk); location.replace(location.pathname+"?v="+m[1]+(typeof DKEY==="string"?"&k="+DKEY:"")+location.hash); }
+      if(store.get("dial-reloaded-for","")!==mk){ store.set("dial-reloaded-for",mk); location.replace(location.pathname+"?v="+m[1]+(typeof DKEY==="string"?"&k="+DKEY:"")+(/[?&]debug=1/.test(location.search)?"&debug=1":"")+location.hash); }
     }
   }catch(e){}
 }
