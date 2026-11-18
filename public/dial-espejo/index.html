@@ -2450,7 +2450,7 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     const A=aff(cur,6);
     const near=new Set(A.map(a=>a.x));
     /* Panal por ciudad: el centro del panal es la ciudad; al medio la radio más escuchada y las demás en anillos hexagonales con separación fija en pantalla */
-    const D=12*Math.pow(k,.45),grp={};
+    const D=12*Math.pow(k,.55),grp={};
     S.forEach(s=>{s._v=false;s._p=null;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;(grp[s.geo.join()]=grp[s.geo.join()]||[]).push(s)});
     Object.values(grp).forEach(l=>{const o=proj(l[0].geo);l.sort((a,b)=>b.l-a.l||a.n.localeCompare(b.n)).forEach((s,i)=>{const h=HEXO[i]||[0,0];
       s._p=[o[0]+D*(h[0]+h[1]/2),o[1]+D*h[1]*.866]})});
@@ -2464,20 +2464,20 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
       .attr("d",d=>path({type:"LineString",coordinates:[cur._g||cur.geo,d.x._g||d.x.geo]}));
     // Los puntos crecen un poco al acercar, pero mucho menos que el mapa: así las radios de una misma zona se separan
-    const g=Math.min(1.9,Math.pow(k,.3));
+    const g=Math.min(2.2,Math.pow(k,.33)),fz=Math.min(1.55,Math.pow(k,.19));
     gDot.selectAll("circle").data(vis,d=>d.i).join("circle")
-      .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>d===cur?Math.min(9,D*.46):near.has(d)?Math.min(6.5,D*.4):Math.min(2.6+d.l*.7,D*.36))
+      .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>d===cur?Math.min(7*g,D*.46):near.has(d)?Math.min(5*g,D*.4):Math.min((2.2+d.l*.55)*g,D*.36))
       .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur?1:!onF(d)?.12:near.has(d)?1:d.dead?.2:.75).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
     // Nombres: la que suena y sus afines siempre; al acercar, también las demás que quepan sin taparse
     const pri=[cur,...A.map(a=>a.x)].filter(s=>s._v&&(s===cur||onF(s)));
     const extra=k>=2.2||filtering()?vis.filter(s=>s!==cur&&!near.has(s)&&onF(s)&&(k>=2.2||filtering())).sort((a,b)=>b.l-a.l):[];
     const placed=[],L=[];
-    for(const s of [...pri,...extra]){const [x,y]=s._p,w=(s.sh.length+3)*5.6,ly=y-9-(s===cur?2:0);
-      const box=[x-w/2,ly-10,x+w/2,ly+2];
-      if(placed.some(b=>box[0]<b[2]&&box[2]>b[0]&&box[1]<b[3]&&box[3]>b[1])){if(pri.includes(s)){box[1]+=26;box[3]+=26}else continue}
+    for(const s of [...pri,...extra]){const [x,y]=s._p,w=(s.sh.length+3)*5.6*fz,ly=y-(5+4*g)-(s===cur?2:0);
+      const box=[x-w/2,ly-10*fz,x+w/2,ly+2];
+      if(placed.some(b=>box[0]<b[2]&&box[2]>b[0]&&box[1]<b[3]&&box[3]>b[1])){if(pri.includes(s)){box[1]+=26*fz;box[3]+=26*fz}else continue}
       placed.push(box);L.push({s,x,y:box[3]-2})}
     gLbl.selectAll("text").data(L,d=>d.s.i).join("text").attr("class",d=>"alt-lbl"+(d.s===cur?" cur":pri.includes(d.s)?"":" far"))
-      .attr("x",d=>d.x).attr("y",d=>d.y).attr("text-anchor","middle").text(d=>`${flag(d.s.cc)} ${d.s.sh}`);
+      .attr("x",d=>d.x).attr("y",d=>d.y).style("font-size",d=>((d.s===cur?12.5:pri.includes(d.s)?11:10)*fz).toFixed(1)+"px").attr("text-anchor","middle").text(d=>`${flag(d.s.cc)} ${d.s.sh}`);
     $("altCap").textContent=`${cur.n} · ${A.filter(a=>a.x.cc!==cur.cc).length} de 6 afines en otros países`;
     $("gHint").hidden=k>1.2}
   function sync(){const s=ref();if(s===shown){draw();return}shown=s;anim&&anim.stop();const to=[-s.geo[0],-s.geo[1]+(k>1.5?0:12),0],ip=d3.interpolate(rot.slice(),to);
@@ -2567,7 +2567,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-17i";
+const APP_VERSION="2026-11-17j";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
