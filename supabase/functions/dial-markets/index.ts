@@ -91,6 +91,14 @@ const EXCH: [string, string, string, string][] = [
 ];
 const REG: Record<string, string> = { na: "EE.UU. y Canadá", la: "Latinoamérica", eu: "Europa", as: "Asia-Pacífico", me: "Medio Oriente" };
 const MACRO = ["ACWI", "^STOXX50E", "^VIX", "^TNX", "DX-Y.NYB", "CLP=X", "HG=F", "BZ=F", "GC=F", "ECH"];
+// Monedas: [código, nombre, bandera, símbolo Yahoo, true si Yahoo da dólares por unidad (EURUSD) en vez de unidades por dólar]
+const FX: [string, string, string, string, boolean][] = [
+  ["EUR", "Euro", "🇪🇺", "EURUSD=X", true], ["GBP", "Libra esterlina", "🇬🇧", "GBPUSD=X", true], ["JPY", "Yen japonés", "🇯🇵", "JPY=X", false],
+  ["CNY", "Yuan chino", "🇨🇳", "CNY=X", false], ["CHF", "Franco suizo", "🇨🇭", "CHF=X", false], ["CAD", "Dólar canadiense", "🇨🇦", "CAD=X", false],
+  ["AUD", "Dólar australiano", "🇦🇺", "AUDUSD=X", true], ["KRW", "Won surcoreano", "🇰🇷", "KRW=X", false], ["INR", "Rupia india", "🇮🇳", "INR=X", false],
+  ["BRL", "Real brasileño", "🇧🇷", "BRL=X", false], ["MXN", "Peso mexicano", "🇲🇽", "MXN=X", false], ["ARS", "Peso argentino", "🇦🇷", "ARS=X", false],
+  ["COP", "Peso colombiano", "🇨🇴", "COP=X", false], ["PEN", "Sol peruano", "🇵🇪", "PEN=X", false],
+];
 const CONE: [string, string][] = [["ACWI", "MSCI Mundo"], ["^GSPC", "S&P 500"], ["CHL", "MSCI Chile en pesos"], ["^BVSP", "Ibovespa"], ["^STOXX50E", "Euro Stoxx 50"], ["^N225", "Nikkei 225"]];
 const HZ = [1, 7, 30, 91, 365]; // día (observación anterior), semana, mes, trimestre, año
 const HZN = ["en el día", "en la semana", "en el mes", "en el trimestre", "en el año"];
@@ -134,7 +142,7 @@ function weekly(s: Ser): Ser {
 
 // ---------- cálculo principal ----------
 async function compute() {
-  const syms = [...new Set([...EXCH.map((e) => e[0]).filter((s) => s !== "CHL"), ...MACRO])];
+  const syms = [...new Set([...EXCH.map((e) => e[0]).filter((s) => s !== "CHL"), ...MACRO, ...FX.map((f) => f[3])])];
   const got = await Promise.all(syms.map((s) => yahoo(s)));
   const Y: Record<string, Ser> = {}; syms.forEach((s, i) => (Y[s] = got[i]));
   const [F, CA] = await Promise.all([fred(), cape()]);
@@ -283,6 +291,26 @@ async function compute() {
     return { s, n, S0, asof: iso(last(w).t), hist: hw, fc, pUp4: up(4), pUp8: up(8), pDD: Math.round((below / N) * 100), med1: Math.round((Math.exp(quant(lv[3], 0.5)) - 1) * 1000) / 10, mu: Math.round(mu * 1000) / 10, volA: Math.round(Math.sqrt(lvar * 52) * 1000) / 10, how, bt: { n: errs.length, raw80, k: Math.round(kS * 100) / 100, c95: cal95, from: iso(w[105]?.t || T) }, garch: { a: Math.round(g.a * 100) / 100, b: Math.round(g.b * 100) / 100 } };
   }).filter(Boolean) as any[];
 
+  // Tipo de cambio: cada moneda en dólares y en pesos chilenos; el cambio positivo significa que la moneda se aprecia
+  const fxStat = (sr: Ser) => {
+    if (sr.length < 30) return null; const L = last(sr); const win = sr.filter((p) => p.t > T - 3650);
+    const pct = Math.round((win.filter((p) => p.v <= L.v).length / win.length) * 100); const step = Math.max(1, Math.floor(sr.length / 400));
+    const d = HZ.map((h) => { const c = chg(sr, L.t, h, "pct"); if (!c) return null; const hs: number[] = [];
+      for (let i = sr.length - 1; i > 0; i -= step) { const cc = chg(sr, sr[i].t, h, "pct"); if (cc) hs.push(cc.x); }
+      return { s: c.s, x: Math.round(c.x * 100) / 100, z: Math.round((hs.length > 20 ? c.x / (sd(hs) || 1) : 0) * 10) / 10 }; });
+    return { v: L.v, asof: iso(L.t), pct, yrs: Math.max(1, Math.round((T - win[0].t) / 365)), d };
+  };
+  const clpS = Y["CLP=X"] || [];
+  const fx = FX.map(([c, n, f, y, inv]) => {
+    const u = (Y[y] || []).map((p) => ({ t: p.t, v: inv ? 1 / p.v : p.v })); // unidades por dólar
+    if (!u.length) return null;
+    const usd = u.map((p) => ({ t: p.t, v: 1 / p.v }));
+    const clp = u.map((p) => { const k = at(clpS, p.t); return k ? { t: p.t, v: k / p.v } : null; }).filter(Boolean) as Ser;
+    return { c, n, f, usd: fxStat(usd), clp: fxStat(clp) };
+  }).filter((x) => x && x.usd) as any[];
+  // el dólar y el peso chileno, cada uno frente al otro
+  fx.unshift({ c: "USD", n: "Dólar estadounidense", f: "🇺🇸", usd: null, clp: fxStat(clpS) }, { c: "CLP", n: "Peso chileno", f: "🇨🇱", usd: fxStat(clpS.map((p) => ({ t: p.t, v: 1 / p.v }))), clp: null });
+
   // Seguimiento: guarda el pronóstico de hoy y evalúa los que ya vencieron
   const rows = cones.flatMap((c) => c.fc.map((f: any) => ({ made_on: iso(T), symbol: c.s, q: f.q, target_date: f.target, level0: c.S0, p05: f.p[0], p10: f.p[1], p25: f.p[2], p50: f.p[3], p75: f.p[4], p90: f.p[5], p95: f.p[6] })));
   await db.from("dial_mkt_forecasts").upsert(rows, { onConflict: "made_on,symbol,q", ignoreDuplicates: true });
@@ -292,7 +320,7 @@ async function compute() {
   const { data: first } = await db.from("dial_mkt_forecasts").select("made_on").order("made_on").limit(1);
   const track = { first: first?.[0]?.made_on || iso(T), n: ev?.length || 0, c80: ev?.length ? Math.round((ev.filter((e: any) => e.realized >= e.p10 && e.realized <= e.p90).length / ev.length) * 100) : null };
 
-  return { at: new Date().toISOString(), read, inds, evs, cones, track,
+  return { at: new Date().toISOString(), read, inds, fx, evs, cones, track,
     sources: ["Yahoo Finance (índices, tasas, monedas, materias primas)", "FRED, Fed de St. Louis (spreads, NFCI, curva, tasa real)", "multpl.com (CAPE de Shiller)"] };
 }
 
