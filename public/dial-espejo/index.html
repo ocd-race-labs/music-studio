@@ -934,6 +934,54 @@ html[data-sec="radio"]:not(.adv-open) #view-radio{padding-bottom:40px}
 .adv-x{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:24px;line-height:1;cursor:pointer}
 html.adv-open{overflow:hidden}
 html.adv-open #player{z-index:35}
+/* Mercados */
+#mkHz{margin-top:2px}
+.mk-hero{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:center;padding:14px}
+@media (max-width:520px){.mk-hero{grid-template-columns:minmax(0,1fr)}}
+.mk-g{display:grid;justify-items:center;text-align:center;gap:2px}
+.mk-g svg{width:140px;height:84px}
+.mk-g b{font-size:13px;font-weight:600}
+.mk-read{list-style:none;margin:0;padding:0}
+.mk-read li{font-size:13.5px;line-height:1.5;color:var(--muted);padding:7px 0;border-bottom:1px solid var(--line)}
+.mk-read li:last-child{border-bottom:0}
+.mk-read b{color:var(--ink);font-weight:600}
+.mk-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){.mk-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mk-grp{display:grid;gap:6px;align-content:start}
+.mk-ind{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;padding:10px 12px}
+.mk-n{font-weight:600;font-size:13.5px}
+.mk-sg{font:500 10px var(--mono);padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px;border:1px solid currentColor;white-space:nowrap}
+.mk-sg.f{color:#2FD3A0}.mk-sg.n{color:#F2B544}.mk-sg.a{color:#FF5C7A}
+.mk-v{text-align:right;font:500 15px var(--mono);white-space:nowrap}
+.mk-r{font-size:12.5px;color:var(--muted);line-height:1.4}
+.mk-d{text-align:right;font:500 12px var(--mono);white-space:nowrap}
+.mk-d small{color:var(--dim);font-size:11px}
+.mk-up{color:#2FD3A0}.mk-dn{color:#FF5C7A}
+.mk-z{display:block;font:500 10px var(--mono);color:#F2B544}
+.mk-p{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:4px}
+.mk-bar{flex:1;height:4px;background:var(--panel-2);border-radius:3px;position:relative}
+.mk-bar i{position:absolute;top:-4px;width:3px;height:12px;margin-left:-1.5px;border-radius:2px;background:var(--sec)}
+.mk-p span{font:400 10px var(--mono);color:var(--dim);white-space:nowrap}
+.mk-src{grid-column:1/-1;font:400 10px var(--mono);color:var(--dim)}
+.mk-evs{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.mk-ev{padding:12px 14px;display:grid;gap:6px;align-content:start}
+.mk-evh{display:flex;justify-content:space-between;gap:8px;font:500 11.5px var(--mono);color:var(--dim)}
+.mk-evm{font-size:20px;font-weight:600}
+.mk-evm small{font:400 11px var(--mono);color:var(--dim);margin-left:6px}
+.mk-co{display:flex;flex-wrap:wrap;gap:5px}
+.mk-co span{font:500 11px var(--mono);border:1px solid var(--line);border-radius:999px;padding:3px 8px;color:var(--muted)}
+.mk-ev a{font:500 11.5px var(--mono);color:var(--sec);text-decoration:none}
+.mk-fan{padding:12px 14px;display:grid;gap:12px}
+.mk-fan svg{width:100%;max-width:720px;height:auto;display:block;margin:0 auto}
+.mk-fan svg text{font-family:var(--mono);font-size:9px;fill:var(--dim)}
+.mk-leg{display:flex;gap:12px;flex-wrap:wrap;font:400 11px var(--mono);color:var(--dim)}
+.mk-leg i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:5px;vertical-align:0;background:var(--sec)}
+.mk-prob{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.mk-prob{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mk-prob div{background:var(--panel-2);border-radius:12px;padding:9px 10px;font-size:11.5px;color:var(--muted);line-height:1.3}
+.mk-prob b{display:block;font:500 18px var(--mono);color:var(--ink);margin-top:3px}
+.mk-how{font-size:12px;color:var(--dim);line-height:1.55;margin:0}
+.mk-how b{color:var(--muted);font-weight:600}
 </style>
 </head>
 <body>
@@ -1012,6 +1060,13 @@ html.adv-open #player{z-index:35}
   <div class="chips sseg" id="stabs" role="group" aria-label="Deportes"></div>
   <div id="sbody"></div>
   <footer>Datos públicos de ESPN; MTB desde el archivo de OCD Race Labs.</footer>
+</div>
+
+<div class="wrap" id="view-markets" hidden>
+  <div class="nhead"><h1>Mercados</h1><p class="sub">Lectura ejecutiva de los mercados del mundo con indicadores de la literatura financiera, y proyección a 2 años, actualizadas al entrar.</p><div class="clock" id="mkStamp"></div></div>
+  <div class="mseg" id="mkHz" role="group" aria-label="Horizonte"></div>
+  <div id="mkBody" style="display:grid;gap:28px"></div>
+  <footer id="mkFoot">Yahoo Finance (índices, tasas, monedas y materias primas), FRED de la Fed de St. Louis (spreads, condiciones financieras, curva y tasa real) y multpl.com (CAPE de Shiller).</footer>
 </div>
 
 <div class="np" id="npSheet" hidden role="dialog" aria-modal="true" aria-label="Sonando ahora">
@@ -2486,17 +2541,19 @@ function applyTheme(){
   if(PZ.k==="pat"){pat=PZ_PAT.find(x=>x[0]===PZ.n)}
   if(!pat){const t=PZ_SOL.find(x=>x[0]===PZ.n)||PZ_SOL.find(x=>x[0]==="Lima");c={radio:t[1],noticias:t[2],deportes:t[3]}}
   else c={radio:pat[2][0],noticias:pat[2][1],deportes:pat[2][2]};
+  {const hx=v=>String(v).split("|")[0],mix=(a,b)=>{const p=h=>{h=hx(h);if(h.length===4)h="#"+[...h.slice(1)].map(x=>x+x).join("");const n=parseInt(h.slice(1),16);return[n>>16,n>>8&255,n&255]};const A=p(a),B=p(b);return "#"+A.map((x,i)=>Math.round((x+B[i])/2).toString(16).padStart(2,"0")).join("")};c.mercados=mix(c.radio,c.noticias)}
   c.band=(pat&&pat[4])||c.radio; // la barra minimizada puede tener su propio color
   // Un color puede traer su propio texto: "#fondo|#texto" (si no, se elige blanco o negro según el contraste)
   let css=`:root{${Object.entries(c).map(([k,v])=>{const [bg,ink]=String(v).split("|");return `--s-${k}:${bg};--i-${k}:${ink||inkFor(bg)}`}).join(";")}}
 :root{--sec:var(--s-radio);--sec-ink:var(--i-radio)}
 html[data-sec="noticias"]{--sec:var(--s-noticias);--sec-ink:var(--i-noticias)}
 html[data-sec="deportes"]{--sec:var(--s-deportes);--sec-ink:var(--i-deportes)}
+html[data-sec="mercados"]{--sec:var(--s-mercados);--sec-ink:var(--i-mercados)}
 .uil button[aria-pressed="true"]{background:color-mix(in srgb,var(--sec) 22%,var(--panel-2));color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sec) 60%,transparent)}
 .tabs{box-shadow:inset 0 0 0 1px var(--line)}
 .tab{display:inline-flex;align-items:center;justify-content:center;gap:7px}
 .tab::before{content:"";width:7px;height:7px;border-radius:50%;flex:none}
-.tab[data-v="radio"]::before{background:var(--s-radio)}.tab[data-v="noticias"]::before{background:var(--s-noticias)}.tab[data-v="deportes"]::before{background:var(--s-deportes)}
+.tab[data-v="radio"]::before{background:var(--s-radio)}.tab[data-v="noticias"]::before{background:var(--s-noticias)}.tab[data-v="deportes"]::before{background:var(--s-deportes)}.tab[data-v="mercados"]::before{background:var(--s-mercados)}
 .tab[aria-selected="true"]::before{background:currentColor;opacity:.8}
 .search>span{color:var(--sec)!important}
 .search{border-color:color-mix(in srgb,var(--sec) 50%,var(--line))}
@@ -2508,8 +2565,8 @@ html[data-sec="deportes"]{--sec:var(--s-deportes);--sec-ink:var(--i-deportes)}
 .nhead h1::after{content:"";display:block;height:3px;width:44px;margin-top:6px;border-radius:2px;background:var(--sec)}
 `;
   // Los botones activos usan la paleta del tema en color sólido (el patrón va solo en el fondo de pantalla)
-  css+=`.tab[aria-selected="true"]{font-weight:600}.tab[data-v="radio"][aria-selected="true"]{background:var(--s-radio);color:var(--i-radio)}.tab[data-v="noticias"][aria-selected="true"]{background:var(--s-noticias);color:var(--i-noticias)}.tab[data-v="deportes"][aria-selected="true"]{background:var(--s-deportes);color:var(--i-deportes)}
-.vseg button[aria-pressed="true"],.sseg .chip[aria-pressed=true],#stabs.sseg .chip[aria-pressed=true],.mseg button[aria-pressed="true"],#nchips .chip[aria-pressed="true"],#nscope .chip[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink);border-color:transparent;font-weight:600}
+  css+=`.tab[aria-selected="true"]{font-weight:600}.tab[data-v="radio"][aria-selected="true"]{background:var(--s-radio);color:var(--i-radio)}.tab[data-v="noticias"][aria-selected="true"]{background:var(--s-noticias);color:var(--i-noticias)}.tab[data-v="deportes"][aria-selected="true"]{background:var(--s-deportes);color:var(--i-deportes)}.tab[data-v="mercados"][aria-selected="true"]{background:var(--s-mercados);color:var(--i-mercados)}
+.vseg button[aria-pressed="true"],.sseg .chip[aria-pressed=true],#stabs.sseg .chip[aria-pressed=true],.mseg button[aria-pressed="true"],#nchips .chip[aria-pressed="true"],#nscope .chip[aria-pressed="true"],#mkIx .chip[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink);border-color:transparent;font-weight:600}
 .vseg button[aria-pressed="true"] small{color:var(--sec-ink);opacity:.75}.np-pp{color:var(--i-radio)}.rtabs button[aria-pressed=true]{box-shadow:inset 0 -2px var(--sec)}.ntb{border-color:color-mix(in srgb,var(--sec) 45%,var(--line))}.ntb b{color:var(--sec)}`;
   if(pat&&pat[3]==="neon")css+=`.tab[aria-selected="true"],.vseg button[aria-pressed="true"],.sseg .chip[aria-pressed=true],#stabs.sseg .chip[aria-pressed=true],.mseg button[aria-pressed="true"],#nchips .chip[aria-pressed="true"],#nscope .chip[aria-pressed="true"]{background:#050806!important;color:var(--sec)!important;box-shadow:0 0 0 1.5px var(--sec),0 0 14px var(--sec),inset 0 0 10px color-mix(in srgb,var(--sec) 35%,transparent)}.vseg button[aria-pressed="true"] small{color:var(--sec)!important}`;
   // Fondo: un oscuro fijo, o "Del tema": con un tema de patrón, su imagen como fondo de pantalla (una sola imagen, nunca en
@@ -2566,7 +2623,7 @@ ${((store.get("dial-bg",null)||{}).b)==="Del tema"?`<label class="pz-tint"><span
 <div class="pz-k"><span>Tamaño de letra</span><span>se nota en el iPhone</span></div>
 <div class="pz-seg">${[["n","Normal"],["g","Grande"],["xg","Muy grande"]].map(([k,l])=>`<button data-tx="${k}" aria-pressed="${store.get("dial-txt","n")===k}">${l}</button>`).join("")}</div>
 <div class="pz-k"><span>Abrir en</span></div>
-<div class="pz-seg">${[["radio","Radio"],["noticias","Noticias"],["deportes","Deportes"]].map(([k,l])=>`<button data-o="${k}" aria-pressed="${open===k}">${l}</button>`).join("")}</div>
+<div class="pz-seg">${[["radio","Radio"],["noticias","Noticias"],["deportes","Deportes"],["mercados","Mercados"]].map(([k,l])=>`<button data-o="${k}" aria-pressed="${open===k}">${l}</button>`).join("")}</div>
 <div class="pz-k"><span>Idioma</span></div>
 <div class="pz-seg">${[["es","Español"],["en","English"],["pt","Português"]].map(([k,l])=>`<button data-l="${k}" aria-pressed="${UIL===k}" data-noi18n>${l}</button>`).join("")}</div>
 <div class="pz-note">Se guarda solo en este dispositivo.</div>`;
@@ -2771,7 +2828,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-18a";
+const APP_VERSION="2026-11-18b";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2795,8 +2852,8 @@ checkVersion();
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkVersion(); });
 
 /* ---- Pestañas del banner (agregar aquí futuras secciones) ---- */
-const VIEWS=[{code:"radio",label:"Radio"},{code:"noticias",label:"Noticias"},{code:"deportes",label:"Deportes"}];
-const VIEW_EL={noticias:"news",deportes:"sports"};
+const VIEWS=[{code:"radio",label:"Radio"},{code:"noticias",label:"Noticias"},{code:"deportes",label:"Deportes"},{code:"mercados",label:"Mercados"}];
+const VIEW_EL={noticias:"news",deportes:"sports",mercados:"markets"};
 function show(code){
   if(!VIEWS.some(v=>v.code===code)) code="radio";
   VIEWS.forEach(v=>{ const el=$("view-"+(VIEW_EL[v.code]||v.code)); if(el) el.hidden = v.code!==code; });
@@ -2805,11 +2862,74 @@ function show(code){
   document.documentElement.dataset.sec=code;
   if(code==="noticias") loadNews();
   if(code==="deportes") loadSports();
+  if(code==="mercados") loadMarkets();
   window.scrollTo(0,0);
 }
 VIEWS.forEach(v=>{ const b=document.createElement("button"); b.className="tab"; b.role="tab"; b.dataset.v=v.code; b.textContent=v.label;
   b.addEventListener("click",()=>{ location.hash=v.code; }); $("tabs").appendChild(b); });
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+
+/* ---- Mercados: lee lo que calcula la función dial-markets (indicadores, lectura, puntos de inflexión y cono); la app no calcula nada ---- */
+const MK_HZ=[["Día","del día","día"],["Semana","de la semana","semana"],["Mes","del mes","mes"],["Trimestre","del trimestre","trimestre"],["Año","del año","año"]];
+const MK_SG={f:"Favorable",n:"Neutral",a:"Alerta"};
+let mkH=+store.get("dial-mk-h",0)||0,mkIx=store.get("dial-mk-ix","ACWI"),MK=null,mkTok=0;
+const mkN=v=>v>=1000?Math.round(v).toLocaleString("es-CL"):v.toLocaleString("es-CL",{maximumFractionDigits:2});
+const mkD=iso=>{const d=new Date(iso+"T12:00:00Z");return d.toLocaleDateString("es-CL",{day:"numeric",month:"short",timeZone:"UTC"}).replace(".","")};
+const mkDL=iso=>{const d=new Date(iso+"T12:00:00Z");return d.toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}).replace(/\./g,"")};
+function mkSeg(){const c=$("mkHz");c.innerHTML=MK_HZ.map(([l],i)=>`<button data-h="${i}" aria-pressed="${i===mkH}">${l}</button>`).join("");
+  c.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkH=+b.dataset.h;store.set("dial-mk-h",mkH);mkSeg();if(MK)mkRender()})}
+async function loadMarkets(){const tok=++mkTok;mkSeg();const b=$("mkBody");
+  if(!MK)b.innerHTML=`<p class="note">Calculando la lectura de los mercados…</p>`;
+  try{const r=await fetch(`${SB}/functions/v1/dial-markets`,{headers:H});const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||"error");
+    if(tok!==mkTok)return;MK=j;mkRender()}
+  catch(e){if(tok===mkTok&&!MK)b.innerHTML=`<p class="note">No se pudieron traer los mercados ahora. Inténtalo de nuevo en un rato.</p>`}}
+function mkGauge(v){const a=Math.PI*(1-v/100),x=70+56*Math.cos(a),y=74-56*Math.sin(a),c=v<40?"#FF5C7A":v<60?"#F2B544":"#2FD3A0";
+  return `<svg viewBox="0 0 140 84" aria-hidden="true"><path d="M14 74 A56 56 0 0 1 126 74" stroke="var(--panel-2)" stroke-width="10" fill="none" stroke-linecap="round"/>${v>0?`<path d="M14 74 A56 56 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}" stroke="${c}" stroke-width="10" fill="none" stroke-linecap="round"/>`:""}<text x="70" y="70" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)" font-weight="500" font-size="26">${v}</text></svg><b style="color:${c}">${v<40?"Aversión al riesgo":v<60?"Riesgo moderado":"Apetito por riesgo"}</b>`}
+function mkRender(){const k=mkH,R=MK.read[k],hz=MK_HZ[k];
+  const at=new Date(MK.at);$("mkStamp").textContent=`Actualizado ${at.toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"})}${MK.stale?" · sin conexión a las fuentes, último cálculo guardado":""}`;
+  let h=`<section class="topic"><div class="topic-head"><div><h2>Lectura ${hz[1]}</h2><p class="meta">Apetito por riesgo de 0 a 100: promedio de las señales de los ${MK.inds.length} indicadores</p></div></div>
+  <div class="sp-card mk-hero"><div class="mk-g">${mkGauge(R.score)}<span class="meta">${k?"al inicio del período":"ayer"}: ${R.prev}</span></div><ul class="mk-read">${R.lines.map(l=>`<li>${l}</li>`).join("")}</ul></div></section>`;
+  // Indicadores por grupo
+  const G=[];MK.inds.forEach(i=>{let g=G.find(x=>x.g===i.g);if(!g)G.push(g={g:i.g,a:[]});g.a.push(i)});
+  h+=`<section class="topic"><div class="topic-head"><div><h2>Indicadores clave</h2><p class="meta">Variación ${hz[1]}, percentil frente a su historia y la literatura que respalda cada señal</p></div></div><div class="mk-grid">`+
+    G.map(g=>`<div class="mk-grp"><div class="sp-ct">${esc(g.g)}</div>`+g.a.map(i=>{const d=i.d[k];const cl=d?(d.x>0?"mk-up":d.x<0?"mk-dn":""):"";
+      return `<div class="sp-card mk-ind"><div class="mk-n">${esc(i.n)}<span class="mk-sg ${i.sg}">${MK_SG[i.sg]}</span></div><div class="mk-v">${esc(i.v)}</div><div class="mk-r">${esc(i.txt)}</div><div class="mk-d"><span class="${cl}">${d?esc(d.s):"s/d"}</span> <small>${hz[2]}</small>${d&&Math.abs(d.z)>=2?`<span class="mk-z">inusual · ${String(d.z).replace(".",",")} σ</span>`:""}</div><div class="mk-p"><span>mín ${i.yrs} ${i.yrs===1?"año":"años"}</span><div class="mk-bar"><i style="left:${i.pct}%"></i></div><span>máx · p${i.pct}</span></div><div class="mk-src">${esc(i.src)} · dato al ${mkD(i.asof)}</div></div>`}).join("")+`</div>`).join("")+`</div></section>`;
+  // Puntos de inflexión del período
+  const ev=MK.evs.filter(e=>e.k<=k);
+  h+=`<section class="topic"><div class="topic-head"><div><h2>Puntos de inflexión</h2><p class="meta">Días en que el MSCI Mundo se movió más de 2,5 veces su volatilidad del momento, con lo que se movió junto</p></div></div>`+
+    (ev.length?`<div class="mk-evs">`+ev.map(e=>{const d0=new Date(e.t+"T12:00:00Z"),a=new Date(d0-864e5).toISOString().slice(0,10),b=new Date(+d0+864e5).toISOString().slice(0,10);
+      const u=`https://news.google.com/search?q=${encodeURIComponent(`bolsas mercados after:${a} before:${b}`)}&hl=es-419&gl=CL&ceid=CL:es-419`;
+      return `<div class="sp-card mk-ev"><div class="mk-evh"><span>${esc(mkDL(e.t))}</span><span>${String(e.z).replace(".",",")} σ</span></div><div class="mk-evm ${e.r<0?"mk-dn":"mk-up"}">${e.r>0?"+":"−"}${String(Math.abs(e.r)).replace(".",",")}%<small>MSCI Mundo</small></div><div class="mk-co">${e.co.map(c=>`<span>${esc(c)}</span>`).join("")}</div><a href="${u}" target="_blank" rel="noopener">Noticias de ese día ↗</a></div>`}).join("")+`</div>`
+    :`<p class="note">Sin días fuera de lo normal ${["hoy","esta semana","este mes","este trimestre","este año"][k]}.</p>`)+`</section>`;
+  // Cono
+  const C=MK.cones.find(c=>c.s===mkIx)||MK.cones[0];mkIx=C.s;
+  h+=`<section class="topic"><div class="topic-head"><div><h2>Proyección a 2 años</h2><p class="meta">Cono de probabilidad por trimestre · bandas al 50%, 80% y 95%</p></div></div>
+  <div class="chips" id="mkIx" role="group" aria-label="Índice">${MK.cones.map(c=>`<button class="chip" data-s="${esc(c.s)}" aria-pressed="${c.s===C.s}">${esc(c.n)}</button>`).join("")}</div>
+  <div class="sp-card mk-fan">${mkFan(C)}<div class="mk-leg"><span><i style="height:2px"></i>Mediana</span><span><i style="opacity:.55"></i>50%</span><span><i style="opacity:.3"></i>80%</span><span><i style="opacity:.14"></i>95%</span><span>Hoy: ${mkN(C.S0)}</span></div>
+  <div class="mk-prob"><div>Prob. de estar sobre hoy en 1 año<b>${C.pUp4}%</b></div><div>Prob. de estar sobre hoy en 2 años<b>${C.pUp8}%</b></div><div>Prob. de una caída de más de 20% en el próximo año<b class="mk-dn">${C.pDD}%</b></div><div>Retorno mediano a 1 año<b class="${C.med1>=0?"mk-up":"mk-dn"}">${C.med1>0?"+":""}${String(C.med1).replace(".",",")}%</b></div></div>
+  <div class="tw"><table class="st"><thead><tr><th class="l">Trimestre</th><th>95% bajo</th><th>80% bajo</th><th>Mediana</th><th>80% alto</th><th>95% alto</th></tr></thead><tbody>${C.fc.map(f=>`<tr><td class="l">${f.lbl}</td><td>${mkN(f.p[0])}</td><td>${mkN(f.p[1])}</td><td><b>${mkN(f.p[3])}</b></td><td>${mkN(f.p[5])}</td><td>${mkN(f.p[6])}</td></tr>`).join("")}</tbody></table></div>
+  <p class="mk-how"><b>Cómo se construye.</b> Tendencia: ${esc(C.how)}, más una inclinación por el momentum de 12 meses (Moskowitz, Ooi y Pedersen, 2012); hoy da ${String(C.mu).replace(".",",")}% anual. Ancho: volatilidad GARCH(1,1) semanal (Bollerslev, 1986) simulada 3.000 veces con shocks históricos reales (simulación histórica filtrada; Barone-Adesi y otros, 1999), por eso el cono puede abrirse más hacia abajo que hacia arriba.</p>
+  <p class="mk-how"><b>Precisión.</b> En ${C.bt.n} ventanas de 1 año desde ${new Date(C.bt.from).getUTCFullYear()}, la banda del 80% sin ajustar contuvo el ${C.bt.raw80}% de los resultados reales; su ancho se ajustó (×${String(C.bt.k).replace(".",",")}) para que la del 80% contenga el 80%, y con ese ajuste la del 95% contiene el ${C.bt.c95}%. ${MK.track.n?`Seguimiento en vivo: ${MK.track.n} pronósticos ya vencidos; el ${MK.track.c80}% cayó dentro de la banda del 80%.`:`Seguimiento en vivo: cada día se guarda el pronóstico y se compara con el resultado real al vencer cada trimestre; las primeras comparaciones llegan el ${mkD(new Date(Date.parse(MK.track.first)+91*864e5).toISOString().slice(0,10))}.`}</p>
+  <p class="fc-disc">Proyecciones estadísticas con fines informativos. No son una recomendación de inversión y pueden fallar; la geopolítica puede romper cualquier banda.</p></div></section>`;
+  $("mkBody").innerHTML=h;
+  $("mkIx").querySelectorAll("button").forEach(b=>b.onclick=()=>{mkIx=b.dataset.s;store.set("dial-mk-ix",mkIx);mkRender()});
+}
+function mkFan(C){const W=360,Hh=214,L=4,R=304,T=12,B=184;const tp=s=>Date.parse(s);
+  const t0=tp(C.hist[0].t),tN=tp(C.asof),t1=tp(C.fc[C.fc.length-1].target);
+  const X=t=>L+(t-t0)/(t1-t0)*(R-L);const all=[...C.hist.map(p=>p.v),...C.fc.flatMap(f=>[f.p[0],f.p[6]]),C.S0];
+  const mn=Math.min(...all)*.98,mx=Math.max(...all)*1.02,Y=v=>B-(v-mn)/(mx-mn)*(B-T);
+  const pts=i=>[[tN,C.S0],...C.fc.map(f=>[tp(f.target),f.p[i]])];
+  const band=(lo,hi,op)=>{const a=pts(hi),b=pts(lo).reverse();return `<polygon points="${[...a,...b].map(([t,v])=>`${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}" fill="var(--sec)" fill-opacity="${op}"/>`};
+  let s=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Cono de proyección de ${esc(C.n)}">`;
+  [.25,.5,.75].forEach(f=>{const y=T+f*(B-T);s+=`<line x1="${L}" x2="${R}" y1="${y}" y2="${y}" stroke="var(--line)"/>`});
+  s+=band(0,6,.14)+band(1,5,.3)+band(2,4,.55);
+  s+=`<polyline points="${C.hist.map(p=>`${X(tp(p.t)).toFixed(1)},${Y(p.v).toFixed(1)}`).join(" ")} ${X(tN).toFixed(1)},${Y(C.S0).toFixed(1)}" fill="none" stroke="var(--ink)" stroke-width="1.6"/>`;
+  s+=`<polyline points="${pts(3).map(([t,v])=>`${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}" fill="none" stroke="var(--sec)" stroke-width="2" stroke-dasharray="4 3"/>`;
+  s+=`<line x1="${X(tN)}" x2="${X(tN)}" y1="${T}" y2="${B}" stroke="var(--muted)" stroke-dasharray="2 3"/><text x="${X(tN)}" y="${T-3}" text-anchor="middle">hoy</text>`;
+  const f8=C.fc[C.fc.length-1];[[f8.p[6],"95%"],[f8.p[3],"med"],[f8.p[0],"5%"]].forEach(([v])=>s+=`<text x="${R+4}" y="${(Y(v)+3).toFixed(1)}">${mkN(v)}</text>`);
+  C.fc.forEach((f,i)=>{if(i%2)s+=`<text x="${X(tp(f.target)).toFixed(1)}" y="${B+15}" text-anchor="middle">${f.lbl}</text>`});
+  const h0=new Date(t0);s+=`<text x="${L}" y="${B+15}">${["1T","2T","3T","4T"][Math.floor(h0.getUTCMonth()/3)]}${String(h0.getUTCFullYear()).slice(2)}</text>`;
+  return s+`</svg>`}
 
 /* ---- Noticias ---- */
 const SECTIONS=[["politica","Política"],["economia","Economía"],["deportes_extremos","Deportes extremos"],["nba","NBA"],["nfl","NFL"],["tecnologia","Tecnología"],["ia","IA"],["educacion","Educación"],["salud","Salud"],["ciencias","Ciencias"],["cultura","Cultura"],["musica","Música"],["aviacion","Aviación"],["empleo","Empleo"]];
