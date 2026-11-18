@@ -1113,6 +1113,15 @@ if(UIL!=="es"){
     b.onclick=()=>{if(l===UIL)return;store.set("dial-ui",l);const q=new URLSearchParams(location.search);q.delete("lang");q.set("v",Date.now());location.replace(location.pathname+"?"+q+location.hash)};box.appendChild(b)})})();
 
 const audio=$("audio");
+/* Diagnóstico: con ?debug=1 muestra en pantalla los errores y eventos del audio */
+if(/[?&]debug=1/.test(location.search)){const box=document.createElement("pre");box.style.cssText="position:fixed;left:6px;right:6px;bottom:6px;max-height:42vh;overflow:auto;z-index:99999;background:rgba(0,0,0,.85);color:#9f9;font:11px/1.35 monospace;padding:8px;border-radius:8px;white-space:pre-wrap;pointer-events:auto";
+  const L=[];const log=t=>{L.push(new Date().toTimeString().slice(0,8)+" "+t);if(L.length>40)L.shift();box.textContent=L.join("\n");box.scrollTop=1e9};
+  document.addEventListener("DOMContentLoaded",()=>document.body.appendChild(box));
+  window.addEventListener("error",e=>log("ERROR "+e.message+" @"+(e.lineno||"")));window.addEventListener("unhandledrejection",e=>log("PROMESA "+(e.reason&&e.reason.message||e.reason)));
+  ["loadstart","play","playing","pause","waiting","stalled","canplay","ended","abort","emptied"].forEach(ev=>audio.addEventListener(ev,()=>log(ev+" rs="+audio.readyState+" ns="+audio.networkState)));
+  audio.addEventListener("error",()=>log("AUDIO ERROR code="+(audio.error&&audio.error.code)+" "+(audio.error&&audio.error.message||"")+" src="+audio.currentSrc.slice(0,70)));
+  const op=audio.play.bind(audio);audio.play=function(){log("play() src="+String(audio.src).slice(0,70));const p=op();if(p)p.catch(e=>log("play() rechazado: "+e.name+" "+e.message));return p};
+  setTimeout(()=>log("versión "+(typeof APP_VERSION!=="undefined"?APP_VERSION:"?")+" · "+navigator.userAgent.slice(0,90)),0)}
 
 /* ---------- Catálogo y perfiles ----------
    nombre|corto|país|familia|idioma|habla(0-1)|energía(0-1)|audiencia(1-5)|FM Santiago|etiquetas|búsqueda|patrón|web */
@@ -2757,7 +2766,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-17t";
+const APP_VERSION="2026-11-17u";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
