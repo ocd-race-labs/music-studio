@@ -1113,8 +1113,13 @@ const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán
 const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",MA:"África",CR:"Latinoamérica",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía",PL:"Europa",AE:"Asia",GR:"Europa"};
 const REGIONS=["Chile","Latinoamérica","Norteamérica","Europa","Asia","África","Oceanía"];
 const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],MA:[33.57,-7.59],CR:[9.93,-84.08],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35],NZ:[-41.29,174.78],PL:[52.23,21.01],AE:[25.2,55.27],GR:[37.45,25.33]};
+/* Ciudades: si una radio lleva la ciudad en sus etiquetas, el globo la ubica ahí y no en el centro del país */
+const CITY={"são-paulo":[-23.55,-46.63],"rio":[-22.91,-43.17],"belo-horizonte":[-19.92,-43.94],"porto-alegre":[-30.03,-51.23],"salvador":[-12.97,-38.5],"recife":[-8.05,-34.88],"paraíba":[-7.12,-34.86],"ceará":[-3.73,-38.53],"brasilia":[-15.79,-47.88],
+  "nueva-york":[40.71,-74.0],"york":[40.71,-74.0],"boston":[42.36,-71.06],"cambridge":[42.37,-71.11],"chicago":[41.88,-87.63],"seattle":[47.61,-122.33],"portland":[45.52,-122.68],"los-ángeles":[34.05,-118.24],"san-francisco":[37.77,-122.42],"bay-area":[37.8,-122.27],"berkeley":[37.87,-122.27],"new-orleans":[29.95,-90.07],"newark":[40.74,-74.17],
+  "toronto":[43.65,-79.38],"montreal":[45.5,-73.57],"vancouver":[49.28,-123.12],
+  "concepción":[-36.83,-73.05],"temuco":[-38.74,-72.6],"valdivia":[-39.81,-73.25],"osorno":[-40.57,-73.13],"punta-arenas":[-53.16,-70.91],"washington":[38.9,-77.04]};
 const RAW=`Radio Cooperativa|Coop|CL|news|es|.95|.4|4|93.3|noticias actualidad política|Cooperativa||https://www.cooperativa.cl
-Radio Bío-Bío|BíoBío|CL|news|es|.95|.4|4|99.7|noticias actualidad regional|Bio|b[ií]o.?b[ií]o|https://www.biobiochile.cl
+Radio Bío-Bío|BíoBío|CL|news|es|.95|.4|4|99.7|noticias actualidad regional concepción|Bio|b[ií]o.?b[ií]o|https://www.biobiochile.cl
 ADN Radio|ADN|CL|gen|es|.9|.5|3|91.7|noticias deportes actualidad|ADN||https://www.adnradio.cl
 Radio Agricultura|Agri|CL|gen|es|.9|.4|3|92.1|noticias deportes actualidad|Agricultura||https://www.radioagricultura.cl
 Radio Duna|Duna|CL|gen|es|.85|.3|2|89.7|conversación economía actualidad|Duna||https://www.duna.cl
@@ -1142,8 +1147,8 @@ Ibero 90.9|Ibero|MX|rock|es|.25|.7|3||indie alternativo rock juvenil|Ibero||http
 Caracol Radio|Carac|CO|gen|es|.9|.5|4||noticias deportes|Caracol||https://caracol.com.co
 Radiónica|Radión|CO|rock|es|.2|.75|3||indie alternativo rock pública juvenil|nica|radi[oó]nica|https://www.radionica.rocks
 RPP|RPP|PE|gen|es|.95|.45|4||noticias actualidad|RPP||https://rpp.pe
-CBN|CBN|BR|news|pt|.95|.45|4||noticias actualidad|CBN||https://cbn.globo.com
-Antena 1 Brasil|Antena1|BR|pop|pt|.1|.5|3||pop adulto éxitos|Antena 1||https://www.antena1.com.br
+CBN|CBN|BR|news|pt|.95|.45|4||noticias actualidad são-paulo|CBN||https://cbn.globo.com
+Antena 1 Brasil|Antena1|BR|pop|pt|.1|.5|3||pop adulto éxitos são-paulo|Antena 1||https://www.antena1.com.br
 Jovem Pan News|JP News|BR|news|pt|.95|.5|4||noticias são-paulo actualidad|https://stream.zeno.fm/vlcraijc6yiuv||https://jovempan.com.br/
 BandNews FM|BandNews|BR|news|pt|.95|.45|4|96.9|noticias são-paulo 24-horas|https://playerservices.streamtheworld.com/api/livestream-redirect/BANDNEWSFM_SP.mp3||https://www.bandnewsfm.com.br/
 Rádio Gaúcha|Gaúcha|BR|news|pt|.9|.45|3|93.7|noticias porto-alegre deportes|https://liverdgaupoa.rbsdirect.com.br/primary/gaucha_rbs.sdp/playlist.m3u8||https://gauchazh.clicrbs.com.br/
@@ -1152,18 +1157,18 @@ Rádio Globo|Globo|BR|gen|pt|.8|.55|3||noticias deportes entretención rio|https
 Rádio Nacional|Nacional|BR|culture|pt|.6|.45|3|87.1|pública ebc mpb cultura rio|https://radionacionalrio-stream.ebc.com.br/ebc/radionacionalriodejaneiro/playlist.m3u8||https://radios.ebc.com.br/
 Rádio USP|USP|BR|culture|pt|.5|.35|2|93.7|universitaria cultura são-paulo|https://flow.emm.usp.br:8008/radiousp-128.mp3||https://jornal.usp.br/radio-usp/
 Cultura FM|Cultura FM|BR|classic|pt|.3|.2|3|103.3|clásica são-paulo pública|https://player-culturafm.stream.uol.com.br/live/culturafm.m3u8||https://cultura.uol.com.br/
-Bossa Jazz Brasil|Bossa Jazz|BR|jazz|pt|.02|.3|2||bossa-nova jazz mpb|https://centova5.transmissaodigital.com:20104/live||https://bossajazzbrasil.com/
-Rádio Batuta|Batuta|BR|folk|pt|.15|.4|2||mpb samba choro ims|https://radioims.out.airtime.pro/radioims_a||https://radiobatuta.com.br/
-Nova Brasil FM|Nova Brasil|BR|folk|pt|.05|.45|3|89.7|mpb música-brasileña|https://playerservices.streamtheworld.com/api/livestream-redirect/NOVABRASIL_SP.mp3||https://novabrasilfm.com.br/
-Metropolitana MPB|Metro MPB|BR|folk|pt|.02|.45|1||mpb música-brasileña|https://ice.fabricahost.com.br/metropolitanampb||https://metropolitanafm.com.br/
-Geração Samba e Pagode|Samba|BR|folk|pt|.02|.7|1||samba pagode|https://stream.geracaoradios.com.br/listen/samba/radio||https://geracaoradios.com.br/
-Nativa FM|Nativa|BR|folk|pt|.1|.7|3|95.3|sertanejo pagode popular|https://playerservices.streamtheworld.com/api/livestream-redirect/NATIVA_SP.mp3||https://www.band.com.br/radios/nativa
-Band FM|Band FM|BR|folk|pt|.1|.7|3|96.1|sertanejo pagode popular|https://playerservices.streamtheworld.com/api/livestream-redirect/BANDFM_SP.mp3||https://www.band.com.br/band-fm
+Bossa Jazz Brasil|Bossa Jazz|BR|jazz|pt|.02|.3|2||bossa-nova jazz mpb são-paulo|https://centova5.transmissaodigital.com:20104/live||https://bossajazzbrasil.com/
+Rádio Batuta|Batuta|BR|folk|pt|.15|.4|2||mpb samba choro ims rio|https://radioims.out.airtime.pro/radioims_a||https://radiobatuta.com.br/
+Nova Brasil FM|Nova Brasil|BR|folk|pt|.05|.45|3|89.7|mpb música-brasileña são-paulo|https://playerservices.streamtheworld.com/api/livestream-redirect/NOVABRASIL_SP.mp3||https://novabrasilfm.com.br/
+Metropolitana MPB|Metro MPB|BR|folk|pt|.02|.45|1||mpb música-brasileña são-paulo|https://ice.fabricahost.com.br/metropolitanampb||https://metropolitanafm.com.br/
+Geração Samba e Pagode|Samba|BR|folk|pt|.02|.7|1||samba pagode são-paulo|https://stream.geracaoradios.com.br/listen/samba/radio||https://geracaoradios.com.br/
+Nativa FM|Nativa|BR|folk|pt|.1|.7|3|95.3|sertanejo pagode popular são-paulo|https://playerservices.streamtheworld.com/api/livestream-redirect/NATIVA_SP.mp3||https://www.band.com.br/radios/nativa
+Band FM|Band FM|BR|folk|pt|.1|.7|3|96.1|sertanejo pagode popular são-paulo|https://playerservices.streamtheworld.com/api/livestream-redirect/BANDFM_SP.mp3||https://www.band.com.br/band-fm
 Kiss FM Brasil|Kiss BR|BR|rock|pt|.05|.65|3|92.5|rock clásico são-paulo|https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_KISSFM.mp3||https://kissfm.com.br/
 89 FM A Rádio Rock|89 FM|BR|rock|pt|.05|.75|3|89.1|rock são-paulo|https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_89FM.mp3||https://www.radiorock.com.br/
-Alpha FM|Alpha FM|BR|pop|pt|.05|.35|3|101.7|pop adulto romántico|https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_ALPHAFM.mp3||https://www.alphafm.com.br/
+Alpha FM|Alpha FM|BR|pop|pt|.05|.35|3|101.7|pop adulto romántico são-paulo|https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_ALPHAFM.mp3||https://www.alphafm.com.br/
 Metropolitana FM|Metropolitana|BR|pop|pt|.05|.8|3|98.5|pop éxitos são-paulo|https://ice.fabricahost.com.br/metropolitana985sp||https://metropolitanafm.com.br/
-Rádio Disney Brasil|Disney BR|BR|pop|pt|.05|.8|2|91.3|pop juvenil éxitos|https://playerservices.streamtheworld.com/api/livestream-redirect/DISNEY_BRA_SP.mp3||https://radiodisney.com.br/
+Rádio Disney Brasil|Disney BR|BR|pop|pt|.05|.8|2|91.3|pop juvenil éxitos são-paulo|https://playerservices.streamtheworld.com/api/livestream-redirect/DISNEY_BRA_SP.mp3||https://radiodisney.com.br/
 Eldorado FM|Eldorado|BR|ecl|pt|.15|.5|2|107.3|ecléctica rock mpb são-paulo|https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_ELDORADO.mp3||https://www.estadao.com.br/eldorado/
 Educadora FM Bahia|Educadora|BR|culture|pt|.35|.45|2|107.5|pública salvador bahia música-brasileña nordeste|https://streaming.educadorafm.ba.gov.br/stream-01||https://www.educadora.ba.gov.br/
 Rádio Metrópole|Metrópole|BR|gen|pt|.8|.5|2|101.3|noticias opinión salvador bahia nordeste|https://listen.radioking.com/radio/268642/stream/313975||https://www.metro1.com.br/
@@ -1171,8 +1176,33 @@ Frei Caneca FM|Frei Caneca|BR|culture|pt|.3|.5|2|101.5|pública recife frevo man
 Rádio Clube Pernambuco|Clube PE|BR|folk|pt|.1|.7|2|99.1|recife piseiro forró brega nordeste|https://radio.saopaulo01.com.br/8016/stream||https://clubepe.fm/
 Rádio Jornal Recife|Jornal PE|BR|news|pt|.9|.5|2|90.3|noticias deportes recife pernambuco nordeste|https://player-ne10-radiojornal-app.stream.uol.com.br/live/radiojornalrecifeapp_lsd.m3u8||https://radiojornal.com.br/
 Rádio Tabajara|Tabajara|BR|folk|pt|.2|.55|2|105.5|pública paraíba forró mpb nordeste|https://stm2.xcast.com.br:7524/stream||https://radiotabajara.pb.gov.br/
-MGT Forró|MGT Forró|BR|folk|pt|.02|.7|1||forró pé-de-serra xote baião nordeste|https://cast.mgtradio.net/radio/8050/aac||https://www.mgtradio.net/
+MGT Forró|MGT Forró|BR|folk|pt|.02|.7|1||forró pé-de-serra xote baião nordeste recife|https://cast.mgtradio.net/radio/8050/aac||https://www.mgtradio.net/
 Rádio Forró Brega|Forró Brega|BR|folk|pt|.02|.75|1||forró brega piseiro ceará nordeste|https://stream-280.surfernetwork.com/38zc8xggntzuv||https://www.forrobrega.com.br/
+Radio Bío-Bío Temuco|BB Temuco|CL|news|es|.9|.45|2|98.5|noticias regional temuco araucanía sur|https://unlimited3-cl.dps.live/biobiotemuco/aac/icecast.audio||https://www.biobiochile.cl
+Radio UdeC|UdeC|CL|culture|es|.4|.4|2|95.1|universitaria cultura concepción biobío sur|https://audio.divalstream.com:7019/stream||https://www.radioudec.cl
+Radio Sago|Sago|CL|gen|es|.7|.45|2|93.3|noticias regional osorno los-lagos sur|https://audio.divalstream.com:7001/stream||https://www.radiosago.cl
+Radio Genoveva|Genoveva|CL|pop|es|.2|.6|1||pop éxitos valdivia los-ríos sur|https://audio.bitsur.cl/8032/stream||
+Digital FM Punta Arenas|Digital PA|CL|pop|es|.1|.7|1|99.1|pop éxitos punta-arenas magallanes sur|https://radio.digitalfm.cl:8000/ptaarenas||https://www.digitalfm.cl
+CKNW 730|CKNW|CA|news|en|.95|.45|3||noticias opinión vancouver british-columbia|https://corus.leanstream.co/CKNWAM-MP3?type=.mp3||https://globalnews.ca/radio/cknw/
+CiTR 101.9|CiTR|CA|ecl|en|.15|.55|2|101.9|universitaria indie ecléctica vancouver ubc|https://live.citr.ca/live.aac||https://www.citr.ca/
+Indie88|Indie88|CA|rock|en|.05|.7|3|88.1|indie alternativo toronto|https://localradio.streamb.live/SB00348||https://indie88.com/
+KUOW|KUOW|US|gen|en|.85|.4|3|94.9|noticias cultura pública npr seattle|https://playerservices.streamtheworld.com/api/livestream-redirect/KUOWFM_HIGH_MP3.mp3||https://www.kuow.org/
+KNKX|KNKX|US|jazz|en|.3|.4|2|88.5|jazz blues pública seattle tacoma|https://knkx-live-a.edge.audiocdn.com/6284_128k||https://www.knkx.org/
+Classical KING FM|KING FM|US|classic|en|.2|.2|2|98.1|clásica pública seattle|https://classicalking.streamguys1.com/king-fm-aac-128k||https://www.king.org/
+XRAY.fm|XRAY|US|ecl|en|.2|.6|2|91.1|independiente ecléctica indie portland|https://listen.xray.fm/stream||https://xray.fm/
+KMHD|KMHD|US|jazz|en|.1|.4|2|89.1|jazz pública portland|https://ais-sa1.streamon.fm/7000_48k.aac||https://www.kmhd.org/
+LAist 89.3|LAist|US|gen|en|.85|.4|3|89.3|noticias pública npr los-ángeles|https://laist.streamguys1.com/kpcc-mp3||https://laist.com/
+KROQ|KROQ|US|rock|en|.1|.8|3|106.7|rock alternativo los-ángeles|https://live.amperwave.net/direct/audacy-kroqfmaac-imc||https://www.kroq.com/
+dublab|dublab|US|ecl|en|.1|.5|2||ecléctica electrónica experimental los-ángeles|https://dublab.out.airtime.pro/dublab_a||https://www.dublab.com/
+KQED|KQED|US|gen|en|.85|.4|3|88.5|noticias pública npr san-francisco|https://streams.kqed.org/kqedradio||https://www.kqed.org/
+KALX|KALX|US|ecl|en|.15|.6|2|90.7|universitaria indie ecléctica berkeley|https://stream.kalx.berkeley.edu:8443/kalx-128.mp3||https://kalx.berkeley.edu/
+KPFA|KPFA|US|gen|en|.75|.45|2|94.1|noticias cultura comunitaria berkeley|https://streams.kpfa.org:8443/kpfa||https://kpfa.org/
+WBUR|WBUR|US|gen|en|.85|.4|3|90.9|noticias pública npr boston|https://icecast-stream.wbur.org/wbur||https://www.wbur.org/
+GBH 89.7|GBH|US|gen|en|.8|.4|3|89.7|noticias cultura pública boston|https://wgbh-live.streamguys1.com/wgbh-noads||https://www.wgbh.org/
+WMBR|WMBR|US|ecl|en|.15|.55|2|88.1|universitaria ecléctica mit cambridge|https://wmbr.org:8002/hi||https://wmbr.org/
+WFUV|WFUV|US|rock|en|.2|.5|3|90.7|indie folk rock adulto pública nueva-york|https://onair.wfuv.org/onair-hi||https://wfuv.org/
+WKCR|WKCR|US|jazz|en|.2|.4|2|89.9|jazz universitaria columbia nueva-york|https://wkcr.streamguys1.com/live||https://www.cc-seas.columbia.edu/wkcr/
+WBGO|WBGO|US|jazz|en|.15|.4|3|88.3|jazz blues pública newark nueva-york|https://ais-sa8.cdnstream1.com/3629_128.mp3||https://www.wbgo.org/
 Cadena SER|SER|ES|gen|es|.9|.45|4||noticias actualidad deportes|Cadena SER||https://cadenaser.com
 RNE Radio Nacional|RNE|ES|gen|es|.9|.35|3||noticias cultura pública|Radio Nacional|rne|https://www.rtve.es/play/radio/
 Radio Exterior de España|REE|ES|gen|es|.9|.35|2||noticias internacional pública|Exterior||https://www.rtve.es/play/radio/
@@ -1202,19 +1232,19 @@ Rai Radio 1|Rai 1|IT|gen|it|.9|.4|4||noticias deportes pública|Rai Radio 1||htt
 Radio Monte Carlo|RMC|IT|pop|it|.15|.6|3||pop adulto|Radio Monte Carlo||https://www.radiomontecarlo.net
 RTP Antena 1|RTP|PT|gen|pt|.6|.45|3||noticias música pública|Antena 1||https://www.rtp.pt/antena1
 NPO Radio 2|NPO 2|NL|pop|nl|.2|.6|4||pop rock pública|NPO Radio 2||https://www.nporadio2.nl
-NPR News|NPR|US|news|en|.95|.35|5||noticias cultura pública|NPR||https://www.npr.org
-WNYC|WNYC|US|gen|en|.9|.35|4||noticias cultura pública|WNYC||https://www.wnyc.org
-WQXR|WQXR|US|classic|en|.1|.2|3||clásica ópera|WQXR||https://www.wqxr.org
-KEXP|KEXP|US|rock|en|.15|.7|3||indie alternativo rock pública|KEXP||https://www.kexp.org
-KCRW|KCRW|US|ecl|en|.3|.6|3||ecléctica indie electrónica pública|KCRW||https://www.kcrw.com
+NPR News|NPR|US|news|en|.95|.35|5||noticias cultura pública washington|NPR||https://www.npr.org
+WNYC|WNYC|US|gen|en|.9|.35|4||noticias cultura pública nueva-york|WNYC||https://www.wnyc.org
+WQXR|WQXR|US|classic|en|.1|.2|3||clásica ópera nueva-york|WQXR||https://www.wqxr.org
+KEXP|KEXP|US|rock|en|.15|.7|3||indie alternativo rock pública seattle|KEXP||https://www.kexp.org
+KCRW|KCRW|US|ecl|en|.3|.6|3||ecléctica indie electrónica pública los-ángeles|KCRW||https://www.kcrw.com
 Radio Paradise|RParad|US|ecl|en|.02|.5|3||ecléctica rock indie world|Radio Paradise|main mix|https://radioparadise.com
-SomaFM Groove Salad|Soma|US|elec|en|.02|.3|2||electrónica ambient downtempo|Groove Salad||https://somafm.com
-CBC Radio One|CBC 1|CA|gen|en|.95|.35|4||noticias cultura pública|CBC Radio One|radio one|https://www.cbc.ca/listen/live-radio
-CBC Music|CBC M|CA|pop|en|.25|.6|3||pop indie pública|CBC Music||https://www.cbc.ca/listen/live-radio
-ICI Première|ICI 1|CA|gen|fr|.95|.35|3||noticias cultura pública|Première|premi|https://ici.radio-canada.ca/ohdio
-ICI Musique|ICI M|CA|ecl|fr|.2|.5|2||ecléctica pop jazz pública|ICI Musique||https://ici.radio-canada.ca/ohdio/musique
-JAZZ.FM91|JazzFM|CA|jazz|en|.2|.35|2||jazz standards adulto|Jazz FM|jazz.?fm|https://jazz.fm
-CHOM 97.7|CHOM|CA|rock|en|.15|.75|2||rock-clásico rock hard-rock|CHOM||https://www.iheartradio.ca/chom
+SomaFM Groove Salad|Soma|US|elec|en|.02|.3|2||electrónica ambient downtempo san-francisco|Groove Salad||https://somafm.com
+CBC Radio One|CBC 1|CA|gen|en|.95|.35|4||noticias cultura pública toronto|CBC Radio One|radio one|https://www.cbc.ca/listen/live-radio
+CBC Music|CBC M|CA|pop|en|.25|.6|3||pop indie pública toronto|CBC Music||https://www.cbc.ca/listen/live-radio
+ICI Première|ICI 1|CA|gen|fr|.95|.35|3||noticias cultura pública montreal|Première|premi|https://ici.radio-canada.ca/ohdio
+ICI Musique|ICI M|CA|ecl|fr|.2|.5|2||ecléctica pop jazz pública montreal|ICI Musique||https://ici.radio-canada.ca/ohdio/musique
+JAZZ.FM91|JazzFM|CA|jazz|en|.2|.35|2||jazz standards adulto toronto|Jazz FM|jazz.?fm|https://jazz.fm
+CHOM 97.7|CHOM|CA|rock|en|.15|.75|2||rock-clásico rock hard-rock montreal|CHOM||https://www.iheartradio.ca/chom
 NHK World|NHK|JP|news|en|.95|.35|3||noticias internacional pública|NHK World||https://www3.nhk.or.jp/nhkworld/
 KBS Cool FM|KBS|KR|pop|ko|.3|.8|3||pop k-pop juvenil|Cool FM||https://world.kbs.co.kr
 Radio Mirchi|Mirchi|IN|pop|hi|.3|.8|4||pop bollywood éxitos|Mirchi||https://www.radiomirchi.com
@@ -1235,31 +1265,31 @@ Radio Swiss Jazz|Swiss Jz|CH|jazz|en|.02|.35|2||jazz soul pública|Radio Swiss J
 Radio Swiss Classic|Swiss Cl|CH|classic|de|.02|.2|2||clásica pública|Radio Swiss Classic|^radio swiss classic( german)?$|https://www.radioswissclassic.ch
 Couleur 3|Coul3|CH|ecl|fr|.3|.7|2||indie electrónica alternativo pública|Couleur 3||https://www.rts.ch/couleur3
 Jazz24|Jazz24|US|jazz|en|.05|.4|3||jazz standards pública|Jazz24||https://www.jazz24.org
-WFMU|WFMU|US|ecl|en|.3|.6|2||ecléctica underground indie|WFMU||https://wfmu.org
-SomaFM Indie Pop Rocks|Soma IP|US|rock|en|.02|.65|2||indie pop alternativo|Indie Pop Rocks||https://somafm.com/indiepop/
-SomaFM Secret Agent|Soma SA|US|ecl|en|.02|.4|2||lounge downtempo ecléctica|Secret Agent||https://somafm.com/secretagent/
+WFMU|WFMU|US|ecl|en|.3|.6|2||ecléctica underground indie newark|WFMU||https://wfmu.org
+SomaFM Indie Pop Rocks|Soma IP|US|rock|en|.02|.65|2||indie pop alternativo san-francisco|Indie Pop Rocks||https://somafm.com/indiepop/
+SomaFM Secret Agent|Soma SA|US|ecl|en|.02|.4|2||lounge downtempo ecléctica san-francisco|Secret Agent||https://somafm.com/secretagent/
 Radio Paradise Mellow|RP Mel|US|ecl|en|.02|.3|2||ecléctica acústica adulto|Radio Paradise Mellow|mellow|https://radioparadise.com
 Double J|Double J|AU|rock|en|.25|.6|3||indie rock adulto pública|Double J||https://www.abc.net.au/listen/doublej
 Kerrang! Radio|Kerrang|GB|metal|en|.15|.9|2||metal hard-rock rock alternativo|Kerrang|kerrang|https://www.kerrangradio.co.uk
 ROCK ANTENNE|RockAnt|DE|rock|de|.2|.8|3||rock hard-rock rock-clásico|ROCK ANTENNE|^rock antenne$|https://www.rockantenne.de
 ROCK ANTENNE Heavy Metal|RA Metal|DE|metal|de|.05|.95|2||metal heavy-metal hard-rock|ROCK ANTENNE Heavy Metal|heavy metal|https://www.rockantenne.de
 RADIO BOB!|BOB!|DE|rock|de|.2|.8|3||rock hard-rock metal|RADIO BOB|^radio bob!?$|https://www.radiobob.de
-SomaFM Metal Detector|Soma MD|US|metal|en|.02|.95|1||metal heavy-metal|Metal Detector||https://somafm.com/metal/
+SomaFM Metal Detector|Soma MD|US|metal|en|.02|.95|1||metal heavy-metal san-francisco|Metal Detector||https://somafm.com/metal/
 Venice Classic Radio|Venice|IT|classic|it|.02|.2|2||clásica barroco ópera|Venice Classic||https://www.veniceclassicradio.eu
-WFMT|WFMT|US|classic|en|.15|.2|3||clásica ópera pública|WFMT||https://www.wfmt.com
-KUSC|KUSC|US|classic|en|.15|.2|3||clásica pública|KUSC||https://www.kusc.org
+WFMT|WFMT|US|classic|en|.15|.2|3||clásica ópera pública chicago|WFMT||https://www.wfmt.com
+KUSC|KUSC|US|classic|en|.15|.2|3||clásica pública los-ángeles|KUSC||https://www.kusc.org
 Radio Clásica|R Clás|ES|classic|es|.15|.2|3||clásica ópera pública|Radio Clasica|cl[aá]sica|https://www.rtve.es/play/radio/
 BR-Klassik|BR Klass|DE|classic|de|.15|.2|3||clásica ópera pública|BR-Klassik|klassik|https://www.br-klassik.de
 Radio Nacional Folklórica|Folklórica|AR|folk|es|.3|.4|2||folklore música-argentina pública|Nacional Folkl|folkl|https://www.radionacional.com.ar
 Folk Alley|FolkAlly|US|folk|en|.05|.35|2||folk americana acústica raíces|Folk Alley||https://www.folkalley.com
 WWOZ|WWOZ|US|folk|en|.2|.6|2||jazz blues raíces new-orleans|WWOZ||https://www.wwoz.org
-SomaFM Boot Liquor|Soma BL|US|folk|en|.02|.4|1||americana country raíces|Boot Liquor||https://somafm.com/bootliquor/
-SomaFM Folk Forward|Soma FF|US|folk|en|.02|.35|1||folk indie acústica|Folk Forward||https://somafm.com/folkfwd/
+SomaFM Boot Liquor|Soma BL|US|folk|en|.02|.4|1||americana country raíces san-francisco|Boot Liquor||https://somafm.com/bootliquor/
+SomaFM Folk Forward|Soma FF|US|folk|en|.02|.35|1||folk indie acústica san-francisco|Folk Forward||https://somafm.com/folkfwd/
 FIP Reggae|FIP Rg|FR|folk|fr|.02|.55|2||reggae raíces pública|FIP Reggae||https://www.radiofrance.fr/fip/radio-reggae
 FIP Monde|FIP Mo|FR|folk|fr|.02|.5|2||world raíces pública|FIP Musiques du monde|monde|https://www.radiofrance.fr/fip/radio-monde
 FIP Electro|FIP El|FR|elec|fr|.02|.7|2||electrónica pública|FIP Electro||https://www.radiofrance.fr/fip/radio-electro
-SomaFM Beat Blender|Soma BB|US|elec|en|.02|.6|2||electrónica house downtempo|Beat Blender||https://somafm.com/beatblender/
-SomaFM Space Station|Soma SS|US|elec|en|.02|.5|2||electrónica ambient espacial|Space Station||https://somafm.com/spacestation/
+SomaFM Beat Blender|Soma BB|US|elec|en|.02|.6|2||electrónica house downtempo san-francisco|Beat Blender||https://somafm.com/beatblender/
+SomaFM Space Station|Soma SS|US|elec|en|.02|.5|2||electrónica ambient espacial san-francisco|Space Station||https://somafm.com/spacestation/
 sunshine live|Sunshine|DE|elec|de|.15|.9|3||electrónica techno dance|sunshine live|^sunshine live$|https://www.sunshine-live.de
 Ibiza Global Radio|Ibiza GR|ES|elec|en|.05|.75|2||electrónica house deep-house|Ibiza Global|^ibiza global radio$|https://www.ibizaglobalradio.com
 Sunshine Live Afro House|SSL Afro|DE|elec|en|.02|.7|2||afro-house house deep-house|https://stream.sunshine-live.de/afrohouse/mp3-192/||https://www.sunshine-live.de/afrohouse-channel
@@ -1289,8 +1319,8 @@ Chillout Radio Mykonos|Mykonos|GR|elec|en|.02|.45|1||deep-house balearic chillou
 Café del Mar Radio|Café del Mar|ES|elec|en|.02|.35|2||chillout balearic lounge downtempo|https://streams.radio.co/se1a320b47/listen||https://cafedelmar.com/radio
 Café del Mar Calm|CdM Calm|ES|elec|en|.01|.2|1||chillout ambient balearic|https://streamer.radio.co/sb748f24ad/listen||https://cafedelmar.com/radio
 Café del Mar Channel 2|CdM Ch2|ES|elec|en|.02|.4|1||balearic lounge deep-house chillout|https://s4.radio.co/seeae9c220/listen||https://cafedelmar.com/radio
-SomaFM cliqhop idm|Soma IDM|US|elec|en|.02|.55|2||idm glitch electrónica experimental|https://ice2.somafm.com/cliqhop-128-mp3||https://somafm.com/cliqhop/
-SomaFM The Trip|Soma Trip|US|elec|en|.02|.7|2||trance progressive-house hipnótico|https://ice2.somafm.com/thetrip-128-mp3||https://somafm.com/thetrip/
+SomaFM cliqhop idm|Soma IDM|US|elec|en|.02|.55|2||idm glitch electrónica experimental san-francisco|https://ice2.somafm.com/cliqhop-128-mp3||https://somafm.com/cliqhop/
+SomaFM The Trip|Soma Trip|US|elec|en|.02|.7|2||trance progressive-house hipnótico san-francisco|https://ice2.somafm.com/thetrip-128-mp3||https://somafm.com/thetrip/
 Elektronisch Querbeat|Querbeat|DE|elec|en|.02|.5|1||idm ambient glitch dub hipnótico|https://stream.laut.fm/elektronisch_querbeat||https://laut.fm/elektronisch_querbeat
 Boards of Canada Radio|BoC Radio|DE|elec|en|.02|.4|1||idm downtempo ambient|https://stream.laut.fm/boards-of-canada-radio||https://laut.fm/boards-of-canada-radio
 Aphex Twin Radio|Aphex|DE|elec|en|.02|.6|1||idm ambient-techno drill-n-bass|https://stream.laut.fm/aphex-twin-radio||https://laut.fm/aphex-twin-radio
@@ -1317,14 +1347,14 @@ bigFM Hip-Hop|bigFM HH|DE|hiphop|de|.02|.8|2||hip-hop rap deutschrap|https://str
 bigFM Oldschool Rap|bigFM Old|DE|hiphop|de|.02|.7|1||old-school rap hip-hop 90s|https://streams.bigfm.de/bigfm-oldschool-128-mp3||https://www.bigfm.de/
 Deutschrap|Deutschrap|DE|hiphop|de|.02|.8|1||deutschrap rap alemán|https://rautemusik.stream43.radiohost.de/deutschrap?ref=radiobrowser||https://www.rm.fm/deutschrap
 Radio 105 Hip Hop & RnB|105 HipHop|IT|hiphop|it|.02|.8|2||hip-hop r&b rap italiano|https://icy.unitedradio.it/105HipHopRnB.mp3||https://www.105.net/
-Rádio Rap Brasil|Rap BR|BR|hiphop|pt|.02|.75|1||rap brasileño hip-hop|https://stream.zeno.fm/7c83b37e32quv||https://www.cxradio.com.br/radio/rap-brasil
+Rádio Rap Brasil|Rap BR|BR|hiphop|pt|.02|.75|1||rap brasileño hip-hop são-paulo|https://stream.zeno.fm/7c83b37e32quv||https://www.cxradio.com.br/radio/rap-brasil
 Urbano 106|Urbano 106|CR|hiphop|es|.05|.85|2|105.9|urbano reggaetón hip-hop dancehall|https://usa18.fastcast4u.com/proxy/rmoohhrw?mp=/1||https://www.urbano106.com/
 Rap Lbeldi Maroc|Rap Lbeldi|MA|hiphop|ar|.02|.75|1||rap marroquí darija hip-hop|https://stream.zeno.fm/ivdufrl7q0quv||
 Metro FM|Metro FM|ZA|hiphop|en|.15|.8|3||hip-hop r&b amapiano urbana sudafricana pública|https://playerservices.streamtheworld.com/api/livestream-redirect/METROFM.mp3||https://www.metrofm.co.za/
 KMEL 106.1|KMEL|US|hiphop|en|.1|.85|3|106.1|hip-hop rap r&b bay-area san-francisco|https://stream.revma.ihrhls.com/zc293||https://kmel.iheart.com/
 WGCI 107.5|WGCI|US|hiphop|en|.1|.85|3|107.5|hip-hop rap r&b chicago|https://stream.revma.ihrhls.com/zc841||https://wgci.iheart.com/
 Rinse FM|Rinse|GB|hiphop|en|.05|.8|3||grime uk-garage dubstep club londres|https://admin.stream.rinse.fm/proxy/rinse_uk/stream||https://www.rinse.fm/`;
-const S=RAW.trim().split("\n").map((l,i)=>{const a=l.split("|");return{i,n:a[0],sh:a[1],cc:a[2],g:a[3],lang:a[4],talk:+a[5],en:+a[6],l:+a[7],f:a[8]?+a[8]:null,tags:new Set(a[9].split(" ")),q:a[10],re:a[11]||null,u:a[12],ll:LL[a[2]],reg:REGION_OF[a[2]]}});
+const S=RAW.trim().split("\n").map((l,i)=>{const a=l.split("|");return{i,n:a[0],sh:a[1],cc:a[2],g:a[3],lang:a[4],talk:+a[5],en:+a[6],l:+a[7],f:a[8]?+a[8]:null,tags:new Set(a[9].split(" ")),q:a[10],re:a[11]||null,u:a[12],ll:LL[a[2]],city:(a[9].split(" ").map(t=>CITY[t]).find(Boolean))||null,reg:REGION_OF[a[2]]}});
 
 /* ---------- Capa analítica: afinidad entre radios ---------- */
 const rad=d=>d*Math.PI/180;
@@ -2309,7 +2339,8 @@ const RMV=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const hsh=s=>{let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0};
 // Posición estable por radio: las de un mismo país se reparten alrededor de su punto en el mapa
 const perCC={};S.forEach(s=>{(perCC[s.cc]=perCC[s.cc]||[]).push(s)});
-Object.values(perCC).forEach(l=>l.forEach((s,i)=>{const a=i*2.399,r=l.length>1?1.2+1.6*Math.sqrt(i):0;s.geo=[s.ll[1]+r*Math.cos(a)*1.3,s.ll[0]+r*Math.sin(a)];const h=hsh(s.n);s.jx=(h%1000)/1000-.5;s.jy=((h>>>10)%1000)/1000-.5}));
+{const G={};S.forEach(s=>{const k=s.city?s.city.join(","):s.cc;(G[k]=G[k]||[]).push(s)});Object.values(G).forEach(l=>l.forEach((s,i)=>{const c=s.city||s.ll,a=i*2.399,r=l.length>1?(s.city?.35+.55*Math.sqrt(i):1.2+1.6*Math.sqrt(i)):0;s.geo=[c[1]+r*Math.cos(a)*1.3,c[0]+r*Math.sin(a)]}))}
+Object.values(perCC).forEach(l=>l.forEach((s,i)=>{const h=hsh(s.n);s.jx=(h%1000)/1000-.5;s.jy=((h>>>10)%1000)/1000-.5}));
 const aff=(s,n)=>S.filter(x=>x!==s&&!x.dead&&onF(x)).map(x=>({x,v:sim(s,x).v})).sort((a,b)=>b.v-a.v).slice(0,n);
 const choose=s=>{openCard(s)};
 const onF=s=>!filtering()||match(s);
@@ -2457,7 +2488,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-17b";
+const APP_VERSION="2026-11-17c";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
