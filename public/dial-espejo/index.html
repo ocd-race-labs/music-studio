@@ -1082,7 +1082,7 @@ function trSeg(x){const k=x.trim();if(!k)return x;const d=I18N[UIL];if(d[k]!=nul
   for(const [re,e,p] of I18P){if(re.test(k))return x.replace(k,k.replace(re,UIL==="en"?e:p))}
   if(k.includes(", ")){const y=k.split(", ").map(z=>d[z]!=null?d[z]:z).join(", ");if(y!==k)return x.replace(k,y)}
   return x}
-Object.assign(I18N.en,{"Marruecos":"Morocco","Costa Rica":"Costa Rica"});Object.assign(I18N.pt,{"Marruecos":"Marrocos","Costa Rica":"Costa Rica"});Object.assign(I18N.en,{"Todas":"All","Todos":"All","Varones":"Men","Damas":"Women","Sub-23":"Under-23"});Object.assign(I18N.pt,{"Todas":"Todas","Todos":"Todos","Varones":"Masculino","Damas":"Feminino","Junior":"Júnior"});Object.assign(I18N.en,{"Temporizador para dormir":"Sleep timer","Apagar en":"Stop in","Cancelar":"Cancel","apagada por el temporizador":"stopped by the sleep timer"});Object.assign(I18N.pt,{"Temporizador para dormir":"Timer para dormir","Apagar en":"Desligar em","Cancelar":"Cancelar","apagada por el temporizador":"desligada pelo timer"});
+Object.assign(I18N.en,{"Marruecos":"Morocco","Costa Rica":"Costa Rica"});Object.assign(I18N.pt,{"Marruecos":"Marrocos","Costa Rica":"Costa Rica"});Object.assign(I18N.en,{"Nigeria": "Nigeria", "Kenia": "Kenya", "Ghana": "Ghana", "Egipto": "Egypt", "Senegal": "Senegal", "Singapur": "Singapore", "Filipinas": "Philippines", "Tailandia": "Thailand", "Vietnam": "Vietnam", "Indonesia": "Indonesia", "Malasia": "Malaysia", "China": "China", "Hong Kong": "Hong Kong", "Rusia": "Russia", "Noruega": "Norway", "Suecia": "Sweden", "Dinamarca": "Denmark", "Finlandia": "Finland", "Islandia": "Iceland", "Ruso": "Russian", "Chino": "Chinese", "Sueco": "Swedish", "Noruego": "Norwegian", "Danés": "Danish", "Finés": "Finnish", "Islandés": "Icelandic", "Tailandés": "Thai", "Vietnamita": "Vietnamese", "Indonesio": "Indonesian", "Tagalo": "Tagalog", "Suajili": "Swahili"});Object.assign(I18N.pt,{"Nigeria": "Nigéria", "Kenia": "Quênia", "Ghana": "Gana", "Egipto": "Egito", "Senegal": "Senegal", "Singapur": "Singapura", "Filipinas": "Filipinas", "Tailandia": "Tailândia", "Vietnam": "Vietnã", "Indonesia": "Indonésia", "Malasia": "Malásia", "China": "China", "Hong Kong": "Hong Kong", "Rusia": "Rússia", "Noruega": "Noruega", "Suecia": "Suécia", "Dinamarca": "Dinamarca", "Finlandia": "Finlândia", "Islandia": "Islândia", "Ruso": "Russo", "Chino": "Chinês", "Sueco": "Sueco", "Noruego": "Norueguês", "Danés": "Dinamarquês", "Finés": "Finlandês", "Islandés": "Islandês", "Tailandés": "Tailandês", "Vietnamita": "Vietnamita", "Indonesio": "Indonésio", "Tagalo": "Tagalo", "Suajili": "Suaíli"});Object.assign(I18N.en,{"Todas":"All","Todos":"All","Varones":"Men","Damas":"Women","Sub-23":"Under-23"});Object.assign(I18N.pt,{"Todas":"Todas","Todos":"Todos","Varones":"Masculino","Damas":"Feminino","Junior":"Júnior"});Object.assign(I18N.en,{"Temporizador para dormir":"Sleep timer","Apagar en":"Stop in","Cancelar":"Cancel","apagada por el temporizador":"stopped by the sleep timer"});Object.assign(I18N.pt,{"Temporizador para dormir":"Timer para dormir","Apagar en":"Desligar em","Cancelar":"Cancelar","apagada por el temporizador":"desligada pelo timer"});
 function trText(s){if(UIL==="es"||!s||!/[A-Za-zÁÉÍÓÚáéíóúñ]/.test(s))return s;const d=I18N[UIL],k=s.trim();if(d[k]!=null)return s.replace(k,d[k]);
   return s.includes(" · ")?s.split(" · ").map(trSeg).join(" · "):trSeg(s)}
 const NOI18N="[data-noi18n],.tl-t b,.tl-h,#hlN,#hlSvg,#npcT,#npcA,#npcS,.tp-it b,.sq-tx b,.af-b b,script,style,#kCn,.pz-res,.story h3,.hl a,.concept .cl:not(.amb),#bT,#npSong,#npArtist,#npAlbum,.topic-head h2:not(.sph),.thive text";
@@ -1109,10 +1109,10 @@ const audio=$("audio");
    nombre|corto|país|familia|idioma|habla(0-1)|energía(0-1)|audiencia(1-5)|FM Santiago|etiquetas|búsqueda|patrón|web */
 const FAM={news:["Noticias 24/7","var(--news)","#5B7BFF",1920],gen:["Noticias y más","var(--gen)","#7AB8FF",1925],culture:["Cultura","var(--culture)","#8FA3FF",1930],classic:["Clásica","var(--classic)","#F2B544",1700],jazz:["Jazz","var(--jazz)","#2FD3A0",1915],
   rock:["Rock e indie","var(--rock)","#FF5C7A",1955],elec:["Electrónica","#E85CFF","#E85CFF",1990],metal:["Metal","#B9C3D6","#B9C3D6",1980],folk:["Folklore y raíces","#9BCB6A","#9BCB6A",1900],pop:["Pop","var(--pop)","#B98CFF",1960],hiphop:["Hip Hop","#C8F03C","#C8F03C",1973],latin:["Latina","var(--latin)","#FF9F5A",1950],ecl:["Ecléctica","var(--ecl)","#4FD9F0",1980]};
-const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán",it:"Italiano",nl:"Neerlandés",ar:"Árabe",ja:"Japonés",ko:"Coreano",hi:"Hindi",pl:"Polaco"};
-const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",MA:"África",CR:"Latinoamérica",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía",PL:"Europa",AE:"Asia",GR:"Europa"};
+const LANG={es:"Español",en:"Inglés",fr:"Francés",pt:"Portugués",de:"Alemán",it:"Italiano",nl:"Neerlandés",ar:"Árabe",ja:"Japonés",ko:"Coreano",hi:"Hindi",pl:"Polaco",ru:"Ruso",zh:"Chino",sv:"Sueco",no:"Noruego",da:"Danés",fi:"Finés",is:"Islandés",th:"Tailandés",vi:"Vietnamita",id:"Indonesio",tl:"Tagalo",sw:"Suajili"};
+const REGION_OF={CL:"Chile",AR:"Latinoamérica",MX:"Latinoamérica",CO:"Latinoamérica",PE:"Latinoamérica",BR:"Latinoamérica",US:"Norteamérica",CA:"Norteamérica",GB:"Europa",ES:"Europa",FR:"Europa",DE:"Europa",IT:"Europa",PT:"Europa",NL:"Europa",IE:"Europa",VA:"Europa",JP:"Asia",IN:"Asia",KR:"Asia",ZA:"África",MA:"África",NG:"África",KE:"África",GH:"África",EG:"África",SN:"África",SG:"Asia",PH:"Asia",TH:"Asia",VN:"Asia",ID:"Asia",MY:"Asia",CN:"Asia",HK:"Asia",RU:"Europa",NO:"Europa",SE:"Europa",DK:"Europa",FI:"Europa",IS:"Europa",CR:"Latinoamérica",AU:"Oceanía",CH:"Europa",BE:"Europa",NZ:"Oceanía",PL:"Europa",AE:"Asia",GR:"Europa"};
 const REGIONS=["Chile","Latinoamérica","Norteamérica","Europa","Asia","África","Oceanía"];
-const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],MA:[33.57,-7.59],CR:[9.93,-84.08],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35],NZ:[-41.29,174.78],PL:[52.23,21.01],AE:[25.2,55.27],GR:[37.45,25.33]};
+const LL={CL:[-33.45,-70.66],AR:[-34.6,-58.38],MX:[19.43,-99.13],CO:[4.71,-74.07],PE:[-12.05,-77.04],BR:[-23.55,-46.63],US:[39.5,-98.35],CA:[45.4,-75.7],GB:[51.5,-0.12],ES:[40.42,-3.7],FR:[48.86,2.35],DE:[52.52,13.4],IT:[41.9,12.5],PT:[38.72,-9.14],NL:[52.37,4.9],IE:[53.35,-6.26],VA:[41.9,12.45],JP:[35.68,139.69],IN:[19.07,72.88],KR:[37.57,126.98],ZA:[-26.2,28.05],NG:[6.52, 3.38],KE:[-1.29, 36.82],GH:[5.6, -0.19],EG:[30.04, 31.24],SN:[14.72, -17.47],SG:[1.35, 103.82],PH:[14.6, 120.98],TH:[13.75, 100.5],VN:[21.03, 105.85],ID:[-6.2, 106.85],MY:[3.14, 101.69],CN:[39.9, 116.4],HK:[22.32, 114.17],RU:[55.76, 37.62],NO:[59.91, 10.75],SE:[59.33, 18.07],DK:[55.68, 12.57],FI:[60.17, 24.94],IS:[64.15, -21.94],MA:[33.57,-7.59],CR:[9.93,-84.08],AU:[-33.87,151.21],CH:[46.95,7.45],BE:[50.85,4.35],NZ:[-41.29,174.78],PL:[52.23,21.01],AE:[25.2,55.27],GR:[37.45,25.33]};
 /* Ciudades: si una radio lleva la ciudad en sus etiquetas, el globo la ubica ahí y no en el centro del país */
 const CITY={"são-paulo":[-23.55,-46.63],"rio":[-22.91,-43.17],"belo-horizonte":[-19.92,-43.94],"porto-alegre":[-30.03,-51.23],"salvador":[-12.97,-38.5],"recife":[-8.05,-34.88],"paraíba":[-7.12,-34.86],"ceará":[-3.73,-38.53],"brasilia":[-15.79,-47.88],
   "nueva-york":[40.71,-74.0],"york":[40.71,-74.0],"boston":[42.36,-71.06],"cambridge":[42.37,-71.11],"chicago":[41.88,-87.63],"seattle":[47.61,-122.33],"portland":[45.52,-122.68],"los-ángeles":[34.05,-118.24],"san-francisco":[37.77,-122.42],"bay-area":[37.8,-122.27],"berkeley":[37.87,-122.27],"new-orleans":[29.95,-90.07],"newark":[40.74,-74.17],
@@ -1203,6 +1203,56 @@ WMBR|WMBR|US|ecl|en|.15|.55|2|88.1|universitaria ecléctica mit cambridge|https:
 WFUV|WFUV|US|rock|en|.2|.5|3|90.7|indie folk rock adulto pública nueva-york|https://onair.wfuv.org/onair-hi||https://wfuv.org/
 WKCR|WKCR|US|jazz|en|.2|.4|2|89.9|jazz universitaria columbia nueva-york|https://wkcr.streamguys1.com/live||https://www.cc-seas.columbia.edu/wkcr/
 WBGO|WBGO|US|jazz|en|.15|.4|3|88.3|jazz blues pública newark nueva-york|https://ais-sa8.cdnstream1.com/3629_128.mp3||https://www.wbgo.org/
+Cool FM Lagos|Cool FM|NG|pop|en|.15|.75|3|96.9|afrobeats pop éxitos lagos|https://coolfmlagos969-atunwadigital.streamguys1.com/coolfmlagos969||https://coolfm.ng/
+Wazobia FM|Wazobia|NG|gen|en|.6|.65|3|95.1|pidgin afrobeats entretención lagos|https://wazobiafmlagos951-atunwadigital.streamguys1.com/wazobiafmlagos951||https://wazobiafm.com/
+Nigeria Info|NigInfo|NG|news|en|.95|.45|3|99.3|noticias opinión lagos|https://nigeriainfofmlagos993-atunwadigital.streamguys1.com/nigeriainfofmlagos993||https://nigeriainfo.fm/
+Capital FM Kenya|Capital KE|KE|pop|en|.2|.65|3|98.4|pop éxitos nairobi|https://atunwadigital.streamguys1.com/capitalfm||https://www.capitalfm.co.ke/
+Classic 105|Classic 105|KE|pop|en|.4|.5|2|105.2|clásicos rock conversación nairobi|https://classic105-atunwadigital.streamguys1.com/classic105||https://classic105.com/
+Radio Citizen|Citizen|KE|news|sw|.9|.45|3|106.7|noticias suajili nairobi|https://radiocitizen-atunwadigital.streamguys1.com/radiocitizen||https://www.citizen.digital/
+Joy FM|Joy FM|GH|gen|en|.7|.5|3|99.7|noticias música accra|https://mmg.streamguys1.com/JoyFM-mp3||https://www.myjoyonline.com/
+Nogoum FM|Nogoum|EG|pop|ar|.1|.7|3|100.6|pop árabe cairo|https://stream.zeno.fm/qb1zvsykm98uv||https://nogoumfm.net/
+Mix FM Egypt|Mix EG|EG|pop|ar|.05|.75|2|87.8|pop árabe éxitos cairo|https://stream-29.zeno.fm/na3vpvn10qruv||
+Radio Thiossane|Thiossane|SN|folk|fr|.1|.6|2||mbalax música-senegalesa tradicional dakar|https://listen.senemultimedia.net:8112/stream||
+Hit Radio Maroc|Hit Radio|MA|pop|fr|.1|.8|3|100.0|pop urbano éxitos rabat|https://hitradio-maroc.ice.infomaniak.ch/hitradio-maroc-128.mp3||https://www.hitradio.ma/
+Jacaranda FM|Jacaranda|ZA|pop|en|.1|.6|3|94.2|pop adulto pretoria|https://edge.iono.fm/xice/jacarandafm_live_medium.mp3||https://www.jacarandafm.com/
+Talk Radio 702|702|ZA|news|en|.95|.4|3|92.7|noticias conversación johannesburgo|https://playerservices.streamtheworld.com/api/livestream-redirect/FM702_192AAC.aac||https://www.702.co.za/
+CNA 938|CNA 938|SG|news|en|.95|.45|3|93.8|noticias singapur|https://playerservices.streamtheworld.com/api/livestream-redirect/938NOW_PREM_SC||https://www.channelnewsasia.com/
+Class 95|Class 95|SG|pop|en|.1|.7|3|95.0|pop éxitos singapur|https://playerservices.streamtheworld.com/api/livestream-redirect/CLASS95_PREM_SC||https://www.melisten.sg/
+YES 933|YES 933|SG|pop|zh|.1|.7|3|93.3|mandopop chino singapur|https://playerservices.streamtheworld.com/api/livestream-redirect/YES933_SC||https://www.melisten.sg/
+Gold 905|Gold 905|SG|pop|en|.1|.5|2|90.5|clásicos oldies singapur|https://playerservices.streamtheworld.com/api/livestream-redirect/GOLD905_PREM_SC||https://www.melisten.sg/
+DZRH|DZRH|PH|news|tl|.9|.5|3||noticias manila|https://azura.dzrh.com.ph/listen/dzrh_manila/radio.mp3||https://www.dzrh.com.ph/
+Easy Rock Manila|Easy Rock|PH|pop|en|.05|.4|2|96.3|soft-rock adulto manila|https://azura.easyrock.com.ph/listen/easy_rock_manila/radio.mp3||https://www.easyrock.com.ph/
+Cool Fahrenheit 93|Cool 93|TH|pop|th|.05|.4|2|93.0|pop tailandés relajado bangkok|https://coolism-web3rd.cdn.byteark.com/stream/1/||https://www.coolism.net/
+Chili Radio|Chili|TH|pop|en|.02|.6|1||clásicos 80s 90s phuket|https://stream.chiliradio.app/chiliclassics||
+BKK.FM|BKK.FM|TH|ecl|en|.05|.55|1||alternativa indie bangkok|https://rsas.bkk.fm/radio||https://bkk.fm/
+VOV Giao thông|VOV GT|VN|gen|vi|.7|.5|2||noticias tránsito música hanoi|https://play.vovgiaothong.vn/live/gthn/playlist.m3u8||https://vovgiaothong.vn/
+Hanoi Community Radio|Hanoi CR|VN|ecl|en|.05|.6|1||comunitaria dj indie hanoi|https://ha-noi-community-radio.radiocult.fm/stream||
+Prambors FM|Prambors|ID|pop|id|.1|.75|3|102.2|pop juvenil jakarta|https://stream.rcs.revma.com/h77wwp48kxcwv||https://www.pramborsfm.com/
+HITZ|HITZ|MY|pop|en|.05|.8|3|92.9|pop éxitos kuala-lumpur|https://stream.rcs.revma.com/488kt4sbv4uvv||https://hitz.com.my/
+BIG FM 92.7|BIG FM|IN|pop|hi|.1|.7|3|92.7|bollywood pop hindi|https://stream.zeno.fm/dbstwo3dvhhtv||https://www.bigfmindia.com/
+Hindi Gold Radio|Hindi Gold|IN|pop|hi|.02|.5|2||bollywood clásicos hindi|https://azuracast.vibesounds.in:8010/radio.mp3||
+Bollywood Gaane Purane|Bolly Retro|IN|pop|hi|.02|.5|2||bollywood retro clásicos hindi|https://stream.zeno.fm/6n6ewddtad0uv||
+CCTV-13 Noticias|CCTV-13|CN|news|zh|.95|.45|3||noticias china pekín|https://piccpndali.v.myalicdn.com/audio/cctv13_2.m3u8||https://tv.cctv.com/
+CGTN Radio|CGTN|CN|news|en|.95|.45|2||noticias internacional china|https://english-livetx.cgtn.com/hls/yypdyyctzb_sd.m3u8||https://www.cgtn.com/
+RTHK Radio 2|RTHK 2|HK|pop|zh|.3|.6|3||pop cantonés juvenil pública hong-kong|https://rthkaudio2-lh.akamaihd.net/i/radio2_1@355865/index_56_a-p.m3u8||https://www.rthk.hk/
+RTHK Radio 5|RTHK 5|HK|culture|zh|.5|.35|2||cultura ópera-china pública hong-kong|https://rthkaudio5-lh.akamaihd.net/i/radio5_1@355868/index_56_a-p.m3u8||https://www.rthk.hk/
+Russkoye Radio|Russkoye|RU|pop|ru|.1|.7|3|105.7|pop ruso éxitos moscú|https://rusradio.hostingradio.ru/rusradio128.mp3||https://rusradio.ru/
+Europa Plus|Europa+|RU|pop|ru|.1|.8|3|106.2|pop éxitos internacional moscú|https://ep256.hostingradio.ru:8052/europaplus256.mp3||https://europaplus.ru/
+Nashe Radio|Nashe|RU|rock|ru|.1|.7|3|101.8|rock ruso moscú|https://nashe1.hostingradio.ru/nashe-128.mp3||https://www.nashe.ru/
+Radio Jazz Moscú|R Jazz|RU|jazz|ru|.05|.4|2|89.1|jazz moscú|https://main.hostingradio.ru/jazz-128.mp3||https://radiojazzfm.ru/
+Radio Record|Record|RU|elec|ru|.02|.9|3|106.3|electrónica dance edm san-petersburgo|https://radiorecord.hostingradio.ru/rr_main96.aacp||https://www.radiorecord.ru/
+NRK P1|NRK P1|NO|gen|no|.7|.45|3||noticias música pública oslo|https://cdn0-47115-liveicecast0.dna.contentdelivery.net/p1_mp3_h||https://radio.nrk.no/
+NRK P3|NRK P3|NO|pop|no|.2|.75|3||pop juvenil pública oslo|https://cdn0-47115-liveicecast0.dna.contentdelivery.net/p3_mp3_h||https://radio.nrk.no/
+Sveriges Radio P1|SR P1|SE|news|sv|.95|.4|3||noticias cultura pública estocolmo|https://live1.sr.se/p1-aac-320||https://sverigesradio.se/
+Sveriges Radio P2|SR P2|SE|classic|sv|.2|.2|2||clásica jazz pública estocolmo|https://live1.sr.se/p2-aac-320||https://sverigesradio.se/
+Sveriges Radio P3|SR P3|SE|pop|sv|.2|.75|3||pop juvenil pública estocolmo|https://edge1.sr.se/p3-aac-320||https://sverigesradio.se/
+DR P1|DR P1|DK|news|da|.9|.4|3||noticias cultura pública copenhague|https://drliveradio2.akamaized.net/hls/live/2118698/p1/masterab.m3u8||https://www.dr.dk/lyd
+DR P3|DR P3|DK|pop|da|.2|.75|3||pop juvenil pública copenhague|https://live-icy.dr.dk/A/A05H.mp3||https://www.dr.dk/lyd
+DR P8 Jazz|DR P8|DK|jazz|da|.05|.4|2||jazz pública copenhague|https://drliveradio2.akamaized.net/hls/live/2118698/p8/masterab.m3u8||https://www.dr.dk/lyd
+Yle Radio Suomi|Yle Suomi|FI|gen|fi|.7|.45|3||noticias música pública helsinki|https://icecast.live.yle.fi/radio/YleRS/icecast.audio||https://areena.yle.fi/
+YleX|YleX|FI|pop|fi|.15|.8|3||pop juvenil pública helsinki|https://icecast.live.yle.fi/radio/YleX/icecast.audio||https://yle.fi/ylex
+RÚV Rás 1|Rás 1|IS|culture|is|.6|.35|2||cultura noticias pública reikiavik|https://ruv-radio-live.akamaized.net/streymi/ras1/ras1.m3u8||https://www.ruv.is/
+RÚV Rás 2|Rás 2|IS|pop|is|.2|.65|2||pop rock pública reikiavik|https://ruv-radio-live.akamaized.net/streymi/ras2/ras2.m3u8||https://www.ruv.is/
 Cadena SER|SER|ES|gen|es|.9|.45|4||noticias actualidad deportes|Cadena SER||https://cadenaser.com
 RNE Radio Nacional|RNE|ES|gen|es|.9|.35|3||noticias cultura pública|Radio Nacional|rne|https://www.rtve.es/play/radio/
 Radio Exterior de España|REE|ES|gen|es|.9|.35|2||noticias internacional pública|Exterior||https://www.rtve.es/play/radio/
@@ -1617,7 +1667,7 @@ function pick(s){
 
 
 /* ---------- Ficha de radio: al tocar un hexágono, resumen y opción de escuchar ---------- */
-var CN_ALL;const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",MA:"Marruecos",CR:"Costa Rica",AU:"Australia",CH:"Suiza",BE:"Bélgica",NZ:"Nueva Zelanda",PL:"Polonia",AE:"Emiratos Árabes",GR:"Grecia"};
+var CN_ALL;const CN={CL:"Chile",AR:"Argentina",MX:"México",CO:"Colombia",PE:"Perú",BR:"Brasil",US:"Estados Unidos",CA:"Canadá",GB:"Reino Unido",ES:"España",FR:"Francia",DE:"Alemania",IT:"Italia",PT:"Portugal",NL:"Países Bajos",IE:"Irlanda",VA:"Vaticano",JP:"Japón",IN:"India",KR:"Corea del Sur",ZA:"Sudáfrica",NG:"Nigeria",KE:"Kenia",GH:"Ghana",EG:"Egipto",SN:"Senegal",SG:"Singapur",PH:"Filipinas",TH:"Tailandia",VN:"Vietnam",ID:"Indonesia",MY:"Malasia",CN:"China",HK:"Hong Kong",RU:"Rusia",NO:"Noruega",SE:"Suecia",DK:"Dinamarca",FI:"Finlandia",IS:"Islandia",MA:"Marruecos",CR:"Costa Rica",AU:"Australia",CH:"Suiza",BE:"Bélgica",NZ:"Nueva Zelanda",PL:"Polonia",AE:"Emiratos Árabes",GR:"Grecia"};
 let cardS=null;
 function stationDesc(s){return[FAM[s.g][0],[...s.tags].slice(0,3).map(t=>t.replace("-"," ")).join(", "),CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+(s.cc==="CL"?" FM Santiago":" FM"):""].filter(Boolean).join(" · ")}
 function openCard(s){cardS=s;const c=$("card"),col=FAM[s.g][2];c.style.setProperty("--cc",col);
@@ -2488,7 +2538,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-17c";
+const APP_VERSION="2026-11-17d";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
