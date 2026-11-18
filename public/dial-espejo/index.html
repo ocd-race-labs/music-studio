@@ -2420,6 +2420,7 @@ function need(){if(libs)return libs;
 
 /* ---------- Globo: la afinidad sobre el mapa real; se gira arrastrando y se acerca pellizcando ---------- */
 const HEXO=(()=>{const o=[[0,0]],dirs=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];for(let n=1;n<=6;n++){let q=-n,r=n;for(let d=0;d<6;d++)for(let j=0;j<n;j++){o.push([q,r]);q+=dirs[d][0];r+=dirs[d][1]}}return o})();
+const LAY={k:null,lk:null,lbl:[]};
 const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=[0,0,0],land,gr,shown=null,k=1,zoom,last=null;
   const R0=158,KMAX=12;
   function mount(st,LAND){land=topojson.feature(LAND,LAND.objects.land);gr=d3.geoGraticule10();
@@ -2449,17 +2450,20 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     sea.attr("r",R0*k);grat.attr("d",path(gr));gLand.attr("d",path(land));
     const A=aff(cur,6);
     const near=new Set(A.map(a=>a.x));
-    /* Panal por ciudad: el centro del panal es la ciudad; al medio la radio más escuchada y las demás en anillos hexagonales con separación fija en pantalla */
+    /* Panal por ciudad, calculado una sola vez por nivel de zoom (no al girar): la ciudad es el centro, la más escuchada al medio,
+       el resto en anillos hexagonales; ciudades vecinas se separan. Al girar, cada punto conserva su desplazamiento respecto de su ciudad */
     const D=4.5*Math.pow(k,.78),grp={};
-    S.forEach(s=>{s._v=false;s._p=null;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;(grp[s.geo.join()]=grp[s.geo.join()]||[]).push(s)});
-    Object.values(grp).forEach(l=>{const o=proj(l[0].geo);l.sort((a,b)=>b.l-a.l||a.n.localeCompare(b.n)).forEach((s,i)=>{const h=HEXO[i]||[0,0];
-      s._p=[o[0]+D*(h[0]+h[1]/2),o[1]+D*h[1]*.866];s._t=s._p.slice()})});
-    /* Ciudades vecinas (San Francisco y Berkeley, Nueva York y Newark): sus panales se separan empujando los puntos que quedan a menos de la distancia mínima */
-    {const P=S.filter(s=>s._p&&grp[s.geo.join()]),m=D*.92;for(let it=0;it<24;it++){const H=new Map(),key=(x,y)=>Math.floor(x/m)+","+Math.floor(y/m);let mv=0;
-      P.forEach(s=>{const k=key(s._p[0],s._p[1]);(H.get(k)||H.set(k,[]).get(k)).push(s)});
-      P.forEach(a=>{const cx=Math.floor(a._p[0]/m),cy=Math.floor(a._p[1]/m);for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)(H.get((cx+i)+","+(cy+j))||[]).forEach(b=>{if(b.i<=a.i)return;
-        let dx=b._p[0]-a._p[0],dy=b._p[1]-a._p[1],d=Math.hypot(dx,dy);if(d>=m)return;if(d<.01){dx=Math.cos(a.i);dy=Math.sin(a.i);d=1}const f=(m-d)/2/d;a._p=[a._p[0]-dx*f,a._p[1]-dy*f];b._p=[b._p[0]+dx*f,b._p[1]+dy*f];mv++})});P.forEach(s=>{const dx=s._p[0]-s._t[0],dy=s._p[1]-s._t[1],d=Math.hypot(dx,dy),L=D*1.2;if(d>L)s._p=[s._t[0]+dx*L/d,s._t[1]+dy*L/d]});if(!mv)break}}
-    S.forEach(s=>{if(!s._p||!grp[s.geo.join()])return;s._v=s._p[0]>-10&&s._p[0]<370&&s._p[1]>-10&&s._p[1]<370;s._g=proj.invert(s._p)||s.geo});
+    if(LAY.k!==k){LAY.k=k;const sc=R0*k*Math.PI/180,G={};S.forEach(s=>{(G[s.geo.join()]=G[s.geo.join()]||[]).push(s)});
+      const P=[];Object.values(G).forEach(l=>{const c=l[0].geo,cx=c[0]*Math.cos(c[1]*Math.PI/180)*sc,cy=-c[1]*sc;
+        l.slice().sort((a,b)=>b.l-a.l||a.n.localeCompare(b.n)).forEach((s,i)=>{const h=HEXO[i]||[0,0];s._c=[cx,cy];s._t=[cx+D*(h[0]+h[1]/2),cy+D*h[1]*.866];s._q=s._t.slice();P.push(s)})});
+      const m=D*.92;for(let it=0;it<24;it++){const H=new Map(),key=(x,y)=>Math.floor(x/m)+","+Math.floor(y/m);let mv=0;
+        P.forEach(s=>{const kk=key(s._q[0],s._q[1]);(H.get(kk)||H.set(kk,[]).get(kk)).push(s)});
+        P.forEach(a=>{const cx=Math.floor(a._q[0]/m),cy=Math.floor(a._q[1]/m);for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)(H.get((cx+i)+","+(cy+j))||[]).forEach(b=>{if(b.i<=a.i)return;
+          let dx=b._q[0]-a._q[0],dy=b._q[1]-a._q[1],d=Math.hypot(dx,dy);if(d>=m)return;if(d<.01){dx=Math.cos(a.i);dy=Math.sin(a.i);d=1}const f=(m-d)/2/d;a._q=[a._q[0]-dx*f,a._q[1]-dy*f];b._q=[b._q[0]+dx*f,b._q[1]+dy*f];mv++})});
+        P.forEach(s=>{const dx=s._q[0]-s._t[0],dy=s._q[1]-s._t[1],d=Math.hypot(dx,dy),L=D*1.2;if(d>L)s._q=[s._t[0]+dx*L/d,s._t[1]+dy*L/d]});if(!mv)break}
+      P.forEach(s=>{s._o=[s._q[0]-s._c[0],s._q[1]-s._c[1]]})}
+    S.forEach(s=>{s._v=false;s._p=null;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;grp[s.geo.join()]=1;const o=proj(s.geo);
+      s._p=[o[0]+s._o[0],o[1]+s._o[1]];s._v=s._p[0]>-10&&s._p[0]<370&&s._p[1]>-10&&s._p[1]<370;s._g=proj.invert(s._p)||s.geo});
     const vis=S.filter(s=>s._v);
     gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
       .attr("d",d=>path({type:"LineString",coordinates:[cur._g||cur.geo,d.x._g||d.x.geo]}));
@@ -2469,13 +2473,16 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
       .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>d===cur?Math.max(6,Math.min(7*g,D*.5)):near.has(d)?Math.max(3.5,Math.min(5*g,D*.42)):Math.max(1.8,Math.min((2.2+d.l*.55)*g,D*.38)))
       .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur?1:!onF(d)?.12:near.has(d)?1:d.dead?.2:.75).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
     // Nombres: la que suena y sus afines siempre; al acercar, también las demás que quepan sin taparse
-    const pri=[cur,...A.map(a=>a.x)].filter(s=>s._v&&(s===cur||onF(s)));
-    const extra=k>=2.2||filtering()?vis.filter(s=>s!==cur&&!near.has(s)&&onF(s)&&(k>=2.2||filtering())).sort((a,b)=>b.l-a.l):[];
-    const placed=[],L=[];
-    for(const s of [...pri,...extra]){const [x,y]=s._p,w=(s.sh.length+3)*5.6*fz,ly=y-(5+4*g)-(s===cur?2:0);
-      const box=[x-w/2,ly-10*fz,x+w/2,ly+2];
-      if(placed.some(b=>box[0]<b[2]&&box[2]>b[0]&&box[1]<b[3]&&box[3]>b[1])){if(pri.includes(s)){box[1]+=26*fz;box[3]+=26*fz}else continue}
-      placed.push(box);L.push({s,x,y:box[3]-2})}
+    /* Qué nombres se muestran se decide una vez por zoom, radio actual y filtro (en el plano del panal), no en cada cuadro del giro */
+    const pri=[cur,...A.map(a=>a.x)].filter(s=>s===cur||onF(s));
+    const lk=[k,cur.i,A.map(a=>a.x.i).join(),S.filter(onF).length].join("|");
+    if(LAY.lk!==lk){LAY.lk=lk;const extra=k>=2.2||filtering()?S.filter(s=>s!==cur&&!near.has(s)&&onF(s)).sort((a,b)=>b.l-a.l):[];
+      const placed=[];LAY.lbl=[];
+      for(const s of [...pri,...extra]){if(!s._q)continue;const [x,y]=s._q,w=(s.sh.length+3)*5.6*fz,ly=y-(5+4*g)-(s===cur?2:0);
+        const box=[x-w/2,ly-10*fz,x+w/2,ly+2];
+        if(placed.some(b=>box[0]<b[2]&&box[2]>b[0]&&box[1]<b[3]&&box[3]>b[1])){if(pri.includes(s)){box[1]+=26*fz;box[3]+=26*fz}else continue}
+        placed.push(box);LAY.lbl.push({s,dy:box[3]-2-y})}}
+    const L=LAY.lbl.filter(d=>d.s._v).map(d=>({s:d.s,x:d.s._p[0],y:d.s._p[1]+d.dy}));
     gLbl.selectAll("text").data(L,d=>d.s.i).join("text").attr("class",d=>"alt-lbl"+(d.s===cur?" cur":pri.includes(d.s)?"":" far"))
       .attr("x",d=>d.x).attr("y",d=>d.y).style("font-size",d=>((d.s===cur?12.5:pri.includes(d.s)?11:10)*fz).toFixed(1)+"px").attr("text-anchor","middle").text(d=>`${flag(d.s.cc)} ${d.s.sh}`);
     $("altCap").textContent=`${cur.n} · ${A.filter(a=>a.x.cc!==cur.cc).length} de 6 afines en otros países`;
@@ -2567,7 +2574,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-17k";
+const APP_VERSION="2026-11-17l";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
