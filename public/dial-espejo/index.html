@@ -2389,7 +2389,7 @@ const RMV=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const hsh=s=>{let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0};
 // Posición estable por radio: las de un mismo país se reparten alrededor de su punto en el mapa
 const perCC={};S.forEach(s=>{(perCC[s.cc]=perCC[s.cc]||[]).push(s)});
-{const G={};S.forEach(s=>{const k=s.city?s.city.join(","):s.cc;(G[k]=G[k]||[]).push(s)});Object.values(G).forEach(l=>l.forEach((s,i)=>{const c=s.city||s.ll,a=i*2.399,r=i?.1+.16*Math.sqrt(i):0;s.geo=[c[1]+r*Math.cos(a)/Math.cos(c[0]*Math.PI/180),c[0]+r*Math.sin(a)]}))}
+{const G={};S.forEach(s=>{const k=s.city?s.city.join(","):s.cc;(G[k]=G[k]||[]).push(s)});Object.values(G).forEach(l=>l.forEach((s,i)=>{const c=s.city||s.ll;s.geo=[c[1],c[0]]}))}
 Object.values(perCC).forEach(l=>l.forEach((s,i)=>{const h=hsh(s.n);s.jx=(h%1000)/1000-.5;s.jy=((h>>>10)%1000)/1000-.5}));
 const aff=(s,n)=>S.filter(x=>x!==s&&!x.dead&&onF(x)).map(x=>({x,v:sim(s,x).v})).sort((a,b)=>b.v-a.v).slice(0,n);
 const choose=s=>{openCard(s)};
@@ -2402,6 +2402,7 @@ function need(){if(libs)return libs;
     .then(()=>fetch("land-110m.json")).then(r=>r.json()).catch(e=>{libs=null;throw e});return libs}
 
 /* ---------- Globo: la afinidad sobre el mapa real; se gira arrastrando y se acerca pellizcando ---------- */
+const HEXO=(()=>{const o=[[0,0]],dirs=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];for(let n=1;n<=6;n++){let q=-n,r=n;for(let d=0;d<6;d++)for(let j=0;j<n;j++){o.push([q,r]);q+=dirs[d][0];r+=dirs[d][1]}}return o})();
 const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=[0,0,0],land,gr,shown=null,k=1,zoom,last=null;
   const R0=158,KMAX=12;
   function mount(st,LAND){land=topojson.feature(LAND,LAND.objects.land);gr=d3.geoGraticule10();
@@ -2421,7 +2422,7 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
         last=t;k=t.k;draw()});
     svg.call(zoom).on("dblclick.zoom",null);
     svg.on("click",e=>{const [px,py]=d3.pointer(e);let b=null,bd=22;
-      S.forEach(s=>{if(!s._v)return;const p=proj(s.geo),d=Math.hypot(p[0]-px,p[1]-py);if(d<bd){bd=d;b=s}});if(b)choose(b)});
+      S.forEach(s=>{if(!s._v)return;const p=s._p,d=Math.hypot(p[0]-px,p[1]-py);if(d<bd){bd=d;b=s}});if(b)choose(b)});
     // Los botones acercan sobre la radio que suena, no sobre el centro del globo
     const by=f=>{const c=ref();if(c._v&&f>1){anim&&anim.stop();rot=[-c.geo[0],-c.geo[1],0];proj.rotate(rot)}return svg.transition().duration(RMV?0:350).call(zoom.scaleBy,f,[180,184])};
     $("gzi").onclick=()=>by(1.8);$("gzo").onclick=()=>by(1/1.8);
@@ -2429,15 +2430,20 @@ const GLOBO=(()=>{let svg,proj,path,gLand,gArc,gDot,gLbl,grat,sea,anim=null,rot=
     draw()}
   function draw(){const cur=ref();proj.scale(R0*k).rotate(rot);const c=proj.invert([180,184]);
     sea.attr("r",R0*k);grat.attr("d",path(gr));gLand.attr("d",path(land));
-    const A=aff(cur,6);gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
-      .attr("d",d=>path({type:"LineString",coordinates:[cur.geo,d.x.geo]}));
+    const A=aff(cur,6);
     const near=new Set(A.map(a=>a.x));
-    S.forEach(s=>{s._v=false;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;const p=proj(s.geo);s._p=p;s._v=p[0]>-10&&p[0]<370&&p[1]>-10&&p[1]<370});
+    /* Panal por ciudad: el centro del panal es la ciudad; al medio la radio más escuchada y las demás en anillos hexagonales con separación fija en pantalla */
+    const D=12*Math.pow(k,.45),grp={};
+    S.forEach(s=>{s._v=false;if(d3.geoDistance(s.geo,c)>=Math.PI/2-.02)return;(grp[s.geo.join()]=grp[s.geo.join()]||[]).push(s)});
+    Object.values(grp).forEach(l=>{const o=proj(l[0].geo);l.sort((a,b)=>b.l-a.l||a.n.localeCompare(b.n)).forEach((s,i)=>{const h=HEXO[i]||[0,0];
+      s._p=[o[0]+D*(h[0]+h[1]/2),o[1]+D*h[1]*.866];s._v=s._p[0]>-10&&s._p[0]<370&&s._p[1]>-10&&s._p[1]<370;s._g=proj.invert(s._p)||s.geo})});
     const vis=S.filter(s=>s._v);
+    gArc.selectAll("path").data(A,d=>d.x.i).join("path").attr("fill","none").attr("stroke",COLR(cur.g)).attr("stroke-width",d=>.8+d.v*1.2).attr("stroke-opacity",d=>.35+d.v*.6).attr("stroke-dasharray","3 3")
+      .attr("d",d=>path({type:"LineString",coordinates:[cur._g||cur.geo,d.x._g||d.x.geo]}));
     // Los puntos crecen un poco al acercar, pero mucho menos que el mapa: así las radios de una misma zona se separan
     const g=Math.min(1.9,Math.pow(k,.3));
     gDot.selectAll("circle").data(vis,d=>d.i).join("circle")
-      .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>(d===cur?7:near.has(d)?5:2.2+d.l*.55)*(d===cur?1:g))
+      .attr("cx",d=>d._p[0]).attr("cy",d=>d._p[1]).attr("r",d=>d===cur?Math.min(9,D*.46):near.has(d)?Math.min(6.5,D*.4):Math.min(2.6+d.l*.7,D*.36))
       .attr("fill",d=>COLR(d.g)).attr("opacity",d=>d===cur?1:!onF(d)?.12:near.has(d)?1:d.dead?.2:.75).attr("stroke",d=>d===cur?"#EDEDF2":"#07070A").attr("stroke-width",d=>d===cur?2:.8).style("cursor","pointer");
     // Nombres: la que suena y sus afines siempre; al acercar, también las demás que quepan sin taparse
     const pri=[cur,...A.map(a=>a.x)].filter(s=>s._v&&(s===cur||onF(s)));
@@ -2538,7 +2544,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-17e";
+const APP_VERSION="2026-11-17f";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
