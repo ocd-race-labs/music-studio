@@ -117,7 +117,7 @@ function delta(kind: Kind, a: number, b: number) {
 }
 // cambio del valor vigente en t respecto de hace h días (h=1: observación anterior)
 function chg(s: Ser, t: number, h: number, kind: Kind) {
-  let i = s.length - 1; while (i >= 0 && s[i].t > t) i--; if (i < 1) return null;
+  let lo = 0, hi = s.length - 1, i = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (s[m].t <= t) { i = m; lo = m + 1; } else hi = m - 1; } if (i < 1) return null;
   const a = s[i].v; const b = h === 1 ? s[i - 1].v : at(s, s[i].t - h); if (b == null) return null;
   return delta(kind, a, b);
 }
@@ -211,7 +211,7 @@ async function compute() {
     // z del cambio en cada horizonte vs su distribución histórica
     const d = HZ.map((h) => {
       const c = chg(x.s, L.t, h, x.k); if (!c) return null;
-      const hist: number[] = []; const step = Math.max(1, Math.floor(x.s.length / 400));
+      const hist: number[] = []; const step = Math.max(1, Math.floor(x.s.length / 250));
       for (let i = x.s.length - 1; i > 0; i -= step) { const cc = chg(x.s, x.s[i].t, h, x.k); if (cc) hist.push(cc.x); }
       const z = hist.length > 20 ? c.x / (sd(hist) || 1) : 0;
       return { s: c.s, x: c.x, z: Math.round(z * 10) / 10 };
@@ -294,7 +294,7 @@ async function compute() {
   // Tipo de cambio: cada moneda en dólares y en pesos chilenos; el cambio positivo significa que la moneda se aprecia
   const fxStat = (sr: Ser) => {
     if (sr.length < 30) return null; const L = last(sr); const win = sr.filter((p) => p.t > T - 3650);
-    const pct = Math.round((win.filter((p) => p.v <= L.v).length / win.length) * 100); const step = Math.max(1, Math.floor(sr.length / 400));
+    const pct = Math.round((win.filter((p) => p.v <= L.v).length / win.length) * 100); const step = Math.max(1, Math.floor(sr.length / 250));
     const d = HZ.map((h) => { const c = chg(sr, L.t, h, "pct"); if (!c) return null; const hs: number[] = [];
       for (let i = sr.length - 1; i > 0; i -= step) { const cc = chg(sr, sr[i].t, h, "pct"); if (cc) hs.push(cc.x); }
       return { s: c.s, x: Math.round(c.x * 100) / 100, z: Math.round((hs.length > 20 ? c.x / (sd(hs) || 1) : 0) * 10) / 10 }; });
