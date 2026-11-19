@@ -989,8 +989,8 @@ html.adv-open #player{z-index:35}
 .mk-ph span:first-child{flex-basis:100%;color:var(--dim);font-weight:400;font-size:11px}
 .mk-ph b{font-size:16px;font-weight:500}
 .mk-ph small{color:var(--dim)}
-.mk-ln{width:100%;height:auto;display:block}
-.mk-ln text{font-family:var(--mono);font-size:9.5px;fill:var(--muted)}
+.mk-ln{width:100%;height:auto;display:block;max-width:1100px}
+.mk-ln text{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
 .mk-cty{padding:12px 14px;display:grid;gap:12px}
 .mk-ch{display:flex;align-items:baseline;gap:10px;font-family:var(--mono)}
 .mk-ch b{font-size:24px;font-weight:500}
@@ -2928,7 +2928,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-19mk2";
+const APP_VERSION="2026-11-19mk3";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -3097,27 +3097,30 @@ const mkDT=t=>new Date(t*864e5).toLocaleDateString(MKLOC,{day:"numeric",month:"s
 function mkCross(x,y){const S=MK.fxs||{},sx=x==="USD"?null:S[x],sy=y==="USD"?null:S[y],base=sx||sy;if(!base)return[];
   return base.map(([t])=>{const ux=sx?mkAt(sx,t):1,uy=sy?mkAt(sy,t):1;return ux&&uy?[t,uy/ux]:null}).filter(Boolean)}
 function mkPair(a,b,k){return `<div class="mk-pair">`+[[a,b],[b,a]].map(([x,y])=>{const s=mkWin(mkCross(x,y),k);if(s.length<2)return "";const v=s[s.length-1][1],c=(v/s[0][1]-1)*100;
-  return `<div class="mk-pc"><div class="mk-ph"><span>${MKT("Cuánto cuesta","Price of","Quanto custa")} 1 ${x} ${MKT("en","in","em")} ${y}</span><b>${mkFmt(v)} ${y}</b><span class="${c>0?"mk-up":c<0?"mk-dn":""}">${mkPct(c)} <small>${MK_HZ[k][2]}</small></span></div>${mkLine(s,mkFmt)}</div>`}).join("")+`</div>`}
+  return `<div class="mk-pc"><div class="mk-ph"><span>${MKT("Cuánto cuesta","Price of","Quanto custa")} 1 ${x} ${MKT("en","in","em")} ${y}</span><b>${mkFmt(v)} ${y}</b><span class="${c>0?"mk-up":c<0?"mk-dn":""}">${mkPct(c)} <small>${MK_HZ[k][2]}</small></span></div>${mkLine(s,mkFmt,1)}</div>`}).join("")+`</div>`}
 // Gráfico de línea con ejes: valores "redondos" a la derecha y fechas según el largo del período
 function mkTicks(mn,mx,n){const r=(mx-mn)||Math.abs(mx)||1,raw=r/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,st=(f<1.5?1:f<2.25?2:f<3.5?2.5:f<7.5?5:10)*p;
   const o=[];for(let v=Math.ceil(mn/st)*st;v<=mx+st*1e-9;v+=st)o.push(+v.toPrecision(12));return o}
-function mkXT(pts){const t0=pts[0][0],t1=pts[pts.length-1][0],sp=t1-t0,D=t=>new Date(t*864e5),out=[];
+function mkXT(pts,X){const t0=pts[0][0],t1=pts[pts.length-1][0],sp=t1-t0,D=t=>new Date(t*864e5),out=[];
   const mo=t=>D(t).toLocaleDateString(MKLOC,{month:"short",timeZone:"UTC"}).replace(".","");
   if(sp<=8){pts.forEach(p=>out.push([p[0],D(p[0]).toLocaleDateString(MKLOC,{weekday:"short",day:"numeric",timeZone:"UTC"}).replace(".","")]))}
   else if(sp<=40){let w=-1;pts.forEach(p=>{const k=Math.floor((p[0]+3)/7);if(k!==w){w=k;out.push([p[0],mkDT(p[0])])}})}
   else if(sp<=120){let m=-1;pts.forEach(p=>{const d=D(p[0]),k=d.getUTCMonth()*2+(d.getUTCDate()>=15?1:0);if(k!==m){m=k;out.push([p[0],mkDT(p[0])])}})}
   else{let m=-1;pts.forEach(p=>{const d=D(p[0]),k=d.getUTCMonth();if(k!==m){m=k;out.push([p[0],mo(p[0])+(k===0||!out.length?" "+String(d.getUTCFullYear()).slice(2):"")])}})}
-  if(out.length>1&&out[0][0]-t0<sp*.04&&sp>8)out[0][1]=out[0][1]; // primer tick en el borde
-  let o=out;while(o.length>7)o=o.filter((_,i)=>i%2===0);return o}
-function mkLine(pts,fmt){if(pts.length<2)return `<p class="note">${MKT("Sin datos suficientes para el período.","Not enough data for the period.","Sem dados suficientes para o período.")}</p>`;
-  const W=360,Hh=168,L=4,R=296,T=10,B=140,vs=pts.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);
+  if(!X)return out;const gap=sp<=8?36:58;
+  if(out.length>1&&X(out[1][0])-X(out[0][0])<gap)out.shift();
+  const o=[];out.forEach(p=>{if(!o.length||X(p[0])-X(o[o.length-1][0])>=gap)o.push(p)});
+  if(o.length&&!/\d{2}$/.test(o[0][1])&&sp>120){const d=new Date(o[0][0]*864e5);o[0][1]+=" "+String(d.getUTCFullYear()).slice(2)}
+  return o}
+function mkLine(pts,fmt,half){if(pts.length<2)return `<p class="note">${MKT("Sin datos suficientes para el período.","Not enough data for the period.","Sem dados suficientes para o período.")}</p>`;
+  const vw=Math.min(window.innerWidth||393,1240),wide=vw>=760,W=Math.round(Math.max(300,Math.min(1100,(half&&wide?(vw-120)/2:vw-80)))),Hh=wide?200:168,L=4,R=W-62,T=10,B=Hh-28,vs=pts.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);
   const yt=mkTicks(mn,mx,4);mn=Math.min(mn,yt[0]??mn);mx=Math.max(mx,yt[yt.length-1]??mx);const pad=(mx-mn)*.04||Math.abs(mx)*.001;mn-=pad;mx+=pad;
   const t0=pts[0][0],t1=pts[pts.length-1][0],X=t=>L+(t-t0)/((t1-t0)||1)*(R-L),Y=v=>B-(v-mn)/((mx-mn)||1)*(B-T);
   const up=vs[vs.length-1]>=vs[0],col=up?"#2FD3A0":"#FF5C7A",ln=pts.map(p=>`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
   let s=`<svg class="mk-ln" viewBox="0 0 ${W} ${Hh}" role="img">`;
   yt.forEach(v=>{const y=Y(v);if(y<T-2||y>B+2)return;s+=`<line x1="${L}" x2="${R}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)"/><text x="${R+5}" y="${(y+3).toFixed(1)}">${fmt(v)}</text>`});
   s+=`<line x1="${L}" x2="${R}" y1="${Y(vs[0]).toFixed(1)}" y2="${Y(vs[0]).toFixed(1)}" stroke="var(--muted)" stroke-opacity=".5" stroke-dasharray="3 3"/>`;
-  mkXT(pts).forEach(([t,l],i,a)=>{const x=X(t);s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${B}" y2="${B+4}" stroke="var(--muted)"/><text x="${x.toFixed(1)}" y="${B+16}" text-anchor="${i===0&&x<20?"start":x>R-20?"end":"middle"}">${esc(l)}</text>`});
+  mkXT(pts,X).forEach(([t,l],i,a)=>{const x=X(t);s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${B}" y2="${B+4}" stroke="var(--muted)"/><text x="${x.toFixed(1)}" y="${B+16}" text-anchor="${i===0&&x<20?"start":x>R-20?"end":"middle"}">${esc(l)}</text>`});
   s+=`<line x1="${L}" x2="${R}" y1="${B}" y2="${B}" stroke="var(--muted)" stroke-opacity=".6"/>`;
   s+=`<polygon points="${X(t0).toFixed(1)},${B} ${ln} ${X(t1).toFixed(1)},${B}" fill="${col}" fill-opacity=".1"/><polyline points="${ln}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round"/>`;
   const im=vs.indexOf(Math.max(...vs)),iM=vs.indexOf(Math.min(...vs));
@@ -3184,6 +3187,7 @@ function mkCountry(k,hz){const L=MK.countries||[];if(!L.length)return `<p class=
   h+=`<section class="topic"><div class="topic-head"><div><h2>${MKT("Moneda","Currency","Moeda")}: ${cur}${fx?` · ${esc(fx.n)}`:""}</h2><p class="meta">${MKT("Las dos miradas del tipo de cambio en el período elegido","Both sides of the exchange rate over the chosen period","Os dois lados do câmbio no período escolhido")}</p></div></div><div class="sp-card mk-fan">${mkPair(cur,other,k)}${cur!=="CLP"&&other!=="CLP"?mkPair(cur,"CLP",k):""}</div></section>`;
   return h}
 const MKT_HZN=k=>MKT(["en el día","en la semana","en el mes","en el trimestre","en el año"][k],["on the day","this week","this month","this quarter","this year"][k],["no dia","na semana","no mês","no trimestre","no ano"][k]);
+let mkRz=0;addEventListener("resize",()=>{clearTimeout(mkRz);mkRz=setTimeout(()=>{if(MK&&!$("view-markets").hidden)mkRender()},250)});
 function mkBind(){
   $("mkV")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkV=b.dataset.v;store.set("dial-mk-v",mkV);mkRender()});
   $("mkCc")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkCc=b.dataset.c;store.set("dial-mk-cc",mkCc);mkRender()});
