@@ -71,8 +71,8 @@ const GRP: Record<"en" | "pt", Record<string, string>> = {
   pt: { "Riesgo y volatilidad": "Risco e volatilidade", "Tasas y ciclo": "Juros e ciclo", "Crédito y liquidez": "Crédito e liquidez", "Dólar y emergentes": "Dólar e emergentes", "Materias primas": "Commodities", "Valoración y tendencia": "Valuation e tendência" },
 };
 const FXN: Record<"en" | "pt", Record<string, string>> = {
-  en: { USD: "US dollar", CLP: "Chilean peso", EUR: "Euro", GBP: "Pound sterling", JPY: "Japanese yen", CNY: "Chinese yuan", CHF: "Swiss franc", CAD: "Canadian dollar", AUD: "Australian dollar", KRW: "South Korean won", INR: "Indian rupee", BRL: "Brazilian real", MXN: "Mexican peso", ARS: "Argentine peso", COP: "Colombian peso", PEN: "Peruvian sol", HKD: "Hong Kong dollar", TWD: "Taiwan dollar", SAR: "Saudi riyal" },
-  pt: { USD: "Dólar americano", CLP: "Peso chileno", EUR: "Euro", GBP: "Libra esterlina", JPY: "Iene japonês", CNY: "Yuan chinês", CHF: "Franco suíço", CAD: "Dólar canadense", AUD: "Dólar australiano", KRW: "Won sul-coreano", INR: "Rupia indiana", BRL: "Real brasileiro", MXN: "Peso mexicano", ARS: "Peso argentino", COP: "Peso colombiano", PEN: "Sol peruano", HKD: "Dólar de Hong Kong", TWD: "Dólar taiwanês", SAR: "Rial saudita" },
+  en: { USD: "US dollar", CLP: "Chilean peso", EUR: "Euro", GBP: "Pound sterling", JPY: "Japanese yen", CNY: "Chinese yuan", CHF: "Swiss franc", CAD: "Canadian dollar", AUD: "Australian dollar", KRW: "South Korean won", INR: "Indian rupee", BRL: "Brazilian real", MXN: "Mexican peso", ARS: "Argentine peso", COP: "Colombian peso", PEN: "Peruvian sol", DKK: "Danish krone", HKD: "Hong Kong dollar", TWD: "Taiwan dollar", SAR: "Saudi riyal" },
+  pt: { USD: "Dólar americano", CLP: "Peso chileno", EUR: "Euro", GBP: "Libra esterlina", JPY: "Iene japonês", CNY: "Yuan chinês", CHF: "Franco suíço", CAD: "Dólar canadense", AUD: "Dólar australiano", KRW: "Won sul-coreano", INR: "Rupia indiana", BRL: "Real brasileiro", MXN: "Peso mexicano", ARS: "Peso argentino", COP: "Peso colombiano", PEN: "Sol peruano", DKK: "Coroa dinamarquesa", HKD: "Dólar de Hong Kong", TWD: "Dólar taiwanês", SAR: "Rial saudita" },
 };
 const CONE: Record<Lang, Record<string, string>> = {
   es: { ACWI: "MSCI Mundo", CHL: "MSCI Chile en pesos" }, en: { ACWI: "MSCI World", CHL: "MSCI Chile in pesos" }, pt: { ACWI: "MSCI Mundo", CHL: "MSCI Chile em pesos" },
@@ -151,6 +151,8 @@ export function localize(p: any, lang: string): any {
   // deno-lint-ignore no-explicit-any
   const fxd = (x: any) => (x ? { ...x, d: x.d.map((d: any) => (d ? { ...d, s: n(d.s) } : d)) } : x);
   // deno-lint-ignore no-explicit-any
+  // deno-lint-ignore no-explicit-any
+  out.cos = (p.cos || []).map((i: any) => ({ ...i, d: (i.d || []).map((d: any) => (d ? { ...d, s: n(d.s) } : d)) }));
   // deno-lint-ignore no-explicit-any
   out.countries = (p.countries || []).map((c: any) => ({ ...c, idx: c.idx.map((i: any) => ({ ...i, d: (i.d || []).map((d: any) => (d ? { ...d, s: n(d.s) } : d)) })) }));
   out.fx = (p.fx || []).map((f: any) => ({ ...f, n: FXN[l][f.c] || f.n, usd: fxd(f.usd), clp: fxd(f.clp) }));

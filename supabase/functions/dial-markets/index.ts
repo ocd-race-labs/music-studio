@@ -44,10 +44,10 @@ function at(s: Ser, t: number): number | null {
 const last = (s: Ser) => s[s.length - 1];
 
 // ---------- fuentes ----------
-async function yahoo(sym: string): Promise<Ser> {
+async function yahoo(sym: string, range = "10y"): Promise<Ser> {
   for (const host of ["query1", "query2"]) {
     try {
-      const r = await fetch(`https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=10y&interval=1d`, { headers: UA, signal: AbortSignal.timeout(12000) });
+      const r = await fetch(`https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=${range}&interval=1d`, { headers: UA, signal: AbortSignal.timeout(12000) });
       if (!r.ok) continue;
       const j = await r.json(); const x = j?.chart?.result?.[0]; if (!x) continue;
       const ts: number[] = x.timestamp || [], c: (number | null)[] = x.indicators?.quote?.[0]?.close || [];
@@ -99,7 +99,21 @@ const FX: [string, string, string, string, boolean][] = [
   ["AUD", "Dólar australiano", "🇦🇺", "AUDUSD=X", true], ["KRW", "Won surcoreano", "🇰🇷", "KRW=X", false], ["INR", "Rupia india", "🇮🇳", "INR=X", false],
   ["BRL", "Real brasileño", "🇧🇷", "BRL=X", false], ["MXN", "Peso mexicano", "🇲🇽", "MXN=X", false], ["ARS", "Peso argentino", "🇦🇷", "ARS=X", false],
   ["COP", "Peso colombiano", "🇨🇴", "COP=X", false], ["PEN", "Sol peruano", "🇵🇪", "PEN=X", false],
-  ["HKD", "Dólar de Hong Kong", "🇭🇰", "HKD=X", false], ["TWD", "Dólar taiwanés", "🇹🇼", "TWD=X", false], ["SAR", "Riyal saudí", "🇸🇦", "SAR=X", false],
+  ["DKK", "Corona danesa", "🇩🇰", "DKK=X", false], ["HKD", "Dólar de Hong Kong", "🇭🇰", "HKD=X", false], ["TWD", "Dólar taiwanés", "🇹🇼", "TWD=X", false], ["SAR", "Riyal saudí", "🇸🇦", "SAR=X", false],
+];
+// Compañías que más pesan en los índices del mundo: [símbolo, nombre, bandera, sector, moneda, acciones en circulación (miles de millones, últimos reportes)]
+// La capitalización es aproximada: acciones en circulación × precio de cierre, pasada a dólares con el tipo de cambio del día.
+const COS: [string, string, string, string, string, number][] = [
+  ["AAPL", "Apple", "🇺🇸", "tech", "USD", 14.84], ["MSFT", "Microsoft", "🇺🇸", "tech", "USD", 7.43], ["NVDA", "NVIDIA", "🇺🇸", "semi", "USD", 24.3],
+  ["GOOGL", "Alphabet", "🇺🇸", "comm", "USD", 12.1], ["AMZN", "Amazon", "🇺🇸", "cons", "USD", 10.7], ["META", "Meta", "🇺🇸", "comm", "USD", 2.52],
+  ["AVGO", "Broadcom", "🇺🇸", "semi", "USD", 4.72], ["TSLA", "Tesla", "🇺🇸", "auto", "USD", 3.22], ["BRK-B", "Berkshire Hathaway", "🇺🇸", "fin", "USD", 2.157],
+  ["2330.TW", "TSMC", "🇹🇼", "semi", "TWD", 25.93], ["LLY", "Eli Lilly", "🇺🇸", "health", "USD", 0.897], ["JPM", "JPMorgan Chase", "🇺🇸", "fin", "USD", 2.75],
+  ["V", "Visa", "🇺🇸", "fin", "USD", 1.93], ["WMT", "Walmart", "🇺🇸", "cons", "USD", 7.98], ["ORCL", "Oracle", "🇺🇸", "tech", "USD", 2.81],
+  ["XOM", "Exxon Mobil", "🇺🇸", "energy", "USD", 4.3], ["2222.SR", "Saudi Aramco", "🇸🇦", "energy", "SAR", 242], ["005930.KS", "Samsung Electronics", "🇰🇷", "tech", "KRW", 5.92],
+  ["0700.HK", "Tencent", "🇨🇳", "comm", "HKD", 9.15], ["ASML.AS", "ASML", "🇳🇱", "semi", "EUR", 0.393], ["MC.PA", "LVMH", "🇫🇷", "cons", "EUR", 0.5],
+  ["SAP.DE", "SAP", "🇩🇪", "tech", "EUR", 1.17], ["NOVO-B.CO", "Novo Nordisk", "🇩🇰", "health", "DKK", 4.44], ["NESN.SW", "Nestlé", "🇨🇭", "cons", "CHF", 2.58],
+  ["7203.T", "Toyota", "🇯🇵", "auto", "JPY", 13.0], ["RELIANCE.NS", "Reliance Industries", "🇮🇳", "energy", "INR", 13.53],
+  ["PETR4.SA", "Petrobras", "🇧🇷", "energy", "BRL", 12.89], ["VALE3.SA", "Vale", "🇧🇷", "mining", "BRL", 4.27], ["SQM", "SQM", "🇨🇱", "mining", "USD", 0.2857],
 ];
 // Países: [código, bandera, moneda, índices]
 const CTRY: [string, string, string, string[]][] = [
@@ -153,7 +167,7 @@ function weekly(s: Ser): Ser {
 // ---------- cálculo principal ----------
 async function compute() {
   const syms = [...new Set([...EXCH.map((e) => e[0]).filter((s) => s !== "CHL"), ...MACRO, ...FX.map((f) => f[3])])];
-  const got = await Promise.all(syms.map((s) => yahoo(s)));
+  const [got, gotCo] = await Promise.all([Promise.all(syms.map((s) => yahoo(s))), Promise.all(COS.map((c) => yahoo(c[0], "2y")))]);
   const Y: Record<string, Ser> = {}; syms.forEach((s, i) => (Y[s] = got[i]));
   const [F, CA] = await Promise.all([fred(), cape()]);
   // MSCI Chile en pesos = ECH (USD) × dólar en Chile
@@ -343,6 +357,16 @@ async function compute() {
       ytd: y0 ? Math.round((L.v / y0 - 1) * 1000) / 10 : null, evs: ev.reverse().slice(0, 8),
       ser: x.filter((p) => p.t > T - 400).map((p) => [p.t, +p.v.toPrecision(6)]) };
   };
+  // Compañías: precio, tendencia, volatilidad, capitalización aproximada en dólares y cuánto valor sumaron o restaron por horizonte
+  const uAt = (cur: string, t: number) => { if (cur === "USD") return 1; const a = FXS[cur]; if (!a?.length) return null; let lo = 0, hi = a.length - 1, r = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (a[m][0] <= t) { r = m; lo = m + 1; } else hi = m - 1; } return r < 0 ? a[0][1] : a[r][1]; };
+  const cos = COS.map(([sym, n, f, sec, cur, sh], j) => {
+    const x = gotCo[j]; if (x.length < 60) return null; Y[sym] = x;
+    const o: Ser = []; let acc = 0; for (let i = 0; i < x.length; i++) { acc += x[i].v; if (i >= 200) acc -= x[i - 200].v; if (i >= 199) o.push({ t: x[i].t, v: acc / 200 }); } sma[sym] = o;
+    const st = idxStat(sym); if (!st) return null; const L = last(x); const u = uAt(cur, L.t); if (!u) return null;
+    const cap = (L.v * sh) / u; // miles de millones de dólares
+    const con = HZ.map((h) => { let i = x.length - 1; const b = h === 1 ? x[i - 1] : null; const t0 = b ? b.t : L.t - h; const p0 = b ? b.v : at(x, t0); const u0 = uAt(cur, t0); return p0 && u0 ? Math.round((cap - (p0 * sh) / u0) * 10) / 10 : null; });
+    return { ...st, n, f, sec, cur, cap: Math.round(cap * 10) / 10, con };
+  }).filter(Boolean);
   const countries = CTRY.map(([cc, f, cur, syms]) => ({ cc, f, cur, idx: syms.map(idxStat).filter(Boolean) })).filter((c) => c.idx.length);
 
   // Seguimiento: guarda el pronóstico de hoy y evalúa los que ya vencieron
@@ -354,7 +378,7 @@ async function compute() {
   const { data: first } = await db.from("dial_mkt_forecasts").select("made_on").order("made_on").limit(1);
   const track = { first: first?.[0]?.made_on || iso(T), n: ev?.length || 0, c80: ev?.length ? Math.round((ev.filter((e: any) => e.realized >= e.p10 && e.realized <= e.p90).length / ev.length) * 100) : null };
 
-  return { at: new Date().toISOString(), read, inds, fx, fxs: FXS, countries, evs, cones, track,
+  return { at: new Date().toISOString(), read, inds, fx, fxs: FXS, countries, cos, evs, cones, track,
     sources: ["Yahoo Finance (índices, tasas, monedas, materias primas)", "FRED, Fed de St. Louis (spreads, NFCI, curva, tasa real)", "multpl.com (CAPE de Shiller)"] };
 }
 
