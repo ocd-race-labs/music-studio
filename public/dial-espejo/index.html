@@ -989,7 +989,7 @@ html.adv-open #player{z-index:35}
 .mk-ph span:first-child{flex-basis:100%;color:var(--dim);font-weight:400;font-size:11px}
 .mk-ph b{font-size:16px;font-weight:500}
 .mk-ph small{color:var(--dim)}
-.mk-ln{width:100%;height:auto;display:block;max-width:1100px}
+.mk-ln{width:100%;height:auto;display:block}
 .mk-ln text{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
 .mk-cty{padding:12px 14px;display:grid;gap:12px}
 .mk-ch{display:flex;align-items:baseline;gap:10px;font-family:var(--mono)}
@@ -998,6 +998,15 @@ html.adv-open #player{z-index:35}
 .mk-ch small{color:var(--dim);font-size:11px}
 .mk-cc{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 @media (max-width:430px){.topbar .tab{padding:7px 6px;font-size:12.5px;gap:5px}}
+.mk-fbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-top:-6px}
+.mk-seg{display:inline-flex;background:var(--panel-2);border-radius:999px;padding:3px;box-shadow:inset 0 0 0 1px var(--line)}
+.mk-seg button{border:0;background:transparent;color:var(--muted);font:500 12.5px var(--sans,inherit);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.mk-seg button[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink)}
+#mkHzB{margin-left:auto}
+.mk-sel{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border-radius:999px;padding:0 6px 0 12px;box-shadow:inset 0 0 0 1px var(--line);height:34px}
+.mk-sel select{appearance:none;-webkit-appearance:none;background:transparent;border:0;color:var(--ink);font:500 13px inherit;padding:0 22px 0 0;height:32px;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 9px) 14px,calc(100% - 5px) 14px;background-size:4px 4px;background-repeat:no-repeat}
+.mk-sel select option{background:var(--panel);color:var(--ink)}
+@media (max-width:560px){.mk-fbar{flex-wrap:wrap}#mkHzB{margin-left:0;width:100%;display:flex}#mkHzB button{flex:1;padding:6px 4px}.mk-seg#mkV button{padding:6px 9px}.mk-sel{flex:1;min-width:0}.mk-sel select{flex:1;min-width:0;width:100%}}
 #mkV .chip[aria-pressed="true"],#mkCc .chip[aria-pressed="true"],#mkCoS .chip[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink);border-color:var(--sec)}
 .mk-hero2{padding:14px;display:grid;gap:14px}
 .mk-top{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:center}
@@ -1153,7 +1162,7 @@ html.adv-open #player{z-index:35}
 
 <div class="wrap" id="view-markets" hidden>
   <div class="nhead"><h1>Mercados</h1><p class="sub">Lectura ejecutiva de los mercados del mundo con indicadores de la literatura financiera, y proyección a 2 años, actualizadas al entrar.</p><div class="clock" id="mkStamp" data-noi18n></div></div>
-  <div class="mseg" id="mkHz" role="group" aria-label="Horizonte" data-noi18n></div>
+  <div id="mkHz" hidden data-noi18n></div>
   <div id="mkBody" style="display:grid;gap:28px" data-noi18n></div>
   <footer id="mkFoot">Yahoo Finance (índices, tasas, monedas y materias primas), FRED de la Fed de St. Louis (spreads, condiciones financieras, curva y tasa real) y multpl.com (CAPE de Shiller).</footer>
 </div>
@@ -2928,7 +2937,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-19mk3";
+const APP_VERSION="2026-11-19mk4";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2981,7 +2990,7 @@ const mkDec=s=>MKL==="en"?String(s):String(s).replace(".",",");
 const mkN=v=>v>=1000?Math.round(v).toLocaleString(MKLOC):v.toLocaleString(MKLOC,{maximumFractionDigits:2});
 const mkD=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(MKLOC,{day:"numeric",month:"short",timeZone:"UTC"}).replace(".","");
 const mkDL=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(MKLOC,{weekday:"short",day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}).replace(/\./g,"");
-function mkSeg(){const c=$("mkHz");c.innerHTML=MK_HZ.map(([l],i)=>`<button data-h="${i}" aria-pressed="${i===mkH}">${l}</button>`).join("");
+function mkSeg(){return;const c=$("mkHz");c.innerHTML=MK_HZ.map(([l],i)=>`<button data-h="${i}" aria-pressed="${i===mkH}">${l}</button>`).join("");
   c.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkH=+b.dataset.h;store.set("dial-mk-h",mkH);mkSeg();if(MK)mkRender()})}
 async function loadMarkets(){const tok=++mkTok;mkSeg();const b=$("mkBody");
   if(!MK)b.innerHTML=`<p class="note">${MKT("Calculando la lectura de los mercados…","Calculating the market reading…","Calculando a leitura dos mercados…")}</p>`;
@@ -3107,13 +3116,13 @@ function mkXT(pts,X){const t0=pts[0][0],t1=pts[pts.length-1][0],sp=t1-t0,D=t=>ne
   else if(sp<=40){let w=-1;pts.forEach(p=>{const k=Math.floor((p[0]+3)/7);if(k!==w){w=k;out.push([p[0],mkDT(p[0])])}})}
   else if(sp<=120){let m=-1;pts.forEach(p=>{const d=D(p[0]),k=d.getUTCMonth()*2+(d.getUTCDate()>=15?1:0);if(k!==m){m=k;out.push([p[0],mkDT(p[0])])}})}
   else{let m=-1;pts.forEach(p=>{const d=D(p[0]),k=d.getUTCMonth();if(k!==m){m=k;out.push([p[0],mo(p[0])+(k===0||!out.length?" "+String(d.getUTCFullYear()).slice(2):"")])}})}
-  if(!X)return out;const gap=sp<=8?36:58;
+  if(!X)return out;const gap=sp<=8?36:(window.innerWidth||393)<560?68:58;
   if(out.length>1&&X(out[1][0])-X(out[0][0])<gap)out.shift();
   const o=[];out.forEach(p=>{if(!o.length||X(p[0])-X(o[o.length-1][0])>=gap)o.push(p)});
   if(o.length&&!/\d{2}$/.test(o[0][1])&&sp>120){const d=new Date(o[0][0]*864e5);o[0][1]+=" "+String(d.getUTCFullYear()).slice(2)}
   return o}
 function mkLine(pts,fmt,half){if(pts.length<2)return `<p class="note">${MKT("Sin datos suficientes para el período.","Not enough data for the period.","Sem dados suficientes para o período.")}</p>`;
-  const vw=Math.min(window.innerWidth||393,1240),wide=vw>=760,W=Math.round(Math.max(300,Math.min(1100,(half&&wide?(vw-120)/2:vw-80)))),Hh=wide?200:168,L=4,R=W-62,T=10,B=Hh-28,vs=pts.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);
+  const vw=window.innerWidth||393,wide=vw>=760,cw=($("mkBody")?.clientWidth||vw-32)-30,W=Math.round(Math.max(300,Math.min(1700,half&&wide?(cw-14)/2:cw))),Hh=wide?200:168,L=4,R=W-62,T=10,B=Hh-28,vs=pts.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);
   const yt=mkTicks(mn,mx,4);mn=Math.min(mn,yt[0]??mn);mx=Math.max(mx,yt[yt.length-1]??mx);const pad=(mx-mn)*.04||Math.abs(mx)*.001;mn-=pad;mx+=pad;
   const t0=pts[0][0],t1=pts[pts.length-1][0],X=t=>L+(t-t0)/((t1-t0)||1)*(R-L),Y=v=>B-(v-mn)/((mx-mn)||1)*(B-T);
   const up=vs[vs.length-1]>=vs[0],col=up?"#2FD3A0":"#FF5C7A",ln=pts.map(p=>`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
@@ -3127,7 +3136,10 @@ function mkLine(pts,fmt,half){if(pts.length<2)return `<p class="note">${MKT("Sin
   [[im,"▲"],[iM,"▼"]].forEach(([i,g])=>{if(i>0&&i<vs.length-1)s+=`<circle cx="${X(pts[i][0]).toFixed(1)}" cy="${Y(vs[i]).toFixed(1)}" r="2" fill="var(--muted)"/>`});
   s+=`<circle cx="${X(t1).toFixed(1)}" cy="${Y(vs[vs.length-1]).toFixed(1)}" r="3" fill="${col}"/>`;
   return s+`</svg>`}
-function mkTop(){return `<div class="chips" id="mkV" role="group">${[["mundo",MKT("Mundo","World","Mundo")],["cty",MKT("Por país","By country","Por país")],["co",MKT("Por compañía","By company","Por empresa")]].map(([c,l])=>`<button class="chip" data-v="${c}" aria-pressed="${c===mkV}">${l}</button>`).join("")}</div>`}
+function mkTop(){const L=MK.countries||[];
+  const seg=(id,opts,cur,attr)=>`<div class="mk-seg" id="${id}" role="group">${opts.map(([c,l])=>`<button data-${attr}="${c}" aria-pressed="${String(c)===String(cur)}">${l}</button>`).join("")}</div>`;
+  const cty=mkV==="cty"&&L.length?`<label class="mk-sel"><span class="mk-sfl">${(L.find(c=>c.cc===mkCc)||L[0]).f}</span><select id="mkCcSel" aria-label="${MKT("País","Country","País")}">${L.map(c=>`<option value="${c.cc}"${c.cc===mkCc?" selected":""}>${esc(MK_CN[c.cc]||c.cc)}</option>`).join("")}</select></label>`:"";
+  return `<div class="mk-fbar">${seg("mkV",[["mundo",MKT("Mundo","World","Mundo")],["cty",MKT("País","Country","País")],["co",MKT("Compañías","Companies","Empresas")]],mkV,"v")}${cty}${seg("mkHzB",MK_HZ.map(([l],i)=>[i,l]),mkH,"h")}</div>`}
 /* ---- Mercados: vista por compañía ---- */
 let mkCoSel=store.get("dial-mk-co",""),mkCoSort=store.get("dial-mk-cosort","cap");
 const MK_SEC={es:{tech:"Tecnología",semi:"Semiconductores",comm:"Comunicaciones",cons:"Consumo",auto:"Autos",fin:"Financiero",health:"Salud",energy:"Energía",mining:"Minería"},
@@ -3165,7 +3177,7 @@ function mkCoDet(c,k,hz){const s=mkWin(c.ser,k),d=c.d[k];
   ${(c.evs||[]).filter(e=>e.k<=k).length?`<div class="mk-co">${c.evs.filter(e=>e.k<=k).map(e=>`<span class="${e.r<0?"mk-dn":"mk-up"}">${mkD(e.t)} ${e.r>0?"+":"−"}${mkDec(Math.abs(e.r))}% · ${mkDec(e.z)} σ</span>`).join("")}</div>`:""}`}
 function mkCountry(k,hz){const L=MK.countries||[];if(!L.length)return `<p class="note">${MKT("Sin datos por país por ahora.","No country data yet.","Sem dados por país por enquanto.")}</p>`;
   const C=L.find(c=>c.cc===mkCc)||L[0];mkCc=C.cc;const nm=MK_CN[C.cc]||C.cc;
-  let h=`<div class="chips mk-cc" id="mkCc" role="group">${L.map(c=>`<button class="chip" data-c="${c.cc}" aria-pressed="${c.cc===C.cc}">${c.f} ${esc(MK_CN[c.cc]||c.cc)}</button>`).join("")}</div>`;
+  let h="";
   C.idx.forEach(i=>{const d=i.d[k],s=mkWin(i.ser,k),cl=d?(d.x>0?"mk-up":d.x<0?"mk-dn":""):"";
     const tr=i.ma==null?"":i.ma>=0?MKT(`sobre su tendencia de largo plazo (${mkPct(i.ma)} frente a su media de 200 días)`,`above its long-term trend (${mkPct(i.ma)} vs its 200-day average)`,`acima da tendência de longo prazo (${mkPct(i.ma)} frente à média de 200 dias)`):MKT(`bajo su tendencia de largo plazo (${mkPct(i.ma)} frente a su media de 200 días)`,`below its long-term trend (${mkPct(i.ma)} vs its 200-day average)`,`abaixo da tendência de longo prazo (${mkPct(i.ma)} frente à média de 200 dias)`);
     const vq=i.volP>=80?MKT("alta","high","alta"):i.volP<=30?MKT("baja","low","baixa"):MKT("normal","normal","normal");
@@ -3190,7 +3202,8 @@ const MKT_HZN=k=>MKT(["en el día","en la semana","en el mes","en el trimestre",
 let mkRz=0;addEventListener("resize",()=>{clearTimeout(mkRz);mkRz=setTimeout(()=>{if(MK&&!$("view-markets").hidden)mkRender()},250)});
 function mkBind(){
   $("mkV")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkV=b.dataset.v;store.set("dial-mk-v",mkV);mkRender()});
-  $("mkCc")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkCc=b.dataset.c;store.set("dial-mk-cc",mkCc);mkRender()});
+  $("mkCcSel")?.addEventListener("change",e=>{mkCc=e.target.value;store.set("dial-mk-cc",mkCc);mkRender()});
+  $("mkHzB")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkH=+b.dataset.h;store.set("dial-mk-h",mkH);mkRender()});
   $("mkFx")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkFx=b.dataset.b;store.set("dial-mk-fx",mkFx);mkRender()});
   $("mkIx")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkIx=b.dataset.s;store.set("dial-mk-ix",mkIx);mkRender()});
   $("mkCoS")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkCoSort=b.dataset.s;store.set("dial-mk-cosort",mkCoSort);mkRender()});
