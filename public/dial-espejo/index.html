@@ -331,7 +331,10 @@ a{color:inherit}
 .np-info .row{display:grid;gap:3px}
 .np-ig{display:inline-flex;align-items:center;gap:8px;font-weight:600;text-decoration:none;color:var(--ink)}
 .np-ig i{width:18px;height:18px;border-radius:6px;background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fd5949 45%,#d6249f 60%,#285AEB 90%);flex:none}
-.player{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 var(--gut-r) calc(10px + env(safe-area-inset-bottom, 0px)) var(--gut-l)}
+/* sticky y no fixed: en iPhone el fixed a veces se queda pegado al contenido y se va con el scroll.
+   body en columna para que, en páginas cortas, el reproductor quede igual abajo */
+body{display:flex;flex-direction:column;min-height:100dvh}body>*{flex-shrink:0;width:100%}
+.player{position:sticky;left:0;right:0;bottom:0;margin-top:auto;z-index:20;padding:0 var(--gut-r) calc(10px + env(safe-area-inset-bottom, 0px)) var(--gut-l)}
 .band{max-width:1100px;margin:0 auto;border-radius:20px;background:var(--panel-2);color:var(--ink);display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px;transition:background .5s,color .5s}
 .art{width:52px;height:52px;border-radius:13px;background:rgba(0,0,0,.85);display:grid;place-items:center;overflow:hidden}
 .art img{width:100%;height:100%;object-fit:cover}
@@ -2166,6 +2169,8 @@ function fitMq(el){const tr=el.firstChild;if(!tr)return;const txt=el._t;const fi
 const refitMq=()=>["bT","bA","bM"].forEach(id=>{const el=$(id);if(el._t!=null)fitMq(el)});
 window.addEventListener("resize",refitMq);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(refitMq);
 let current=null,playToken=0,curList=[],curIdx=0,statusTxt="";let wantPlay=false,stallT=null,recovering=false,trying=0;
+// Descripción que manda el servidor de la radio; se ignoran los textos de fábrica ("My station description", etc.)
+const realDesc=(d,s)=>!!d&&d!==s.n&&!/^\s*(my |this is my )?(station|stream|server|radio)?\s*description\s*$|^\s*(unspecified|no) description|^\s*(unspecified|n\/?a|-+|null|undefined)\s*$/i.test(d);
 function setBand(s){
   // La barra toma el color de Radio del tema (y su tinta); la familia de la radio queda como punto junto al nombre
   $("player").hidden=false;const band=$("band");band.style.background="var(--s-band)";band.style.color="var(--i-band)";band.style.setProperty("--bc",FAM[s.g][2]);
@@ -2354,7 +2359,7 @@ function npShow(s,j){j=npFix(j);np.cur=j;if(!npSheet.hidden)setTimeout(renderShe
   if(song&&artist){mset("bT",cleanSong(song));mset("bA",[artist,j.album,j.year,prog?"en "+prog:""].filter(Boolean).join(" · "))}
   else if(prog){mset("bT",prog);mset("bA",pdesc||stationDesc(s))}
   else if(raw){mset("bT",raw);mset("bA",stationDesc(s))}
-  else{mset("bT",s.n);mset("bA",[j&&j.stream_description&&j.stream_description!==s.n?j.stream_description:"",stationDesc(s)].filter(Boolean).join(" · "))}
+  else{mset("bT",s.n);mset("bA",[j&&realDesc(j.stream_description,s)?j.stream_description:"",stationDesc(s)].filter(Boolean).join(" · "))}
   if(j&&j.artwork){np.art=true;$("art").innerHTML=`<img src="${esc(j.artwork)}" alt="Carátula de ${esc(song||"")}">`}else{np.art=false;setBtn(!audio.paused)}
   const line=song&&artist?`${artist} · ${song}`:(raw||prog||"");
   if(line!==np.last&&"mediaSession" in navigator){np.last=line;try{navigator.mediaSession.metadata=new MediaMetadata({title:song||prog||raw||s.n,artist:song&&artist?`${artist} · ${s.n}`:(song||prog||raw)?s.n:[FAM[s.g][0],CN[s.cc]||s.cc].join(" · "),album:s.n,
@@ -2473,7 +2478,7 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   rows.push(["Radio",[FAM[s.g][0],LANG[s.lang],CN[s.cc]||s.cc,s.f?s.f.toFixed(1)+(s.cc==="CL"?" FM Santiago":" FM"):""].filter(Boolean).join(" · ")]);
   rows.push(["Estilo",[...s.tags].map(t=>t.replace("-"," ")).join(" · ")]);
   if(IG[s.n])rows.push(["Instagram",{html:`<a class="np-ig" href="${igLink(s)}" target="_blank" rel="noopener"><i></i>@${esc(IG[s.n])}</a>`}]);
-  if(j.stream_description&&j.stream_description!==s.n)rows.push(["Sobre la señal",j.stream_description]);
+  if(realDesc(j.stream_description,s))rows.push(["Sobre la señal",j.stream_description]);
   const sig=curList[curIdx];if(sig)rows.push(["Señal",[sig.codec,sig.bitrate?sig.bitrate+" kbps":"",curList.length>1?`${curIdx+1} de ${curList.length}`:""].filter(Boolean).join(" · ")]);
   $("npInfo").innerHTML=rows.map(([k,v])=>`<div class="row"><div class="k">${esc(k)}</div><div class="v">${v&&v.html?v.html:esc(v)}</div></div>`).join("");
 }
@@ -2684,10 +2689,10 @@ html[data-sec="mercados"]{--sec:var(--s-mercados);--sec-ink:var(--i-mercados)}
   let wall=document.getElementById("pzWall");if(!wall&&document.body){wall=document.createElement("div");wall.id="pzWall";wall.setAttribute("aria-hidden","true");document.body.prepend(wall)}
   if(BG[0]!=="Del tema"){css+=`:root{--bg:${BG[1]}}#pzWall{display:none}`}
   else if(!pat){const h=Math.min(I,40);css+=`:root{--bg:color-mix(in srgb,var(--sec) ${Math.round(h/4)}%,#07070A)}body{background:transparent!important}
-#pzWall{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(130% 60% at 50% -12%,color-mix(in srgb,var(--sec) ${Math.round(h*1.3)}%,transparent),transparent 62%),radial-gradient(90% 45% at 105% 105%,color-mix(in srgb,var(--sec) ${Math.round(h*.8)}%,transparent),transparent 70%),var(--bg);transition:background .4s}
+#pzWall{position:sticky;top:0;height:100lvh;margin-bottom:-100lvh;z-index:-1;pointer-events:none;background:radial-gradient(130% 60% at 50% -12%,color-mix(in srgb,var(--sec) ${Math.round(h*1.3)}%,transparent),transparent 62%),radial-gradient(90% 45% at 105% 105%,color-mix(in srgb,var(--sec) ${Math.round(h*.8)}%,transparent),transparent 70%),var(--bg);transition:background .4s}
 .np{background:radial-gradient(130% 60% at 50% -12%,color-mix(in srgb,var(--sec) ${Math.round(h*1.3)}%,transparent),transparent 62%),radial-gradient(90% 45% at 105% 105%,color-mix(in srgb,var(--sec) ${Math.round(h*.8)}%,transparent),transparent 70%),var(--bg)}`}
   else{const a=(1-I/100).toFixed(2);
-    css+=`:root{--bg:#07070A}body{background:transparent!important}#pzWall{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(rgba(7,7,10,${a}),rgba(7,7,10,${a})),url("temas/${pat[1]}.jpg") center/cover no-repeat,#07070A}
+    css+=`:root{--bg:#07070A}body{background:transparent!important}#pzWall{position:sticky;top:0;height:100lvh;margin-bottom:-100lvh;z-index:-1;pointer-events:none;background:linear-gradient(rgba(7,7,10,${a}),rgba(7,7,10,${a})),url("temas/${pat[1]}.jpg") center/cover no-repeat,#07070A}
 .np{background:linear-gradient(rgba(7,7,10,${a}),rgba(7,7,10,${a})),url("temas/${pat[1]}.jpg") center/cover no-repeat,#07070A}
 .np-bg{display:none}.np-bg::after{background:linear-gradient(180deg,rgba(7,7,10,.1),rgba(7,7,10,.35))}`}
   css+=`:root{--panel:color-mix(in srgb,#fff 4%,var(--bg));--panel-2:color-mix(in srgb,#fff 7%,var(--bg))}`;
@@ -2937,7 +2942,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-19mk5";
+const APP_VERSION="2026-11-19p";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
