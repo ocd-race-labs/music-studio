@@ -99,6 +99,14 @@ const FX: [string, string, string, string, boolean][] = [
   ["AUD", "Dólar australiano", "🇦🇺", "AUDUSD=X", true], ["KRW", "Won surcoreano", "🇰🇷", "KRW=X", false], ["INR", "Rupia india", "🇮🇳", "INR=X", false],
   ["BRL", "Real brasileño", "🇧🇷", "BRL=X", false], ["MXN", "Peso mexicano", "🇲🇽", "MXN=X", false], ["ARS", "Peso argentino", "🇦🇷", "ARS=X", false],
   ["COP", "Peso colombiano", "🇨🇴", "COP=X", false], ["PEN", "Sol peruano", "🇵🇪", "PEN=X", false],
+  ["HKD", "Dólar de Hong Kong", "🇭🇰", "HKD=X", false], ["TWD", "Dólar taiwanés", "🇹🇼", "TWD=X", false], ["SAR", "Riyal saudí", "🇸🇦", "SAR=X", false],
+];
+// Países: [código, bandera, moneda, índices]
+const CTRY: [string, string, string, string[]][] = [
+  ["US", "🇺🇸", "USD", ["^GSPC", "^IXIC", "^DJI"]], ["CA", "🇨🇦", "CAD", ["^GSPTSE"]], ["CL", "🇨🇱", "CLP", ["CHL"]], ["BR", "🇧🇷", "BRL", ["^BVSP"]], ["MX", "🇲🇽", "MXN", ["^MXX"]],
+  ["GB", "🇬🇧", "GBP", ["^FTSE"]], ["DE", "🇩🇪", "EUR", ["^GDAXI"]], ["FR", "🇫🇷", "EUR", ["^FCHI"]], ["CH", "🇨🇭", "CHF", ["^SSMI"]], ["ES", "🇪🇸", "EUR", ["^IBEX"]], ["IT", "🇮🇹", "EUR", ["FTSEMIB.MI"]],
+  ["JP", "🇯🇵", "JPY", ["^N225"]], ["CN", "🇨🇳", "CNY", ["000001.SS"]], ["HK", "🇭🇰", "HKD", ["^HSI"]], ["KR", "🇰🇷", "KRW", ["^KS11"]], ["IN", "🇮🇳", "INR", ["^NSEI"]], ["AU", "🇦🇺", "AUD", ["^AXJO"]], ["TW", "🇹🇼", "TWD", ["^TWII"]],
+  ["SA", "🇸🇦", "SAR", ["^TASI.SR"]],
 ];
 const CONE: [string, string][] = [["ACWI", "MSCI Mundo"], ["^GSPC", "S&P 500"], ["CHL", "MSCI Chile en pesos"], ["^BVSP", "Ibovespa"], ["^STOXX50E", "Euro Stoxx 50"], ["^N225", "Nikkei 225"]];
 const HZ = [1, 7, 30, 91, 365]; // día (observación anterior), semana, mes, trimestre, año
@@ -301,15 +309,39 @@ async function compute() {
     return { v: L.v, asof: iso(L.t), pct, yrs: Math.max(1, Math.round((T - win[0].t) / 365)), d };
   };
   const clpS = Y["CLP=X"] || [];
+  const FXS: Record<string, [number, number][]> = { CLP: clpS.filter((p) => p.t > T - 400).map((p) => [p.t, +p.v.toPrecision(6)]) };
   const fx = FX.map(([c, n, f, y, inv]) => {
     const u = (Y[y] || []).map((p) => ({ t: p.t, v: inv ? 1 / p.v : p.v })); // unidades por dólar
     if (!u.length) return null;
+    FXS[c] = u.filter((p) => p.t > T - 400).map((p) => [p.t, +p.v.toPrecision(6)]);
     const usd = u.map((p) => ({ t: p.t, v: 1 / p.v }));
     const clp = u.map((p) => { const k = at(clpS, p.t); return k ? { t: p.t, v: k / p.v } : null; }).filter(Boolean) as Ser;
     return { c, n, f, usd: fxStat(usd), clp: fxStat(clp) };
   }).filter((x) => x && x.usd) as any[];
   // el dólar y el peso chileno, cada uno frente al otro
   fx.unshift({ c: "USD", n: "Dólar estadounidense", f: "🇺🇸", usd: null, clp: fxStat(clpS) }, { c: "CLP", n: "Peso chileno", f: "🇨🇱", usd: fxStat(clpS.map((p) => ({ t: p.t, v: 1 / p.v }))), clp: null });
+
+  // Mirada por país: cada índice con su tendencia, distancia al máximo, volatilidad y días fuera de lo normal
+  const idxStat = (sym: string) => {
+    const x = Y[sym] || []; const st = fxStat(x); if (!st) return null; const L = last(x);
+    const m = at(sma[sym] || [], L.t); const hi = Math.max(...x.filter((p) => p.t > L.t - 365).map((p) => p.v));
+    const r: number[] = []; for (let i = 1; i < x.length; i++) r.push(Math.log(x[i].v / x[i - 1].v));
+    // volatilidad de 21 sesiones anualizada y su percentil (muestreo semanal en 10 años)
+    const vAt = (i: number) => { const w = r.slice(Math.max(0, i - 20), i + 1); return sd(w) * Math.sqrt(252) * 100; };
+    const vNow = vAt(r.length - 1); const vh: number[] = []; for (let i = 21; i < r.length; i += 5) vh.push(vAt(i));
+    // días fuera de lo normal: retorno sobre la volatilidad EWMA (λ = 0,94; RiskMetrics)
+    let v2 = mean(r.slice(0, 60).map((y) => y * y)); const ev: { t: string; r: number; z: number; k: number }[] = [];
+    for (let i = 0; i < r.length; i++) { const z = r[i] / Math.sqrt(v2); const t = x[i + 1].t;
+      if (Math.abs(z) >= 2.5 && t > T - 366) ev.push({ t: iso(t), r: Math.round((Math.exp(r[i]) - 1) * 1000) / 10, z: Math.round(z * 10) / 10, k: T - t <= 1 ? 0 : T - t <= 7 ? 1 : T - t <= 30 ? 2 : T - t <= 91 ? 3 : 4 });
+      v2 = 0.94 * v2 + 0.06 * r[i] * r[i]; }
+    const y0 = at(x, Math.floor(Date.UTC(new Date(T * DAYMS).getUTCFullYear(), 0, 1) / DAYMS) - 1);
+    return { s: sym, n: (EXCH.find((e) => e[0] === sym) || [sym, sym])[1], ...st,
+      ma: m ? Math.round((L.v / m - 1) * 1000) / 10 : null, dd: Math.round((L.v / hi - 1) * 1000) / 10,
+      vol: Math.round(vNow * 10) / 10, volP: vh.length ? Math.round((vh.filter((v) => v <= vNow).length / vh.length) * 100) : null,
+      ytd: y0 ? Math.round((L.v / y0 - 1) * 1000) / 10 : null, evs: ev.reverse().slice(0, 8),
+      ser: x.filter((p) => p.t > T - 400).map((p) => [p.t, +p.v.toPrecision(6)]) };
+  };
+  const countries = CTRY.map(([cc, f, cur, syms]) => ({ cc, f, cur, idx: syms.map(idxStat).filter(Boolean) })).filter((c) => c.idx.length);
 
   // Seguimiento: guarda el pronóstico de hoy y evalúa los que ya vencieron
   const rows = cones.flatMap((c) => c.fc.map((f: any) => ({ made_on: iso(T), symbol: c.s, q: f.q, target_date: f.target, level0: c.S0, p05: f.p[0], p10: f.p[1], p25: f.p[2], p50: f.p[3], p75: f.p[4], p90: f.p[5], p95: f.p[6] })));
@@ -320,7 +352,7 @@ async function compute() {
   const { data: first } = await db.from("dial_mkt_forecasts").select("made_on").order("made_on").limit(1);
   const track = { first: first?.[0]?.made_on || iso(T), n: ev?.length || 0, c80: ev?.length ? Math.round((ev.filter((e: any) => e.realized >= e.p10 && e.realized <= e.p90).length / ev.length) * 100) : null };
 
-  return { at: new Date().toISOString(), read, inds, fx, evs, cones, track,
+  return { at: new Date().toISOString(), read, inds, fx, fxs: FXS, countries, evs, cones, track,
     sources: ["Yahoo Finance (índices, tasas, monedas, materias primas)", "FRED, Fed de St. Louis (spreads, NFCI, curva, tasa real)", "multpl.com (CAPE de Shiller)"] };
 }
 
