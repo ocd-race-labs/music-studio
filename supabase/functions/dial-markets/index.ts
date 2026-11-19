@@ -31,7 +31,7 @@ function erf(x: number) {
 const Phi = (z: number) => 0.5 * (1 + erf(z / Math.SQRT2));
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / (a.length || 1);
 const sd = (a: number[]) => { const m = mean(a); return Math.sqrt(mean(a.map((x) => (x - m) ** 2))); };
-const quant = (a: number[], p: number) => { const s = [...a].sort((x, y) => x - y); const i = (s.length - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (i - lo); };
+const quant = (a: number[], p: number, sorted = false) => { const s = sorted ? a : [...a].sort((x, y) => x - y); const i = (s.length - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (i - lo); };
 function mulberry(seed: number) { return () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const hash = (s: string) => [...s].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0, 7);
 
@@ -113,7 +113,8 @@ const HZ = [1, 7, 30, 91, 365]; // día (observación anterior), semana, mes, tr
 const HZN = ["en el día", "en la semana", "en el mes", "en el trimestre", "en el año"];
 
 // ---------- formato ----------
-const nf = (x: number, d = 1) => x.toLocaleString("es-CL", { minimumFractionDigits: d, maximumFractionDigits: d });
+// formato chileno sin Intl (toLocaleString es muy lento en el runtime y agotaba el tiempo de CPU)
+const nf = (x: number, d = 1) => { const [i, f] = Math.abs(x).toFixed(d).split("."); const g = i.replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (x < 0 && +Math.abs(x).toFixed(d) !== 0 ? "-" : "") + g + (f ? "," + f : ""); };
 const sg = (x: number, d = 1) => (x > 0 ? "+" : x < 0 ? "−" : "") + nf(Math.abs(x), d);
 type Kind = "pct" | "pb" | "pp" | "pt" | "abs2" | "abs1";
 function delta(kind: Kind, a: number, b: number) {
@@ -293,7 +294,8 @@ async function compute() {
       if (mn < Math.log(0.8)) below++;
     }
     const P = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95];
-    const fc = lv.map((a, q) => { const td = T + Math.round((q + 1) * 91.3); const d = new Date(td * DAYMS); return { q: q + 1, target: iso(td), lbl: `${Math.floor(d.getUTCMonth() / 3) + 1}T${String(d.getUTCFullYear()).slice(2)}`, p: P.map((pp) => Math.round(S0 * Math.exp(quant(a, pp)) * 100) / 100) }; });
+    lv.forEach((a) => a.sort((x, y) => x - y));
+    const fc = lv.map((a, q) => { const td = T + Math.round((q + 1) * 91.3); const d = new Date(td * DAYMS); return { q: q + 1, target: iso(td), lbl: `${Math.floor(d.getUTCMonth() / 3) + 1}T${String(d.getUTCFullYear()).slice(2)}`, p: P.map((pp) => Math.round(S0 * Math.exp(quant(a, pp, true)) * 100) / 100) }; });
     const up = (q: number) => Math.round((lv[q - 1].filter((x) => x > 0).length / N) * 100);
     const hw = w.filter((p) => p.t > T - 7 * 78).map((p) => ({ t: iso(p.t), v: Math.round(p.v * 100) / 100 }));
     return { s, n, S0, asof: iso(last(w).t), hist: hw, fc, pUp4: up(4), pUp8: up(8), pDD: Math.round((below / N) * 100), med1: Math.round((Math.exp(quant(lv[3], 0.5)) - 1) * 1000) / 10, mu: Math.round(mu * 1000) / 10, volA: Math.round(Math.sqrt(lvar * 52) * 1000) / 10, how, bt: { n: errs.length, raw80, k: Math.round(kS * 100) / 100, c95: cal95, from: iso(w[105]?.t || T) }, garch: { a: Math.round(g.a * 100) / 100, b: Math.round(g.b * 100) / 100 } };
