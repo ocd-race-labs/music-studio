@@ -990,7 +990,7 @@ html.adv-open #player{z-index:35}
 .mk-ph b{font-size:16px;font-weight:500}
 .mk-ph small{color:var(--dim)}
 .mk-ln{width:100%;height:auto;display:block}
-.mk-ln text{font-family:var(--mono);font-size:9px;fill:var(--dim)}
+.mk-ln text{font-family:var(--mono);font-size:9.5px;fill:var(--muted)}
 .mk-cty{padding:12px 14px;display:grid;gap:12px}
 .mk-ch{display:flex;align-items:baseline;gap:10px;font-family:var(--mono)}
 .mk-ch b{font-size:24px;font-weight:500}
@@ -998,7 +998,60 @@ html.adv-open #player{z-index:35}
 .mk-ch small{color:var(--dim);font-size:11px}
 .mk-cc{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 @media (max-width:430px){.topbar .tab{padding:7px 6px;font-size:12.5px;gap:5px}}
-#mkV .chip[aria-pressed="true"],#mkCc .chip[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink);border-color:var(--sec)}
+#mkV .chip[aria-pressed="true"],#mkCc .chip[aria-pressed="true"],#mkCoS .chip[aria-pressed="true"]{background:var(--sec);color:var(--sec-ink);border-color:var(--sec)}
+.mk-hero2{padding:14px;display:grid;gap:14px}
+.mk-top{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:center}
+@media (max-width:520px){.mk-top{grid-template-columns:minmax(0,1fr)}}
+.mk-dv{font:500 11px var(--mono)}
+.mk-sig{display:grid;gap:8px}
+.mk-stack{display:flex;height:10px;border-radius:6px;overflow:hidden;gap:2px}
+.mk-stack i.f,.mk-sl i.f,.mk-cnt i.f,.mk-dot.f{background:#2FD3A0}.mk-stack i.n,.mk-sl i.n,.mk-cnt i.n,.mk-dot.n{background:#F2B544}.mk-stack i.a,.mk-sl i.a,.mk-cnt i.a,.mk-dot.a{background:#FF5C7A}
+.mk-sl{display:flex;flex-wrap:wrap;gap:4px 12px;font:400 11.5px var(--mono);color:var(--muted)}
+.mk-sl i,.mk-cnt i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.mk-al{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.mk-al span{font:500 11px var(--mono);color:#FF5C7A;margin-right:2px}
+.mk-al em{font-style:normal;font-size:12px;border:1px solid #FF5C7A55;color:var(--ink);border-radius:999px;padding:2px 9px}
+.mk-rows{display:grid}
+.mk-row{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;padding:9px 0;border-top:1px solid var(--line)}
+.mk-row .mk-lb{font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--sec);padding-top:2px}
+.mk-row p{margin:0;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.mk-row p b{color:var(--ink);font-weight:600}
+@media (max-width:480px){.mk-row{grid-template-columns:minmax(0,1fr);gap:3px}}
+.mk-it{padding:6px 12px 8px}
+.mk-ith{display:flex;justify-content:space-between;align-items:center;padding:6px 0 8px;font-weight:600;font-size:13.5px}
+.mk-cnt{font:500 11px var(--mono);color:var(--muted);display:flex;gap:8px;align-items:center}
+.mk-cnt i{margin-right:3px}
+.mk-ir{display:grid;grid-template-columns:8px minmax(0,1fr) auto 64px 58px;gap:9px;align-items:center;padding:9px 0;border-top:1px solid var(--line);cursor:pointer}
+.mk-irh{cursor:default;font:400 10px var(--mono);color:var(--dim);padding:4px 0}
+.mk-irh span:nth-child(n+3){text-align:right}
+.mk-dot{width:8px;height:8px;border-radius:50%}
+.mk-inm{font-size:13px;line-height:1.3;min-width:0}
+.mk-inm small{display:block;font:400 10px var(--mono);color:var(--dim);margin-top:1px}
+.mk-iv{font:500 13px var(--mono);text-align:right;white-space:nowrap}
+.mk-idl{font:500 12px var(--mono);text-align:right;white-space:nowrap;display:grid}
+.mk-idl small{font-size:9.5px}
+.mk-ipc{display:grid;gap:3px;justify-items:end}
+.mk-ipc .mk-bar{width:100%;display:block}
+.mk-ipc .mk-bar b{position:absolute;left:50%;top:-2px;width:1px;height:8px;background:var(--muted);opacity:.5}
+.mk-ipc small{font:400 10px var(--mono);color:var(--dim)}
+.mk-idet{padding:2px 0 10px 17px}
+.mk-idet p{margin:0 0 4px;font-size:13px;color:var(--ink);line-height:1.45}
+.mk-idet small{display:block;font:400 10.5px var(--mono);color:var(--dim);line-height:1.5}
+@media (max-width:400px){.mk-ir{grid-template-columns:8px minmax(0,1fr) auto 58px 44px;gap:7px}}
+.mk-coh,.mk-cor{display:grid;grid-template-columns:18px minmax(0,1fr) 70px 54px 78px;gap:8px;align-items:center}
+.mk-cor .mk-fxv{font-size:12.5px}
+.mk-coh{font:400 10.5px var(--mono);color:var(--dim);padding:8px 0 4px;border-bottom:1px solid var(--line)}
+.mk-coh span:nth-child(n+3){text-align:right}
+.mk-cor{padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.mk-cor[aria-expanded="true"]{border-bottom:0}
+.mk-rk{font:500 11px var(--mono);color:var(--dim)}
+.mk-con{display:grid;gap:3px;justify-items:end}
+.mk-cb{position:relative;width:100%;height:6px;background:var(--panel-2);border-radius:3px}
+.mk-cb::after{content:"";position:absolute;left:50%;top:-2px;width:1px;height:10px;background:var(--muted);opacity:.6}
+.mk-cb i{position:absolute;top:0;height:6px;border-radius:3px}
+.mk-cb i.p{left:50%;background:#2FD3A0}.mk-cb i.m{right:50%;background:#FF5C7A}
+.mk-con small{font:500 10.5px var(--mono);white-space:nowrap}
+@media (max-width:430px){.mk-coh,.mk-cor{grid-template-columns:14px minmax(0,1fr) 62px 48px 66px;gap:6px}.mk-cor .mk-fxv{font-size:11.5px}.mk-cor .mk-fxd{font-size:11px}.mk-cor .fl{font-size:16px}}
 .mk-evs{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
 .mk-ev{padding:12px 14px;display:grid;gap:6px;align-content:start}
 .mk-evh{display:flex;justify-content:space-between;gap:8px;font:500 11.5px var(--mono);color:var(--dim)}
@@ -2875,7 +2928,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-19mk1";
+const APP_VERSION="2026-11-19mk2";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -2941,16 +2994,33 @@ function mkGauge(v){const a=Math.PI*(1-v/100),x=70+56*Math.cos(a),y=74-56*Math.s
 function mkRender(){const k=mkH,R=MK.read[k],hz=MK_HZ[k];
   const at=new Date(MK.at);$("mkStamp").textContent=`${MKT("Actualizado","Updated","Atualizado")} ${at.toLocaleTimeString(MKLOC,{hour:"2-digit",minute:"2-digit"})}${MK.stale?MKT(" · sin conexión a las fuentes, último cálculo guardado"," · sources unreachable, showing the last saved calculation"," · sem conexão com as fontes, último cálculo salvo"):""}`;
   if(mkV==="cty"){$("mkBody").innerHTML=mkTop()+mkCountry(k,hz);mkBind();return}
-  let h=mkTop()+`<section class="topic"><div class="topic-head"><div><h2>${MKT("Lectura","Reading","Leitura")} ${hz[1]}</h2><p class="meta">${MKT(`Apetito por riesgo de 0 a 100: promedio de las señales de los ${MK.inds.length} indicadores`,`Risk appetite from 0 to 100: average of the signals of the ${MK.inds.length} indicators`,`Apetite por risco de 0 a 100: média dos sinais dos ${MK.inds.length} indicadores`)}</p></div></div>
-  <div class="sp-card mk-hero"><div class="mk-g">${mkGauge(R.score)}<span class="meta">${k?MKT("al inicio del período","at the start of the period","no início do período"):MKT("ayer","yesterday","ontem")}: ${R.prev}</span></div><ul class="mk-read">${R.lines.map(l=>`<li>${l}</li>`).join("")}</ul></div></section>`;
-  // Indicadores por grupo
-  const G=[];MK.inds.forEach(i=>{let g=G.find(x=>x.g===i.g);if(!g)G.push(g={g:i.g,a:[]});g.a.push(i)});
-  const yr=n=>n===1?MKT("año","year","ano"):MKT("años","years","anos");
-  h+=`<section class="topic"><div class="topic-head"><div><h2>${MKT("Indicadores clave","Key indicators","Indicadores-chave")}</h2><p class="meta">${MKT(`Variación ${hz[1]}, percentil frente a su historia y la literatura que respalda cada señal`,`Change ${hz[1]}, percentile against its history and the research behind each signal`,`Variação ${hz[1]}, percentil frente à sua história e a literatura que sustenta cada sinal`)}</p></div></div><div class="mk-grid">`+
-    G.map(g=>`<div class="mk-grp"><div class="sp-ct">${esc(g.g)}</div>`+g.a.map(i=>{const d=i.d[k];const cl=d?(d.x>0?"mk-up":d.x<0?"mk-dn":""):"";
-      return `<div class="sp-card mk-ind"><div class="mk-n">${esc(i.n)}<span class="mk-sg ${i.sg}">${MK_SG[i.sg]}</span></div><div class="mk-v">${esc(i.v)}</div><div class="mk-r">${esc(i.txt)}</div><div class="mk-d"><span class="${cl}">${d?esc(d.s):MKT("s/d","n/a","s/d")}</span> <small>${hz[2]}</small>${d&&Math.abs(d.z)>=2?`<span class="mk-z">${MKT("inusual","unusual","incomum")} · ${mkDec(d.z)} σ</span>`:""}</div><div class="mk-p"><span>${MKT("mín","min","mín")} ${i.yrs} ${yr(i.yrs)}</span><div class="mk-bar"><i style="left:${i.pct}%"></i></div><span>${MKT("máx","max","máx")} · p${i.pct}</span></div><div class="mk-src">${esc(i.src)} · ${MKT("dato al","as of","dado de")} ${mkD(i.asof)}</div></div>`}).join("")+`</div>`).join("")+`</div></section>`;
-  // Tipo de cambio: cada moneda frente al peso chileno o al dólar; verde = la moneda se aprecia
-  if(MK.fx&&MK.fx.length){const base=mkFx==="usd"?"usd":"clp",rows=MK.fx.filter(f=>f[base]);
+  if(mkV==="co"){$("mkBody").innerHTML=mkTop()+mkCompany(k,hz);mkBind();return}
+  $("mkBody").innerHTML=mkTop()+mkSecRead(k,R,hz)+mkSecInd(k,hz)+mkSecCone()+mkSecEv(k)+mkSecFx(k,hz);
+  mkBind();
+}
+// Lectura del período: termómetro, reparto de señales y cuatro frases con su etiqueta
+function mkSecRead(k,R,hz){const n={f:0,n:0,a:0};MK.inds.forEach(i=>n[i.sg]++);const T=MK.inds.length||1,dv=R.score-R.prev;
+  const al=MK.inds.filter(i=>i.sg==="a").map(i=>i.n.replace(/\s*\(.*\)$/,""));
+  const LB=[MKT("Mercado global","Global market","Mercado global"),MKT("Mayor movimiento","Biggest mover","Maior movimento"),MKT("Ciclo y crédito","Cycle and credit","Ciclo e crédito"),"Chile"];
+  const rows=R.lines.map((l,i)=>`<div class="mk-row"><span class="mk-lb">${LB[i]||""}</span><p>${l.replace(/^<b>[^<:]*:\s*/,"<b>").replace(/^<b><\/b>\s*/,"")}</p></div>`).join("");
+  return `<section class="topic"><div class="topic-head"><div><h2>${MKT("Lectura","Reading","Leitura")} ${hz[1]}</h2><p class="meta">${MKT(`Apetito por riesgo de 0 a 100: promedio de las señales de los ${T} indicadores`,`Risk appetite from 0 to 100: average of the signals of the ${T} indicators`,`Apetite por risco de 0 a 100: média dos sinais dos ${T} indicadores`)}</p></div></div>
+  <div class="sp-card mk-hero2"><div class="mk-top"><div class="mk-g">${mkGauge(R.score)}<span class="mk-dv ${dv>0?"mk-up":dv<0?"mk-dn":""}">${dv>0?"▲ +":dv<0?"▼ ":"= "}${dv?Math.abs(dv):""} ${k?MKT("vs inicio del período","vs start of period","vs início do período"):MKT("vs ayer","vs yesterday","vs ontem")} (${R.prev})</span></div>
+  <div class="mk-sig"><div class="mk-stack"><i class="f" style="flex:${n.f}"></i><i class="n" style="flex:${n.n}"></i><i class="a" style="flex:${n.a}"></i></div>
+  <div class="mk-sl"><span><i class="f"></i>${n.f} ${MKT("favorables","favorable","favoráveis")}</span><span><i class="n"></i>${n.n} ${MKT("neutrales","neutral","neutros")}</span><span><i class="a"></i>${n.a} ${MKT("en alerta","on warning","em alerta")}</span></div>
+  ${al.length?`<div class="mk-al"><span>${MKT("En alerta","On warning","Em alerta")}</span>${al.map(a=>`<em>${esc(a)}</em>`).join("")}</div>`:""}</div></div>
+  <div class="mk-rows">${rows}</div></div></section>`}
+// Indicadores clave: una tabla compacta por grupo; al tocar una fila se abre la lectura y la fuente
+let mkIndSel="";
+function mkSecInd(k,hz){const G=[];MK.inds.forEach(i=>{let g=G.find(x=>x.g===i.g);if(!g)G.push(g={g:i.g,a:[]});g.a.push(i)});
+  return `<section class="topic"><div class="topic-head"><div><h2>${MKT("Indicadores clave","Key indicators","Indicadores-chave")}</h2><p class="meta">${MKT(`Valor, variación ${hz[1]} y dónde está frente a sus últimos años · toca una fila para ver la lectura`,`Value, change ${hz[1]} and where it sits against recent years · tap a row for the reading`,`Valor, variação ${hz[1]} e onde está frente aos últimos anos · toque uma linha para ver a leitura`)}</p></div></div><div class="mk-grid">`+
+  G.map(g=>{const c={f:0,n:0,a:0};g.a.forEach(i=>c[i.sg]++);
+    return `<div class="sp-card mk-it"><div class="mk-ith"><span>${esc(g.g)}</span><span class="mk-cnt">${["f","n","a"].filter(s=>c[s]).map(s=>`<i class="${s}"></i>${c[s]}`).join(" ")}</span></div>
+    <div class="mk-ir mk-irh"><span></span><span>${MKT("Indicador","Indicator","Indicador")}</span><span>${MKT("Valor","Value","Valor")}</span><span>${hz[0]}</span><span>${MKT("Histórico","History","Histórico")}</span></div>`+
+    g.a.map(i=>{const d=i.d[k],cl=d?(d.x>0?"mk-up":d.x<0?"mk-dn":""):"",op=mkIndSel===i.id;
+      return `<div class="mk-ir" data-i="${i.id}" role="button" aria-expanded="${op}"><span class="mk-dot ${i.sg}" title="${MK_SG[i.sg]}"></span><span class="mk-inm">${esc(i.n)}<small>${MK_SG[i.sg]}</small></span><span class="mk-iv">${esc(i.v)}</span><span class="mk-idl"><span class="${cl}">${d?esc(d.s):MKT("s/d","n/a","s/d")}</span>${d&&Math.abs(d.z)>=2?`<small class="mk-z">${MKT("inusual","unusual","incomum")}</small>`:""}</span><span class="mk-ipc"><span class="mk-bar"><i style="left:${i.pct}%"></i><b></b></span><small>p${i.pct}</small></span></div>`+
+      (op?`<div class="mk-idet"><p>${esc(i.txt)}</p><small>${MKT(`Percentil ${i.pct}: el valor de hoy es mayor que el ${i.pct}% de los últimos ${i.yrs} años.`,`Percentile ${i.pct}: today's value is above ${i.pct}% of the last ${i.yrs} years.`,`Percentil ${i.pct}: o valor de hoje é maior que ${i.pct}% dos últimos ${i.yrs} anos.`)} ${esc(i.src)} · ${MKT("dato al","as of","dado de")} ${mkD(i.asof)}</small></div>`:"")}).join("")+`</div>`}).join("")+`</div></section>`}
+function mkSecFx(k,hz){let h='';
+  if(!(MK.fx&&MK.fx.length))return "";{const base=mkFx==="usd"?"usd":"clp",rows=MK.fx.filter(f=>f[base]);
     const fv=v=>base==="clp"?"$"+(v>=100?Math.round(v).toLocaleString(MKLOC):v.toLocaleString(MKLOC,{maximumFractionDigits:v>=1?1:3})):"US$ "+(v>=1?v.toLocaleString(MKLOC,{minimumFractionDigits:4,maximumFractionDigits:4}):v.toLocaleString(MKLOC,{maximumSignificantDigits:4}));
     const art=f=>(MKL==="en"?"the ":MKL==="pt"?(["GBP","INR","CLP"].includes(f.c)&&f.c!=="CLP"?"a ":"o "):(["GBP","INR"].includes(f.c)?"la ":"el "))+"<b>"+esc(MKL==="en"?f.n:f.n.toLowerCase())+"</b>";
     const rk=rows.filter(f=>f[base].d[k]).sort((a,b)=>b[base].d[k].x-a[base].d[k].x);
@@ -2960,14 +3030,15 @@ function mkRender(){const k=mkH,R=MK.read[k],hz=MK_HZ[k];
     const sum=rk.length>1?MKT(`${per}, la moneda que más se fortaleció frente ${bn} fue ${art(top)} (${esc(top[base].d[k].s)}) y la que más se debilitó, ${art(bot)} (${esc(bot[base].d[k].s)}).`,
       `${per}, the currency that gained most against ${bn} was ${art(top)} (${esc(top[base].d[k].s)}) and the one that lost most, ${art(bot)} (${esc(bot[base].d[k].s)}).`,
       `${per}, a moeda que mais se fortaleceu frente ${bn} foi ${art(top)} (${esc(top[base].d[k].s)}) e a que mais se enfraqueceu, ${art(bot)} (${esc(bot[base].d[k].s)}).`):"";
-    h+=`<section class="topic"><div class="topic-head"><div><h2>${MKT("Tipo de cambio","Exchange rates","Câmbio")}</h2><p class="meta">${base==="clp"?MKT("Cuánto vale cada moneda en pesos chilenos","What each currency is worth in Chilean pesos","Quanto vale cada moeda em pesos chilenos"):MKT("Cuánto vale cada moneda en dólares","What each currency is worth in US dollars","Quanto vale cada moeda em dólares")} · ${MKT("verde: se aprecia","green: appreciating","verde: valoriza")} ${hz[1]}</p></div></div>
+    return `<section class="topic"><div class="topic-head"><div><h2>${MKT("Tipo de cambio","Exchange rates","Câmbio")}</h2><p class="meta">${base==="clp"?MKT("Cuánto vale cada moneda en pesos chilenos","What each currency is worth in Chilean pesos","Quanto vale cada moeda em pesos chilenos"):MKT("Cuánto vale cada moneda en dólares","What each currency is worth in US dollars","Quanto vale cada moeda em dólares")} · ${MKT("verde: se aprecia","green: appreciating","verde: valoriza")} ${hz[1]}</p></div></div>
     <div class="chips" id="mkFx" role="group">${[["clp",MKT("Frente al peso chileno","Against the Chilean peso","Frente ao peso chileno")],["usd",MKT("Frente al dólar","Against the dollar","Frente ao dólar")]].map(([c,l])=>`<button class="chip" data-b="${c}" aria-pressed="${c===base}">${l}</button>`).join("")}</div>
     ${sum?`<p class="mk-how" style="color:var(--muted)">${sum}</p>`:""}<p class="mk-src">${MKT("Toca una moneda para ver su evolución en el período, en las dos direcciones.","Tap a currency to see how it moved over the period, both ways.","Toque uma moeda para ver sua evolução no período, nas duas direções.")}</p>
     <div class="sp-card mk-fx"><div class="mk-fxh"><span>${MKT("Moneda","Currency","Moeda")}</span><span>${MKT("Valor","Value","Valor")}</span><span>${hz[0]}</span><span>${MKT("10 años","10 years","10 anos")}</span></div>`+rows.map(f=>{const x=f[base],d=x.d[k],cl=d?(d.x>0?"mk-up":d.x<0?"mk-dn":""):"";
       const other=base==="clp"?(f.c==="USD"?"CLP":"CLP"):(f.c==="CLP"?"USD":"USD"),pair=f.c===mkFxSel?`<div class="mk-fxdet">${mkPair(f.c==="CLP"&&base==="clp"?"USD":f.c,base==="clp"?"CLP":"USD",k)}</div>`:"";
       return `<div class="mk-fxr" data-c="${f.c}" role="button" aria-expanded="${f.c===mkFxSel}"><div class="mk-fxn"><span class="fl">${f.f}</span><div style="min-width:0"><b>${f.c}</b><small>${esc(f.n)}</small></div></div><div class="mk-fxv">${fv(x.v)}</div><div class="mk-fxd"><span class="${cl}">${d?esc(d.s):MKT("s/d","n/a","s/d")}</span>${d&&Math.abs(d.z)>=2?`<span class="mk-z">${MKT("inusual","unusual","incomum")}</span>`:""}</div><div class="mk-fxp"><div class="mk-bar"><i style="left:${x.pct}%"></i></div><span>p${x.pct}</span></div></div>${pair}`}).join("")+`</div>
     <p class="fc-disc">${MKT(`El percentil compara el valor de hoy con los últimos ${rows[0][base].yrs} años: p95 significa que la moneda está más cara que el 95% del tiempo. Fuente: Yahoo Finance; datos al ${mkD(rows[0][base].asof)}.`,`The percentile compares today's value with the last ${rows[0][base].yrs} years: p95 means the currency is dearer than 95% of the time. Source: Yahoo Finance; data as of ${mkD(rows[0][base].asof)}.`,`O percentil compara o valor de hoje com os últimos ${rows[0][base].yrs} anos: p95 significa que a moeda está mais cara que em 95% do tempo. Fonte: Yahoo Finance; dados de ${mkD(rows[0][base].asof)}.`)}</p></section>`}
-  // Puntos de inflexión del período
+  return h}
+function mkSecEv(k){let h='';
   const ev=MK.evs.filter(e=>e.k<=k),W=MKT("MSCI Mundo","MSCI World","MSCI Mundo");
   h+=`<section class="topic"><div class="topic-head"><div><h2>${MKT("Puntos de inflexión","Turning points","Pontos de inflexão")}</h2><p class="meta">${MKT("Días en que el MSCI Mundo se movió más de 2,5 veces su volatilidad del momento, con lo que se movió junto","Days when the MSCI World moved more than 2.5 times its volatility at the time, and what moved with it","Dias em que o MSCI Mundo se moveu mais de 2,5 vezes a volatilidade do momento, e o que se moveu junto")}</p></div></div>`+
     (ev.length?`<div class="mk-evs">`+ev.map(e=>{const d0=new Date(e.t+"T12:00:00Z"),a=new Date(d0-864e5).toISOString().slice(0,10),b=new Date(+d0+864e5).toISOString().slice(0,10);
@@ -2975,7 +3046,8 @@ function mkRender(){const k=mkH,R=MK.read[k],hz=MK_HZ[k];
       const u=`https://news.google.com/search?q=${encodeURIComponent(`${q} after:${a} before:${b}`)}${gl}`;
       return `<div class="sp-card mk-ev"><div class="mk-evh"><span>${esc(mkDL(e.t))}</span><span>${mkDec(e.z)} σ</span></div><div class="mk-evm ${e.r<0?"mk-dn":"mk-up"}">${e.r>0?"+":"−"}${mkDec(Math.abs(e.r))}%<small>${W}</small></div><div class="mk-co">${e.co.map(c=>`<span>${esc(c)}</span>`).join("")}</div><a href="${u}" target="_blank" rel="noopener">${MKT("Noticias de ese día","News from that day","Notícias desse dia")} ↗</a></div>`}).join("")+`</div>`
     :`<p class="note">${MKT(`Sin días fuera de lo normal ${["hoy","esta semana","este mes","este trimestre","este año"][k]}.`,`No unusual days ${["today","this week","this month","this quarter","this year"][k]}.`,`Sem dias fora do normal ${["hoje","nesta semana","neste mês","neste trimestre","neste ano"][k]}.`)}</p>`)+`</section>`;
-  // Cono
+  return h}
+function mkSecCone(){let h='';
   const C=MK.cones.find(c=>c.s===mkIx)||MK.cones[0];mkIx=C.s;
   const nxt=mkD(new Date(Date.parse(MK.track.first)+91*864e5).toISOString().slice(0,10)),fy=new Date(C.bt.from).getUTCFullYear();
   h+=`<section class="topic"><div class="topic-head"><div><h2>${MKT("Proyección a 2 años","2-year outlook","Projeção para 2 anos")}</h2><p class="meta">${MKT("Cono de probabilidad por trimestre · bandas al 50%, 80% y 95%","Probability cone by quarter · 50%, 80% and 95% bands","Cone de probabilidade por trimestre · faixas de 50%, 80% e 95%")}</p></div></div>
@@ -2991,9 +3063,7 @@ function mkRender(){const k=mkH,R=MK.read[k],hz=MK_HZ[k];
     `<b>Precisão.</b> Em ${C.bt.n} janelas de 1 ano desde ${fy}, a faixa de 80% sem ajuste conteve ${C.bt.raw80}% dos resultados reais; sua largura foi ajustada (×${mkDec(C.bt.k)}) para que a de 80% contenha 80%, e com esse ajuste a de 95% contém ${C.bt.c95}%. `)}${MK.track.n?MKT(`Seguimiento en vivo: ${MK.track.n} pronósticos ya vencidos; el ${MK.track.c80}% cayó dentro de la banda del 80%.`,`Live tracking: ${MK.track.n} forecasts already due; ${MK.track.c80}% landed inside the 80% band.`,`Acompanhamento ao vivo: ${MK.track.n} previsões já vencidas; ${MK.track.c80}% caíram dentro da faixa de 80%.`)
     :MKT(`Seguimiento en vivo: cada día se guarda el pronóstico y se compara con el resultado real al vencer cada trimestre; las primeras comparaciones llegan el ${nxt}.`,`Live tracking: each day's forecast is saved and compared with the actual result when each quarter comes due; the first comparisons arrive on ${nxt}.`,`Acompanhamento ao vivo: a previsão de cada dia é salva e comparada com o resultado real ao vencer cada trimestre; as primeiras comparações chegam em ${nxt}.`)}</p>
   <p class="fc-disc">${MKT("Proyecciones estadísticas con fines informativos. No son una recomendación de inversión y pueden fallar; la geopolítica puede romper cualquier banda.","Statistical projections for information only. They are not investment advice and can be wrong; geopolitics can break any band.","Projeções estatísticas com fins informativos. Não são recomendação de investimento e podem falhar; a geopolítica pode romper qualquer faixa.")}</p></div></section>`;
-  $("mkBody").innerHTML=h;
-  mkBind();
-}
+  return h}
 function mkFan(C){const W=360,Hh=214,L=4,R=304,T=12,B=184;const tp=s=>Date.parse(s);
   const t0=tp(C.hist[0].t),tN=tp(C.asof),t1=tp(C.fc[C.fc.length-1].target);
   const X=t=>L+(t-t0)/(t1-t0)*(R-L);const all=[...C.hist.map(p=>p.v),...C.fc.flatMap(f=>[f.p[0],f.p[6]]),C.S0];
@@ -3023,23 +3093,73 @@ const mkAt=(ser,t)=>{let lo=0,hi=ser.length-1,r=-1;while(lo<=hi){const m=(lo+hi)
 const mkFmt=v=>{const a=Math.abs(v);return a>=1000?Math.round(v).toLocaleString(MKLOC):a>=10?v.toLocaleString(MKLOC,{minimumFractionDigits:2,maximumFractionDigits:2}):a>=1?v.toLocaleString(MKLOC,{minimumFractionDigits:4,maximumFractionDigits:4}):v.toLocaleString(MKLOC,{maximumSignificantDigits:4})};
 const mkPct=x=>(x>0?"+":x<0?"−":"")+mkDec(Math.abs(x).toFixed(1))+"%";
 const mkDT=t=>new Date(t*864e5).toLocaleDateString(MKLOC,{day:"numeric",month:"short",timeZone:"UTC"}).replace(".","");
-// Gráfico de línea del período elegido
-function mkLine(pts,fmt){if(pts.length<2)return `<p class="note">${MKT("Sin datos suficientes para el período.","Not enough data for the period.","Sem dados suficientes para o período.")}</p>`;
-  const W=360,Hh=128,L=4,R=300,T=10,B=104,vs=pts.map(p=>p[1]),mn=Math.min(...vs),mx=Math.max(...vs),pad=(mx-mn)*.08||mx*.001;
-  const t0=pts[0][0],t1=pts[pts.length-1][0],X=t=>L+(t-t0)/((t1-t0)||1)*(R-L),Y=v=>B-(v-mn+pad)/((mx-mn+2*pad)||1)*(B-T);
-  const up=vs[vs.length-1]>=vs[0],col=up?"#2FD3A0":"#FF5C7A",ln=pts.map(p=>`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
-  const iMx=vs.indexOf(mx),iMn=vs.indexOf(mn);
-  return `<svg class="mk-ln" viewBox="0 0 ${W} ${Hh}" role="img"><line x1="${L}" x2="${R}" y1="${Y(vs[0]).toFixed(1)}" y2="${Y(vs[0]).toFixed(1)}" stroke="var(--line)" stroke-dasharray="3 3"/>
-  <polygon points="${X(t0).toFixed(1)},${B} ${ln} ${X(t1).toFixed(1)},${B}" fill="${col}" fill-opacity=".1"/><polyline points="${ln}" fill="none" stroke="${col}" stroke-width="1.8"/>
-  <circle cx="${X(t1).toFixed(1)}" cy="${Y(vs[vs.length-1]).toFixed(1)}" r="2.6" fill="${col}"/>
-  <text x="${R+4}" y="${(Y(mx)+3).toFixed(1)}">${fmt(mx)}</text><text x="${R+4}" y="${(Y(mn)+3).toFixed(1)}">${fmt(mn)}</text>
-  <text x="${L}" y="${Hh-6}">${mkDT(t0)}</text><text x="${R}" y="${Hh-6}" text-anchor="end">${mkDT(t1)}</text></svg>`}
 // Precio de 1 unidad de x expresado en y (las series vienen en unidades por dólar)
 function mkCross(x,y){const S=MK.fxs||{},sx=x==="USD"?null:S[x],sy=y==="USD"?null:S[y],base=sx||sy;if(!base)return[];
   return base.map(([t])=>{const ux=sx?mkAt(sx,t):1,uy=sy?mkAt(sy,t):1;return ux&&uy?[t,uy/ux]:null}).filter(Boolean)}
 function mkPair(a,b,k){return `<div class="mk-pair">`+[[a,b],[b,a]].map(([x,y])=>{const s=mkWin(mkCross(x,y),k);if(s.length<2)return "";const v=s[s.length-1][1],c=(v/s[0][1]-1)*100;
   return `<div class="mk-pc"><div class="mk-ph"><span>${MKT("Cuánto cuesta","Price of","Quanto custa")} 1 ${x} ${MKT("en","in","em")} ${y}</span><b>${mkFmt(v)} ${y}</b><span class="${c>0?"mk-up":c<0?"mk-dn":""}">${mkPct(c)} <small>${MK_HZ[k][2]}</small></span></div>${mkLine(s,mkFmt)}</div>`}).join("")+`</div>`}
-function mkTop(){return `<div class="chips" id="mkV" role="group">${[["mundo",MKT("Mundo","World","Mundo")],["cty",MKT("Por país","By country","Por país")]].map(([c,l])=>`<button class="chip" data-v="${c}" aria-pressed="${c===mkV}">${l}</button>`).join("")}</div>`}
+// Gráfico de línea con ejes: valores "redondos" a la derecha y fechas según el largo del período
+function mkTicks(mn,mx,n){const r=(mx-mn)||Math.abs(mx)||1,raw=r/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,st=(f<1.5?1:f<2.25?2:f<3.5?2.5:f<7.5?5:10)*p;
+  const o=[];for(let v=Math.ceil(mn/st)*st;v<=mx+st*1e-9;v+=st)o.push(+v.toPrecision(12));return o}
+function mkXT(pts){const t0=pts[0][0],t1=pts[pts.length-1][0],sp=t1-t0,D=t=>new Date(t*864e5),out=[];
+  const mo=t=>D(t).toLocaleDateString(MKLOC,{month:"short",timeZone:"UTC"}).replace(".","");
+  if(sp<=8){pts.forEach(p=>out.push([p[0],D(p[0]).toLocaleDateString(MKLOC,{weekday:"short",day:"numeric",timeZone:"UTC"}).replace(".","")]))}
+  else if(sp<=40){let w=-1;pts.forEach(p=>{const k=Math.floor((p[0]+3)/7);if(k!==w){w=k;out.push([p[0],mkDT(p[0])])}})}
+  else if(sp<=120){let m=-1;pts.forEach(p=>{const d=D(p[0]),k=d.getUTCMonth()*2+(d.getUTCDate()>=15?1:0);if(k!==m){m=k;out.push([p[0],mkDT(p[0])])}})}
+  else{let m=-1;pts.forEach(p=>{const d=D(p[0]),k=d.getUTCMonth();if(k!==m){m=k;out.push([p[0],mo(p[0])+(k===0||!out.length?" "+String(d.getUTCFullYear()).slice(2):"")])}})}
+  if(out.length>1&&out[0][0]-t0<sp*.04&&sp>8)out[0][1]=out[0][1]; // primer tick en el borde
+  let o=out;while(o.length>7)o=o.filter((_,i)=>i%2===0);return o}
+function mkLine(pts,fmt){if(pts.length<2)return `<p class="note">${MKT("Sin datos suficientes para el período.","Not enough data for the period.","Sem dados suficientes para o período.")}</p>`;
+  const W=360,Hh=168,L=4,R=296,T=10,B=140,vs=pts.map(p=>p[1]);let mn=Math.min(...vs),mx=Math.max(...vs);
+  const yt=mkTicks(mn,mx,4);mn=Math.min(mn,yt[0]??mn);mx=Math.max(mx,yt[yt.length-1]??mx);const pad=(mx-mn)*.04||Math.abs(mx)*.001;mn-=pad;mx+=pad;
+  const t0=pts[0][0],t1=pts[pts.length-1][0],X=t=>L+(t-t0)/((t1-t0)||1)*(R-L),Y=v=>B-(v-mn)/((mx-mn)||1)*(B-T);
+  const up=vs[vs.length-1]>=vs[0],col=up?"#2FD3A0":"#FF5C7A",ln=pts.map(p=>`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
+  let s=`<svg class="mk-ln" viewBox="0 0 ${W} ${Hh}" role="img">`;
+  yt.forEach(v=>{const y=Y(v);if(y<T-2||y>B+2)return;s+=`<line x1="${L}" x2="${R}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)"/><text x="${R+5}" y="${(y+3).toFixed(1)}">${fmt(v)}</text>`});
+  s+=`<line x1="${L}" x2="${R}" y1="${Y(vs[0]).toFixed(1)}" y2="${Y(vs[0]).toFixed(1)}" stroke="var(--muted)" stroke-opacity=".5" stroke-dasharray="3 3"/>`;
+  mkXT(pts).forEach(([t,l],i,a)=>{const x=X(t);s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${B}" y2="${B+4}" stroke="var(--muted)"/><text x="${x.toFixed(1)}" y="${B+16}" text-anchor="${i===0&&x<20?"start":x>R-20?"end":"middle"}">${esc(l)}</text>`});
+  s+=`<line x1="${L}" x2="${R}" y1="${B}" y2="${B}" stroke="var(--muted)" stroke-opacity=".6"/>`;
+  s+=`<polygon points="${X(t0).toFixed(1)},${B} ${ln} ${X(t1).toFixed(1)},${B}" fill="${col}" fill-opacity=".1"/><polyline points="${ln}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round"/>`;
+  const im=vs.indexOf(Math.max(...vs)),iM=vs.indexOf(Math.min(...vs));
+  [[im,"▲"],[iM,"▼"]].forEach(([i,g])=>{if(i>0&&i<vs.length-1)s+=`<circle cx="${X(pts[i][0]).toFixed(1)}" cy="${Y(vs[i]).toFixed(1)}" r="2" fill="var(--muted)"/>`});
+  s+=`<circle cx="${X(t1).toFixed(1)}" cy="${Y(vs[vs.length-1]).toFixed(1)}" r="3" fill="${col}"/>`;
+  return s+`</svg>`}
+function mkTop(){return `<div class="chips" id="mkV" role="group">${[["mundo",MKT("Mundo","World","Mundo")],["cty",MKT("Por país","By country","Por país")],["co",MKT("Por compañía","By company","Por empresa")]].map(([c,l])=>`<button class="chip" data-v="${c}" aria-pressed="${c===mkV}">${l}</button>`).join("")}</div>`}
+/* ---- Mercados: vista por compañía ---- */
+let mkCoSel=store.get("dial-mk-co",""),mkCoSort=store.get("dial-mk-cosort","cap");
+const MK_SEC={es:{tech:"Tecnología",semi:"Semiconductores",comm:"Comunicaciones",cons:"Consumo",auto:"Autos",fin:"Financiero",health:"Salud",energy:"Energía",mining:"Minería"},
+  en:{tech:"Technology",semi:"Semiconductors",comm:"Communications",cons:"Consumer",auto:"Autos",fin:"Financials",health:"Health care",energy:"Energy",mining:"Mining"},
+  pt:{tech:"Tecnologia",semi:"Semicondutores",comm:"Comunicações",cons:"Consumo",auto:"Automóveis",fin:"Financeiro",health:"Saúde",energy:"Energia",mining:"Mineração"}}[MKL];
+// miles de millones de dólares → texto corto
+function mkCap(b,sign,short){const a=Math.abs(b),sg=sign?(b>0?"+":b<0?"−":""):"",cu=short?"":MKL==="en"?"$":"US$ ";
+  if(MKL==="en")return sg+cu+(a>=1000?mkDec((a/1000).toFixed(2))+"T":a>=10?Math.round(a)+"B":mkDec(a.toFixed(1))+"B");
+  if(MKL==="pt")return sg+cu+(a>=1000?mkDec((a/1000).toFixed(2))+" tri":a>=10?Math.round(a)+" bi":mkDec(a.toFixed(1))+" bi");
+  return sg+cu+(a>=1000?mkDec((a/1000).toFixed(2))+(short?" bill":" billones"):a>=10?Math.round(a).toLocaleString("es-CL")+" mil M":mkDec(a.toFixed(1))+" mil M")}
+function mkCompany(k,hz){const L=(MK.cos||[]).filter(c=>c.cap);if(!L.length)return `<p class="note">${MKT("Sin datos de compañías por ahora.","No company data yet.","Sem dados de empresas por enquanto.")}</p>`;
+  const tot=L.reduce((s,c)=>s+c.cap,0),net=L.reduce((s,c)=>s+(c.con[k]||0),0),by=[...L].filter(c=>c.con[k]!=null).sort((a,b)=>b.con[k]-a.con[k]);
+  const up=by.filter(c=>c.con[k]>0).slice(0,3),dn=by.filter(c=>c.con[k]<0).slice(-3).reverse();
+  const top5=[...L].sort((a,b)=>b.cap-a.cap).slice(0,5),sh5=Math.round(top5.reduce((s,c)=>s+c.cap,0)/tot*100);
+  const nm=a=>a.map(c=>`<b>${esc(c.n)}</b> (${mkCap(c.con[k],1)})`).join(", ");
+  const per=MKT(["En el día","En la semana","En el mes","En el trimestre","En el año"][k],["On the day","This week","This month","This quarter","This year"][k],["No dia","Na semana","No mês","No trimestre","No ano"][k]);
+  const R=[[MKT("Valor total","Total value","Valor total"),MKT(`${per}, las ${L.length} compañías ${net>=0?"sumaron":"perdieron"} <b>${mkCap(Math.abs(net))}</b> de valor de mercado; hoy valen en conjunto ${mkCap(tot)}.`,`${per}, the ${L.length} companies ${net>=0?"added":"lost"} <b>${mkCap(Math.abs(net))}</b> in market value; together they are worth ${mkCap(tot)} today.`,`${per}, as ${L.length} empresas ${net>=0?"somaram":"perderam"} <b>${mkCap(Math.abs(net))}</b> em valor de mercado; hoje valem juntas ${mkCap(tot)}.`)],
+    up.length?[MKT("Más aportaron","Biggest gains","Mais somaram"),nm(up)+"."]:null,dn.length?[MKT("Más restaron","Biggest losses","Mais subtraíram"),nm(dn)+"."]:null,
+    [MKT("Concentración","Concentration","Concentração"),MKT(`Las 5 más grandes son el ${sh5}% del valor de esta lista.`,`The 5 largest are ${sh5}% of this list's value.`,`As 5 maiores são ${sh5}% do valor desta lista.`)]].filter(Boolean);
+  const S=[...L].sort(mkCoSort==="move"?(a,b)=>(b.con[k]??-1e9)-(a.con[k]??-1e9):mkCoSort==="pct"?(a,b)=>(b.d[k]?.x??-1e9)-(a.d[k]?.x??-1e9):(a,b)=>b.cap-a.cap);
+  const mxc=Math.max(...L.map(c=>Math.abs(c.con[k]||0)))||1;
+  let h=`<section class="topic"><div class="topic-head"><div><h2>${MKT("Las compañías que mueven el mundo","The companies that move the world","As empresas que movem o mundo")}</h2><p class="meta">${MKT(`Las de mayor valor de mercado del planeta y cuánto valor sumaron o restaron ${hz[1]}`,`The largest companies by market value and how much value they added or lost ${hz[1]}`,`As de maior valor de mercado do planeta e quanto valor somaram ou perderam ${hz[1]}`)}</p></div></div>
+  <div class="sp-card mk-hero2"><div class="mk-rows">${R.map(([l,t])=>`<div class="mk-row"><span class="mk-lb">${l}</span><p>${t}</p></div>`).join("")}</div></div></section>
+  <section class="topic"><div class="topic-head"><div><h2>${MKT("Ranking","Ranking","Ranking")}</h2><p class="meta">${MKT("Toca una compañía para ver su gráfico y sus datos","Tap a company for its chart and figures","Toque uma empresa para ver o gráfico e os dados")}</p></div></div>
+  <div class="chips" id="mkCoS" role="group">${[["cap",MKT("Tamaño","Size","Tamanho")],["move",MKT("Aporte","Impact","Impacto")],["pct",MKT("Variación","Change","Variação")]].map(([c,l])=>`<button class="chip" data-s="${c}" aria-pressed="${c===mkCoSort}">${l}</button>`).join("")}</div>
+  <div class="sp-card mk-fx"><div class="mk-coh"><span>#</span><span>${MKT("Compañía","Company","Empresa")}</span><span>${MKT("Valor US$","Value $","Valor US$")}</span><span>${hz[0]}</span><span>${MKT("Aporte US$","Impact $","Impacto US$")}</span></div>`+
+  S.map((c,i)=>{const d=c.d[k],cl=d?(d.x>0?"mk-up":d.x<0?"mk-dn":""):"",cn=c.con[k],w=cn==null?0:Math.abs(cn)/mxc*50,op=mkCoSel===c.s;
+    return `<div class="mk-cor" data-s="${esc(c.s)}" role="button" aria-expanded="${op}"><span class="mk-rk">${i+1}</span><span class="mk-fxn"><span class="fl">${c.f}</span><span style="min-width:0"><b>${esc(c.n)}</b><small>${esc(MK_SEC[c.sec]||c.sec)} · ${esc(c.s)}</small></span></span><span class="mk-fxv">${mkCap(c.cap,0,1)}</span><span class="mk-fxd ${cl}">${d?esc(d.s):"s/d"}</span><span class="mk-con"><span class="mk-cb"><i class="${cn>=0?"p":"m"}" style="width:${w.toFixed(1)}%"></i></span><small class="${cn>0?"mk-up":cn<0?"mk-dn":""}">${cn==null?"s/d":mkCap(cn,1,1)}</small></span></div>`+
+    (op?`<div class="mk-fxdet">${mkCoDet(c,k,hz)}</div>`:"")}).join("")+`</div>
+  <p class="fc-disc">${MKT("Valor de mercado aproximado: acciones en circulación según los últimos reportes de cada compañía multiplicadas por el precio de cierre, pasado a dólares con el tipo de cambio del día. El aporte incluye el efecto de la moneda. Precios: Yahoo Finance.","Approximate market value: shares outstanding from each company's latest reports times the closing price, converted to dollars at the day's exchange rate. The impact includes the currency effect. Prices: Yahoo Finance.","Valor de mercado aproximado: ações em circulação segundo os últimos relatórios de cada empresa multiplicadas pelo preço de fechamento, convertido em dólares pelo câmbio do dia. O impacto inclui o efeito da moeda. Preços: Yahoo Finance.")}</p></section>`;
+  return h}
+function mkCoDet(c,k,hz){const s=mkWin(c.ser,k),d=c.d[k];
+  return `<div class="mk-ch"><b>${mkN(c.v)} <small style="font-size:12px">${c.cur}</small></b><span class="${d&&d.x>0?"mk-up":d&&d.x<0?"mk-dn":""}">${d?esc(d.s):"s/d"}</span><small>${hz[2]}</small></div>${mkLine(s,mkN)}
+  <div class="mk-prob"><div>${MKT("Frente a su media de 200 días","vs 200-day average","Frente à média de 200 dias")}<b class="${c.ma>=0?"mk-up":"mk-dn"}">${c.ma==null?"s/d":mkPct(c.ma)}</b></div><div>${MKT("Desde su máximo de 52 semanas","From 52-week high","Desde a máxima de 52 semanas")}<b class="${c.dd<-10?"mk-dn":""}">${mkPct(c.dd)}</b></div><div>${MKT("Volatilidad 21 días (anual)","21-day volatility (annual)","Volatilidade 21 dias (anual)")}<b>${mkDec(c.vol)}% <small style="font-size:11px;color:var(--dim)">p${c.volP}</small></b></div><div>${MKT("En lo que va del año","Year to date","No acumulado do ano")}<b class="${c.ytd>=0?"mk-up":"mk-dn"}">${c.ytd==null?"s/d":mkPct(c.ytd)}</b></div></div>
+  ${(c.evs||[]).filter(e=>e.k<=k).length?`<div class="mk-co">${c.evs.filter(e=>e.k<=k).map(e=>`<span class="${e.r<0?"mk-dn":"mk-up"}">${mkD(e.t)} ${e.r>0?"+":"−"}${mkDec(Math.abs(e.r))}% · ${mkDec(e.z)} σ</span>`).join("")}</div>`:""}`}
 function mkCountry(k,hz){const L=MK.countries||[];if(!L.length)return `<p class="note">${MKT("Sin datos por país por ahora.","No country data yet.","Sem dados por país por enquanto.")}</p>`;
   const C=L.find(c=>c.cc===mkCc)||L[0];mkCc=C.cc;const nm=MK_CN[C.cc]||C.cc;
   let h=`<div class="chips mk-cc" id="mkCc" role="group">${L.map(c=>`<button class="chip" data-c="${c.cc}" aria-pressed="${c.cc===C.cc}">${c.f} ${esc(MK_CN[c.cc]||c.cc)}</button>`).join("")}</div>`;
@@ -3069,6 +3189,9 @@ function mkBind(){
   $("mkCc")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkCc=b.dataset.c;store.set("dial-mk-cc",mkCc);mkRender()});
   $("mkFx")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkFx=b.dataset.b;store.set("dial-mk-fx",mkFx);mkRender()});
   $("mkIx")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkIx=b.dataset.s;store.set("dial-mk-ix",mkIx);mkRender()});
+  $("mkCoS")?.querySelectorAll("button").forEach(b=>b.onclick=()=>{mkCoSort=b.dataset.s;store.set("dial-mk-cosort",mkCoSort);mkRender()});
+  document.querySelectorAll("#mkBody .mk-cor[data-s]").forEach(r=>r.onclick=()=>{mkCoSel=mkCoSel===r.dataset.s?"":r.dataset.s;store.set("dial-mk-co",mkCoSel);mkRender()});
+  document.querySelectorAll("#mkBody .mk-ir[data-i]").forEach(r=>r.onclick=()=>{mkIndSel=mkIndSel===r.dataset.i?"":r.dataset.i;mkRender()});
   document.querySelectorAll("#mkBody .mk-fxr[data-c]").forEach(r=>r.onclick=()=>{mkFxSel=mkFxSel===r.dataset.c?"":r.dataset.c;store.set("dial-mk-fxsel",mkFxSel);mkRender()});
 }
 
