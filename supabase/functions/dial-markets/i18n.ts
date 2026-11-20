@@ -152,7 +152,7 @@ export function localize(p: any, lang: string): any {
   const fxd = (x: any) => (x ? { ...x, d: x.d.map((d: any) => (d ? { ...d, s: n(d.s) } : d)) } : x);
   // deno-lint-ignore no-explicit-any
   // deno-lint-ignore no-explicit-any
-  out.cos = (p.cos || []).map((i: any) => ({ ...i, d: (i.d || []).map((d: any) => (d ? { ...d, s: n(d.s) } : d)) }));
+  out.cos = (p.cos || []).map((i: any) => ({ ...i, ipo: i.ipo ? { ...i.ipo, s: n(i.ipo.s) } : null, d: (i.d || []).map((d: any) => (d ? { ...d, s: n(d.s) } : d)) }));
   // deno-lint-ignore no-explicit-any
   out.countries = (p.countries || []).map((c: any) => ({ ...c, idx: c.idx.map((i: any) => ({ ...i, d: (i.d || []).map((d: any) => (d ? { ...d, s: n(d.s) } : d)) })) }));
   out.fx = (p.fx || []).map((f: any) => ({ ...f, n: FXN[l][f.c] || f.n, usd: fxd(f.usd), clp: fxd(f.clp) }));

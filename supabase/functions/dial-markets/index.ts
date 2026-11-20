@@ -103,9 +103,11 @@ const FX: [string, string, string, string, boolean][] = [
 ];
 // Compañías que más pesan en los índices del mundo: [símbolo, nombre, bandera, sector, moneda, acciones en circulación (miles de millones, últimos reportes)]
 // La capitalización es aproximada: acciones en circulación × precio de cierre, pasada a dólares con el tipo de cambio del día.
-const COS: [string, string, string, string, string, number][] = [
+const COS: [string, string, string, string, string, number, [string, number]?][] = [
   ["AAPL", "Apple", "🇺🇸", "tech", "USD", 14.84], ["MSFT", "Microsoft", "🇺🇸", "tech", "USD", 7.43], ["NVDA", "NVIDIA", "🇺🇸", "semi", "USD", 24.3],
-  ["GOOGL", "Alphabet", "🇺🇸", "comm", "USD", 12.1], ["AMZN", "Amazon", "🇺🇸", "cons", "USD", 10.7], ["META", "Meta", "🇺🇸", "comm", "USD", 2.52],
+  ["GOOGL", "Alphabet", "🇺🇸", "comm", "USD", 12.1],
+  // Anthropic: salió a bolsa en Nasdaq el 19 nov 2026 a US$ 83; acciones totales (incluye restringidas y opciones) ≈ 1,76 billones / 97,17
+  ["ANT", "Anthropic", "🇺🇸", "tech", "USD", 18.1, ["2026-11-19", 83]], ["AMZN", "Amazon", "🇺🇸", "cons", "USD", 10.7], ["META", "Meta", "🇺🇸", "comm", "USD", 2.52],
   ["AVGO", "Broadcom", "🇺🇸", "semi", "USD", 4.72], ["TSLA", "Tesla", "🇺🇸", "auto", "USD", 3.22], ["BRK-B", "Berkshire Hathaway", "🇺🇸", "fin", "USD", 2.157],
   ["2330.TW", "TSMC", "🇹🇼", "semi", "TWD", 25.93], ["LLY", "Eli Lilly", "🇺🇸", "health", "USD", 0.897], ["JPM", "JPMorgan Chase", "🇺🇸", "fin", "USD", 2.75],
   ["V", "Visa", "🇺🇸", "fin", "USD", 1.93], ["WMT", "Walmart", "🇺🇸", "cons", "USD", 7.98], ["ORCL", "Oracle", "🇺🇸", "tech", "USD", 2.81],
@@ -359,13 +361,18 @@ async function compute() {
   };
   // Compañías: precio, tendencia, volatilidad, capitalización aproximada en dólares y cuánto valor sumaron o restaron por horizonte
   const uAt = (cur: string, t: number) => { if (cur === "USD") return 1; const a = FXS[cur]; if (!a?.length) return null; let lo = 0, hi = a.length - 1, r = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (a[m][0] <= t) { r = m; lo = m + 1; } else hi = m - 1; } return r < 0 ? a[0][1] : a[r][1]; };
-  const cos = COS.map(([sym, n, f, sec, cur, sh], j) => {
-    const x = gotCo[j]; if (x.length < 60) return null; Y[sym] = x;
+  const cos = COS.map(([sym, n, f, sec, cur, sh, ipo], j) => {
+    const x = gotCo[j]; if (!x.length || (!ipo && x.length < 60)) return null; Y[sym] = x;
     const o: Ser = []; let acc = 0; for (let i = 0; i < x.length; i++) { acc += x[i].v; if (i >= 200) acc -= x[i - 200].v; if (i >= 199) o.push({ t: x[i].t, v: acc / 200 }); } sma[sym] = o;
-    const st = idxStat(sym); if (!st) return null; const L = last(x); const u = uAt(cur, L.t); if (!u) return null;
+    // recién salida a bolsa: sin historia suficiente para tendencia, volatilidad ni percentiles
+    const st = x.length >= 30 ? idxStat(sym) : { s: sym, v: last(x).v, asof: iso(last(x).t), pct: null, yrs: 0, ma: null, dd: null, vol: null, volP: null, ytd: null, evs: [],
+      d: HZ.map((h) => { const c = chg(x, last(x).t, h, "pct"); return c && x.length > 1 && (h === 1 || x[0].t <= last(x).t - h) ? { s: c.s, x: Math.round(c.x * 100) / 100, z: 0 } : null; }),
+      ser: x.map((p) => [p.t, +p.v.toPrecision(6)]) };
+    if (!st) return null; const L = last(x); const u = uAt(cur, L.t); if (!u) return null;
     const cap = (L.v * sh) / u; // miles de millones de dólares
     const con = HZ.map((h) => { let i = x.length - 1; const b = h === 1 ? x[i - 1] : null; const t0 = b ? b.t : L.t - h; const p0 = b ? b.v : at(x, t0); const u0 = uAt(cur, t0); return p0 && u0 ? Math.round((cap - (p0 * sh) / u0) * 10) / 10 : null; });
-    return { ...st, n, f, sec, cur, cap: Math.round(cap * 10) / 10, con };
+    const ip = ipo ? { t: ipo[0], p: ipo[1], x: Math.round((L.v / ipo[1] - 1) * 1000) / 10, s: sg((L.v / ipo[1] - 1) * 100, 1) + "%" } : null;
+    return { ...st, n, f, sec, cur, cap: Math.round(cap * 10) / 10, con: con.map((c, i) => (st.d[i] ? c : null)), ipo: ip };
   }).filter(Boolean);
   const countries = CTRY.map(([cc, f, cur, syms]) => ({ cc, f, cur, idx: syms.map(idxStat).filter(Boolean) })).filter((c) => c.idx.length);
 
