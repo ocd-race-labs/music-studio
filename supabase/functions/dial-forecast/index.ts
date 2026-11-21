@@ -121,7 +121,15 @@ async function injuries(nameToAbbr: Map<string, string>) {
   return out;
 }
 // probabilidad de jugar según el estado del reporte
-const playProb = (st: string) => /out|suspen/i.test(st) ? 0 : /doubt/i.test(st) ? 0.25 : /question/i.test(st) ? 0.5 : /day/i.test(st) ? 0.6 : /probable/i.test(st) ? 0.9 : 1;
+const playProbDef = (st: string) => /out|suspen/i.test(st) ? 0 : /doubt/i.test(st) ? 0.25 : /question/i.test(st) ? 0.5 : /day/i.test(st) ? 0.6 : /probable/i.test(st) ? 0.9 : 1;
+// calibrada con lo que pasó de verdad (dial_fc_inj_calib), encogida hacia el valor por defecto con peso de 20 casos
+let CALIB: Record<string, { n: number; jugaron: number }> = {};
+const playProb = (st: string) => {
+  const d = playProbDef(st);
+  if (d === 0 || d === 1) return d;
+  const c = CALIB[st];
+  return c ? (c.jugaron + 20 * d) / (c.n + 20) : d;
+};
 
 // planilla de un partido (ESPN) → filas de dial_fc_box
 const numx = (x: any) => { const n = parseInt(String(x ?? ""), 10); return Number.isFinite(n) ? n : null; };
@@ -509,7 +517,8 @@ function absPts(x: any, P: any) {
   return r1(v);
 }
 function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: Map<string, any>) {
-  const x = predict(f, P);
+  const x0 = predict(f, P);
+  const x = f.mix ? { ...x0, p: f.mix.p, margin: f.mix.margin, total: f.mix.total, sd: f.mix.sd } : x0;
   const ho = outs?.get(g.home), ao = outs?.get(g.away);
   const usesAbs = "xs" in (P.margin || {});
   const bajas = usesAbs ? [...(f.abs_h || []).map((b: any) => ({ ...b, eq: g.home })), ...(f.abs_a || []).map((b: any) => ({ ...b, eq: g.away }))]
@@ -525,6 +534,7 @@ function predRow(g: Game, f: any, P: any, version: string, kind: string, outs?: 
       ...(bajas.length ? { bajas_calc: bajas } : {}),
       ...(f.extra_var ? { sd: r1(x.sd), sd_base: r1(x.sd0) } : {}),
       ...(f.pl_live ? { jugadores: f.pl_live } : {}),
+      ...(f.mix ? { escenarios: f.mix.esc, dudas: f.mix.dudas } : {}),
     },
     home_out: outs ? (ho?.out ?? 0) : null, away_out: outs ? (ao?.out ?? 0) : null,
     updated_at: new Date().toISOString(),
@@ -640,6 +650,8 @@ async function auto(adminKey: string) {
     const nameToAbbr = new Map<string, string>();
     for (const g of games) { if (g.home_name) nameToAbbr.set(g.home_name, g.home); if (g.away_name) nameToAbbr.set(g.away_name, g.away); }
     const outs = await injuries(nameToAbbr);
+    const { data: cal } = await db.from("dial_fc_inj_calib").select("status,n,jugaron");
+    CALIB = Object.fromEntries((cal || []).map((c: any) => [c.status, { n: Number(c.n), jugaron: Number(c.jugaron) }]));
     // bajas del reporte → jugadores con su nivel; las dudas entran con su probabilidad y agregan incertidumbre
     const { data: pls } = await db.from("dial_fc_players").select("athlete_id,name,team,tier,mpg,last_game").eq("season", season).in("tier", ["s", "a", "b"]).gte("mpg", 15);
     const byName = new Map((pls || []).map((p: any) => [`${p.team}|${p.name}`, p]));
@@ -650,7 +662,7 @@ async function auto(adminKey: string) {
         const p = playProb(it.status), pl = byName.get(`${team}|${it.name}`);
         if (p >= 1 || !pl) continue;
         const missed = games.filter((x) => completed(x) && (x.home === team || x.away === team) && x.start_time > pl.last_game).length;
-        list.push({ id: pl.athlete_id, n: pl.name, t: pl.tier, k: missed + 1, w: r3(1 - p), st: it.status, p });
+        list.push({ id: pl.athlete_id, n: pl.name, t: pl.tier, k: missed + 1, w: r3(1 - p), st: it.status, p, team });
       }
       return list;
     };
@@ -661,12 +673,13 @@ async function auto(adminKey: string) {
     const injOf = (team: string) => new Map((outs.get(team)?.list || []).map((it: any) => [it.name, it.status]));
     const cPl = P.margin?.plm || 0;
     // fuerza esperada: minutos habituales por probabilidad de jugar, reescalados a 240; idem erraticidad
-    const teamStr = (team: string, skip?: string, force?: string) => {
+    const teamStr = (team: string, skip?: string | Set<string>, force?: string | Set<string>) => {
       const inj = injOf(team);
+      const has = (x: any, id: string) => x && (typeof x === "string" ? x === id : x.has(id));
       const lst = rosterOf(team).map((p: any) => {
         const st = inj.get(p.name);
         let q = st ? playProb(String(st)) : 1;
-        if (p.athlete_id === skip) q = 0; else if (p.athlete_id === force) q = 1;
+        if (has(skip, p.athlete_id)) q = 0; else if (has(force, p.athlete_id)) q = 1;
         return { p, e: Math.max(p.n >= 3 ? p.mpg : 20, 1) * q, st, q: st ? playProb(String(st)) : 1 };
       });
       const sum = lst.reduce((a: number, x: any) => a + x.e, 0) || 1;
@@ -695,6 +708,34 @@ async function auto(adminKey: string) {
       }
       for (const pd of dmap.values() as any) ev += (cPl * pd.d) ** 2 * pd.p * (1 - pd.p);
       f.extra_var = ev;
+      // Mezcla de escenarios: las (hasta) 3 dudas que más pesan se resuelven juega / no juega; cada escenario con su
+      // propio margen y su probabilidad. Así el pronóstico no queda en un "promedio" que no describe ningún partido real.
+      const dudas = new Map<string, any>();
+      for (const b of [...f.abs_h, ...f.abs_a].filter((b: any) => b.p > 0 && b.p < 1)) dudas.set(b.id, { id: b.id, n: b.n, eq: b.team ?? null, q: b.p, imp: absPts({ ...b }, P) });
+      for (const pd of (f.pl_dud || [])) { const o = dudas.get(pd.id) || { id: pd.id, n: pd.name, q: pd.p, imp: 0 }; o.imp += Math.abs(cPl * pd.d); dudas.set(pd.id, o); }
+      const top = [...dudas.values()].filter((d) => d.imp >= 0.3).sort((a, b) => b.imp - a.imp).slice(0, 3);
+      if (top.length) {
+        const sc: any[] = [];
+        for (let mask = 0; mask < 1 << top.length; mask++) {
+          const plays = new Set<string>(), out = new Set<string>(); let pr = 1;
+          top.forEach((d, i) => { if (mask & (1 << i)) { out.add(d.id); pr *= 1 - d.q; } else { plays.add(d.id); pr *= d.q; } });
+          const fs: any = { ...f, abs_h: f.abs_h.map((b: any) => out.has(b.id) ? { ...b, w: 1 } : b).filter((b: any) => !plays.has(b.id)),
+            abs_a: f.abs_a.map((b: any) => out.has(b.id) ? { ...b, w: 1 } : b).filter((b: any) => !plays.has(b.id)) };
+          if (f.pl_live) { const Hs = teamStr(g.home, out, plays), As = teamStr(g.away, out, plays); fs.plm = Hs.s - As.s; }
+          // incertidumbre de las dudas que no se resolvieron en el escenario
+          let evr = 0;
+          for (const d of dudas.values()) if (!plays.has(d.id) && !out.has(d.id)) evr += d.imp ** 2 * d.q * (1 - d.q);
+          fs.extra_var = evr;
+          const x = predict(fs, P);
+          sc.push({ pr, m: x.margin, t: x.total, p: x.p, sd: x.sd, out: top.filter((d) => out.has(d.id)).map((d) => d.n) });
+        }
+        const m = sc.reduce((a, s) => a + s.pr * s.m, 0), t = sc.reduce((a, s) => a + s.pr * s.t, 0), ph = sc.reduce((a, s) => a + s.pr * s.p, 0);
+        const v = sc.reduce((a, s) => a + s.pr * (s.sd ** 2 + (s.m - m) ** 2), 0);
+        f.mix = { p: ph, margin: m, total: t, sd: Math.sqrt(v),
+          esc: sc.sort((a, b) => b.pr - a.pr).filter((s) => s.pr >= 0.03).slice(0, 4)
+            .map((s) => ({ pr: r3(s.pr), p: r3(s.p), m: r1(s.m), out: s.out })),
+          dudas: top.map((d) => ({ n: d.n, q: r3(d.q) })) };
+      }
       return predRow(g, f, P, model.version, "live", outs.size ? outs : undefined);
     });
     await upsertChunks("dial_fc_predictions", preds, "game_id,kind");

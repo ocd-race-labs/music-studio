@@ -2943,7 +2943,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-20mk1";
+const APP_VERSION="2026-11-21es";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -3836,13 +3836,17 @@ function fcCard(p,names){const ph=p.p_home,pa=1-ph,f=p.factors||{},c=f.contrib||
   const TIER={s:"estrella",a:"muy bueno",b:"bueno"},ST=x=>/out/i.test(x||"")?"fuera":/doubt/i.test(x||"")?"probable baja":/question/i.test(x||"")?"en duda":/day/i.test(x||"")?"día a día":/probable/i.test(x||"")?"probable que juegue":"";
   const bc=f.bajas_calc||[],dud=bc.filter(b=>b.w<1);
   const calc=bc.length?`<li><span class="fc-out"><b style="font-weight:600;color:var(--ink)">Bajas que entran al cálculo</b>${bc.map(b=>`<br>${esc(b.n)} (${esc(b.eq)}) · ${TIER[b.t]||""} · ${esc(ST(b.st)||"fuera")} · −${fcN1(b.pts*b.w)} pts${b.w<1?` de ${fcN1(b.pts)} si no juega`:""}`).join("")}</span></li>`:"";
-  let rng="",lo=null,hi=null;if(dud.length){const sd=f.sd_base||13.6,P=m=>0.5*(1+Math.tanh(0.7978845608*(m/sd)*(1+0.044715*(m/sd)**2)));let mp=p.pred_margin,mn=p.pred_margin;
+  let rng="",lo=null,hi=null;const esn=f.escenarios||[];
+  if(esn.length>1){const ps=esn.map(e=>e.p);lo=Math.min(...ps);hi=Math.max(...ps);
+    const lin=e=>{const fv=e.m>=0?p.home:p.away;return `<br>${e.out.length?"Sin "+esc(e.out.join(" ni ")):"Juegan todos"} (${fcPct(e.pr)}): ${esc(p.home)} gana ${fcPct(e.p)} · ${esc(fv)} −${fcN1(Math.abs(e.m))}`};
+    rng=`<li><span class="fc-out"><b style="font-weight:600;color:var(--ink)">Escenarios según quién juegue</b>${esn.map(lin).join("")}<br><small>La probabilidad principal combina estos escenarios según qué tan probable es cada uno.</small></span></li>`}
+  else if(dud.length){const sd=f.sd_base||13.6,P=m=>0.5*(1+Math.tanh(0.7978845608*(m/sd)*(1+0.044715*(m/sd)**2)));let mp=p.pred_margin,mn=p.pred_margin;
     dud.forEach(b=>{const s=b.eq===p.home?1:-1;mp+=s*b.w*b.pts;mn-=s*(1-b.w)*b.pts});const a=P(mp),z=P(mn);lo=Math.min(a,z);hi=Math.max(a,z);
     rng=`<li><span class="fc-out"><b style="font-weight:600;color:var(--ink)">Pronóstico menos seguro</b>: hay ${dud.length} jugador${dud.length>1?"es":""} en duda. Según quién juegue, ${esc(p.home)} gana entre ${fcPct(Math.min(a,z))} y ${fcPct(Math.max(a,z))}.</span></li>`}
   const outs=(f.bajas_local||f.bajas_visita)?`<li><span class="fc-out">Reporte de bajas · ${esc(p.home)}: ${esc((f.bajas_local||[]).join(", ")||"ninguna")} · ${esc(p.away)}: ${esc((f.bajas_visita||[]).join(", ")||"ninguna")}.</span></li>`:"";
   return `<div class="sp-card fc-g"><div class="fc-when"><span>${esc(fcWhen(p.start_time))}</span><span>${live?"en juego":"Elo "+Math.round(f.elo_a||0)+" · "+Math.round(f.elo_h||0)}</span></div>
     <div class="fc-teams"><div class="fc-tm">${fcLogo(p.away)}<span>${esc(an)}</span></div><span class="fc-at">en</span><div class="fc-tm r"><span>${esc(hn)}</span>${fcLogo(p.home)}</div></div>
-    <div class="fc-res${dud.length?" fc-dud":""}"><div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i>${lo!=null?`<b class="fc-rg" style="left:${((1-hi)*100).toFixed(1)}%;width:${Math.max((hi-lo)*100,1.5).toFixed(1)}%"></b>`:""}</div>
+    <div class="fc-res${dud.length||esn.length>1?" fc-dud":""}"><div class="fc-bar ${ph>=.5?"fc-hm":""}"><i style="width:${Math.round(Math.max(ph,pa)*100)}%"></i>${lo!=null?`<b class="fc-rg" style="left:${((1-hi)*100).toFixed(1)}%;width:${Math.max((hi-lo)*100,1.5).toFixed(1)}%"></b>`:""}</div>
     <div class="fc-pct"><span class="${pa>ph?"w":"l"}">${fcPct(pa)}</span>${lo!=null?`<span class="fc-rgl">rango por dudas ${ph>=.5?`${fcPct(lo)}–${fcPct(hi)}`:`${fcPct(1-hi)}–${fcPct(1-lo)}`}</span>`:""}<span class="${ph>=pa?"w":"l"}">${fcPct(ph)}</span></div>
     <div class="fc-mk"><div><span>Hándicap</span><b>${esc(fav)} −${fcN1(Math.abs(p.pred_margin))}</b></div><div><span>Total de puntos</span><b>${fcN1(p.pred_total)}</b></div></div></div>
     <details class="fc-why"><summary>Qué explica el pronóstico</summary><ul>${why}${calc}${rng}${outs}</ul></details></div>`}
