@@ -184,7 +184,7 @@ function load() { try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch
 function persist() { try { localStorage.setItem(LS_KEY, JSON.stringify(me)); } catch (e) {} }
 let me = Object.assign({ name: "", ncards: 2, cards: [], round: null, marks: {}, auto: false, speak: false, voice: null, claim: null }, load() || {});
 if (!me.voice) me.voice = me.speak ? "c" : "off";
-if (!me.voiceV2) { if (me.voice !== "off") me.voice = "c"; me.voiceV2 = true; }
+if (me.voice !== "off") me.voice = "c";
 
 /* ---------- shared game state ---------- */
 const EMPTY = { round: 0, drawn: [], winners: [], phase: "espera" };
@@ -428,7 +428,7 @@ function claim(type) {
 }
 
 /* ---------- speech ---------- */
-/* recorded voices: voz/f/<n>.mp3 (mujer) and voz/m/<n>.mp3 (hombre), played by one reused audio element */
+/* recorded channel voice: voz/c/<n>.mp3, played by one reused audio element */
 let unlocked = false, voiceStatus = "";
 const player = new Audio();
 player.preload = "auto";
@@ -436,7 +436,7 @@ function setVoiceStatus(t) { voiceStatus = t; const el = $("#voiceStatus"); if (
 function playNum(n) {
   try {
     player.pause();
-    player.src = "voz/" + (["c", "f", "m"].includes(me.voice) ? me.voice : "c") + "/" + n + ".mp3";
+    player.src = "voz/c/" + n + ".mp3";
     player.currentTime = 0;
     const p = player.play();
     if (p && p.then) p.then(() => { unlocked = true; setVoiceStatus(""); })
@@ -502,10 +502,8 @@ function render() {
         <div class="row">
           <label class="toggle" style="background:rgba(255,255,255,.85);padding:6px 10px;border-radius:10px"><input type="checkbox" id="autoMark" ${me.auto ? "checked" : ""}> Marcar solo</label>
           <div class="vseg" id="voice" role="group" aria-label="Voz que canta los números">
-            <button data-v="c" class="${me.voice === "c" ? "on" : ""}">🎙️ Canal</button>
-            <button data-v="f" class="${me.voice === "f" ? "on" : ""}">👩 Mujer</button>
-            <button data-v="m" class="${me.voice === "m" ? "on" : ""}">👨 Hombre</button>
-            <button data-v="off" class="${me.voice === "off" ? "on" : ""}">🔇</button>
+            <button data-v="c" class="${me.voice === "c" ? "on" : ""}">🔊 Activar voz</button>
+            <button data-v="off" class="${me.voice === "off" ? "on" : ""}">🔇 Desactivar</button>
           </div>
           <button class="btn ghost" id="changeCards" style="background:rgba(255,255,255,.85);padding:6px 10px;font-size:13px">Cambiar cartones</button>
         </div></div>
