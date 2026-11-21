@@ -268,6 +268,29 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .h-steps span{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(42,29,18,.07);color:#7a6a58}
 .h-steps span.now{background:#ffcf3f;color:#3b2a00}
 .h-steps span.done{background:#e3f3e1;color:#1f7a2a}
+.chat-fab{position:fixed;right:14px;bottom:88px;z-index:12;width:56px;height:56px;border-radius:50%;border:none;background:#24272d;color:#fff;font-size:24px;
+  box-shadow:0 6px 16px rgba(0,0,0,.35);display:grid;place-items:center}
+.chat-fab.bump{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.chat-badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;border:2px solid #fff}
+.chat{position:fixed;left:0;right:0;bottom:0;z-index:16;max-width:560px;margin:0 auto;height:min(70vh,560px);background:#fbfbfa;border-radius:20px 20px 0 0;
+  box-shadow:0 -10px 30px rgba(0,0,0,.3);display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+.chat[hidden]{display:none}
+.chat-fab[hidden],.chat-badge[hidden]{display:none}
+.chat-head{display:flex;align-items:center;gap:8px;padding:14px 16px 8px;font-family:Oswald,sans-serif;font-size:18px;text-transform:uppercase;letter-spacing:.4px}
+.chat-x{margin-left:auto;border:none;background:#eeefef;width:36px;height:36px;border-radius:50%;font-size:16px}
+.chat-list{flex:1;overflow-y:auto;padding:4px 12px 8px;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+.chat-empty{text-align:center;margin-top:30px}
+.msg{display:flex}
+.msg.mine{justify-content:flex-end}
+.bub{max-width:80%;background:#eeefef;border-radius:16px 16px 16px 4px;padding:7px 11px;font-size:15px;line-height:1.3;word-wrap:break-word}
+.msg.mine .bub{background:#24272d;color:#fff;border-radius:16px 16px 4px 16px}
+.bub b{display:block;font-size:12px;color:var(--red);margin-bottom:1px}
+.bub i{display:block;font-style:normal;font-size:10px;opacity:.55;margin-top:2px;text-align:right}
+.msg-del{border:none;background:none;color:inherit;text-decoration:underline;font-size:10px;padding:0 0 0 4px}
+.chat-quick{display:flex;gap:6px;overflow-x:auto;padding:6px 12px}
+.chat-quick button{border:none;background:#eeefef;border-radius:999px;padding:7px 12px;font-size:14px;white-space:nowrap;font-weight:700}
+.chat-form{display:flex;gap:8px;padding:6px 12px 12px}
+.chat-form input{flex:1;min-width:0}
 #toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;
   font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -284,6 +307,15 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 <div id="bar"></div>
 <div id="overlay"></div>
 <div id="toast"></div>
+<button id="chatFab" class="chat-fab" hidden aria-label="Abrir chat">💬<span id="chatBadge" class="chat-badge" hidden></span></button>
+<div id="chat" class="chat" hidden>
+  <div class="chat-head"><b>Chat</b><span class="muted" id="chatCount"></span><button class="chat-x" id="chatClose" aria-label="Cerrar chat">✕</button></div>
+  <div class="chat-list" id="chatList"></div>
+  <div class="chat-quick">
+    <button data-q="👏">👏</button><button data-q="😂">😂</button><button data-q="🍀 ¡Suerte!">🍀 ¡Suerte!</button><button data-q="😱 ¡Casi!">😱 ¡Casi!</button><button data-q="🔥">🔥</button>
+  </div>
+  <form class="chat-form" id="chatForm"><input type="text" id="chatInput" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button class="btn primary" type="submit">Enviar</button></form>
+</div>
 
 <svg width="0" height="0" style="position:absolute">
   <defs>
@@ -718,10 +750,78 @@ function netPill() {
 }
 
 /* ---------- render ---------- */
+/* ---------- chat ---------- */
+let chatMsgs = [], chatOpen = false, chatSending = false;
+let chatSeen = 0;
+try { chatSeen = Number(localStorage.getItem("bingo-chat-seen")) || 0; } catch (e) {}
+function chatVisible() {
+  const ok = !!(sb && me.name && me.cards.length);
+  $("#chatFab").hidden = !ok || chatOpen;
+  if (!ok) { $("#chat").hidden = true; chatOpen = false; }
+}
+function chatUnread() { return chatMsgs.filter((m) => m.id > chatSeen && m.player_id !== me.pid).length; }
+function markSeen() {
+  const last = chatMsgs.length ? chatMsgs[chatMsgs.length - 1].id : 0;
+  if (last > chatSeen) { chatSeen = last; try { localStorage.setItem("bingo-chat-seen", String(last)); } catch (e) {} }
+}
+function renderChat() {
+  chatVisible();
+  const n = chatUnread(), badge = $("#chatBadge");
+  badge.hidden = !n || chatOpen; badge.textContent = n > 9 ? "9+" : String(n);
+  if (!chatOpen) return;
+  const list = $("#chatList");
+  const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+  const hhmm = (t) => { try { return new Date(t).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } };
+  list.innerHTML = chatMsgs.length ? chatMsgs.map((m) => {
+    const mine = m.player_id === me.pid;
+    return `<div class="msg ${mine ? "mine" : ""}"><div class="bub">${mine ? "" : `<b>${esc(m.name)}</b>`}<span>${esc(m.body)}</span>
+      <i>${hhmm(m.created_at)}${isHost ? ` <button class="msg-del" data-del="${m.id}" aria-label="Borrar mensaje">borrar</button>` : ""}</i></div></div>`;
+  }).join("") : `<p class="muted chat-empty">Todavía no hay mensajes. ¡Saluda!</p>`;
+  if (atBottom || list.dataset.first !== "0") { list.scrollTop = list.scrollHeight; list.dataset.first = "0"; }
+  $("#chatCount").textContent = chatMsgs.length ? "" : "";
+  list.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    const { error } = await sb.rpc("bingo_chat_delete", { p_game: GAME, p_key: hostKey, p_id: Number(b.dataset.del) });
+    if (error) toast("No se pudo borrar"); else { chatMsgs = chatMsgs.filter((m) => m.id !== Number(b.dataset.del)); renderChat(); }
+  });
+  markSeen();
+}
+async function loadChat() {
+  if (!sb) return;
+  const { data, error } = await sb.from("bingo_messages").select("id,player_id,name,body,created_at").eq("game_id", GAME).order("id", { ascending: false }).limit(80);
+  if (error) return;
+  const next = (data || []).reverse();
+  const changed = next.length !== chatMsgs.length || (next.length && next[next.length - 1].id !== chatMsgs[chatMsgs.length - 1]?.id);
+  if (changed) {
+    const fresh = next.filter((m) => m.id > (chatMsgs.length ? chatMsgs[chatMsgs.length - 1].id : chatSeen) && m.player_id !== me.pid);
+    chatMsgs = next;
+    if (!chatOpen && fresh.length) { const f = $("#chatFab"); f.classList.remove("bump"); void f.offsetWidth; f.classList.add("bump"); }
+    renderChat();
+  }
+}
+async function sendChat(text) {
+  text = String(text || "").trim().slice(0, 200);
+  if (!text || chatSending) return;
+  if (!sb) return toast("Sin conexión");
+  chatSending = true;
+  const { error } = await sb.rpc("bingo_chat_send", { p_game: GAME, p_player: me.pid, p_key: me.pkey, p_body: text });
+  chatSending = false;
+  if (error) {
+    const m = String(error.message || "");
+    return toast(m.includes("too fast") ? "Espera un segundo entre mensajes" : m.includes("not in game") || m.includes("not a player") ? "Entra al juego para escribir" : "No se pudo enviar");
+  }
+  $("#chatInput").value = "";
+  loadChat();
+}
+$("#chatFab").onclick = () => { chatOpen = true; $("#chat").hidden = false; $("#chatList").dataset.first = "1"; renderChat(); loadChat(); };
+$("#chatClose").onclick = () => { chatOpen = false; $("#chat").hidden = true; renderChat(); };
+$("#chatForm").onsubmit = (e) => { e.preventDefault(); sendChat($("#chatInput").value); };
+document.querySelectorAll(".chat-quick [data-q]").forEach((b) => b.onclick = () => sendChat(b.dataset.q));
+
 function render() {
   netPill();
   const app = $("#app");
   if (offline && !localMode) { renderSignIn(); return; }
+  chatVisible();
   if (!me.name || !me.cards.length) { renderJoin(); return; }
   if (!app.querySelector("#sec-ball")) {
     app.innerHTML = `
@@ -730,8 +830,8 @@ function render() {
         <section class="panel" id="sec-ball"></section>
         <section class="panel" id="sec-host" hidden></section>
       </div>
-      <section class="panel"><h2>Tablero <small id="boardHint"></small></h2><div id="sec-board"></div></section>
-      <section><div class="row" style="justify-content:space-between;margin:2px 4px 10px">
+      <section class="panel" id="wrap-board"><h2>Tablero <small id="boardHint"></small></h2><div id="sec-board"></div></section>
+      <section id="wrap-cards"><div class="row" style="justify-content:space-between;margin:2px 4px 10px">
         <h2 style="font-family:Oswald;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.35);font-size:20px;text-transform:uppercase">Mis cartones · ${esc(me.name)}</h2>
         <div class="row">
           <label class="toggle" style="background:rgba(255,255,255,.85);padding:6px 10px;border-radius:10px"><input type="checkbox" id="autoMark" ${me.auto ? "checked" : ""}> Marcar solo</label>
@@ -761,7 +861,10 @@ function render() {
 function renderGame() {
   netPill();
   if (!$("#sec-ball")) { if (!me.name || !me.cards.length) return; return render(); }
-  renderWinners(); renderBall(); renderHost(); renderBoard(); renderCards(); renderPlayers(); renderBar();
+  // before a game starts (or between games) there is nothing to see on the board or the cards
+  const live = playing();
+  $("#wrap-board").hidden = !live; $("#wrap-cards").hidden = !live;
+  renderWinners(); renderBall(); renderHost(); renderBoard(); renderCards(); renderPlayers(); renderBar(); renderChat();
 }
 function paintVoiceBtn() {
   const b = $("#voiceBtn"); if (!b) return;
@@ -1011,7 +1114,7 @@ function renderPlayers() {
 }
 function renderBar() {
   const bar = $("#bar");
-  if (!me.name || !me.cards.length) { bar.innerHTML = ""; return; }
+  if (!me.name || !me.cards.length || !playing()) { bar.innerHTML = ""; return; }
   const t = cur();
   const label = playing() ? (pname(t).length <= 2 ? "¡CANTAR " + pname(t) + "!" : "¡" + pname(t).toUpperCase() + "!") : state.phase === "terminado" ? "Partida terminada" : "Esperando…";
   bar.innerHTML = `<div class="bar"><button class="btn ${t === "lleno" ? "bingo" : "linea"} one" id="c-claim" ${playing() ? "" : "disabled"}>${label}</button></div>`;
@@ -1056,6 +1159,7 @@ async function loadAll() {
       if (isHost && inflight > 0) return;
       if (pl.new && pl.new.id) applyState(clean(pl.new));
     })
+    .on("postgres_changes", { event: "*", schema: "public", table: "bingo_messages", filter: "game_id=eq." + GAME }, () => loadChat())
     .on("postgres_changes", { event: "*", schema: "public", table: "bingo_players", filter: "game_id=eq." + GAME }, (pl) => {
       if (pl.eventType === "DELETE") { players.delete(pl.old && pl.old.id); renderPlayers(); return; }
       onPlayerRow(pl.new);
@@ -1079,6 +1183,8 @@ async function loadAll() {
   }, 1000);
   setInterval(() => { if (!document.hidden) loadAll().catch(() => {}); }, 5000);
   setInterval(() => pushPresence(), 60000);
+  loadChat();
+  setInterval(() => { if (!document.hidden) loadChat(); }, 2500);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadAll().catch(() => {}); pushPresence(); } });
   pushPresence();
 })();
