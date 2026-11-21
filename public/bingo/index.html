@@ -96,6 +96,10 @@ button{font:inherit;cursor:pointer}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .big-draw{font-family:Oswald;font-size:22px;letter-spacing:.5px;padding:14px 22px;flex:1;min-width:170px}
 select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border:1.5px solid rgba(42,29,18,.2);background:#fff;font-size:16px}
+.vbtn{display:flex;align-items:center;gap:8px;border:none;border-radius:10px;padding:5px 5px 5px 12px;font-weight:700;font-size:14px;background:rgba(255,255,255,.85);color:var(--ink);min-height:40px}
+.vbtn .vact{margin-left:4px;border-radius:8px;padding:6px 10px;background:var(--red);color:#fff;font-weight:800}
+.vbtn.on .vact{background:var(--ink)}
+.vbtn .vdot{width:9px;height:9px;border-radius:50%;background:#2fa84f;box-shadow:0 0 0 3px rgba(47,168,79,.25)}
 .vseg{display:flex;background:rgba(255,255,255,.85);border-radius:10px;padding:3px;gap:2px}
 .vseg button{border:none;background:transparent;border-radius:8px;padding:5px 9px;font-weight:700;font-size:14px}
 .vseg button.on{background:var(--ink);color:#fff}
@@ -501,10 +505,7 @@ function render() {
         <h2 style="font-family:Oswald;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.35);font-size:20px;text-transform:uppercase">Mis cartones · ${esc(me.name)}</h2>
         <div class="row">
           <label class="toggle" style="background:rgba(255,255,255,.85);padding:6px 10px;border-radius:10px"><input type="checkbox" id="autoMark" ${me.auto ? "checked" : ""}> Marcar solo</label>
-          <div class="vseg" id="voice" role="group" aria-label="Voz que canta los números">
-            <button data-v="c" class="${me.voice === "c" ? "on" : ""}">🔊 Activar voz</button>
-            <button data-v="off" class="${me.voice === "off" ? "on" : ""}">🔇 Desactivar</button>
-          </div>
+          <button class="vbtn" id="voiceBtn" aria-pressed="false"></button>
           <button class="btn ghost" id="changeCards" style="background:rgba(255,255,255,.85);padding:6px 10px;font-size:13px">Cambiar cartones</button>
         </div></div>
         <div id="voiceStatus" class="vstatus">${esc(voiceStatus)}</div>
@@ -512,12 +513,14 @@ function render() {
       </section>
       <section class="panel" id="sec-players" hidden></section>`;
     $("#autoMark").onchange = (e) => { me.auto = e.target.checked; persist(); pushPresence(); renderCards(); };
-    $("#voice").querySelectorAll("button").forEach((b) => b.onclick = () => {
-      me.voice = b.dataset.v; me.speak = me.voice !== "off"; persist();
-      $("#voice").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
-      if (me.speak) unlockVoice(state.drawn.length ? state.drawn[state.drawn.length - 1] : 22);
+    paintVoiceBtn();
+    $("#voiceBtn").onclick = () => {
+      const turnOn = me.voice === "off";
+      me.voice = turnOn ? "c" : "off"; me.speak = turnOn; persist();
+      paintVoiceBtn();
+      if (turnOn) unlockVoice(state.drawn.length ? state.drawn[state.drawn.length - 1] : 22);
       else { player.pause(); setVoiceStatus(""); }
-    });
+    };
     $("#changeCards").onclick = () => {
       if (state.drawn.length && state.phase !== "terminado") return toast("Solo puedes cambiar cartones antes de la primera bola");
       me.cards = []; me.marks = {}; persist(); $("#app").innerHTML = ""; render();
@@ -529,6 +532,13 @@ function renderGame() {
   netPill();
   if (!$("#sec-ball")) { if (!me.name || !me.cards.length) return; return render(); }
   renderWinners(); renderBall(); renderHost(); renderBoard(); renderCards(); renderPlayers(); renderBar();
+}
+function paintVoiceBtn() {
+  const b = $("#voiceBtn"); if (!b) return;
+  const on = me.voice !== "off";
+  b.classList.toggle("on", on);
+  b.setAttribute("aria-pressed", on ? "true" : "false");
+  b.innerHTML = on ? '<span class="vdot"></span>Voz activada <span class="vact">Desactivar</span>' : '🔇 Voz apagada <span class="vact">Activar voz</span>';
 }
 function renderSignIn() {
   $("#bar").innerHTML = "";
