@@ -144,6 +144,21 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
 .overlay .wname{font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(40px,13vw,72px);line-height:1.05;margin-top:6px;color:var(--ink);word-break:break-word;animation:pop .7s cubic-bezier(.2,1.6,.4,1)}
 .winbox{border:4px solid #ffcf3f}
+.h-status{font-size:14px;margin:-2px 0 10px;color:#5a4a3a}
+.h-status b{color:var(--ink)}
+.h-main{width:100%;font-family:Oswald,sans-serif;font-size:24px;letter-spacing:.5px;padding:15px;border-radius:14px}
+.h-auto{display:flex;align-items:center;gap:6px;margin-top:10px;background:#fff;border-radius:12px;padding:5px;box-shadow:inset 0 0 0 1.5px rgba(42,29,18,.12);position:relative;overflow:hidden}
+.h-play{border:none;border-radius:9px;padding:9px 14px;font-weight:800;font-size:15px;background:var(--ink);color:#fff;min-height:42px}
+.h-auto.on .h-play{background:#ffcf3f;color:#3b2a00}
+.h-every{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;margin-left:auto;padding-right:4px}
+.h-every select{padding:7px 8px;font-size:15px;font-weight:700}
+.h-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(42,29,18,.08)}
+.h-bar i{display:block;height:100%;width:100%;background:var(--red);transform-origin:left;animation:hbar linear infinite}
+@keyframes hbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.h-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.h-tools .btn{padding:10px 8px;font-size:14px;min-height:44px}
+.h-tools .btn.warn{background:#ffe9e6;color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red)}
+.h-hint{font-size:13px;color:#7a6a58;margin-top:10px}
 #toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;
   font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -649,26 +664,41 @@ function renderHost() {
   if (!isHost) { el.hidden = true; return; }
   el.hidden = false;
   const playing = state.phase === "linea" || state.phase === "bingo";
-  el.innerHTML = `<h2>Anfitrión <small>${localMode ? "este equipo controla el juego" : "solo tú ves este panel"}</small></h2>
-    <div class="row">
-      <button class="btn primary big-draw" id="h-draw" ${playing && !autoOn ? "" : "disabled"}>Sacar bola</button>
+  const left = 90 - state.drawn.length;
+  const head = `<h2>Anfitrión <small>solo tú ves este panel</small></h2>`;
+  if (!playing) {
+    const last = state.winners.filter((w) => w.type === "bingo").map((w) => esc(w.name)).join(", ");
+    el.innerHTML = head + `
+      <div class="h-status">${state.phase === "terminado"
+        ? `<b>Partida terminada</b>${last ? ` · ganó ${last}` : ""}`
+        : `<b>Todo listo.</b> Los jugadores ya pueden entrar con sus cartones.`}</div>
+      <button class="btn primary h-main" id="h-new">${state.phase === "terminado" ? "Jugar otra partida" : "Empezar partida"}</button>
+      <p class="h-hint">Los jugadores conservan sus cartones; las marcas se borran.</p>`;
+    $("#h-new").onclick = newGame;
+    return;
+  }
+  el.innerHTML = head + `
+    <div class="h-status"><b>${state.phase === "linea" ? "Se juega por la línea" : "Se juega por el bingo"}</b> · ${left} bolas en la bolsa</div>
+    <button class="btn primary h-main" id="h-draw" ${autoOn || !left ? "disabled" : ""}>${autoOn ? "Sacando solo…" : "Sacar bola"}</button>
+    <div class="h-auto ${autoOn ? "on" : ""}">
+      <button class="h-play" id="h-auto" aria-label="${autoOn ? "Pausar" : "Sacar bolas solo"}">${autoOn ? "⏸ Pausar" : "▶ Automático"}</button>
+      <label class="h-every">cada
+        <select id="h-sec" aria-label="Segundos entre bolas">${[5, 8, 12, 20].map((x) => `<option value="${x}" ${x === autoSec ? "selected" : ""}>${x} s</option>`).join("")}</select>
+      </label>
+      ${autoOn ? `<span class="h-bar"><i style="animation-duration:${autoSec}s"></i></span>` : ""}
     </div>
-    <div class="row" style="margin-top:10px">
-      <button class="btn ${autoOn ? "dark" : ""}" id="h-auto" ${playing ? "" : "disabled"}>${autoOn ? "⏸ Pausar" : "▶ Automático"}</button>
-      <select id="h-sec" aria-label="Segundos entre bolas">${[5, 8, 12, 20].map((s) => `<option value="${s}" ${s === autoSec ? "selected" : ""}>cada ${s} s</option>`).join("")}</select>
-      <button class="btn ghost" id="h-undo" ${state.drawn.length && playing ? "" : "disabled"}>Deshacer</button>
+    <div class="h-tools">
+      <button class="btn ghost" id="h-undo" ${state.drawn.length ? "" : "disabled"}>↶ Deshacer última</button>
       <button class="btn ghost" id="h-new">Nueva partida</button>
     </div>
-    <p class="muted" style="margin-top:10px">¿Sacas las fichas de la bolsa? Toca el número en el tablero para cantarlo.</p>
-    `;
+    <p class="h-hint">¿Usas la bolsa de fichas? Toca el número en el tablero.</p>`;
   $("#h-draw").onclick = () => draw();
   $("#h-auto").onclick = () => { autoOn ? (stopAuto(), renderHost()) : startAuto(); };
-  $("#h-sec").onchange = (e) => { autoSec = +e.target.value; if (autoOn) startAuto(); };
+  $("#h-sec").onchange = (e) => { autoSec = +e.target.value; if (autoOn) startAuto(); else renderHost(); };
   $("#h-undo").onclick = undo;
   $("#h-new").onclick = () => {
-    if (state.phase === "linea" || state.phase === "bingo") {
-      if (state.drawn.length && !$("#h-new").dataset.sure) { $("#h-new").dataset.sure = 1; $("#h-new").textContent = "¿Seguro? Toca otra vez"; return; }
-    }
+    const b = $("#h-new");
+    if (state.drawn.length && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = "¿Seguro? Toca otra vez"; b.classList.add("warn"); return; }
     newGame();
   };
 }
