@@ -8,6 +8,9 @@
 <script src="supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Nunito+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
+@font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(fonts/sora-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(fonts/sora-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url(fonts/sora-latin-800-normal.woff2) format("woff2")}
 :root{
   --wood1:#c99a5e;--wood2:#b98748;--wood3:#d6aa6f;
   --ink:#2a1d12;--cream:#fbf8f1;--red:#d9363e;--red2:#f08a7e;
@@ -144,6 +147,10 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
 .overlay .wname{font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(40px,13vw,72px);line-height:1.05;margin-top:6px;color:var(--ink);word-break:break-word;animation:pop .7s cubic-bezier(.2,1.6,.4,1)}
 .winbox{border:4px solid #ffcf3f}
+.invite{display:grid;grid-template-columns:1fr auto;gap:8px;margin:-2px 0 12px}
+.invite .btn{min-height:44px;font-size:14px;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.inv-copy{background:#24272d;color:#fff}
+.inv-wa{background:#25d366;color:#08331a}
 .h-status{font-size:14px;margin:-2px 0 10px;color:#5a4a3a}
 .h-status b{color:var(--ink)}
 .h-main{width:100%;font-family:Oswald,sans-serif;font-size:24px;letter-spacing:.5px;padding:15px;border-radius:14px}
@@ -159,6 +166,108 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .h-tools .btn{padding:10px 8px;font-size:14px;min-height:44px}
 .h-tools .btn.warn{background:#ffe9e6;color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red)}
 .h-hint{font-size:13px;color:#7a6a58;margin-top:10px}
+.bar .one{max-width:420px}
+.token .ltr{position:absolute;top:14%;font-style:normal;font-family:Oswald,sans-serif;font-weight:700;color:var(--ink);font-size:calc(var(--s)*.16);z-index:1}
+.ball-big span{margin-top:8%}
+.board.b75{grid-template-columns:18px repeat(15,1fr);gap:3px;max-width:640px}
+.board.b75 .cell{font-size:clamp(9px,2.3vw,14px)}
+.bl-l{font-family:Oswald;font-weight:700;display:grid;place-items:center;color:var(--red);font-size:13px}
+.pick-h{font-family:Oswald;font-weight:600;text-transform:uppercase;letter-spacing:.4px;font-size:14px;margin:4px 0 8px}
+.pick-h small{font-family:"Nunito Sans";text-transform:none;letter-spacing:0;font-weight:600;opacity:.6}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mode{border:2px solid rgba(42,29,18,.12);background:#fff;border-radius:14px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink)}
+.mode.on{border-color:var(--red);background:#fff4f2;box-shadow:0 0 0 3px rgba(217,54,62,.15)}
+.mode .mn{font-family:Oswald;font-weight:600;font-size:17px;margin-top:4px}
+.mode .ms{font-size:12px;opacity:.65;text-align:center}
+.mini{display:grid;gap:1.5px;padding:3px;border-radius:4px;background:#2f8fd8}
+.mini i{background:#fff;border-radius:1px}
+.mini.m90{grid-template-columns:repeat(9,1fr);width:100%;max-width:150px;background:#3c9a3a}
+.mini.m90 i{aspect-ratio:.8}
+.mini.m90 i.bl{background:#3c9a3a}
+.mini.m75{grid-template-columns:repeat(5,1fr);width:78px}
+.mini.m75 b{color:#fff;font-family:Oswald;font-size:10px;text-align:center;line-height:1.2}
+.mini.m75 i{aspect-ratio:1}
+.mini.m75 i.fr{background:#fff4d0}
+.mini i.on{background:#ffcf3f}
+.mini.m75 i.fr.on{background:#ffcf3f}
+.mini.dense{gap:1px;padding:2px}
+.mini.m75.dense{width:44px}
+.mini.m90.dense{width:66px;max-width:none}
+/* 5x5 slide-window card: light, neutral */
+.card.c75{outline:none !important;font-family:Sora,"Nunito Sans",system-ui,sans-serif;background:#fbfbfa;border:none;
+  border-radius:24px;padding:14px 12px 12px;max-width:380px;justify-self:center;width:100%;color:#1d1f23;
+  box-shadow:0 1px 2px rgba(0,0,0,.16),0 8px 20px rgba(40,30,20,.16)}
+.c75 .hdr5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 0 8px;background:none;border-radius:0}
+.c75 .hdr5 b{font-family:Sora;font-weight:800;font-size:clamp(16px,4.6vw,21px);text-align:center;border-radius:10px;padding:4px 0;color:#fff;background:#24272d}
+.c75 .grid.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;border:none;margin:0;padding:0;background:none}
+.c75 .sq.w5{aspect-ratio:1;border:none;border-radius:12px;background:#eeefef;box-shadow:inset 0 1px 2px rgba(0,0,0,.08);
+  overflow:hidden;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.c75 .sq.w5 .n{font-family:Sora;font-weight:700;font-size:clamp(19px,5.6vw,27px);letter-spacing:-.5px;position:relative;z-index:0;color:#1d1f23}
+.c75 .sq.w5:active{background:#e4e5e6}
+.c75 .sq.free{background:#d9dadb}
+.c75 .sq.free .n{font-size:clamp(20px,5.6vw,27px);color:#fff;z-index:2}
+.c75 .sq.free .m{font-family:Sora;font-weight:700;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#fff;position:relative;z-index:2;margin-top:2px}
+.c75 .sq.w5.tgt{background:#fde3e1;box-shadow:inset 0 0 0 3.5px #d9363e}
+/* covered numbers stay readable: the window is tinted glass, the number shows through in white */
+.c75 .sq.w5.mk .n{z-index:2;color:rgba(255,255,255,.92);text-shadow:0 1px 2px rgba(0,0,0,.35);transition:color .2s .15s}
+.c75 .sq.w5 .sh{-webkit-backdrop-filter:none;backdrop-filter:none}
+/* pattern cells keep the dark window; a red ring drawn above it shows the shape */
+.c75 .sq.w5.tgt::after{content:"";position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 3.5px #d9363e;z-index:3;pointer-events:none}
+.c75.shape-on .sq.w5.mk:not(.tgt) .n{color:rgba(255,255,255,.9)}
+.c75.shape-on .sq.w5:not(.tgt){background:#f4f4f3}
+.c75.shape-on .sq.w5:not(.tgt) .n{color:#a3a5a9}
+.c75.shape-on .sq.w5:not(.tgt) .sh{opacity:.55}
+.c75 .shape-tag{font-weight:700;color:#d9363e}
+.c75 .sh{position:absolute;inset:0;z-index:1;border-radius:12px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(52,56,64,.80),rgba(30,32,38,.74));
+  -webkit-backdrop-filter:blur(1.2px);backdrop-filter:blur(1.2px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 2px 5px rgba(0,0,0,.25);transform:translateY(-86%)}
+.c75 .sh::after{content:"";position:absolute;left:36%;right:36%;bottom:5px;height:3px;border-radius:3px;background:rgba(255,255,255,.75)}
+.c75 .sh.closed{transform:translateY(0)}
+.c75 .sh.in{animation:shIn .34s cubic-bezier(.3,1.45,.5,1)}
+.c75 .sh.out{animation:shOut .24s ease-out}
+@keyframes shIn{from{transform:translateY(-86%)}to{transform:translateY(0)}}
+@keyframes shOut{from{transform:translateY(0)}to{transform:translateY(-86%)}}
+.c75 .foot5{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px;font-family:Sora;font-weight:600;font-size:12px;color:#6c6f75}
+.c75 .foot5 .badge{font-family:Sora;font-weight:700;background:#eeefef;color:#2c2f35;letter-spacing:0}
+.c75 .foot5 .badge.hot{background:#ffcf3f;color:#2a1d00}
+.c75 .sq.shake{animation:shake .35s}
+.pick-h{font-family:Oswald;font-weight:600;text-transform:uppercase;letter-spacing:.4px;font-size:14px;margin:4px 0 8px}
+.pick-h small{font-family:"Nunito Sans";text-transform:none;letter-spacing:0;font-weight:600;opacity:.6}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mode{border:2px solid rgba(42,29,18,.12);background:#fff;border-radius:14px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink)}
+.mode.on{border-color:var(--red);background:#fff4f2;box-shadow:0 0 0 3px rgba(217,54,62,.15)}
+.mode .mn{font-family:Oswald;font-weight:600;font-size:17px;margin-top:4px}
+.mode .ms{font-size:12px;opacity:.65;text-align:center}
+.mini{display:grid;gap:1.5px;padding:3px;border-radius:4px;background:#2f8fd8}
+.mini i{background:#fff;border-radius:1px}
+.mini.m90{grid-template-columns:repeat(9,1fr);width:100%;max-width:150px;background:#3c9a3a}
+.mini.m90 i{aspect-ratio:.8}
+.mini.m90 i.bl{background:#3c9a3a}
+.mini.m75{grid-template-columns:repeat(5,1fr);width:78px}
+.mini.m75 b{color:#fff;font-family:Oswald;font-size:10px;text-align:center;line-height:1.2}
+.mini.m75 i{aspect-ratio:1}
+.mini.m75 i.fr{background:#fff4d0}
+.mini i.on{background:#ffcf3f}
+.mini.m75 i.fr.on{background:#ffcf3f}
+.mini.dense{gap:1px;padding:2px}
+.mini.m75.dense{width:44px}
+.mini.m90.dense{width:66px;max-width:none}
+.prizes{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.prize{position:relative;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;text-align:left;
+  border:2px solid rgba(42,29,18,.12);background:#fff;border-radius:12px;padding:8px;min-height:60px;color:var(--ink)}
+.prize .mini{grid-row:1/3}
+.prize .pn{font-weight:800;font-size:14px}
+.prize .pd{font-size:11px;opacity:.6;line-height:1.2}
+.prize.on{border-color:#e0a800;background:#fff8dc}
+.prize:not(.on) .mini{opacity:.45;filter:grayscale(1)}
+.prize .pos{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center}
+.prize:not(.on) .pos{display:none}
+.h-order{font-size:13px;font-weight:700;margin:12px 0 10px;color:#5a4a3a}
+.h-steps{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 12px}
+.h-steps span{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(42,29,18,.07);color:#7a6a58}
+.h-steps span.now{background:#ffcf3f;color:#3b2a00}
+.h-steps span.done{background:#e3f3e1;color:#1f7a2a}
 #toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;
   font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -195,7 +304,9 @@ const SERIES = [
   { c: "#1d1d1d", n: "SERIE 7" },
 ];
 const kernel = (isNew) => '<svg class="kern' + (isNew ? ' new' : '') + '" viewBox="0 0 40 46"><path d="M20 2C9 2 3 13 3 24c0 12 8 20 17 20s17-8 17-20C37 13 31 2 20 2z" fill="url(#kg)"/><ellipse cx="14" cy="16" rx="5" ry="7" fill="#fff8d0" opacity=".55"/><path d="M20 30c-3 0-5 4-5 8 0 2 2 4 5 4s5-2 5-4c0-4-2-8-5-8z" fill="#fffbe6" opacity=".8"/></svg>';
-let justMarked = null;
+let justMarked = null, justOpened = null;
+/* sliding window for the 5x5 card: rests as a lip at the top, slides down over a called number */
+const shutter = (closed, key) => `<span class="sh ${closed ? "closed" : ""} ${closed && justMarked === key ? "in" : ""} ${!closed && justOpened === key ? "out" : ""}"></span>`;
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -209,7 +320,29 @@ if (!me.voice) me.voice = me.speak ? "c" : "off";
 if (me.voice !== "off") me.voice = "c";
 
 /* ---------- shared game state ---------- */
-const EMPTY = { round: 0, drawn: [], winners: [], phase: "espera" };
+const MODES = {
+  l90: { name: "Lotería", sub: "90 bolas · cartón de 3×9", max: 90, prizes: ["linea", "dos", "lleno"] },
+  b75: { name: "Bingo americano", sub: "75 bolas · cartón de 5×5", max: 75, prizes: ["linea", "esquinas", "x", "cruz", "t", "l", "marco", "lleno"] },
+};
+const PRIZES = {
+  l90: { linea: { n: "Línea", d: "Una fila completa" }, dos: { n: "Dos líneas", d: "Dos filas del mismo cartón" }, lleno: { n: "Bingo", d: "Cartón lleno" } },
+  b75: { linea: { n: "Línea", d: "Fila, columna o diagonal" }, esquinas: { n: "Cuatro esquinas", d: "Las 4 puntas" }, x: { n: "Equis", d: "Las dos diagonales" },
+    cruz: { n: "Cruz", d: "Fila y columna del centro" }, t: { n: "T", d: "Fila de arriba y columna N" }, l: { n: "L", d: "Columna B y fila de abajo" },
+    marco: { n: "Marco", d: "Todo el borde" }, lleno: { n: "Bingo", d: "Cartón lleno" } },
+};
+const DEFAULT_PRIZES = { l90: ["linea", "lleno"], b75: ["linea", "esquinas", "l", "lleno"] };
+const EMPTY = { round: 0, drawn: [], winners: [], phase: "espera", mode: "l90", prizes: ["linea", "lleno"], pidx: 0 };
+const R5 = (r) => [0, 1, 2, 3, 4].map((c) => r * 5 + c), C5 = (c) => [0, 1, 2, 3, 4].map((r) => r * 5 + c);
+const D1 = [0, 6, 12, 18, 24], D2 = [4, 8, 12, 16, 20];
+const uniq = (...a) => [...new Set(a.flat())];
+const LINES75 = [0, 1, 2, 3, 4].map(R5).concat([0, 1, 2, 3, 4].map(C5), [D1, D2]);
+const SHAPES75 = { esquinas: [0, 4, 20, 24], x: uniq(D1, D2), cruz: uniq(R5(2), C5(2)), t: uniq(R5(0), C5(2)),
+  l: uniq(C5(0), R5(4)), marco: uniq(R5(0), R5(4), C5(0), C5(4)), lleno: [...Array(25).keys()] };
+const cur = () => state.prizes[state.pidx] || "lleno";
+const pname = (t, mode = state.mode) => (PRIZES[mode][t] || { n: t }).n;
+const plow = (t) => { const n = pname(t); return n.length <= 2 ? "la " + n : n.toLowerCase(); };
+const letterOf = (n) => "BINGO"[Math.floor((n - 1) / 15)];
+const playing = () => state.phase === "jugando";
 let state = { ...EMPTY };
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
@@ -223,7 +356,7 @@ let inflight = 0, chain = Promise.resolve();
 let autoOn = false, autoSec = 8, autoTimer = null;
 let lastAnimated = null;
 
-/* ---------- card generation (lotería 3x9, 15 números) ---------- */
+/* ---------- card generation: lotería 3x9 (15 números) y bingo 5x5 (24 + libre) ---------- */
 function colRange(c) { return c === 0 ? [1, 9] : c === 8 ? [80, 90] : [c * 10, c * 10 + 9]; }
 function makeCard() {
   for (let attempt = 0; attempt < 200; attempt++) {
@@ -251,6 +384,34 @@ function makeCard() {
   }
   return null;
 }
+function makeCard75() {
+  const card = Array(25).fill(0);
+  for (let c = 0; c < 5; c++) {
+    const pool = []; for (let n = c * 15 + 1; n <= c * 15 + 15; n++) pool.push(n);
+    for (let r = 0; r < 5; r++) { if (r === 2 && c === 2) continue; card[r * 5 + c] = pool.splice(rnd(pool.length), 1)[0]; }
+  }
+  return card;
+}
+const makeCardFor = (mode) => (mode === "b75" ? makeCard75() : makeCard());
+const cardMode = (card) => (Array.isArray(card) && card.length === 25 ? "b75" : "l90");
+function validCard(card, mode) {
+  if (!Array.isArray(card)) return false;
+  const len = mode === "b75" ? 25 : 27, max = MODES[mode].max;
+  return card.length === len && card.every((n) => Number.isInteger(n) && n >= 0 && n <= max) && (mode !== "b75" || card[12] === 0);
+}
+/* how many numbers are still missing on one card for a prize; has(n) says whether n counts */
+function missing(card, prize, has, mode = state.mode) {
+  if (!validCard(card, mode)) return 99;
+  if (mode === "l90") {
+    const rows = cardRows(card).map((r) => r.filter((n) => !has(n)).length).sort((a, b) => a - b);
+    if (prize === "linea") return rows[0];
+    if (prize === "dos") return rows[0] + rows[1];
+    return rows[0] + rows[1] + rows[2];
+  }
+  const cnt = (set) => set.filter((i) => card[i] && !has(card[i])).length;
+  if (prize === "linea") return Math.min(...LINES75.map(cnt));
+  return cnt(SHAPES75[prize] || SHAPES75.lleno);
+}
 const cardRows = (card) => [card.slice(0, 9), card.slice(9, 18), card.slice(18, 27)].map((r) => r.filter(Boolean));
 const cardNums = (card) => card.filter(Boolean);
 
@@ -261,45 +422,53 @@ function markedSet(i) {
   if (me.auto) return new Set(cardNums(me.cards[i]).filter((n) => ds.has(n)));
   return new Set((me.marks[i] || []).filter((n) => ds.has(n)));
 }
-function progress(i) {
+function progress(i, prize = cur()) {
   const ms = markedSet(i);
-  const rows = cardRows(me.cards[i]).map((r) => r.filter((n) => !ms.has(n)).length);
-  return { line: Math.min(...rows), full: rows.reduce((a, b) => a + b, 0), rows };
+  return missing(me.cards[i], prize, (n) => ms.has(n));
 }
 function myBest() {
-  let line = 99, full = 99;
-  me.cards.forEach((_, i) => { const p = progress(i); line = Math.min(line, p.line); full = Math.min(full, p.full); });
-  return { line, full };
+  let now = 99, full = 99;
+  me.cards.forEach((_, i) => { now = Math.min(now, progress(i)); full = Math.min(full, progress(i, "lleno")); });
+  return { line: now, full };
 }
 
 /* verify a claim using the drawn numbers (host side) */
 function verify(cards, type) {
   if (!Array.isArray(cards)) return false;
   const ds = drawnSet();
-  return cards.some((card) => {
-    if (!Array.isArray(card) || card.length !== 27) return false;
-    const valid = card.every((n) => Number.isInteger(n) && n >= 0 && n <= 90);
-    if (!valid) return false;
-    if (type === "bingo") return cardNums(card).every((n) => ds.has(n));
-    return cardRows(card).some((r) => r.length && r.every((n) => ds.has(n)));
-  });
+  return cards.some((card) => missing(card, type, (n) => ds.has(n)) === 0);
 }
 
 /* ---------- state handling ---------- */
 function clean(d) {
   if (!d || typeof d !== "object") return { ...EMPTY };
+  const mode = MODES[d.mode] ? d.mode : "l90";
+  const max = MODES[mode].max;
   const seen = new Set();
-  const drawn = (Array.isArray(d.drawn) ? d.drawn : []).filter((n) => Number.isInteger(n) && n >= 1 && n <= 90 && !seen.has(n) && seen.add(n));
+  const drawn = (Array.isArray(d.drawn) ? d.drawn : []).filter((n) => Number.isInteger(n) && n >= 1 && n <= max && !seen.has(n) && seen.add(n));
+  let prizes = (Array.isArray(d.prizes) ? d.prizes : []).filter((t) => PRIZES[mode][t]);
+  prizes = MODES[mode].prizes.filter((t) => prizes.includes(t));
+  if (!prizes.length) prizes = DEFAULT_PRIZES[mode].slice();
+  const legacy = (t) => (t === "bingo" ? "lleno" : t);
   const winners = (Array.isArray(d.winners) ? d.winners : []).filter((w) => w && typeof w === "object")
-    .map((w) => ({ type: w.type === "bingo" ? "bingo" : "linea", name: String(w.name || "Alguien").slice(0, 24), at: Number(w.at) || 0 }));
-  const phase = ["espera", "linea", "bingo", "terminado"].includes(d.phase) ? d.phase : "espera";
-  return { round: Number(d.round) || 0, drawn, winners, phase };
+    .map((w) => ({ type: PRIZES[mode][legacy(w.type)] ? legacy(w.type) : "lleno", name: String(w.name || "Alguien").slice(0, 24), at: Number(w.at) || 0 }));
+  let phase = d.phase, pidx = Number.isInteger(d.pidx) ? d.pidx : 0;
+  if (phase === "linea") { phase = "jugando"; pidx = 0; }
+  if (phase === "bingo") { phase = "jugando"; pidx = Math.min(1, prizes.length - 1); }
+  if (!["espera", "jugando", "terminado"].includes(phase)) phase = "espera";
+  pidx = Math.max(0, Math.min(pidx, prizes.length - 1));
+  return { round: Number(d.round) || 0, drawn, winners, phase, mode, prizes, pidx };
 }
 function applyState(next) {
   const prev = state;
   state = next;
   if (me.round !== state.round) {
     me.round = state.round; me.marks = {}; me.claim = null; persist();
+  }
+  if (me.cards.length && cardMode(me.cards[0]) !== state.mode && (state.phase === "jugando" || prev.mode !== state.mode)) {
+    me.cards = Array.from({ length: me.ncards || me.cards.length }, () => makeCardFor(state.mode));
+    me.marks = {}; me.claim = null; persist();
+    if (prev.mode !== state.mode) toast("Nuevo juego: " + MODES[state.mode].name + ". Tus cartones cambiaron.");
   }
   if (me.claim && state.winners.some((w) => w.type === me.claim.type && w.name === me.name)) {
     // confirmed
@@ -316,7 +485,7 @@ function applyState(next) {
   if (state.winners.length > prev.winners.length && state.round === prev.round) {
     const w = state.winners[state.winners.length - 1];
     celebrate(w);
-    if (w.type === "bingo") stopAuto();
+    stopAuto();
   }
   pushPresence();
   renderGame();
@@ -327,23 +496,25 @@ function save(next) {
   applyState(next);
   if (localMode || !sb || !hostKey) return;
   inflight++;
-  const args = { p_game: GAME, p_key: hostKey, p_round: next.round, p_drawn: next.drawn, p_winners: next.winners, p_phase: next.phase };
+  const args = { p_game: GAME, p_key: hostKey, p_round: next.round, p_drawn: next.drawn, p_winners: next.winners, p_phase: next.phase,
+    p_mode: next.mode, p_prizes: next.prizes, p_pidx: next.pidx };
   chain = chain.then(async () => { const { error } = await sb.rpc("bingo_set_state", args); if (error) throw error; })
     .catch((e) => toast("No se pudo guardar: " + (e && e.message ? e.message : "error")))
     .finally(() => { inflight--; });
 }
 
 /* ---------- host actions ---------- */
-function newGame() {
+function newGame(mode = state.mode, prizes = state.prizes) {
   stopAuto();
-  save({ round: (state.round || 0) + 1, drawn: [], winners: [], phase: "linea" });
+  save({ round: (state.round || 0) + 1, drawn: [], winners: [], phase: "jugando", mode, prizes, pidx: 0 });
 }
 function draw(n) {
-  if (state.phase === "espera" || state.phase === "terminado") return;
+  if (!playing()) return;
+  const max = MODES[state.mode].max;
   if (n == null) {
     const ds = drawnSet();
-    const rest = []; for (let i = 1; i <= 90; i++) if (!ds.has(i)) rest.push(i);
-    if (!rest.length) { stopAuto(); return toast("Ya salieron los 90 números"); }
+    const rest = []; for (let i = 1; i <= max; i++) if (!ds.has(i)) rest.push(i);
+    if (!rest.length) { stopAuto(); return toast("Ya salieron los " + max + " números"); }
     n = rest[rnd(rest.length)];
   } else if (state.drawn.includes(n)) return;
   save({ ...state, drawn: [...state.drawn, n] });
@@ -355,11 +526,10 @@ function undo() {
 }
 function confirmWin(name, type) {
   const winners = [...state.winners, { type, name, at: state.drawn.length }];
-  let phase = state.phase;
-  if (type === "linea" && phase === "linea") phase = "bingo";
-  if (type === "bingo") phase = "terminado";
+  let { phase, pidx } = state;
+  if (type === cur()) { pidx += 1; if (pidx >= state.prizes.length) { phase = "terminado"; pidx = state.prizes.length - 1; } }
   stopAuto();
-  save({ ...state, winners, phase });
+  save({ ...state, winners, phase, pidx });
 }
 function startAuto() {
   stopAuto();
@@ -410,15 +580,15 @@ function onPlayerRow(r) {
   if (isHost && autoOn && pendingClaims().length) { stopAuto(); toast("Pausa: alguien cantó. Revisa el reclamo."); renderHost(); }
 }
 function pendingClaims() {
-  return playersHere().filter((p) => p.claim && p.claim.round === state.round && (p.claim.type === "bingo" || p.claim.type === "linea")
-    && !state.winners.some((w) => w.type === p.claim.type && w.name === p.name)
-    && !(p.claim.type === "linea" && state.phase !== "linea"));
+  if (!playing()) return [];
+  return playersHere().filter((p) => p.claim && p.claim.round === state.round && p.claim.type === cur()
+    && !state.winners.some((w) => w.type === p.claim.type && w.name === p.name));
 }
 
 /* ---------- player actions ---------- */
 function join(name, n) {
   me.name = name.trim().slice(0, 24) || "Jugador";
-  if (me.cards.length !== n) me.cards = Array.from({ length: n }, makeCard);
+  if (me.cards.length !== n || cardMode(me.cards[0]) !== state.mode) me.cards = Array.from({ length: n }, () => makeCardFor(state.mode));
   me.ncards = n; me.marks = {}; me.claim = null; me.round = state.round;
   persist(); pushPresence(); render();
 }
@@ -430,23 +600,19 @@ function toggleMark(i, n, el) {
   }
   const arr = me.marks[i] || (me.marks[i] = []);
   const k = arr.indexOf(n);
-  if (k >= 0) { arr.splice(k, 1); justMarked = null; } else { arr.push(n); justMarked = i + ":" + n; }
-  persist(); pushPresence(); renderCards(); justMarked = null;
+  if (k >= 0) { arr.splice(k, 1); justMarked = null; justOpened = i + ":" + n; } else { arr.push(n); justMarked = i + ":" + n; justOpened = null; }
+  persist(); pushPresence(); renderCards(); justMarked = null; justOpened = null;
 }
-function claim(type) {
+function claim(type = cur()) {
   if (state.phase === "espera") return toast("La partida aún no empieza");
   if (state.phase === "terminado") return toast("La partida terminó");
-  if (type === "linea" && state.phase !== "linea") return toast("La línea ya se cantó; ahora va por el bingo");
-  const ok = me.cards.some((_, i) => { const p = progress(i); return type === "bingo" ? p.full === 0 : p.line === 0; });
-  if (!ok) return toast(type === "bingo" ? "Aún no tienes el cartón lleno" : "Aún no tienes una línea completa");
-  if (localMode || isHost) {
-    confirmWin(me.name, type);
-    return;
-  }
+  const ok = me.cards.some((_, i) => progress(i, type) === 0);
+  if (!ok) return toast("Aún no tienes " + plow(type) + (me.auto ? "" : "; ¿marcaste todos los números?"));
+  if (localMode || isHost) { confirmWin(me.name, type); return; }
   me.claim = { type, round: state.round, at: state.drawn.length };
   persist(); pushPresence();
-  showOverlay(type === "bingo" ? "¡BINGO!" : "¡LÍNEA!",
-    sb && !localMode ? "Tu reclamo llegó al anfitrión. Espera que lo confirme." : "¡Grítalo fuerte para que el anfitrión lo revise!", false);
+  showOverlay("¡" + pname(type).toUpperCase() + "!",
+    sb && !localMode ? "Tu reclamo llegó al anfitrión. Espera que lo confirme." : "¡Grítalo fuerte para que el anfitrión lo revise!");
 }
 
 /* ---------- speech ---------- */
@@ -493,11 +659,11 @@ function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.ad
 function celebrate(w) {
   const mine = w.name === me.name;
   $("#overlay").innerHTML = `<div class="overlay win" data-close><div class="box winbox">
-    <div class="big">${w.type === "bingo" ? "¡BINGO!" : "¡LÍNEA!"}</div>
+    <div class="big">¡${esc(pname(w.type).toUpperCase())}!</div>
     <div class="wname">${esc(w.name)}</div>
-    <p>${mine ? "¡Ganaste" : "gana"} ${w.type === "bingo" ? "el cartón lleno" : "la línea"} con la bola ${w.at}${mine ? "!" : "."}</p>
+    <p>${mine ? "¡Ganaste" : "gana"} ${w.type === "lleno" ? "el bingo" : esc(plow(w.type))} con la bola ${w.at}${mine ? "!" : "."}</p>
     <button class="btn dark" data-close>Seguir</button></div></div>`;
-  confetti(w.type === "bingo" ? 320 : 200);
+  confetti(w.type === "lleno" ? 320 : 200);
 }
 let confT = null;
 function confetti(count) {
@@ -586,7 +752,7 @@ function render() {
       else { player.pause(); setVoiceStatus(""); }
     };
     $("#changeCards").onclick = () => {
-      if (state.drawn.length && state.phase !== "terminado") return toast("Solo puedes cambiar cartones antes de la primera bola");
+      if (state.drawn.length && playing()) return toast("Solo puedes cambiar cartones antes de la primera bola");
       me.cards = []; me.marks = {}; persist(); $("#app").innerHTML = ""; render();
     };
   }
@@ -638,50 +804,109 @@ function renderWinners() {
   const el = $("#sec-winners");
   if (!state.winners.length) { el.innerHTML = ""; return; }
   el.innerHTML = `<div class="winners"><h2>🏆 Ganadores de esta partida</h2><ul>${state.winners.map((w) =>
-    `<li>${w.type === "bingo" ? "Bingo" : "Línea"}: ${esc(w.name)} <span class="muted">(bola ${w.at})</span></li>`).join("")}</ul></div>`;
+    `<li>${esc(pname(w.type))}: ${esc(w.name)} <span class="muted">(bola ${w.at})</span></li>`).join("")}</ul></div>`;
 }
 function renderBall() {
   const el = $("#sec-ball");
   const d = state.drawn, last = d[d.length - 1];
   let msg = "";
   if (!loaded) msg = "Cargando partida…";
-  else if (state.phase === "espera") msg = isHost ? "Pulsa «Nueva partida» para empezar." : "Esperando que el anfitrión inicie la partida.";
+  else if (state.phase === "espera") msg = isHost ? "Elige el juego y empieza la partida." : "Esperando que el anfitrión elija el juego.";
   else if (!d.length) msg = "Partida lista. ¡Atentos a la primera bola!";
-  const phaseTxt = { linea: "Se juega por la línea", bingo: "Se juega por el bingo", terminado: "Partida terminada", espera: "" }[state.phase];
+  const phaseTxt = playing() ? "Se juega por: " + esc(pname(cur())) : state.phase === "terminado" ? "Partida terminada" : "";
+  const is75 = state.mode === "b75";
   el.innerHTML = `<h2>Última bola <small>${phaseTxt}</small></h2>
     <div class="ball-row">
-      <div class="token ball-big ${last && last === lastAnimated ? "pop" : ""}"><span>${last || "–"}</span></div>
+      <div class="token ball-big ${last && last === lastAnimated ? "pop" : ""}">${is75 && last ? `<em class="ltr">${letterOf(last)}</em>` : ""}<span>${last || "–"}</span></div>
       <div class="ball-meta">
-        <div class="count">${d.length ? `Bola ${d.length} de 90` : ""}</div>
-        <div class="words">${last ? words(last) : esc(msg)}</div>
+        <div class="count">${d.length ? `Bola ${d.length} de ${MODES[state.mode].max}` : ""}</div>
+        <div class="words">${last ? (is75 ? letterOf(last) + " · " : "") + words(last) : esc(msg)}</div>
         <div class="prev">${d.slice(-6, -1).reverse().map((n) => `<div class="token"><span>${n}</span></div>`).join("")}</div>
       </div>
     </div>${stale ? `<div class="note">No se pudo confirmar la conexión; los números pueden estar desactualizados.</div>` : ""}`;
   lastAnimated = null;
 }
+let sel = null; // host's choice before starting: { mode, prizes:Set }
+function miniCard(mode, hi = [], dense = false) {
+  if (mode === "b75") {
+    const cells = [...Array(25).keys()].map((i) => `<i class="${i === 12 ? "fr" : ""} ${hi.includes(i) ? "on" : ""}"></i>`).join("");
+    return `<div class="mini m75 ${dense ? "dense" : ""}">${dense ? "" : `<b>B</b><b>I</b><b>N</b><b>G</b><b>O</b>`}${cells}</div>`;
+  }
+  const blanks = [1, 2, 4, 6, 7, 9, 12, 14, 16, 17, 18, 20, 23, 24, 26];
+  const cells = [...Array(27).keys()].map((i) => `<i class="${blanks.includes(i) ? "bl" : ""} ${hi.includes(i) && !blanks.includes(i) ? "on" : ""}"></i>`).join("");
+  return `<div class="mini m90 ${dense ? "dense" : ""}">${cells}</div>`;
+}
+function prizeIcon(mode, t) {
+  if (mode === "l90") return miniCard("l90", t === "linea" ? [9, 10, 11, 13, 15, 19, 21, 22, 25] .filter((i) => i >= 9 && i < 18) : t === "dos" ? [...Array(18).keys()] : [...Array(27).keys()], true);
+  return miniCard("b75", t === "linea" ? R5(1) : SHAPES75[t], true);
+}
+const playerLink = () => location.origin + location.pathname;
+const inviteText = () => "¡Juguemos bingo! Entra con tu nombre aquí: " + playerLink();
+const waLink = () => "https://wa.me/?text=" + encodeURIComponent(inviteText());
+async function copyInvite() {
+  const txt = inviteText();
+  try { await navigator.clipboard.writeText(txt); toast("Link copiado; pégalo en WhatsApp"); return; } catch (e) {}
+  try {
+    const ta = document.createElement("textarea"); ta.value = txt; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, txt.length);
+    const ok = document.execCommand("copy"); ta.remove();
+    if (ok) { toast("Link copiado; pégalo en WhatsApp"); return; }
+  } catch (e) {}
+  toast("No se pudo copiar; usa el botón WhatsApp");
+}
+function wireInvite() { const b = $("#h-copy"); if (b) b.onclick = copyInvite; }
 function renderHost() {
   const el = $("#sec-host");
   if (!isHost) { el.hidden = true; return; }
   el.hidden = false;
-  const playing = state.phase === "linea" || state.phase === "bingo";
-  const left = 90 - state.drawn.length;
+  const left = MODES[state.mode].max - state.drawn.length;
   const head = `<h2>Anfitrión <small>solo tú ves este panel</small></h2>`;
-  if (!playing) {
-    const last = state.winners.filter((w) => w.type === "bingo").map((w) => esc(w.name)).join(", ");
+  const invite = `<div class="invite">
+      <button class="btn inv-copy" id="h-copy">🔗 Copiar link para invitar</button>
+      <a class="btn inv-wa" id="h-wa" href="${waLink()}" target="_blank" rel="noopener">WhatsApp</a>
+    </div>`;
+  if (!playing()) {
+    if (!sel) sel = { mode: state.mode, prizes: new Set(state.prizes) };
+    const ended = state.phase === "terminado";
+    const winTxt = state.winners.filter((w) => w.type === "lleno").map((w) => esc(w.name)).join(", ");
+    const order = MODES[sel.mode].prizes.filter((t) => sel.prizes.has(t));
     el.innerHTML = head + `
-      <div class="h-status">${state.phase === "terminado"
-        ? `<b>Partida terminada</b>${last ? ` · ganó ${last}` : ""}`
-        : `<b>Todo listo.</b> Los jugadores ya pueden entrar con sus cartones.`}</div>
-      <button class="btn primary h-main" id="h-new">${state.phase === "terminado" ? "Jugar otra partida" : "Empezar partida"}</button>
-      <p class="h-hint">Los jugadores conservan sus cartones; las marcas se borran.</p>`;
-    $("#h-new").onclick = newGame;
+      ${ended ? `<div class="h-status"><b>Partida terminada</b>${winTxt ? ` · bingo de ${winTxt}` : ""}</div>` : ""}
+      <div class="pick-h">1 · Tipo de bingo</div>
+      <div class="modes">${Object.entries(MODES).map(([k, m]) => `
+        <button class="mode ${sel.mode === k ? "on" : ""}" data-mode="${k}">
+          ${miniCard(k)}
+          <span class="mn">${m.name}</span><span class="ms">${m.sub}</span>
+        </button>`).join("")}</div>
+      <div class="pick-h">2 · Premios <small>se juegan en este orden</small></div>
+      <div class="prizes">${MODES[sel.mode].prizes.map((t) => {
+        const on = sel.prizes.has(t), pos = order.indexOf(t) + 1;
+        return `<button class="prize ${on ? "on" : ""}" data-prize="${t}" aria-pressed="${on}">
+          ${prizeIcon(sel.mode, t)}<span class="pn">${esc(pname(t, sel.mode))}</span><span class="pd">${esc(PRIZES[sel.mode][t].d || "")}</span>
+          <span class="pos">${on ? pos : ""}</span></button>`;
+      }).join("")}</div>
+      <div class="h-order">${order.map((t) => esc(pname(t, sel.mode))).join(" → ")}</div>
+      <button class="btn primary h-main" id="h-new">${ended ? "Jugar otra partida" : "Empezar partida"}</button>
+      <p class="h-hint">Al empezar, cada jugador recibe cartones del tipo elegido; las marcas se borran.</p>`;
+    el.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => {
+      if (sel.mode === b.dataset.mode) return;
+      sel = { mode: b.dataset.mode, prizes: new Set(DEFAULT_PRIZES[b.dataset.mode]) }; renderHost();
+    });
+    el.querySelectorAll("[data-prize]").forEach((b) => b.onclick = () => {
+      const t = b.dataset.prize;
+      if (sel.prizes.has(t)) { if (sel.prizes.size === 1) return toast("Elige al menos un premio"); sel.prizes.delete(t); } else sel.prizes.add(t);
+      renderHost();
+    });
+    $("#h-new").onclick = () => { const m = sel.mode, pr = MODES[m].prizes.filter((t) => sel.prizes.has(t)); sel = null; newGame(m, pr); };
     return;
   }
-  el.innerHTML = head + `
-    <div class="h-status"><b>${state.phase === "linea" ? "Se juega por la línea" : "Se juega por el bingo"}</b> · ${left} bolas en la bolsa</div>
+  sel = null;
+  el.innerHTML = head + invite + `
+    <div class="h-status"><b>${MODES[state.mode].name}</b> · ${left} bolas en la bolsa</div>
+    <div class="h-steps">${state.prizes.map((t, i) => `<span class="${i < state.pidx ? "done" : i === state.pidx ? "now" : ""}">${i < state.pidx ? "✓ " : ""}${esc(pname(t))}</span>`).join("")}</div>
     <button class="btn primary h-main" id="h-draw" ${autoOn || !left ? "disabled" : ""}>${autoOn ? "Sacando solo…" : "Sacar bola"}</button>
     <div class="h-auto ${autoOn ? "on" : ""}">
-      <button class="h-play" id="h-auto" aria-label="${autoOn ? "Pausar" : "Sacar bolas solo"}">${autoOn ? "⏸ Pausar" : "▶ Automático"}</button>
+      <button class="h-play" id="h-auto">${autoOn ? "⏸ Pausar" : "▶ Automático"}</button>
       <label class="h-every">cada
         <select id="h-sec" aria-label="Segundos entre bolas">${[5, 8, 12, 20].map((x) => `<option value="${x}" ${x === autoSec ? "selected" : ""}>${x} s</option>`).join("")}</select>
       </label>
@@ -689,9 +914,10 @@ function renderHost() {
     </div>
     <div class="h-tools">
       <button class="btn ghost" id="h-undo" ${state.drawn.length ? "" : "disabled"}>↶ Deshacer última</button>
-      <button class="btn ghost" id="h-new">Nueva partida</button>
+      <button class="btn ghost" id="h-new">Terminar partida</button>
     </div>
     <p class="h-hint">¿Usas la bolsa de fichas? Toca el número en el tablero.</p>`;
+  wireInvite();
   $("#h-draw").onclick = () => draw();
   $("#h-auto").onclick = () => { autoOn ? (stopAuto(), renderHost()) : startAuto(); };
   $("#h-sec").onchange = (e) => { autoSec = +e.target.value; if (autoOn) startAuto(); else renderHost(); };
@@ -699,36 +925,55 @@ function renderHost() {
   $("#h-new").onclick = () => {
     const b = $("#h-new");
     if (state.drawn.length && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = "¿Seguro? Toca otra vez"; b.classList.add("warn"); return; }
-    newGame();
+    stopAuto(); save({ ...state, phase: "terminado" });
   };
 }
 function renderBoard() {
   const el = $("#sec-board");
   const ds = drawnSet(), last = state.drawn[state.drawn.length - 1];
-  const clickable = isHost && (state.phase === "linea" || state.phase === "bingo");
-  $("#boardHint").textContent = state.drawn.length ? `${state.drawn.length} cantados · ${90 - state.drawn.length} quedan` : "";
+  const clickable = isHost && playing();
+  const max = MODES[state.mode].max;
+  $("#boardHint").textContent = state.drawn.length ? `${state.drawn.length} cantados · ${max - state.drawn.length} quedan` : "";
+  const cell = (n) => `<button class="cell ${ds.has(n) ? "called" : ""} ${n === last ? "last" : ""}" data-n="${n}" ${clickable ? "" : "tabindex=-1"}>${n}</button>`;
   let h = "";
-  for (let n = 1; n <= 90; n++) h += `<button class="cell ${ds.has(n) ? "called" : ""} ${n === last ? "last" : ""}" data-n="${n}" ${clickable ? "" : "tabindex=-1"}>${n}</button>`;
-  el.innerHTML = `<div class="board ${clickable ? "clickable" : ""}">${h}</div>`;
+  if (state.mode === "b75") {
+    for (let r = 0; r < 5; r++) { h += `<span class="bl-l">${"BINGO"[r]}</span>`; for (let n = r * 15 + 1; n <= r * 15 + 15; n++) h += cell(n); }
+    el.innerHTML = `<div class="board b75 ${clickable ? "clickable" : ""}">${h}</div>`;
+  } else {
+    for (let n = 1; n <= 90; n++) h += cell(n);
+    el.innerHTML = `<div class="board ${clickable ? "clickable" : ""}">${h}</div>`;
+  }
   if (clickable) el.querySelectorAll(".cell:not(.called)").forEach((b) => b.onclick = () => draw(+b.dataset.n));
 }
 function renderCards() {
   const el = $("#sec-cards");
   if (!el) return;
+  const t = cur();
+  const shape = state.mode === "b75" && playing() && SHAPES75[t] && t !== "lleno" ? SHAPES75[t] : [];
   el.innerHTML = me.cards.map((card, i) => {
     const s = SERIES[i % SERIES.length];
     const ms = markedSet(i);
-    const p = progress(i);
     let badge = "";
-    if (state.phase !== "espera" && state.drawn.length) {
-      if (p.full === 0) badge = `<span class="badge hot">¡Cartón lleno!</span>`;
-      else if (p.line === 0 && state.phase === "linea") badge = `<span class="badge hot">¡Tienes línea!</span>`;
-      else if (state.phase === "linea") badge = `<span class="badge ${p.line === 1 ? "hot" : ""}">Faltan ${p.line} para línea</span>`;
-      else badge = `<span class="badge ${p.full === 1 ? "hot" : ""}">Faltan ${p.full} para bingo</span>`;
+    if (playing() && state.drawn.length) {
+      const m = progress(i);
+      badge = m === 0 ? `<span class="badge hot">¡Tienes ${esc(plow(t))}!</span>`
+        : `<span class="badge ${m === 1 ? "hot" : ""}">${m === 1 ? "Falta" : "Faltan"} ${m} para ${esc(plow(t))}</span>`;
     }
-    return `<div class="card" style="--c:${s.c}"><div class="grid">${card.map((n) => n
-      ? `<div class="sq num" data-i="${i}" data-n="${n}"><span class="n">${n}</span><span class="m">${n}</span>${ms.has(n) ? kernel(justMarked === i + ":" + n) : ""}</div>`
-      : `<div class="sq blank"></div>`).join("")}</div>
+    const sq = (n, idx) => {
+      if (cardMode(card) === "b75") {
+        const col = "k" + (idx % 5);
+        if (idx === 12) return `<div class="sq w5 free ${col} ${shape.includes(12) ? "tgt" : ""}"><span class="n">★</span><span class="m">Libre</span>${shutter(true, "")}</div>`;
+        return `<div class="sq w5 num ${col} ${shape.includes(idx) ? "tgt" : ""} ${ms.has(n) ? "mk" : ""}" data-i="${i}" data-n="${n}"><span class="n">${n}</span>${shutter(ms.has(n), i + ":" + n)}</div>`;
+      }
+      if (!n) return `<div class="sq blank"></div>`;
+      return `<div class="sq num ${shape.includes(idx) ? "tgt" : ""}" data-i="${i}" data-n="${n}"><span class="n">${n}</span><span class="m">${n}</span>${ms.has(n) ? kernel(justMarked === i + ":" + n) : ""}</div>`;
+    };
+    if (cardMode(card) === "b75") {
+      return `<div class="card c75 ${shape.length ? "shape-on" : ""}"><div class="hdr5"><b class="k0">B</b><b class="k1">I</b><b class="k2">N</b><b class="k3">G</b><b class="k4">O</b></div>
+        <div class="grid grid5">${card.map(sq).join("")}</div>
+        <div class="foot5"><span>Cartón ${i + 1}</span>${badge}</div></div>`;
+    }
+    return `<div class="card" style="--c:${s.c}"><div class="grid">${card.map(sq).join("")}</div>
       <div class="card-foot"><span>${s.n}</span>${badge}<span>Nº ${i + 1}</span></div></div>`;
   }).join("");
   el.querySelectorAll(".sq.num").forEach((c) => c.onclick = () => toggleMark(+c.dataset.i, +c.dataset.n, c));
@@ -746,11 +991,11 @@ function renderPlayers() {
       let right = "";
       if (c) {
         const ok = verify(p.cards, c.type);
-        right = `<span class="${ok ? "ok" : "bad"}">${c.type === "bingo" ? "¡Bingo!" : "¡Línea!"} ${ok ? "✓ válido" : "✗ no cuadra"}</span>` +
+        right = `<span class="${ok ? "ok" : "bad"}">¡${esc(pname(c.type))}! ${ok ? "✓ válido" : "✗ no cuadra"}</span>` +
           (isHost ? ` <button class="btn primary" data-ok="${esc(p.peer)}" data-t="${c.type}">Confirmar</button> <button class="btn ghost" data-no="${esc(p.peer)}">Rechazar</button>` : "");
       } else {
-        const l = Number.isFinite(p.line) && p.line < 99 ? p.line : null, f = Number.isFinite(p.full) && p.full < 99 ? p.full : null;
-        right = `<span class="muted">${state.phase === "linea" && l != null ? `faltan ${l} p/ línea` : f != null && state.phase !== "espera" ? `faltan ${f} p/ bingo` : ""}</span>`;
+        const l = Number.isFinite(p.line) && p.line < 99 ? p.line : null;
+        right = `<span class="muted">${playing() && l != null ? `faltan ${l} p/ ${esc(plow(cur()))}` : ""}</span>`;
       }
       return `<div class="pl ${c ? "claim" : ""}"><span class="dot"></span><span class="nm">${esc(p.name)}${p.isMe ? " (tú)" : ""}</span>
         <span class="muted">${Array.isArray(p.cards) ? p.cards.length : 0} cart.</span><span class="sp"></span>${right}</div>`;
@@ -767,12 +1012,10 @@ function renderPlayers() {
 function renderBar() {
   const bar = $("#bar");
   if (!me.name || !me.cards.length) { bar.innerHTML = ""; return; }
-  const playing = state.phase === "linea" || state.phase === "bingo";
-  bar.innerHTML = `<div class="bar">
-    <button class="btn linea" id="c-linea" ${playing && state.phase === "linea" ? "" : "disabled"}>¡LÍNEA!</button>
-    <button class="btn bingo" id="c-bingo" ${playing ? "" : "disabled"}>¡BINGO!</button></div>`;
-  $("#c-linea").onclick = () => claim("linea");
-  $("#c-bingo").onclick = () => claim("bingo");
+  const t = cur();
+  const label = playing() ? (pname(t).length <= 2 ? "¡CANTAR " + pname(t) + "!" : "¡" + pname(t).toUpperCase() + "!") : state.phase === "terminado" ? "Partida terminada" : "Esperando…";
+  bar.innerHTML = `<div class="bar"><button class="btn ${t === "lleno" ? "bingo" : "linea"} one" id="c-claim" ${playing() ? "" : "disabled"}>${label}</button></div>`;
+  $("#c-claim").onclick = () => claim(t);
 }
 
 /* ---------- boot ---------- */
@@ -829,7 +1072,7 @@ async function loadAll() {
       fails = 0; if (stale) { stale = false; netPill(); }
       if (!(isHost && inflight > 0) && data) {
         const n = clean(data);
-        if (n.round !== state.round || n.drawn.length !== state.drawn.length || n.phase !== state.phase
+        if (n.round !== state.round || n.drawn.length !== state.drawn.length || n.phase !== state.phase || n.pidx !== state.pidx || n.mode !== state.mode
             || n.winners.length !== state.winners.length || n.drawn[n.drawn.length - 1] !== state.drawn[state.drawn.length - 1]) applyState(n);
       }
     } catch (e) { if (++fails >= 5 && !stale) { stale = true; netPill(); renderBall(); } }
