@@ -740,7 +740,7 @@ async function loadAll() {
     })
     .subscribe((st) => { live = st === "SUBSCRIBED"; netPill(); });
   // safety net: refresh every few seconds when the live channel is down, and keep my seat alive
-  // the game row is tiny: read it every 2 s whether or not the live channel works; players every 5 s
+  // the game row is tiny: read it every second whether or not the live channel works; players every 5 s
   let fails = 0;
   setInterval(async () => {
     if (document.hidden) return;
@@ -753,8 +753,8 @@ async function loadAll() {
         if (n.round !== state.round || n.drawn.length !== state.drawn.length || n.phase !== state.phase
             || n.winners.length !== state.winners.length || n.drawn[n.drawn.length - 1] !== state.drawn[state.drawn.length - 1]) applyState(n);
       }
-    } catch (e) { if (++fails >= 3 && !stale) { stale = true; netPill(); renderBall(); } }
-  }, 2000);
+    } catch (e) { if (++fails >= 5 && !stale) { stale = true; netPill(); renderBall(); } }
+  }, 1000);
   setInterval(() => { if (!document.hidden) loadAll().catch(() => {}); }, 5000);
   setInterval(() => pushPresence(), 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadAll().catch(() => {}); pushPresence(); } });
