@@ -141,6 +141,9 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .overlay .box{background:var(--cream);border-radius:20px;padding:26px 22px;text-align:center;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .overlay .big{font-family:Oswald;font-size:54px;font-weight:700;color:var(--red);line-height:1}
 .overlay p{margin:10px 0 16px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
+.overlay .wname{font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(40px,13vw,72px);line-height:1.05;margin-top:6px;color:var(--ink);word-break:break-word;animation:pop .7s cubic-bezier(.2,1.6,.4,1)}
+.winbox{border:4px solid #ffcf3f}
 #toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;
   font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -297,7 +300,7 @@ function applyState(next) {
   // celebrate new winners
   if (state.winners.length > prev.winners.length && state.round === prev.round) {
     const w = state.winners[state.winners.length - 1];
-    showOverlay(w.type === "bingo" ? "¡BINGO!" : "¡LÍNEA!", `${esc(w.name)} gana ${w.type === "bingo" ? "el cartón lleno" : "la línea"} con la bola ${w.at}.`, true);
+    celebrate(w);
     if (w.type === "bingo") stopAuto();
   }
   pushPresence();
@@ -472,7 +475,53 @@ const words = (n) => n < 30 ? U[n] : T[Math.floor(n / 10)] + (n % 10 ? " y " + U
 /* ---------- UI helpers ---------- */
 let toastT;
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2200); }
-function showOverlay(big, text, confetti) {
+function celebrate(w) {
+  const mine = w.name === me.name;
+  $("#overlay").innerHTML = `<div class="overlay win" data-close><div class="box winbox">
+    <div class="big">${w.type === "bingo" ? "¡BINGO!" : "¡LÍNEA!"}</div>
+    <div class="wname">${esc(w.name)}</div>
+    <p>${mine ? "¡Ganaste" : "gana"} ${w.type === "bingo" ? "el cartón lleno" : "la línea"} con la bola ${w.at}${mine ? "!" : "."}</p>
+    <button class="btn dark" data-close>Seguir</button></div></div>`;
+  confetti(w.type === "bingo" ? 320 : 200);
+}
+let confT = null;
+function confetti(count) {
+  let cv = $("#confetti");
+  if (!cv) { cv = document.createElement("canvas"); cv.id = "confetti"; document.body.appendChild(cv); }
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = innerWidth, H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  try { if (matchMedia("(prefers-reduced-motion: reduce)").matches) count = Math.round(count / 4); } catch (e) {}
+  const cols = ["#3c9a3a", "#e2402f", "#2f8fd8", "#ffcf3f", "#f7c531", "#ffffff", "#1d1d1d"];
+  const ps = Array.from({ length: count }, (_, i) => {
+    const fromLeft = i % 2 === 0;
+    return { x: fromLeft ? -10 : W + 10, y: H * (0.55 + Math.random() * 0.3),
+      vx: (fromLeft ? 1 : -1) * (4 + Math.random() * 9), vy: -(10 + Math.random() * 12),
+      w: 6 + Math.random() * 7, h: 9 + Math.random() * 9, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
+      c: cols[i % cols.length], kernel: i % 9 === 0 };
+  });
+  const t0 = performance.now();
+  cancelAnimationFrame(confT);
+  const step = (t) => {
+    const el = t - t0;
+    ctx.clearRect(0, 0, W, H);
+    let alive = 0;
+    for (const p of ps) {
+      p.vy += 0.32; p.vx *= 0.985; p.vy = Math.min(p.vy, 7 + Math.sin(p.r) * 1.5);
+      p.x += p.vx + Math.sin((el / 300) + p.r) * 0.8; p.y += p.vy; p.r += p.vr;
+      if (p.y < H + 30) alive++;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+      ctx.globalAlpha = el > 5000 ? Math.max(0, 1 - (el - 5000) / 1000) : 1;
+      if (p.kernel) { ctx.fillStyle = "#f7c531"; ctx.beginPath(); ctx.ellipse(0, 0, 6, 8, 0, 0, Math.PI * 2); ctx.fill(); }
+      else { ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 1.7))); }
+      ctx.restore();
+    }
+    if (alive && el < 6000) confT = requestAnimationFrame(step); else ctx.clearRect(0, 0, W, H);
+  };
+  confT = requestAnimationFrame(step);
+}
+function showOverlay(big, text) {
   $("#overlay").innerHTML = `<div class="overlay" data-close><div class="box"><div class="big">${big}</div><p>${text}</p><button class="btn dark" data-close>Seguir</button></div></div>`;
 }
 $("#overlay").addEventListener("click", (e) => { if (e.target.closest("[data-close]") && (e.target.matches("[data-close]"))) $("#overlay").innerHTML = ""; });
