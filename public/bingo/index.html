@@ -28,7 +28,7 @@ body{
   background-attachment:fixed;
   padding-bottom:96px;
 }
-header{display:flex;align-items:center;gap:10px;padding:14px 16px 6px;max-width:980px;margin:0 auto}
+header{display:flex;align-items:center;gap:10px;padding:12px 16px 8px;max-width:980px;margin:0 auto;position:sticky;top:0;z-index:10;background:rgba(201,154,94,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-radius:0 0 16px 16px}
 header h1{font-family:Oswald,sans-serif;font-weight:700;font-size:26px;letter-spacing:1px;color:#fff;background:var(--red);padding:2px 12px;border-radius:8px;box-shadow:0 2px 0 rgba(80,40,0,.35)}
 header .sp{flex:1}
 .pill{font-size:12px;font-weight:800;background:rgba(255,255,255,.85);border-radius:999px;padding:5px 10px;white-space:nowrap}
@@ -268,8 +268,9 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .h-steps span{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(42,29,18,.07);color:#7a6a58}
 .h-steps span.now{background:#ffcf3f;color:#3b2a00}
 .h-steps span.done{background:#e3f3e1;color:#1f7a2a}
-.chat-fab{position:fixed;right:14px;bottom:88px;z-index:12;width:56px;height:56px;border-radius:50%;border:none;background:#24272d;color:#fff;font-size:24px;
-  box-shadow:0 6px 16px rgba(0,0,0,.35);display:grid;place-items:center}
+.chat-fab{position:relative;height:40px;padding:0 14px 0 10px;border-radius:999px;border:none;background:#24272d;color:#fff;font-size:18px;
+  box-shadow:0 3px 8px rgba(0,0,0,.25);display:flex;align-items:center;gap:5px;flex:none}
+.chat-lbl{font-size:14px;font-weight:800}
 .chat-fab.bump{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 .chat-badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;border:2px solid #fff}
 .chat{position:fixed;left:0;right:0;bottom:0;z-index:16;max-width:560px;margin:0 auto;height:min(70vh,560px);background:#fbfbfa;border-radius:20px 20px 0 0;
@@ -291,6 +292,7 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .chat-quick button{border:none;background:#eeefef;border-radius:999px;padding:7px 12px;font-size:14px;white-space:nowrap;font-weight:700}
 .chat-form{display:flex;gap:8px;padding:6px 12px 12px}
 .chat-form input{flex:1;min-width:0}
+.upd{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:40;border:none;border-radius:999px;padding:10px 16px;background:#24272d;color:#fff;font-weight:800;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
 #toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;
   font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -301,13 +303,13 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 <body>
 <header>
   <h1>BINGO</h1><span class="sp"></span>
+  <button id="chatFab" class="chat-fab" hidden aria-label="Abrir chat">💬 <span class="chat-lbl">Chat</span><span id="chatBadge" class="chat-badge" hidden></span></button>
   <span class="pill" id="netPill">Conectando…</span>
 </header>
 <main id="app"></main>
 <div id="bar"></div>
 <div id="overlay"></div>
 <div id="toast"></div>
-<button id="chatFab" class="chat-fab" hidden aria-label="Abrir chat">💬<span id="chatBadge" class="chat-badge" hidden></span></button>
 <div id="chat" class="chat" hidden>
   <div class="chat-head"><b>Chat</b><span class="muted" id="chatCount"></span><button class="chat-x" id="chatClose" aria-label="Cerrar chat">✕</button></div>
   <div class="chat-list" id="chatList"></div>
@@ -751,7 +753,7 @@ function netPill() {
 
 /* ---------- render ---------- */
 /* ---------- chat ---------- */
-let chatMsgs = [], chatOpen = false, chatSending = false;
+let chatMsgs = [], chatOpen = false, chatSending = false, chatLoaded = false;
 let chatSeen = 0;
 try { chatSeen = Number(localStorage.getItem("bingo-chat-seen")) || 0; } catch (e) {}
 function chatVisible() {
@@ -790,6 +792,7 @@ async function loadChat() {
   const { data, error } = await sb.from("bingo_messages").select("id,player_id,name,body,created_at").eq("game_id", GAME).order("id", { ascending: false }).limit(80);
   if (error) return;
   const next = (data || []).reverse();
+  if (!chatLoaded) { chatLoaded = true; chatMsgs = next; renderChat(); return; }
   const changed = next.length !== chatMsgs.length || (next.length && next[next.length - 1].id !== chatMsgs[chatMsgs.length - 1]?.id);
   if (changed) {
     const fresh = next.filter((m) => m.id > (chatMsgs.length ? chatMsgs[chatMsgs.length - 1].id : chatSeen) && m.player_id !== me.pid);
@@ -1120,6 +1123,26 @@ function renderBar() {
   bar.innerHTML = `<div class="bar"><button class="btn ${t === "lleno" ? "bingo" : "linea"} one" id="c-claim" ${playing() ? "" : "disabled"}>${label}</button></div>`;
   $("#c-claim").onclick = () => claim(t);
 }
+
+/* ---------- updates ---------- */
+const BUILD = "20261121184222";
+let updateShown = false;
+async function checkUpdate() {
+  try {
+    const r = await fetch("version.txt?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) return;
+    const v = (await r.text()).trim();
+    if (!v || v === BUILD) return;
+    if (!playing()) { location.reload(); return; }
+    if (updateShown) return; updateShown = true;
+    const d = document.createElement("button");
+    d.className = "upd"; d.textContent = "Hay una versión nueva · toca para actualizar";
+    d.onclick = () => location.reload();
+    document.body.appendChild(d);
+  } catch (e) {}
+}
+setInterval(checkUpdate, 60000);
+setTimeout(checkUpdate, 3000);
 
 /* ---------- boot ---------- */
 // host link: #anfitrion=<key>, kept on this device and removed from the address bar
