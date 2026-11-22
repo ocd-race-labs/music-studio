@@ -48,6 +48,9 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 .fan i:nth-child(3){left:46px;transform:rotate(14deg);color:#d22f3a}
 .sec{color:#fff;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin:18px 2px 10px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
 .sec:first-of-type{margin-top:4px}
+.a-ocho{background:radial-gradient(ellipse at 50% 30%,#6b51b8,#3b2a6b)}
+.a-ocho .fan i:nth-child(1),.a-ocho .fan i:nth-child(3){color:#1d1f23}
+.a-ocho .fan i:nth-child(2){color:#d22f3a}
 .a-soli{background:radial-gradient(ellipse at 50% 30%,#3a7cc4,#245791)}
 .steps{position:relative;width:80px;height:66px}
 .steps i{position:absolute;width:34px;height:48px;border-radius:5px;background:#fff;font-style:normal;font-weight:800;font-size:13px;padding:2px 4px;box-shadow:0 2px 5px rgba(0,0,0,.35);color:#1d1f23}
@@ -81,6 +84,7 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
   <div class="grid">
     <a class="tile" href="carioca/"><span class="go">Jugar</span><div class="art a-carioca"><div class="fan"><i>A<em>♥</em></i><i>A<em>♠</em></i><i>A<em>♦</em></i></div></div><b>Carioca</b><span>2 a 6 jugadores</span></a>
     <a class="tile" href="nerviosito/"><span class="go">Jugar</span><div class="art a-nervio"><div class="fan"><i>7<em>♣</em></i><i>7<em>♥</em></i><i>7<em>♠</em></i></div></div><b>Nerviosito</b><span>2 a 8 jugadores · rapidez</span></a>
+    <a class="tile" href="ocholoco/"><span class="go">Jugar</span><div class="art a-ocho"><div class="fan"><i>8<em>♠</em></i><i>8<em>♥</em></i><i>8<em>♣</em></i></div></div><b>Ocho loco</b><span>2 a 6 jugadores</span></a>
     <a class="tile" href="solitario/"><span class="go">Jugar</span><div class="art a-soli"><div class="steps"><i>K<em>♠</em></i><i>Q<em>♥</em></i><i>J<em>♣</em></i></div></div><b>Solitario</b><span>1 jugador</span></a>
   </div>
   <h2 class="sec">Juegos de mesa</h2>
@@ -98,7 +102,7 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 // the host link of the menu (#anfitrion=…) opens the bingo as host; any other link opens it as a player
 (() => {
   const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/);
-  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; document.querySelector('a[href="solitario/"]').href = "solitario/#" + m[0]; document.querySelector('a[href="backgammon/"]').href = "backgammon/#" + m[0]; }
+  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; document.querySelector('a[href="solitario/"]').href = "solitario/#" + m[0]; document.querySelector('a[href="backgammon/"]').href = "backgammon/#" + m[0]; document.querySelector('a[href="ocholoco/"]').href = "ocholoco/#" + m[0]; }
   const nm = () => { try { const y = JSON.parse(localStorage.getItem("juegos-yo")) || {}; document.getElementById("me-n").textContent = y.name || "Tu perfil"; } catch (e) {} };
   nm();
   document.getElementById("me").onclick = () => Perfil.open();
