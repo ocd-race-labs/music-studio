@@ -227,15 +227,15 @@ function renderStart() {
 }
 /* the tables you are already in come first, so leaving and coming back is one tap */
 async function listMine() {
-  const box = $("#mine"), ids = mine0();
-  if (!box || !ids.length || !client()) return;
+  const box = $("#mine");
+  if (!box || !client()) return;
   const since = new Date(Date.now() - 12 * 3600 * 1000).toISOString();
-  const { data } = await sb.from("carioca_pulse").select("id,host_name,phase,players,updated_at").in("id", ids).in("phase", ["lobby", "playing", "roundEnd"]).gt("updated_at", since).order("updated_at", { ascending: false }).limit(5);
+  const { data } = await sb.from("carioca_pulse").select("id,host_name,phase,players,updated_at").contains("player_ids", [me.pid]).in("phase", ["lobby", "playing", "roundEnd"]).gt("updated_at", since).order("updated_at", { ascending: false }).limit(5);
   if (!$("#mine")) return;
   const rows = data || [];
   mineOpen = new Set(rows.map((r) => r.id));
   box.innerHTML = rows.length ? `<label class="lbl">Tus partidas</label><div class="tables">${rows.map((r) => `
-      <button class="btn back2" data-back="${esc(r.id)}"><span>${r.phase === "lobby" ? "Volver a tu mesa" : "Volver a la partida"} · ${esc(r.id)}</span>
+      <button class="btn back2" data-back="${esc(r.id)}"><span>${r.phase === "lobby" ? "Volver a tu mesa" : "Volver a la partida"}${r.host_name && r.host_name !== me.name ? " de " + esc(r.host_name) : ""} · ${esc(r.id)}</span>
       <small>${r.phase === "lobby" ? "esperando" : "en juego"} · ${r.players} jug.</small></button>`).join("")}</div>` : "";
   box.querySelectorAll("[data-back]").forEach((b) => b.onclick = () => { location.hash = "m=" + b.dataset.back + keepHost(); });
   listOpen();
