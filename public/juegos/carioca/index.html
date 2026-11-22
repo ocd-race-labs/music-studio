@@ -116,16 +116,23 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .tables{display:grid;gap:8px}
 .btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
 .btn.tbl small{font-weight:700;color:#6c6f75;font-size:12px}
+.btn.back2{justify-content:space-between;background:#d9f2e1;text-align:left}
+.btn.back2 small{font-weight:700;color:#2d6a43;font-size:12px}
+.code{display:grid;grid-template-columns:1fr auto;gap:8px}
+.code input{text-transform:uppercase;letter-spacing:2px;font-weight:800}
 .or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
+header .gear{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.9);color:#1d1f23;border:none;font:inherit;font-size:17px;font-weight:800}
 </style>
+<script src="../perfil.js"></script>
 </head>
 <body>
 <header>
   <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
   <span class="logo">CARIOCA</span><span class="sp"></span>
   <span class="pill" id="pill"></span>
+  <button class="gear" id="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
 </header>
 <main id="app"></main>
 <div id="bar" class="bar"></div>
@@ -190,8 +197,11 @@ function renderStart() {
       <h2>Carioca</h2>
       <p class="muted">De 2 a 6 jugadores, cada uno en su teléfono. Dos mazos ingleses con 4 comodines.</p>
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
+      <div id="mine"></div>
       <div id="open"></div>
       <button class="btn primary" id="create">Crear mesa nueva</button>
+      <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
+        <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: 3WFVTE" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
     </section>
     <section class="panel help"><b>Cómo se juega</b><ul>
       <li>Son 9 rondas; en cada una hay que bajarse con un juego distinto (dos tríos, un trío y una escala, …, escala real).</li>
@@ -205,8 +215,33 @@ function renderStart() {
     remember(v.code);
     code = v.code; location.hash = "m=" + code + keepHost(); show(v); watch();
   };
+  const goCode = () => {
+    const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!/^[A-Z0-9]{4,10}$/.test(c)) return toast("Escribe el código de la mesa (6 letras o números)");
+    if (!takeName()) return;
+    location.hash = "m=" + c + keepHost();
+  };
+  $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  listMine();
   listOpen();
 }
+/* the tables you are already in come first, so leaving and coming back is one tap */
+async function listMine() {
+  const box = $("#mine"), ids = mine0();
+  if (!box || !ids.length || !client()) return;
+  const since = new Date(Date.now() - 12 * 3600 * 1000).toISOString();
+  const { data } = await sb.from("carioca_pulse").select("id,host_name,phase,players,updated_at").in("id", ids).in("phase", ["lobby", "playing", "roundEnd"]).gt("updated_at", since).order("updated_at", { ascending: false }).limit(5);
+  if (!$("#mine")) return;
+  const rows = data || [];
+  mineOpen = new Set(rows.map((r) => r.id));
+  box.innerHTML = rows.length ? `<label class="lbl">Tus partidas</label><div class="tables">${rows.map((r) => `
+      <button class="btn back2" data-back="${esc(r.id)}"><span>${r.phase === "lobby" ? "Volver a tu mesa" : "Volver a la partida"} · ${esc(r.id)}</span>
+      <small>${r.phase === "lobby" ? "esperando" : "en juego"} · ${r.players} jug.</small></button>`).join("")}</div>` : "";
+  box.querySelectorAll("[data-back]").forEach((b) => b.onclick = () => { location.hash = "m=" + b.dataset.back + keepHost(); });
+  listOpen();
+}
+let mineOpen = new Set();
+const client = () => (sb || (window.supabase && (sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } }))));
 /* tables waiting for players: join one, or create a new one */
 const mine0 = () => load("carioca-mias") || [];
 function remember(c) { store("carioca-mias", [c].concat(mine0().filter((x) => x !== c)).slice(0, 10)); }
@@ -219,7 +254,7 @@ async function listOpen() {
   const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
   const { data } = await sb.from("carioca_pulse").select("id,host_name,players,updated_at").eq("phase", "lobby").gt("updated_at", since).order("updated_at", { ascending: false }).limit(15);
   if (!$("#open")) return;
-  const rows = (data || []).filter((r) => r.players < 6);
+  const rows = (data || []).filter((r) => r.players < 6 && !mineOpen.has(r.id));
   const mine = mine0();
   box.innerHTML = rows.length ? `<label class="lbl">Mesas esperando jugadores</label><div class="tables">${rows.map((r) => `
       <button class="btn tbl" data-join="${esc(r.id)}"><span>${mine.includes(r.id) ? "Volver a tu mesa" : "Unirse a la mesa de " + esc(r.host_name || "alguien")}</span>
@@ -275,6 +310,7 @@ async function poll() {
 
 /* ---------- render ---------- */
 function show(v) {
+  if (code && (!V || V.code !== v.code)) remember(code);
   const was = V;
   V = v; lastVersion = v.version;
   const mine = V.players[V.me];
@@ -300,6 +336,7 @@ function renderLobby() {
 }
 function renderTable(was) {
   const R = C.ROUNDS[V.round], mine = V.players[V.me], myTurn = V.phase === "playing" && V.turn === V.me;
+  if (window.Perfil) Perfil.turn(myTurn);
   pill("Mesa " + code);
   const pendingCards = new Set(pending.flatMap((g) => g.cards));
   const hand = sortHand((mine.hand || []).filter((c) => !pendingCards.has(c)));

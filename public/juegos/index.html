@@ -47,16 +47,28 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 .fan i:nth-child(2){left:26px;top:0}
 .fan i:nth-child(3){left:46px;transform:rotate(14deg);color:#d22f3a}
 .a-soon{background:#e9e6df;font-size:40px}
+.top{display:flex;align-items:flex-start;gap:10px}
+.top .t{flex:1}
+.me{display:flex;align-items:center;gap:8px;border:none;background:rgba(255,255,255,.92);border-radius:999px;padding:6px 12px 6px 6px;font:inherit;font-weight:800;font-size:14px;color:#1d1f23;box-shadow:0 2px 8px rgba(40,30,20,.2);max-width:46vw}
+.me i{width:30px;height:30px;border-radius:50%;background:#1d1f23;color:#fff;display:grid;place-items:center;font-style:normal;font-size:14px;flex:none}
+.me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a-nervio{background:radial-gradient(ellipse at 50% 30%,#c2414b,#8f2630)}
+.hand{font-size:44px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.25))}
+.a-nervio .fan i:nth-child(1),.a-nervio .fan i:nth-child(3){color:#1d1f23}
+.a-nervio .fan i:nth-child(2){color:#d22f3a}
 </style>
+<script src="perfil.js"></script>
 </head>
 <body>
 <div class="wrap">
-  <h1>Juegos en casa</h1>
-  <p class="sub">Elige un juego e invita a los tuyos.</p>
+  <div class="top"><div class="t"><h1>Juegos en casa</h1>
+  <p class="sub">Elige un juego e invita a los tuyos.</p></div>
+  <button class="me" id="me" aria-label="Tu perfil"><i>⚙</i><span id="me-n">Tu perfil</span></button></div>
   <div class="grid" id="grid">
     <a class="tile" id="t-bingo" href="../bingo/"><span class="go">Jugar</span><div class="art a-bingo"><div class="ball"><i>37</i></div></div><b>Bingo</b><span>Lotería o americano · para todos</span></a>
     <a class="tile" href="damas/"><span class="go">Jugar</span><div class="art a-damas"><div><span class="pc w"></span><span class="pc b"></span></div></div><b>Damas</b><span>2 jugadores</span></a>
     <a class="tile" href="carioca/"><span class="go">Jugar</span><div class="art a-carioca"><div class="fan"><i>A<em>♥</em></i><i>A<em>♠</em></i><i>A<em>♦</em></i></div></div><b>Carioca</b><span>2 a 6 jugadores</span></a>
+    <a class="tile" href="nerviosito/"><span class="go">Jugar</span><div class="art a-nervio"><div class="fan"><i>7<em>♣</em></i><i>7<em>♥</em></i><i>7<em>♠</em></i></div></div><b>Nerviosito</b><span>2 a 8 jugadores · rapidez</span></a>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🐍</div><b>Serpientes y escaleras</b></div>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🎲</div><b>Ludo</b></div>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">⚪</div><b>Backgammon</b></div>
@@ -68,7 +80,11 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 // the host link of the menu (#anfitrion=…) opens the bingo as host; any other link opens it as a player
 (() => {
   const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/);
-  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; }
+  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; }
+  const nm = () => { try { const y = JSON.parse(localStorage.getItem("juegos-yo")) || {}; document.getElementById("me-n").textContent = y.name || "Tu perfil"; } catch (e) {} };
+  nm();
+  document.getElementById("me").onclick = () => Perfil.open();
+  document.addEventListener("perfil-cambio", nm);
 })();
 </script>
 </body>

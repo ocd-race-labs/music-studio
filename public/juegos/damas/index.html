@@ -79,6 +79,10 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .rules{font-size:13px;color:#4a4d53;line-height:1.5}
 .rules li{margin-left:18px}
 .tables{display:grid;gap:8px}
+.btn.back2{justify-content:space-between;background:#d9f2e1;text-align:left}
+.btn.back2 small{font-weight:700;color:#2d6a43;font-size:12px}
+.code{display:grid;grid-template-columns:1fr auto;gap:8px}
+.code input{text-transform:uppercase;letter-spacing:2px;font-weight:800}
 .btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
 .btn.tbl small{font-weight:700;color:#6c6f75;font-size:12px}
 .or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
@@ -88,13 +92,16 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .overlay .box{background:var(--paper);border-radius:22px;padding:24px 20px;text-align:center;max-width:340px;width:100%}
 .overlay .big{font-size:40px;font-weight:800}
 .overlay p{margin:8px 0 16px;color:#4a4d53}
+header .gear{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.9);color:#1d1f23;border:none;font:inherit;font-size:17px;font-weight:800}
 </style>
+<script src="../perfil.js"></script>
 </head>
 <body>
 <header>
   <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
   <span class="logo">DAMAS</span><span class="sp"></span>
   <span class="pill" id="pill"></span>
+  <button class="gear" id="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
 </header>
 <main id="app"></main>
 <div id="overlay"></div>
@@ -141,6 +148,8 @@ function renderStart() {
       <div id="open"></div>
       <button class="btn primary" id="online">Crear mesa nueva</button>
       <button class="btn" id="local">Dos jugadores en este teléfono</button>
+      <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
+        <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: K7MP2Q" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
     </section>
     <section class="panel rules"><b>Reglas</b><ul>
       <li>Los peones avanzan en diagonal y comen solo hacia adelante.</li>
@@ -149,6 +158,13 @@ function renderStart() {
       <li>Gana quien deja al otro sin piezas o sin movimientos.</li></ul></section>`;
   $("#online").onclick = async () => { if (!takeName()) return; await createOnline(); };
   $("#local").onclick = () => { if (!takeName(true)) return; startLocal(); };
+  const goCode = () => {
+    const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!/^[A-Z0-9]{4,10}$/.test(c)) return toast("Escribe el código de la mesa (6 letras o números)");
+    if (!takeName()) return;
+    location.hash = "p=" + c + keepHost();
+  };
+  $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
   listOpen();
 }
 /* tables waiting for a rival: join one, or create a new one */
@@ -157,13 +173,27 @@ async function listOpen() {
   clearTimeout(openT);
   const box = $("#open"); if (!box || mode) return;
   if (!client()) return;
-  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-  const { data } = await sb.from("damas_games").select("id,white_id,white_name,updated_at").is("black_id", null).gt("updated_at", since).order("updated_at", { ascending: false }).limit(15);
+  // your own games first; then tables waiting for a rival, one per host, hiding a host's old table once they are playing elsewhere
+  const since = new Date(Date.now() - 12 * 3600 * 1000).toISOString(), fresh = Date.now() - 30 * 60 * 1000;
+  const { data } = await sb.from("damas_games").select("id,white_id,black_id,white_name,black_name,updated_at,winner:state->winner").gt("updated_at", since).order("updated_at", { ascending: false }).limit(60);
   if (!$("#open") || mode) return;
-  const rows = data || [];
-  box.innerHTML = rows.length ? `<label class="lbl">Mesas esperando rival</label><div class="tables">${rows.map((r) => `
-      <button class="btn tbl" data-join="${esc(r.id)}"><span>${r.white_id === me.pid ? "Volver a tu mesa" : "Jugar con " + esc(r.white_name || "alguien")}</span><small>esperando</small></button>`).join("")}</div>
-      <div class="or">o</div>` : "";
+  const all = data || [];
+  const busyAt = {};
+  for (const r of all) if (r.black_id) for (const id of [r.white_id, r.black_id]) busyAt[id] = Math.max(busyAt[id] || 0, Date.parse(r.updated_at));
+  const myLobby = all.find((r) => r.white_id === me.pid && !r.black_id && Date.parse(r.updated_at) > fresh && !(busyAt[me.pid] > Date.parse(r.updated_at)));
+  const mine = all.filter((r) => r.black_id && (r.white_id === me.pid || r.black_id === me.pid) && !r.winner).slice(0, 4).concat(myLobby ? [myLobby] : []);
+  const seen = new Set();
+  const rows = all.filter((r) => {
+    if (r.black_id || r.white_id === me.pid || Date.parse(r.updated_at) < fresh || seen.has(r.white_id)) return false;
+    seen.add(r.white_id);
+    return !(busyAt[r.white_id] > Date.parse(r.updated_at));
+  });
+  const rival = (r) => (r.white_id === me.pid ? r.black_name : r.white_name) || "alguien";
+  box.innerHTML = (mine.length ? `<label class="lbl">Tus partidas</label><div class="tables">${mine.map((r) => `
+      <button class="btn back2" data-join="${esc(r.id)}"><span>${r.black_id ? "Volver a la partida con " + esc(rival(r)) : "Volver a tu mesa"}</span><small>${r.black_id ? "en juego" : "esperando"}</small></button>`).join("")}</div>` : "")
+    + (rows.length ? `<label class="lbl">Mesas esperando rival</label><div class="tables">${rows.map((r) => `
+      <button class="btn tbl" data-join="${esc(r.id)}"><span>Jugar con ${esc(r.white_name || "alguien")}</span><small>esperando</small></button>`).join("")}</div>` : "")
+    + (mine.length || rows.length ? `<div class="or">o</div>` : "");
   box.querySelectorAll("[data-join]").forEach((b) => b.onclick = () => { if (!takeName()) return; location.hash = "p=" + b.dataset.join + keepHost(); });
   openT = setTimeout(listOpen, 4000);
 }
@@ -291,6 +321,7 @@ function tap(i) {
 /* ---------- render ---------- */
 const nameOf = (c) => (c === "w" ? game.white_name || "Blancas" : game.black_name || (mode === "online" ? "Esperando rival…" : "Negras"));
 function renderGame() {
+  if (window.Perfil) Perfil.turn(mode === "online" && myTurn());
   const top = flip ? "w" : "b", bot = flip ? "b" : "w";
   const turn = state.winner ? null : state.turn;
   const who = (c) => `<div class="who ${turn === c ? "turn" : ""}"><span class="chip ${c}"></span>
