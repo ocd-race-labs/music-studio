@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Juegos en casa</title>
+<meta name="apple-mobile-web-app-title" content="Juegos">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#c99a5e">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<style>
+@font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(fonts/sora-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(fonts/sora-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url(fonts/sora-latin-800-normal.woff2) format("woff2")}
+*{box-sizing:border-box;margin:0;padding:0}
+html{min-height:100%;background:#c99a5e}
+body{min-height:100vh;font-family:Sora,system-ui,sans-serif;color:#1d1f23;padding:20px 14px 30px;
+  background:repeating-linear-gradient(92deg,rgba(255,255,255,.05) 0 2px,transparent 2px 9px),repeating-linear-gradient(88deg,rgba(90,50,10,.07) 0 1px,transparent 1px 23px),linear-gradient(180deg,#d6aa6f,#c99a5e 40%,#b98748);background-attachment:fixed}
+.wrap{max-width:640px;margin:0 auto}
+h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.35);letter-spacing:-.5px}
+.sub{color:#fff;opacity:.9;font-weight:600;margin:4px 0 18px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{position:relative;display:flex;flex-direction:column;gap:10px;background:#fbfbfa;border-radius:22px;padding:14px;text-decoration:none;color:inherit;
+  box-shadow:0 1px 2px rgba(0,0,0,.14),0 8px 20px rgba(40,30,20,.16);min-height:168px}
+.tile:active{transform:scale(.98)}
+.art{height:84px;border-radius:14px;display:grid;place-items:center;overflow:hidden}
+.tile b{font-size:18px;font-weight:800}
+.tile span{font-size:13px;color:#6c6f75;margin-top:-6px}
+.soon{opacity:.55;pointer-events:none}
+.soon .art{filter:grayscale(.6)}
+.badge{position:absolute;top:22px;right:22px;background:#24272d;color:#fff;font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px;letter-spacing:.3px}
+.go{position:absolute;top:22px;right:22px;background:#d9363e;color:#fff;font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px}
+/* little pictures, all CSS */
+.a-bingo{background:#d9363e}
+.ball{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffaf0,#efdcbc 75%);display:grid;place-items:center;box-shadow:0 3px 0 #b0332f}
+.ball i{width:40px;height:40px;border-radius:50%;border:3px solid #d9363e;display:grid;place-items:center;font-style:normal;font-weight:800;color:#d9363e;font-size:18px}
+.a-damas{background:repeating-conic-gradient(#8a5a32 0 25%,#ead8b8 0 50%) 0 0/28px 28px}
+.pc{width:30px;height:30px;border-radius:50%;display:inline-block;margin:0 3px}
+.pc.w{background:radial-gradient(circle at 35% 30%,#fff,#e6dcc8);box-shadow:0 3px 0 #b9ab90}
+.pc.b{background:radial-gradient(circle at 35% 30%,#5b606a,#17181c);box-shadow:0 3px 0 #0d0e10}
+.a-soon{background:#e9e6df;font-size:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Juegos en casa</h1>
+  <p class="sub">Elige un juego e invita a los tuyos.</p>
+  <div class="grid" id="grid">
+    <a class="tile" id="t-bingo" href="../bingo/"><span class="go">Jugar</span><div class="art a-bingo"><div class="ball"><i>37</i></div></div><b>Bingo</b><span>Lotería o americano · para todos</span></a>
+    <a class="tile" href="damas/"><span class="go">Jugar</span><div class="art a-damas"><div><span class="pc w"></span><span class="pc b"></span></div></div><b>Damas</b><span>2 jugadores</span></a>
+    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🐍</div><b>Serpientes y escaleras</b></div>
+    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🎲</div><b>Ludo</b></div>
+    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">⚪</div><b>Backgammon</b></div>
+    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🃏</div><b>Cartas</b></div>
+    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🁫</div><b>Dominó</b></div>
+    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">♞</div><b>Ajedrez</b></div>
+  </div>
+</div>
+<script>
+// the host link of the menu (#anfitrion=…) opens the bingo as host; any other link opens it as a player
+(() => {
+  const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/);
+  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; }
+})();
+</script>
+</body>
+</html>

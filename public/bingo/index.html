@@ -302,7 +302,8 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .chat-form{display:flex;gap:8px;padding:6px 12px 12px}
 .chat-form input{flex:1;min-width:0}
 .upd{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:40;border:none;border-radius:999px;padding:10px 16px;background:#24272d;color:#fff;font-weight:800;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
-@media(max-width:400px){header h1{font-size:22px;padding:2px 9px}.chat-fab{padding:0 11px 0 8px}.pill{font-size:11px;padding:5px 8px}}
+@media(max-width:400px){header h1{font-size:22px;padding:2px 9px}.chat-fab{padding:0 10px}.chat-lbl{display:none}.pill{font-size:11px;padding:5px 8px}}
+.back{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.85);color:#2a1d12;text-decoration:none;font-size:22px;font-weight:800;flex:none}
 #toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;
   font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -312,6 +313,7 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 </head>
 <body>
 <header>
+  <a class="back" id="backMenu" href="../juegos/" aria-label="Volver al menú de juegos">‹</a>
   <h1>BINGO</h1><span class="sp"></span>
   <button id="chatFab" class="chat-fab" hidden aria-label="Abrir chat">💬 <span class="chat-lbl">Chat</span><span id="chatBadge" class="chat-badge" hidden></span></button>
   <span class="pill" id="netPill">Conectando…</span>
@@ -1174,7 +1176,7 @@ function renderBar() {
 }
 
 /* ---------- updates ---------- */
-const BUILD = "20261122145151";
+const BUILD = "20261122183323";
 let updateShown = false;
 async function checkUpdate() {
   try {
@@ -1199,6 +1201,7 @@ setTimeout(checkUpdate, 3000);
 (() => {
   const m = location.hash.match(/anfitrion=([A-Za-z0-9_-]{8,64})/);
   hostKey = m ? m[1] : null;
+  if (m) $("#backMenu").href = "../juegos/#anfitrion=" + m[1];
   try { localStorage.removeItem("bingo-host-key"); } catch (e) {}
 })();
 render();
