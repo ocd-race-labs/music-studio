@@ -78,6 +78,10 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .invite b{font-size:15px}
 .rules{font-size:13px;color:#4a4d53;line-height:1.5}
 .rules li{margin-left:18px}
+.tables{display:grid;gap:8px}
+.btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
+.btn.tbl small{font-weight:700;color:#6c6f75;font-size:12px}
+.or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--black);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
 .overlay{position:fixed;inset:0;background:rgba(20,10,0,.55);display:grid;place-items:center;z-index:20;padding:20px}
@@ -134,7 +138,8 @@ function renderStart() {
   $("#app").innerHTML = `<section class="panel stack">
       <h2>Damas</h2>
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
-      <button class="btn primary" id="online">Jugar con alguien (link)</button>
+      <div id="open"></div>
+      <button class="btn primary" id="online">Crear mesa nueva</button>
       <button class="btn" id="local">Dos jugadores en este teléfono</button>
     </section>
     <section class="panel rules"><b>Reglas</b><ul>
@@ -144,6 +149,23 @@ function renderStart() {
       <li>Gana quien deja al otro sin piezas o sin movimientos.</li></ul></section>`;
   $("#online").onclick = async () => { if (!takeName()) return; await createOnline(); };
   $("#local").onclick = () => { if (!takeName(true)) return; startLocal(); };
+  listOpen();
+}
+/* tables waiting for a rival: join one, or create a new one */
+let openT = null;
+async function listOpen() {
+  clearTimeout(openT);
+  const box = $("#open"); if (!box || mode) return;
+  if (!client()) return;
+  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { data } = await sb.from("damas_games").select("id,white_id,white_name,updated_at").is("black_id", null).gt("updated_at", since).order("updated_at", { ascending: false }).limit(15);
+  if (!$("#open") || mode) return;
+  const rows = data || [];
+  box.innerHTML = rows.length ? `<label class="lbl">Mesas esperando rival</label><div class="tables">${rows.map((r) => `
+      <button class="btn tbl" data-join="${esc(r.id)}"><span>${r.white_id === me.pid ? "Volver a tu mesa" : "Jugar con " + esc(r.white_name || "alguien")}</span><small>esperando</small></button>`).join("")}</div>
+      <div class="or">o</div>` : "";
+  box.querySelectorAll("[data-join]").forEach((b) => b.onclick = () => { if (!takeName()) return; location.hash = "p=" + b.dataset.join + keepHost(); });
+  openT = setTimeout(listOpen, 4000);
 }
 function takeName(optional) {
   const v = ($("#nm").value || "").trim().slice(0, 24);

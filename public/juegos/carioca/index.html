@@ -109,6 +109,10 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .plist div{background:#f1f1f0;border-radius:10px;padding:9px 12px;font-weight:700;display:flex;justify-content:space-between}
 .help{font-size:13px;color:#4a4d53;line-height:1.5}
 .help li{margin-left:18px}
+.tables{display:grid;gap:8px}
+.btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
+.btn.tbl small{font-weight:700;color:#6c6f75;font-size:12px}
+.or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
 </style>
@@ -141,6 +145,7 @@ store("juegos-yo", me);
 let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2400); }
 const pill = (t) => ($("#pill").textContent = t);
+let sb = null;
 
 /* ---------- server ---------- */
 async function call(action, extra = {}) {
@@ -181,7 +186,8 @@ function renderStart() {
       <h2>Carioca</h2>
       <p class="muted">De 2 a 6 jugadores, cada uno en su teléfono. Dos mazos ingleses con 4 comodines.</p>
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
-      <button class="btn primary" id="create">Crear mesa</button>
+      <div id="open"></div>
+      <button class="btn primary" id="create">Crear mesa nueva</button>
     </section>
     <section class="panel help"><b>Cómo se juega</b><ul>
       <li>Son 9 rondas; en cada una hay que bajarse con un juego distinto (dos tríos, un trío y una escala, …, escala real).</li>
@@ -192,8 +198,36 @@ function renderStart() {
   $("#create").onclick = async () => {
     if (!takeName()) return;
     const v = await call("create"); if (!v) return;
+    remember(v.code);
     code = v.code; location.hash = "m=" + code + keepHost(); show(v); watch();
   };
+  listOpen();
+}
+/* tables waiting for players: join one, or create a new one */
+const mine0 = () => load("carioca-mias") || [];
+function remember(c) { store("carioca-mias", [c].concat(mine0().filter((x) => x !== c)).slice(0, 10)); }
+let openT = null;
+async function listOpen() {
+  clearTimeout(openT);
+  const box = $("#open"); if (!box) return;
+  if (!sb && window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+  if (!sb) return;
+  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { data } = await sb.from("carioca_pulse").select("id,host_name,players,updated_at").eq("phase", "lobby").gt("updated_at", since).order("updated_at", { ascending: false }).limit(15);
+  if (!$("#open")) return;
+  const rows = (data || []).filter((r) => r.players < 6);
+  const mine = mine0();
+  box.innerHTML = rows.length ? `<label class="lbl">Mesas esperando jugadores</label><div class="tables">${rows.map((r) => `
+      <button class="btn tbl" data-join="${esc(r.id)}"><span>${mine.includes(r.id) ? "Volver a tu mesa" : "Unirse a la mesa de " + esc(r.host_name || "alguien")}</span>
+      <small>${r.players} ${r.players === 1 ? "persona" : "personas"}</small></button>`).join("")}</div>
+      <div class="or">o</div>` : "";
+  box.querySelectorAll("[data-join]").forEach((b) => b.onclick = async () => {
+    if (!takeName()) return;
+    code = b.dataset.join;
+    const v = await call("join"); if (!v) { code = null; return listOpen(); }
+    location.hash = "m=" + code + keepHost(); show(v); watch();
+  });
+  openT = setTimeout(listOpen, 4000);
 }
 function takeName() {
   const v = ($("#nm").value || "").trim().slice(0, 24);
@@ -219,11 +253,11 @@ function renderJoin(v) {
 }
 
 /* ---------- live updates: a tiny public version number says when to ask for a fresh view ---------- */
-let sb = null, watching = false;
+let watching = false;
 function watch() {
   if (watching) return; watching = true;
   if (window.supabase) {
-    sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+    if (!sb) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
     sb.channel("carioca-" + code).on("postgres_changes", { event: "*", schema: "public", table: "carioca_pulse", filter: "id=eq." + code }, () => poll()).subscribe();
   }
   setInterval(() => { if (!document.hidden) poll(); }, 1500);
