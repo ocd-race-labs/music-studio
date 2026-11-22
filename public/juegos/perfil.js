@@ -42,6 +42,8 @@ header{background:${hexA(d, 0.92)}!important}`;
   let ctx;
   function ac() {
     const A = window.AudioContext || window.webkitAudioContext; if (!A) return null;
+    // iPhone: play as media so the silent switch does not mute the alert the player chose
+    try { if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; } catch (e) {}
     if (!ctx) ctx = new A();
     if (ctx.state === "suspended") ctx.resume();
     return ctx;
@@ -63,24 +65,40 @@ header{background:${hexA(d, 0.92)}!important}`;
   function play(name) {
     const c = ac(); if (!c || name === "none") return;
     const t = c.currentTime + 0.01;
-    if (name === "gota") tone(c, t, 1150, 720, 0.16, 0.07);
-    else if (name === "campana") { tone(c, t, 1318, 1318, 0.5, 0.035); tone(c, t + 0.09, 1760, 1760, 0.55, 0.028); }
-    else if (name === "madera") { tone(c, t, 520, 380, 0.07, 0.09, "triangle"); }
-    else if (name === "burbuja") tone(c, t, 380, 760, 0.12, 0.06);
+    if (name === "gota") tone(c, t, 1150, 720, 0.18, 0.16);
+    else if (name === "campana") { tone(c, t, 1318, 1318, 0.5, 0.09); tone(c, t + 0.09, 1760, 1760, 0.55, 0.07); }
+    else if (name === "madera") { tone(c, t, 520, 380, 0.08, 0.22, "triangle"); }
+    else if (name === "burbuja") tone(c, t, 380, 760, 0.13, 0.15);
     else if (name === "soplo") {
       const n = c.createBufferSource(), b = c.createBuffer(1, c.sampleRate * 0.3, c.sampleRate), d = b.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       n.buffer = b;
       const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1800; f.Q.value = 0.8;
-      const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.09); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.09); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
       n.connect(f).connect(g).connect(c.destination); n.start(t); n.stop(t + 0.32);
     }
   }
-  const canVibrate = () => typeof navigator.vibrate === "function";
+  // Android vibrates through navigator.vibrate; iPhone (iOS 18+) gives a light haptic tap when a switch control toggles
+  const hasVibrate = () => typeof navigator.vibrate === "function";
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const canVibrate = () => hasVibrate() || isIOS;
+  let sw;
+  function tapIOS() {
+    if (!sw) {
+      sw = document.createElement("label");
+      sw.setAttribute("aria-hidden", "true");
+      sw.style.cssText = "position:fixed;left:-100px;top:0;width:1px;height:1px;opacity:0;pointer-events:none";
+      const i = document.createElement("input"); i.type = "checkbox"; i.setAttribute("switch", ""); sw.appendChild(i);
+      document.body.appendChild(sw);
+    }
+    sw.click();
+  }
   function buzz(name) {
-    if (!canVibrate() || name === "none") return;
-    const pat = { uno: 18, dos: [14, 70, 14], suave: 45 }[name];
-    try { navigator.vibrate(pat); } catch (e) {}
+    if (name === "none") return;
+    if (hasVibrate()) { try { navigator.vibrate({ uno: 18, dos: [14, 70, 14], suave: 45 }[name]); } catch (e) {} return; }
+    if (!isIOS) return;
+    tapIOS();
+    if (name === "dos") setTimeout(tapIOS, 120);
   }
   function alertNow() { play(P.sound); buzz(P.vib); }
 
@@ -126,7 +144,7 @@ header{background:${hexA(d, 0.92)}!important}`;
         <div class="note">«Original» deja a cada juego con su propio fondo.</div></div>
       <div><div class="lbl">Aviso cuando es tu turno · sonido</div><div class="opts" id="pf-s">${opt("s", SOUNDS, P.sound)}</div></div>
       <div><div class="lbl">Aviso cuando es tu turno · vibración</div><div class="opts" id="pf-v">${opt("v", VIBS, P.vib)}</div>
-        <div class="note">${canVibrate() ? "Toca una opción para probarla. Se puede usar sonido y vibración juntos." : "Toca una opción para probarla. Este teléfono no permite vibrar desde una página web (los iPhone no lo permiten); el sonido sí funciona."}</div></div>
+        <div class="note">${hasVibrate() ? "Toca una opción para probarla. Se puede usar sonido y vibración juntos." : isIOS ? "En iPhone es un toque suave (necesita iOS 18 o más nuevo, y la vibración del sistema activada). El sonido suena aunque el teléfono esté en silencio." : "Este equipo no puede vibrar; usa sonido."}</div></div>
       <button class="ok">Listo</button></div>`;
     document.body.appendChild(el);
     const keep = () => save(KEY, P);

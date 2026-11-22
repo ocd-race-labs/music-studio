@@ -41,6 +41,8 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
 .btn.tbl small{font-weight:700;color:#6c6f75;font-size:12px}
 .btn.back2{justify-content:space-between;background:#d9f2e1;text-align:left}
+.mrow{display:grid;grid-template-columns:1fr auto;gap:6px}
+.mrow .del{border:none;border-radius:14px;width:46px;background:#eeefef;font:inherit;font-weight:800;font-size:16px;color:#6c6f75}
 .btn.back2 small{font-weight:700;color:#2d6a43;font-size:12px}
 .code{display:grid;grid-template-columns:1fr auto;gap:8px}
 .code input{text-transform:uppercase;letter-spacing:2px;font-weight:800}
@@ -209,6 +211,12 @@ function renderStart() {
   listMine();
   listOpen();
 }
+const hide = (id) => store("juegos-ocultas", [id].concat(load("juegos-ocultas") || []).slice(0, 40));
+async function delTable(id) {
+  if (!client()) return false;
+  const { data, error } = await sb.rpc("nervio_delete", { p_id: id, p_player: me.pid, p_key: me.pkey });
+  return !error && data === true;
+}
 /* the tables you are already in come first, so leaving and coming back is one tap */
 let mineOpen = new Set();
 async function listMine() {
@@ -217,11 +225,18 @@ async function listMine() {
   const { data } = await sb.from("nervio_public").select("id,host_name,phase,players,updated_at").in("phase", ["lobby", "playing"])
     .contains("view", { players: [{ id: me.pid }] }).gt("updated_at", since).order("updated_at", { ascending: false }).limit(5);
   if (!$("#mine")) return;
-  const rows = data || [];
+  const hidden = load("juegos-ocultas") || [];
+  const rows = (data || []).filter((r) => !hidden.includes(r.id));
   mineOpen = new Set(rows.map((r) => r.id));
   box.innerHTML = rows.length ? `<label class="lbl">Tus partidas</label><div class="tables">${rows.map((r) => `
-      <button class="btn back2" data-back="${esc(r.id)}"><span>${r.phase === "lobby" ? "Volver a tu mesa" : "Volver a la partida"} · ${esc(r.id)}</span>
-      <small>${r.phase === "lobby" ? "esperando" : "en juego"} · ${r.players} jug.</small></button>`).join("")}</div>` : "";
+      <div class="mrow"><button class="btn back2" data-back="${esc(r.id)}"><span>${r.phase === "lobby" ? "Volver a tu mesa" : "Volver a la partida"} · ${esc(r.id)}</span>
+      <small>${r.phase === "lobby" ? "esperando" : "en juego"} · ${r.players} jug.</small></button><button class="del" data-del="${esc(r.id)}" data-ph="${r.phase}" aria-label="${r.phase === "lobby" ? "Borrar esta mesa" : "Quitar de tu lista"}">✕</button></div>`).join("")}</div>` : "";
+  box.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    const id = b.dataset.del;
+    if (b.dataset.ph === "lobby" && (await delTable(id))) toast("Mesa borrada");
+    else { hide(id); toast("La quitamos de tu lista"); }
+    listMine();
+  });
   box.querySelectorAll("[data-back]").forEach((b) => b.onclick = () => { location.hash = "m=" + b.dataset.back + keepHost(); });
   listOpen();
 }
@@ -301,7 +316,13 @@ function renderLobby() {
       <div class="plist">${V.players.map((p, i) => `<div><span>${esc(p.name)}${i === myIdx ? " (tú)" : ""}</span><span class="muted">${p.id === V.hostId ? "creó la mesa" : ""}</span></div>`).join("")}</div>
       <p class="muted">${V.players.length < 2 ? "Invita al menos a una persona." : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(V.players.find((p) => p.id === V.hostId).name) + " empiece."}</p>
       <div class="two"><button class="btn primary" id="copy">🔗 Copiar link</button><a class="btn wa" target="_blank" rel="noopener" href="${waLink()}">WhatsApp</a></div>
+      ${isHost ? `<button class="btn" id="del" style="background:none;color:#a3262f;min-height:36px">Borrar esta mesa</button>` : ""}
     </section>`;
+  const dl = $("#del");
+  if (dl) dl.onclick = async () => {
+    if (dl.dataset.sure !== "1") { dl.dataset.sure = "1"; dl.textContent = "¿Seguro? Toca otra vez para borrarla"; return; }
+    if (await delTable(code)) { location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); } else toast("No se pudo borrar");
+  };
   $("#copy").onclick = copyLink;
   $("#bar").innerHTML = isHost ? `<button class="btn gold" id="start" ${V.players.length < 2 ? "disabled" : ""}>Empezar partida (${V.players.length})</button>` : "";
   const s = $("#start"); if (s) s.onclick = () => act("start");
