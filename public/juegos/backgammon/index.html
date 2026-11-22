@@ -54,27 +54,27 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .who .pip{font-size:12px;color:#6c6f75}
 .who .tag{font-size:11px;font-weight:800;background:var(--gold);color:#3b2a00;border-radius:999px;padding:3px 8px}
 
-/* board */
+/* board: the classic layout, points standing up and down, the bar in the middle */
 .board{background:#5a3a20;border-radius:16px;padding:8px;box-shadow:0 10px 26px rgba(40,20,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
-.field{background:#2f6b4c;border-radius:10px;display:grid;grid-template-rows:repeat(6,var(--row)) var(--barh) repeat(6,var(--row));position:relative;overflow:hidden}
-.pt{position:relative;display:flex;align-items:center;cursor:pointer}
-.pt.L{grid-column:1;justify-content:flex-start;padding-left:2px}
-.pt.R{grid-column:2;justify-content:flex-end;padding-right:2px;flex-direction:row-reverse}
-.pt::before{content:"";position:absolute;top:1px;bottom:1px;width:92%;background:var(--pc)}
-.pt.L::before{left:0;clip-path:polygon(0 0,100% 50%,0 100%)}
-.pt.R::before{right:0;clip-path:polygon(100% 0,0 50%,100% 100%)}
+.field{background:#2f6b4c;border-radius:10px;display:grid;grid-template-columns:repeat(6,1fr) var(--barw) repeat(6,1fr);grid-template-rows:1fr 1fr;height:var(--fh);position:relative;overflow:hidden}
+.pt{position:relative;display:flex;flex-direction:column;align-items:center;padding-top:2px;cursor:pointer;min-width:0}
+.pt.bot{flex-direction:column-reverse;padding:0 0 2px}
+.pt::before{content:"";position:absolute;left:1px;right:1px;top:0;height:86%;background:var(--pc);clip-path:polygon(0 0,100% 0,50% 100%)}
+.pt.bot::before{top:auto;bottom:0;clip-path:polygon(50% 0,100% 100%,0 100%)}
 .pt.a{--pc:#e7d2a8}.pt.b{--pc:#a8432f}
-.pt.dest::after{content:"";position:absolute;inset:2px;border-radius:8px;box-shadow:inset 0 0 0 3px var(--gold);background:rgba(255,207,63,.22)}
-.pt.last::before{filter:brightness(1.15) saturate(1.2)}
-.ck{width:var(--d);height:var(--d);border-radius:50%;flex:none;position:relative;z-index:1;margin-right:-1px;display:grid;place-items:center;font-size:12px;font-weight:800}
-.pt.R .ck{margin-right:0;margin-left:-1px}
+.pt.dest::after{content:"";position:absolute;inset:1px;border-radius:6px;box-shadow:inset 0 0 0 3px var(--gold);background:rgba(255,207,63,.22)}
+.pt.last::before{filter:brightness(1.18) saturate(1.2)}
+.ck{width:var(--d);height:var(--d);border-radius:50%;flex:none;position:relative;z-index:1;margin-bottom:-1px;display:grid;place-items:center;font-size:11px;font-weight:800}
+.pt.bot .ck{margin-bottom:0;margin-top:-1px}
 .ck.w{background:radial-gradient(circle at 35% 30%,#fff,#efe6d4 60%,#d9ccb2);box-shadow:0 2px 0 #b9ab90,0 3px 5px rgba(0,0,0,.35);color:#3a3326}
 .ck.b{background:radial-gradient(circle at 35% 30%,#5b606a,#2b2e34 60%,#17181c);box-shadow:0 2px 0 #0d0e10,0 3px 5px rgba(0,0,0,.45);color:#fff}
 .ck.can{box-shadow:0 0 0 3px var(--gold),0 3px 5px rgba(0,0,0,.35)}
-.ck.sel{box-shadow:0 0 0 4px #fff,0 0 0 7px var(--gold)}
-.barrow{grid-column:1 / span 2;background:#4a2f19;display:flex;align-items:center;justify-content:center;gap:10px;position:relative}
-.barrow .bar{display:flex;gap:4px;align-items:center;cursor:pointer;min-width:40px;min-height:36px;justify-content:center;border-radius:10px}
-.barrow .bar.dest{box-shadow:inset 0 0 0 3px var(--gold)}
+.ck.sel{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--gold)}
+.barc{grid-column:7;background:#4a2f19;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:4px 0;gap:2px;cursor:pointer}
+.barc.bot{justify-content:flex-start}
+.barc.me.can{box-shadow:inset 0 0 0 2px var(--gold)}
+.dicebox{position:absolute;top:50%;transform:translate(-50%,-50%);left:calc(75% + var(--barw) / 4);z-index:3;pointer-events:none}
+.arrow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
 .dice{display:flex;gap:6px}
 .die{width:30px;height:30px;border-radius:7px;background:#fffaf0;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:4px;box-shadow:0 2px 0 #c9b998}
 .die.used{opacity:.3}
@@ -353,28 +353,25 @@ function render() {
   const bottom = flip ? "b" : "w", top = G.other(bottom);
   const W = Math.min(window.innerWidth, 560) - 16 - 16;
   const avail = Math.max(340, Math.min(window.innerHeight - 380, 600));
-  const row = Math.floor(Math.min(avail / 13, 50)), d = Math.floor(Math.min(row * 0.86, (W / 2) / 5.6));
+  const barw = Math.max(18, Math.round(W * 0.06)), pw = (W - barw) / 12;
+  const d = Math.floor(Math.min(pw - 2, avail / 11.5, 40)), fh = Math.round(d * 11.4);
   const ms = work && myTurn() ? legal() : [];
   const sources = new Set(ms.map((m) => m.from));
   const dests = new Set(sel !== null ? ms.filter((m) => m.from === sel).map((m) => m.to) : []);
   const last = S.last && !work ? new Set(S.last.moves.flat()) : new Set();
-  // white's view: left column top 12..17, bottom 18..23; right column top 11..6, bottom 5..0
-  const slot = (col, r) => { const i = col === "L" ? (r < 6 ? 12 + r : 18 + (r - 6)) : (r < 6 ? 11 - r : 5 - (r - 6)); return flip ? 23 - i : i; };
+  // white's view: top row 12..17 | bar | 18..23, bottom row 11..6 | bar | 5..0; black sees it turned around
+  const idx = (row, k) => { const i = row === 0 ? (k < 6 ? 12 + k : 18 + (k - 6)) : (k < 6 ? 11 - k : 5 - (k - 6)); return flip ? 23 - i : i; };
   let cells = "";
-  for (let r = 0; r < 12; r++) {
-    if (r === 6) cells += barRowHTML(v, sources, dests, bottom, top);
-    for (const col of ["L", "R"]) {
-      const i = slot(col, r), n = v.board[i], c = n > 0 ? "w" : "b", k = Math.abs(n);
-      const shown = Math.min(k, 5);
-      let cks = "";
-      for (let j = 0; j < shown; j++) {
-        const isTop = j === shown - 1;
-        const cls = isTop && sources.has(i) ? (sel === i ? "sel" : "can") : "";
-        cks += `<span class="ck ${c} ${cls}">${isTop && k > 5 ? k : ""}</span>`;
-      }
-      cells += `<div class="pt ${col} ${(r + (col === "L" ? 0 : 1)) % 2 ? "a" : "b"} ${dests.has(i) ? "dest" : ""} ${last.has(i) ? "last" : ""}" style="grid-row:${r < 6 ? r + 1 : r + 2}" data-p="${i}">${cks}</div>`;
+  for (const r of [0, 1]) for (let k = 0; k < 12; k++) {
+    const i = idx(r, k), n = v.board[i], c = n > 0 ? "w" : "b", cnt = Math.abs(n), shown = Math.min(cnt, 5);
+    let cks = "";
+    for (let j = 0; j < shown; j++) {
+      const isTop = j === shown - 1;
+      cks += `<span class="ck ${c} ${isTop && sources.has(i) ? (sel === i ? "sel" : "can") : ""}">${isTop && cnt > 5 ? cnt : ""}</span>`;
     }
+    cells += `<div class="pt ${r ? "bot" : ""} ${(k + r) % 2 ? "a" : "b"} ${dests.has(i) ? "dest" : ""} ${last.has(i) ? "last" : ""}" style="grid-row:${r + 1};grid-column:${k < 6 ? k + 1 : k + 2}" data-p="${i}">${cks}</div>`;
   }
+  cells += barHTML(v, sources, bottom, top) + `<div class="dicebox">${diceHTML(v)}</div>` + arrowHTML(v);
   const canOff = dests.has("off");
   const P = (c) => `<div class="who ${!S.winner && S.turn === c ? "turn" : ""}"><span class="ck ${c}" style="--d:22px"></span><span class="nm">${esc(nameOf(c))}${mode === "online" && myColor === c ? " (tú)" : ""}</span>
       ${!S.winner && S.turn === c ? `<span class="tag">Juega</span>` : ""}<span class="pip">${G.pipCount(v, c)} pips</span></div>`;
@@ -396,8 +393,8 @@ function render() {
   $("#app").innerHTML = `
     ${waiting ? inviteHTML() : ""}
     ${P(top)}
-    <div class="board" style="--row:${row}px;--barh:${row + 4}px;--d:${d}px">
-      <div class="field" style="grid-template-columns:1fr 1fr">${cells}</div>
+    <div class="board" style="--d:${d}px;--barw:${barw}px;--fh:${fh}px">
+      <div class="field">${cells}</div>
       <div class="offrow">
         <div class="tray" data-p="off-${top}"><span class="stk">${("<i class='" + top + "'></i>").repeat(v.off[top])}</span>${v.off[top]}/15</div>
         <div class="tray ${canOff ? "dest" : ""}" data-p="off" id="offme"><span class="stk">${("<i class='" + bottom + "'></i>").repeat(v.off[bottom])}</span>${canOff ? "Sacar aquí" : v.off[bottom] + "/15"}</div>
@@ -409,7 +406,7 @@ function render() {
   rolling = false;
 
   $("#app").querySelectorAll(".pt[data-p]").forEach((el) => el.onclick = () => tap(+el.dataset.p));
-  const bm = $("#app").querySelector(".bar.me"); if (bm) bm.onclick = () => tap("bar");
+  const bm = $("#app").querySelector(".barc.me"); if (bm) bm.onclick = () => tap("bar");
   $("#offme").onclick = () => tap("off");
   const cp = $("#copy"); if (cp) cp.onclick = copyLink;
   const rs = $("#resign"); if (rs) rs.onclick = () => {
@@ -421,9 +418,27 @@ function render() {
   pill(mode === "local" ? "Mismo teléfono" : "Mesa " + code);
   renderActions(ms, waiting);
 }
-function barRowHTML(v, sources, dests, bottom, top) {
-  const ck = (c) => (v.bar[c] ? `<span class="ck ${c} ${c === actor() && sources.has("bar") ? (sel === "bar" ? "sel" : "can") : ""}">${v.bar[c] > 1 ? v.bar[c] : ""}</span>` : "");
-  return `<div class="barrow" style="grid-row:7"><div class="bar ${top === actor() ? "me" : ""}">${ck(top)}</div>${diceHTML(v)}<div class="bar ${bottom === actor() ? "me" : ""}">${ck(bottom)}</div></div>`;
+function barHTML(v, sources, bottom, top) {
+  const act = actor(), can = sources.has("bar");
+  const ck = (c) => Array.from({ length: Math.min(v.bar[c], 3) }, (_, j) => `<span class="ck ${c} ${j === 0 && c === act && can ? (sel === "bar" ? "sel" : "can") : ""}">${j === 0 && v.bar[c] > 3 ? v.bar[c] : ""}</span>`).join("");
+  return `<div class="barc ${top === act ? "me" : ""}" style="grid-row:1">${ck(top)}</div><div class="barc bot ${bottom === act ? "me" : ""} ${bottom === act && can ? "can" : ""}" style="grid-row:2">${ck(bottom)}</div>`;
+}
+// a faint arrow along the way the player in play moves: along the far row to the left, then the near row to the right, home at bottom right
+function arrowHTML(v) {
+  const flip = mode === "online" && myColor === "b";
+  const bottom = flip ? "b" : "w";
+  const who = mode === "online" ? myColor : (S.turn || "w");
+  if (!who) return "";
+  const col = who === "w" ? "rgba(255,250,235,.32)" : "rgba(15,16,20,.38)";
+  // the player at the bottom moves top-right → top-left → bottom-left → bottom-right; the other the reverse
+  const mineWay = who === bottom;
+  const path = "M 93 30 L 9 30 Q 3 30 3 40 L 3 60 Q 3 70 9 70 L 91 70";
+  const back = "M 93 70 L 9 70 Q 3 70 3 60 L 3 40 Q 3 30 9 30 L 91 30";
+  const d = mineWay ? path : back, tip = mineWay ? "91,70" : "91,30";
+  const [tx, ty] = tip.split(",").map(Number);
+  return `<svg class="arrow" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="1.6" vector-effect="non-scaling-stroke" style="stroke-width:5px" stroke-linecap="round" stroke-dasharray="1 0"/>
+    <path d="M ${tx - 3} ${ty - 4} L ${tx + 2} ${ty} L ${tx - 3} ${ty + 4}" fill="none" stroke="${col}" vector-effect="non-scaling-stroke" style="stroke-width:5px" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 function renderActions(ms, waiting) {
   const a = $("#actions");
