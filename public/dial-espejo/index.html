@@ -2715,10 +2715,10 @@ html[data-sec="mercados"]{--sec:var(--s-mercados);--sec-ink:var(--i-mercados)}
   if(BG[0]!=="Del tema"){css+=`:root{--bg:${BG[1]}}#pzWall{display:none}`}
   else if(!pat){const h=Math.min(I,40);css+=`:root{--bg:color-mix(in srgb,var(--sec) ${Math.round(h/4)}%,#07070A)}body{background:transparent!important}
 #pzWall{position:sticky;top:0;height:100lvh;margin-bottom:-100lvh;z-index:-1;pointer-events:none;background:radial-gradient(130% 60% at 50% -12%,color-mix(in srgb,var(--sec) ${Math.round(h*1.3)}%,transparent),transparent 62%),radial-gradient(90% 45% at 105% 105%,color-mix(in srgb,var(--sec) ${Math.round(h*.8)}%,transparent),transparent 70%),var(--bg);transition:background .4s}
-.np,.adv{background:radial-gradient(130% 60% at 50% -12%,color-mix(in srgb,var(--sec) ${Math.round(h*1.3)}%,transparent),transparent 62%),radial-gradient(90% 45% at 105% 105%,color-mix(in srgb,var(--sec) ${Math.round(h*.8)}%,transparent),transparent 70%),var(--bg)}`}
+.np{background:radial-gradient(130% 60% at 50% -12%,color-mix(in srgb,var(--sec) ${Math.round(h*1.3)}%,transparent),transparent 62%),radial-gradient(90% 45% at 105% 105%,color-mix(in srgb,var(--sec) ${Math.round(h*.8)}%,transparent),transparent 70%),var(--bg)}.adv{background:#07070A}.adv::before{content:"";position:fixed;inset:0 var(--gut-r) 0 var(--gut-l);z-index:-1;pointer-events:none;background:radial-gradient(130% 60% at 50% -12%,color-mix(in srgb,var(--sec) ${Math.round(h*1.3)}%,transparent),transparent 62%),radial-gradient(90% 45% at 105% 105%,color-mix(in srgb,var(--sec) ${Math.round(h*.8)}%,transparent),transparent 70%),var(--bg)}`}
   else{const a=(1-I/100).toFixed(2);
     css+=`:root{--bg:#07070A}body{background:transparent!important}#pzWall{position:sticky;top:0;height:100lvh;margin-bottom:-100lvh;z-index:-1;pointer-events:none;background:linear-gradient(rgba(7,7,10,${a}),rgba(7,7,10,${a})),url("temas/${pat[1]}.jpg") center/cover no-repeat,#07070A}
-.np,.adv{background:linear-gradient(rgba(7,7,10,${a}),rgba(7,7,10,${a})),url("temas/${pat[1]}.jpg") center/cover no-repeat,#07070A}
+.np{background:linear-gradient(rgba(7,7,10,${a}),rgba(7,7,10,${a})),url("temas/${pat[1]}.jpg") center/cover no-repeat,#07070A}.adv{background:#07070A}.adv::before{content:"";position:fixed;inset:0 var(--gut-r) 0 var(--gut-l);z-index:-1;pointer-events:none;background:linear-gradient(rgba(7,7,10,${a}),rgba(7,7,10,${a})),url("temas/${pat[1]}.jpg") center/cover no-repeat,#07070A}
 .np-bg{display:none}.np-bg::after{background:linear-gradient(180deg,rgba(7,7,10,.1),rgba(7,7,10,.35))}`}
   css+=`:root{--panel:color-mix(in srgb,#fff 4%,var(--bg));--panel-2:color-mix(in srgb,#fff 7%,var(--bg))}`;
   const TX={n:100,g:112,xg:125}[store.get("dial-txt","n")]||100;
@@ -2967,7 +2967,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22v";
+const APP_VERSION="2026-11-22w";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
