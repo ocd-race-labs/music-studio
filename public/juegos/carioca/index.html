@@ -15,7 +15,7 @@
 :root{--felt:#1f5a3e;--felt2:#174a33;--ink:#1d1f23;--red:#d22f3a;--paper:#fbfbfa;--gold:#ffcf3f}
 *{box-sizing:border-box;margin:0;padding:0}
 html{min-height:100%;background:var(--felt2)}
-body{min-height:100vh;font-family:Sora,system-ui,sans-serif;color:var(--ink);padding-bottom:150px;
+body{min-height:100vh;font-family:Sora,system-ui,sans-serif;color:var(--ink);padding-bottom:190px;
   background:radial-gradient(ellipse at 50% 20%,#2a7350,var(--felt) 45%,var(--felt2));background-attachment:fixed}
 header{display:flex;align-items:center;gap:8px;padding:12px 12px 8px;max-width:760px;margin:0 auto;position:sticky;top:0;z-index:10;
   background:rgba(23,74,51,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-radius:0 0 16px 16px}
@@ -68,16 +68,20 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .opp .cnt{display:flex;align-items:center;gap:3px;color:#4a4d53}
 .opp .mini{width:12px;height:17px;border-radius:3px;background:repeating-linear-gradient(45deg,#2f6fb5 0 3px,#2a63a3 3px 6px)}
 .opp .dn{color:#1f7a2a}
-.felt{background:rgba(0,0,0,.14);border-radius:18px;padding:10px;display:grid;gap:10px;min-height:60px}
+.felt{background:rgba(0,0,0,.14);border-radius:18px;padding:8px;display:grid;gap:8px;min-height:60px}
 .felt .empty{width:100%;color:rgba(255,255,255,.6);font-size:13px;text-align:center;padding:10px}
-.who-down{background:rgba(255,255,255,.08);border-radius:14px;padding:8px}
-.wd-name{color:#fff;font-size:13px;font-weight:800;margin:0 2px 6px}
-.wd-groups{display:flex;flex-wrap:wrap;gap:8px}
-.grp{display:flex;flex-direction:column;gap:3px;background:rgba(0,0,0,.18);border-radius:12px;padding:5px 6px 6px}
+.who-down{padding:0}
+.who-down + .who-down{border-top:1px solid rgba(255,255,255,.15);padding-top:8px}
+.wd-name{color:#fff;font-size:12px;font-weight:800;margin:0 2px 4px}
+.wd-groups{display:flex;flex-wrap:wrap;gap:6px}
+.grp{display:flex;flex-direction:column;gap:2px;background:rgba(0,0,0,.18);border-radius:10px;padding:4px 5px 5px}
 .grp .gt{color:#ffe28a;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding-left:2px}
-.card.tb{--w:38px}
+.card.tb{--w:32px;height:calc(var(--w)*1.18)}
+.card.tb .r{font-size:calc(var(--w)*.33);letter-spacing:-1.5px}
+.card.tb .s1{top:36%}
+.card.tb .s2{font-size:calc(var(--w)*.42);bottom:4%}
 .grp .cards{display:flex}
-.grp .cards .card{margin-right:-10px}
+.grp .cards .card{margin-right:calc(var(--vis,22px) - var(--w))}
 .grp .cards .card:last-child{margin-right:0}
 .grp .cards{border-radius:8px}
 .grp.target{background:rgba(255,207,63,.3);box-shadow:0 0 0 2px var(--gold);cursor:pointer}
@@ -315,7 +319,7 @@ function renderTable(was) {
       <div class="wd-name">${esc(V.players[o].name)}${o === V.me ? " (tú)" : ""}</div>
       <div class="wd-groups">${V.table.map((g, gi) => ({ g, gi })).filter((x) => x.g.owner === o).map(({ g, gi }) => `<div class="grp ${canAdd ? "target" : ""}" data-g="${gi}">
         <span class="gt">${g.type === "trio" ? "Trío" : "Escala"}</span>
-        <div class="cards">${C.arrange(g).map((c) => cardHTML(c, "tb")).join("")}</div></div>`).join("")}</div></div>`).join("")
+        <div class="cards" style="--vis:${g.cards.length <= 3 ? 20 : g.cards.length <= 5 ? 16 : g.cards.length <= 8 ? 12 : 11}px">${C.arrange(g).map((c) => cardHTML(c, "tb")).join("")}</div></div>`).join("")}</div></div>`).join("")
     : `<div class="empty">Nadie se ha bajado todavía</div>`;
 
   const tn = pending.filter((g) => g.type === "trio").length, en = pending.filter((g) => g.type === "escala").length;
