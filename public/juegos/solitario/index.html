@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Solitario · Juegos en casa</title>
+<meta name="apple-mobile-web-app-title" content="Juegos">
+<meta name="theme-color" content="#1f5a3e">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<style>
+@font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(../fonts/sora-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(../fonts/sora-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url(../fonts/sora-latin-800-normal.woff2) format("woff2")}
+:root{--felt:#1f5a3e;--felt2:#174a33;--ink:#1d1f23;--red:#d22f3a;--paper:#fbfbfa;--gold:#ffcf3f;--w:48px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{min-height:100%;background:var(--felt2)}
+body{min-height:100vh;font-family:Sora,system-ui,sans-serif;color:var(--ink);-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+  background:radial-gradient(ellipse at 50% 20%,#2a7350,var(--felt) 45%,var(--felt2));background-attachment:fixed;padding-bottom:90px}
+header{display:flex;align-items:center;gap:8px;padding:12px 12px 8px;max-width:640px;margin:0 auto;position:sticky;top:0;z-index:10;
+  background:rgba(23,74,51,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-radius:0 0 16px 16px}
+.back,.gear{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.9);color:var(--ink);text-decoration:none;font-size:22px;font-weight:800;border:none;font-family:inherit}
+.gear{font-size:17px}
+.logo{font-weight:800;font-size:19px;letter-spacing:.5px;color:#fff;background:#2f6fb5;padding:5px 12px;border-radius:10px}
+.sp{flex:1}
+.pill{font-size:12px;font-weight:700;background:rgba(255,255,255,.9);border-radius:999px;padding:6px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+main{max-width:640px;margin:0 auto;padding:10px 8px}
+.row{display:grid;grid-template-columns:repeat(7,var(--w));justify-content:space-between}
+.top{margin-bottom:14px}
+.slot{width:var(--w);height:calc(var(--w)*1.42);border-radius:calc(var(--w)*.12);border:2px dashed rgba(255,255,255,.28);position:relative;display:grid;place-items:center;color:rgba(255,255,255,.35);font-weight:800;font-size:calc(var(--w)*.45)}
+.slot.stock{border-style:solid;cursor:pointer}
+.slot.stock .re{font-size:calc(var(--w)*.5)}
+.waste{position:relative;height:calc(var(--w)*1.42);grid-column:span 2}
+.card{width:var(--w);height:calc(var(--w)*1.42);border-radius:calc(var(--w)*.12);background:#fff;position:absolute;left:0;top:0;
+  box-shadow:0 1px 0 #cfd1d4,0 2px 4px rgba(0,0,0,.28);color:#1d1f23;font-weight:800;cursor:pointer;transition:top .14s,left .14s}
+.card.red{color:var(--red)}
+.card .r{position:absolute;top:3%;left:7%;font-size:calc(var(--w)*.34);line-height:1;letter-spacing:-1px}
+.card .s1{position:absolute;top:3%;right:7%;font-size:calc(var(--w)*.3);line-height:1}
+.card .s2{position:absolute;bottom:6%;left:50%;transform:translateX(-50%);font-size:calc(var(--w)*.62);line-height:1}
+.card.down{background:repeating-linear-gradient(45deg,#2f6fb5 0 5px,#2a63a3 5px 10px);box-shadow:inset 0 0 0 3px #fff,0 2px 4px rgba(0,0,0,.3)}
+.card.down>*{display:none}
+.card.sel{box-shadow:0 0 0 3px var(--gold),0 6px 12px rgba(0,0,0,.35)}
+.card.no{animation:no .3s}
+@keyframes no{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.col{position:relative;width:var(--w);min-height:calc(var(--w)*1.42)}
+.col .slot{position:absolute;left:0;top:0}
+.found .card{cursor:pointer}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:12;padding:10px 12px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,rgba(0,0,0,.45) 30%);display:flex;gap:8px;justify-content:center}
+.btn{border:none;border-radius:14px;padding:10px 14px;font:inherit;font-weight:800;font-size:14px;background:rgba(255,255,255,.92);color:var(--ink);min-height:44px;flex:1;max-width:160px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.btn.gold{background:var(--gold);color:#2a1d00}
+.btn:disabled{opacity:.4}
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(10,12,16,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+.sheet .in{background:var(--paper);border-radius:22px;padding:20px;max-width:360px;width:100%;display:grid;gap:12px;text-align:center}
+.sheet h2{font-size:22px;font-weight:800}
+.sheet p{color:#6c6f75;font-size:14px}
+.sheet .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sheet .btn{max-width:none;box-shadow:none;background:#eeefef}
+.sheet .btn.on{background:var(--ink);color:#fff}
+.sheet .btn.gold{background:var(--gold)}
+.help{color:rgba(255,255,255,.75);font-size:12px;text-align:center;margin-top:14px;line-height:1.5}
+#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+.confetti{position:fixed;top:-20px;width:9px;height:14px;z-index:50;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+</style>
+<script src="../perfil.js"></script>
+</head>
+<body>
+<header>
+  <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
+  <span class="logo">SOLITARIO</span><span class="sp"></span>
+  <span class="pill" id="pill"></span>
+  <button class="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
+</header>
+<main>
+  <div class="row top">
+    <div class="slot stock" id="stock"></div>
+    <div class="waste" id="waste"></div>
+    <div class="slot found" data-f="0">A</div><div class="slot found" data-f="1">A</div><div class="slot found" data-f="2">A</div><div class="slot found" data-f="3">A</div>
+  </div>
+  <div class="row" id="tab"></div>
+  <p class="help">Toca una carta y se mueve sola a donde puede ir. Toca el mazo para sacar cartas.</p>
+</main>
+<div class="bar">
+  <button class="btn" id="undo">↶ Deshacer</button>
+  <button class="btn gold" id="auto" hidden>Terminar ✓</button>
+  <button class="btn" id="new">Nueva partida</button>
+</div>
+<div id="toast"></div>
+<script>
+(() => { const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/); if (m) document.getElementById("back").href = "../#" + m[0]; })();
+const $ = (s) => document.querySelector(s);
+const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"], SUITS = ["S", "H", "D", "C"];
+const SYM = { S: "♠", H: "♥", D: "♦", C: "♣" };
+const rank = (c) => RANKS.indexOf(c.split("-")[0]) + 1, suit = (c) => c.split("-")[1];
+const red = (c) => suit(c) === "H" || suit(c) === "D";
+const KEY = "solitario-partida";
+let S, hist = [], timer;
+let toastT;
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2200); }
+
+/* ---------- game ---------- */
+function deal(draw) {
+  const d = [];
+  for (const s of SUITS) for (const r of RANKS) d.push(r + "-" + s);
+  for (let i = d.length - 1; i > 0; i--) { const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1); [d[i], d[j]] = [d[j], d[i]]; }
+  const tab = [];
+  for (let c = 0; c < 7; c++) { tab.push([]); for (let k = 0; k <= c; k++) tab[c].push({ c: d.pop(), up: k === c }); }
+  return { draw, stock: d, waste: [], found: [[], [], [], []], tab, moves: 0, secs: 0, won: false };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function snap() { hist.push(JSON.stringify(S)); if (hist.length > 200) hist.shift(); }
+const fits = (card, col) => {
+  const t = col[col.length - 1];
+  if (!t) return rank(card) === 13;
+  return t.up && red(t.c) !== red(card) && rank(t.c) === rank(card) + 1;
+};
+const fitsFound = (card, f) => {
+  const t = f[f.length - 1];
+  return t ? suit(t) === suit(card) && rank(card) === rank(t) + 1 : rank(card) === 1;
+};
+function foundFor(card) {
+  const same = S.found.findIndex((f) => f.length && suit(f[0]) === suit(card));
+  if (same >= 0) return fitsFound(card, S.found[same]) ? same : -1;
+  return rank(card) === 1 ? S.found.findIndex((f) => !f.length) : -1;
+}
+// a tableau column that takes this card; prefer columns that already have cards
+function tabFor(card, except) {
+  let empty = -1;
+  for (let c = 0; c < 7; c++) {
+    if (c === except || !fits(card, S.tab[c])) continue;
+    if (S.tab[c].length) return c;
+    if (empty < 0) empty = c;
+  }
+  return empty;
+}
+function flipTops() { for (const col of S.tab) { const t = col[col.length - 1]; if (t && !t.up) t.up = true; } }
+function done() { S.moves++; flipTops(); save(); render(); checkWin(); }
+
+function tapStock() {
+  snap();
+  if (!S.stock.length) {
+    if (!S.waste.length) { hist.pop(); return; }
+    S.stock = S.waste.reverse(); S.waste = [];
+  } else for (let k = 0; k < S.draw && S.stock.length; k++) S.waste.push(S.stock.pop());
+  done();
+}
+function tapWaste() {
+  const c = S.waste[S.waste.length - 1]; if (!c) return;
+  const f = foundFor(c), t = f < 0 ? tabFor(c, -1) : -1;
+  if (f < 0 && t < 0) return nope(".waste .card:last-child");
+  snap(); S.waste.pop();
+  f >= 0 ? S.found[f].push(c) : S.tab[t].push({ c, up: true });
+  done();
+}
+function tapFound(i) {
+  const c = S.found[i][S.found[i].length - 1]; if (!c) return;
+  const t = tabFor(c, -1); if (t < 0) return nope(`[data-f="${i}"] .card`);
+  snap(); S.found[i].pop(); S.tab[t].push({ c, up: true }); done();
+}
+function tapTab(col, i) {
+  const pile = S.tab[col], card = pile[i];
+  if (!card || !card.up) return;
+  const top = i === pile.length - 1;
+  const f = top ? foundFor(card.c) : -1;
+  // a king that already heads an empty-based column has nowhere better to go
+  const t = f < 0 ? tabFor(card.c, col) : -1;
+  if (f < 0 && (t < 0 || (i === 0 && rank(card.c) === 13 && !S.tab[t].length))) return nope(`[data-c="${col}"][data-i="${i}"]`);
+  snap();
+  if (f >= 0) { S.found[f].push(pile.pop().c); }
+  else S.tab[t].push(...pile.splice(i));
+  done();
+}
+function nope(sel) { const e = document.querySelector(sel); if (e) { e.classList.remove("no"); void e.offsetWidth; e.classList.add("no"); } }
+const canAuto = () => !S.stock.length && !S.waste.length && S.tab.every((c) => c.every((x) => x.up)) && !S.won;
+function autoFinish() {
+  snap();
+  const step = () => {
+    for (let c = 0; c < 7; c++) {
+      const col = S.tab[c], t = col[col.length - 1];
+      if (t) { const f = foundFor(t.c); if (f >= 0) { S.found[f].push(col.pop().c); S.moves++; save(); render(); return setTimeout(step, 70); } }
+    }
+    checkWin();
+  };
+  step();
+}
+function checkWin() {
+  if (S.won || S.found.some((f) => f.length < 13)) return;
+  S.won = true; save(); render();
+  const m = Math.floor(S.secs / 60), s = S.secs % 60;
+  confetti();
+  sheet(`<h2>🏆 ¡Ganaste!</h2><p>${S.moves} movidas · ${m}:${String(s).padStart(2, "0")}</p>`, true);
+}
+
+/* ---------- drawing ---------- */
+function cardEl(c, up, cls = "") {
+  return `<div class="card ${up ? "" : "down"} ${red(c) ? "red" : ""} ${cls}"><span class="r">${c.split("-")[0]}</span><span class="s1">${SYM[suit(c)]}</span><span class="s2">${SYM[suit(c)]}</span></div>`;
+}
+function size() {
+  const W = Math.min(window.innerWidth, 640) - 16;
+  const w = Math.min(72, Math.floor((W - 6 * 5) / 7));
+  document.documentElement.style.setProperty("--w", w + "px");
+  return w;
+}
+function render() {
+  const w = size(), h = w * 1.42;
+  // stock
+  $("#stock").innerHTML = S.stock.length ? cardEl(S.stock[0], false) : `<span class="re">↻</span>`;
+  // waste: up to three visible, fanned
+  const vis = S.waste.slice(-(S.draw === 3 ? 3 : 2));
+  $("#waste").innerHTML = vis.map((c, k) => cardEl(c, true).replace('class="card', `style="left:${S.draw === 3 ? k * w * 0.32 : 0}px" class="card`)).join("");
+  // foundations
+  document.querySelectorAll("[data-f]").forEach((el) => {
+    const f = S.found[+el.dataset.f];
+    el.innerHTML = f.length ? cardEl(f[f.length - 1], true) : "A";
+  });
+  // tableau: squeeze the spacing when a column would run past the screen
+  const room = window.innerHeight - $("#tab").getBoundingClientRect().top - 110 - h;
+  $("#tab").innerHTML = S.tab.map((col, c) => {
+    let dn = w * 0.2, upg = w * 0.44;
+    const need = col.reduce((a, x, k) => a + (k === col.length - 1 ? 0 : x.up ? upg : dn), 0);
+    if (need > room && need > 0) { const f = Math.max(0.45, room / need); dn *= f; upg *= f; }
+    let y = 0;
+    const cards = col.map((x, k) => { const html = cardEl(x.c, x.up).replace('class="card', `data-c="${c}" data-i="${k}" style="top:${y}px" class="card`); y += x.up ? upg : dn; return html; }).join("");
+    return `<div class="col" style="height:${y + h}px"><div class="slot">K</div>${cards}</div>`;
+  }).join("");
+  $("#undo").disabled = !hist.length || S.won;
+  $("#auto").hidden = !canAuto();
+  pill();
+}
+function pill() { const m = Math.floor(S.secs / 60), s = S.secs % 60; $("#pill").textContent = `${S.moves} mov · ${m}:${String(s).padStart(2, "0")}`; }
+function confetti() {
+  const colors = ["#ffcf3f", "#d22f3a", "#2f6fb5", "#3c9a3a", "#fff"];
+  for (let i = 0; i < 80; i++) {
+    const e = document.createElement("div"); e.className = "confetti";
+    e.style.left = Math.random() * 100 + "vw"; e.style.background = colors[i % colors.length];
+    e.style.animationDuration = 1.8 + Math.random() * 1.8 + "s"; e.style.animationDelay = Math.random() * 0.6 + "s";
+    document.body.appendChild(e); setTimeout(() => e.remove(), 4500);
+  }
+}
+function sheet(head, won) {
+  const el = document.createElement("div"); el.className = "sheet";
+  const d = S ? S.draw : 1;
+  el.innerHTML = `<div class="in">${head}<p>¿Cuántas cartas sacas del mazo cada vez?</p>
+    <div class="opts"><button class="btn ${d === 1 ? "on" : ""}" data-d="1">De a 1 · fácil</button><button class="btn ${d === 3 ? "on" : ""}" data-d="3">De a 3 · clásico</button></div>
+    <button class="btn gold" id="go">${won ? "Jugar otra vez" : "Repartir"}</button>
+    ${won || !S || S.won ? "" : `<button class="btn" id="cancel">Seguir con esta partida</button>`}</div>`;
+  document.body.appendChild(el);
+  let pick = d;
+  el.querySelectorAll("[data-d]").forEach((b) => b.onclick = () => { pick = +b.dataset.d; el.querySelectorAll("[data-d]").forEach((x) => x.classList.toggle("on", x === b)); });
+  el.querySelector("#go").onclick = () => { el.remove(); S = deal(pick); hist = []; save(); render(); };
+  const c = el.querySelector("#cancel"); if (c) c.onclick = () => el.remove();
+}
+
+/* ---------- input ---------- */
+$("#stock").onclick = tapStock;
+$("#waste").onclick = tapWaste;
+document.querySelectorAll("[data-f]").forEach((el) => el.onclick = () => tapFound(+el.dataset.f));
+$("#tab").onclick = (e) => { const c = e.target.closest(".card[data-c]"); if (c) tapTab(+c.dataset.c, +c.dataset.i); };
+$("#undo").onclick = () => { if (!hist.length) return; S = JSON.parse(hist.pop()); save(); render(); };
+$("#new").onclick = () => sheet(`<h2>Nueva partida</h2>`, false);
+$("#auto").onclick = autoFinish;
+window.addEventListener("resize", () => S && render());
+// the clock runs only while you are looking and have started playing
+setInterval(() => { if (S && !S.won && S.moves > 0 && !document.hidden) { S.secs++; pill(); if (S.secs % 5 === 0) save(); } }, 1000);
+
+/* ---------- boot: continue the saved game ---------- */
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
+if (!S || !S.tab || S.won) { S = deal(S && S.draw ? S.draw : 1); save(); }
+render();
+</script>
+</body>
+</html>

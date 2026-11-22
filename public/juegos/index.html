@@ -26,11 +26,11 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 .tile:active{transform:scale(.98)}
 .art{height:84px;border-radius:14px;display:grid;place-items:center;overflow:hidden}
 .tile b{font-size:18px;font-weight:800}
-.tile span{font-size:13px;color:#6c6f75;margin-top:-6px}
+.tile>span:not(.go):not(.badge){font-size:13px;color:#6c6f75;margin-top:-6px}
 .soon{opacity:.55;pointer-events:none}
 .soon .art{filter:grayscale(.6)}
-.badge{z-index:2;position:absolute;top:22px;right:22px;background:#24272d;color:#fff;font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px;letter-spacing:.3px}
-.go{z-index:2;position:absolute;top:22px;right:22px;background:#d9363e;color:#fff;font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px}
+.tile .badge{z-index:2;position:absolute;top:22px;right:22px;background:#24272d;color:#fff;font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px;letter-spacing:.3px}
+.tile .go{z-index:2;position:absolute;top:22px;right:22px;background:#d9363e;color:#fff;font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px}
 /* little pictures, all CSS */
 .a-bingo{background:#d9363e}
 .ball{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffaf0,#efdcbc 75%);display:grid;place-items:center;box-shadow:0 3px 0 #b0332f}
@@ -46,6 +46,15 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 .fan i:nth-child(1){left:6px;transform:rotate(-14deg);color:#d22f3a}
 .fan i:nth-child(2){left:26px;top:0}
 .fan i:nth-child(3){left:46px;transform:rotate(14deg);color:#d22f3a}
+.sec{color:#fff;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin:18px 2px 10px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.sec:first-of-type{margin-top:4px}
+.a-soli{background:radial-gradient(ellipse at 50% 30%,#3a7cc4,#245791)}
+.steps{position:relative;width:80px;height:66px}
+.steps i{position:absolute;width:34px;height:48px;border-radius:5px;background:#fff;font-style:normal;font-weight:800;font-size:13px;padding:2px 4px;box-shadow:0 2px 5px rgba(0,0,0,.35);color:#1d1f23}
+.steps i em{display:block;font-style:normal;font-size:15px}
+.steps i:nth-child(1){left:6px;top:0}
+.steps i:nth-child(2){left:23px;top:9px;color:#d22f3a}
+.steps i:nth-child(3){left:40px;top:18px}
 .a-soon{background:#e9e6df;font-size:40px}
 .top{display:flex;align-items:flex-start;gap:10px}
 .top .t{flex:1}
@@ -64,11 +73,16 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
   <div class="top"><div class="t"><h1>Juegos en casa</h1>
   <p class="sub">Elige un juego e invita a los tuyos.</p></div>
   <button class="me" id="me" aria-label="Tu perfil"><i>⚙</i><span id="me-n">Tu perfil</span></button></div>
+  <h2 class="sec">Juegos de cartas</h2>
+  <div class="grid">
+    <a class="tile" href="carioca/"><span class="go">Jugar</span><div class="art a-carioca"><div class="fan"><i>A<em>♥</em></i><i>A<em>♠</em></i><i>A<em>♦</em></i></div></div><b>Carioca</b><span>2 a 6 jugadores</span></a>
+    <a class="tile" href="nerviosito/"><span class="go">Jugar</span><div class="art a-nervio"><div class="fan"><i>7<em>♣</em></i><i>7<em>♥</em></i><i>7<em>♠</em></i></div></div><b>Nerviosito</b><span>2 a 8 jugadores · rapidez</span></a>
+    <a class="tile" href="solitario/"><span class="go">Jugar</span><div class="art a-soli"><div class="steps"><i>K<em>♠</em></i><i>Q<em>♥</em></i><i>J<em>♣</em></i></div></div><b>Solitario</b><span>1 jugador</span></a>
+  </div>
+  <h2 class="sec">Juegos de mesa</h2>
   <div class="grid" id="grid">
     <a class="tile" id="t-bingo" href="../bingo/"><span class="go">Jugar</span><div class="art a-bingo"><div class="ball"><i>37</i></div></div><b>Bingo</b><span>Lotería o americano · para todos</span></a>
     <a class="tile" href="damas/"><span class="go">Jugar</span><div class="art a-damas"><div><span class="pc w"></span><span class="pc b"></span></div></div><b>Damas</b><span>2 jugadores</span></a>
-    <a class="tile" href="carioca/"><span class="go">Jugar</span><div class="art a-carioca"><div class="fan"><i>A<em>♥</em></i><i>A<em>♠</em></i><i>A<em>♦</em></i></div></div><b>Carioca</b><span>2 a 6 jugadores</span></a>
-    <a class="tile" href="nerviosito/"><span class="go">Jugar</span><div class="art a-nervio"><div class="fan"><i>7<em>♣</em></i><i>7<em>♥</em></i><i>7<em>♠</em></i></div></div><b>Nerviosito</b><span>2 a 8 jugadores · rapidez</span></a>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🐍</div><b>Serpientes y escaleras</b></div>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🎲</div><b>Ludo</b></div>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">⚪</div><b>Backgammon</b></div>
@@ -80,7 +94,7 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 // the host link of the menu (#anfitrion=…) opens the bingo as host; any other link opens it as a player
 (() => {
   const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/);
-  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; }
+  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; document.querySelector('a[href="solitario/"]').href = "solitario/#" + m[0]; }
   const nm = () => { try { const y = JSON.parse(localStorage.getItem("juegos-yo")) || {}; document.getElementById("me-n").textContent = y.name || "Tu perfil"; } catch (e) {} };
   nm();
   document.getElementById("me").onclick = () => Perfil.open();
