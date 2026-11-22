@@ -173,8 +173,6 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .h-tools .btn.warn{background:#ffe9e6;color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red)}
 .ctrls{display:inline-grid;grid-template-columns:auto auto;gap:8px;align-items:stretch}
 .ctrls #changeCards{grid-column:1/-1;background:rgba(255,255,255,.85);padding:8px 10px;font-size:14px;min-height:40px}
-.h-leave{display:block;margin:12px auto 0;border:none;background:none;color:#7a6a58;text-decoration:underline;font-size:13px;font-weight:600;padding:6px}
-.h-leave.warn{color:var(--red);text-decoration:none;font-weight:800}
 .h-hint{font-size:13px;color:#7a6a58;margin-top:10px}
 .bar .one{max-width:420px}
 .token .ltr{position:absolute;top:14%;font-style:normal;font-family:Oswald,sans-serif;font-weight:700;color:var(--ink);font-size:calc(var(--s)*.16);z-index:1}
@@ -1010,18 +1008,7 @@ async function copyInvite() {
 }
 function wireInvite() {
   const b = $("#h-copy"); if (b) b.onclick = copyInvite;
-  const l = $("#h-leave");
-  if (l) l.onclick = () => {
-    if (!l.dataset.sure) { l.dataset.sure = 1; l.textContent = "¿Seguro? Este teléfono dejará de ser anfitrión · toca otra vez"; l.classList.add("warn"); return; }
-    stopAuto();
-    try { localStorage.removeItem("bingo-host-key"); } catch (e) {}
-    hostKey = null; isHost = false;
-    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
-    toast("Ahora juegas solo como jugador en este teléfono");
-    renderGame(); renderChat();
-  };
 }
-const leaveHostBtn = () => `<button class="h-leave" id="h-leave">Usar este teléfono solo como jugador</button>`;
 function renderHost() {
   const el = $("#sec-host");
   if (!isHost) { el.hidden = true; return; }
@@ -1054,8 +1041,7 @@ function renderHost() {
       }).join("")}</div>
       <div class="h-order">${order.map((t) => esc(pname(t, sel.mode))).join(" → ")}</div>
       <button class="btn primary h-main" id="h-new">${ended ? "Jugar otra partida" : "Empezar partida"}</button>
-      <p class="h-hint">Al empezar, cada jugador recibe cartones del tipo elegido; las marcas se borran.</p>
-      ${leaveHostBtn()}`;
+      <p class="h-hint">Al empezar, cada jugador recibe cartones del tipo elegido; las marcas se borran.</p>`;
     wireInvite();
     el.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => {
       if (sel.mode === b.dataset.mode) return;
@@ -1085,8 +1071,7 @@ function renderHost() {
       <button class="btn ghost" id="h-undo" ${state.drawn.length ? "" : "disabled"}>↶ Deshacer última</button>
       <button class="btn ghost" id="h-new">Terminar partida</button>
     </div>
-    <p class="h-hint">¿Usas la bolsa de fichas? Toca el número en el tablero.</p>
-    ${leaveHostBtn()}`;
+    <p class="h-hint">¿Usas la bolsa de fichas? Toca el número en el tablero.</p>`;
   wireInvite();
   $("#h-draw").onclick = () => draw();
   $("#h-auto").onclick = () => { autoOn ? (stopAuto(), renderHost()) : startAuto(); };
@@ -1189,7 +1174,7 @@ function renderBar() {
 }
 
 /* ---------- updates ---------- */
-const BUILD = "20261122144950";
+const BUILD = "20261122145151";
 let updateShown = false;
 async function checkUpdate() {
   try {
@@ -1209,13 +1194,12 @@ setInterval(checkUpdate, 60000);
 setTimeout(checkUpdate, 3000);
 
 /* ---------- boot ---------- */
-// host link: #anfitrion=<key>, kept on this device and removed from the address bar
+// the link decides the role: the host link (#anfitrion=<key>, or a home-screen icon made from it) makes you host;
+// the invitation link always makes you a player, even on a phone that was host before
 (() => {
   const m = location.hash.match(/anfitrion=([A-Za-z0-9_-]{8,64})/);
-  try {
-    if (m) localStorage.setItem("bingo-host-key", m[1]);
-    hostKey = localStorage.getItem("bingo-host-key");
-  } catch (e) { hostKey = m ? m[1] : null; }
+  hostKey = m ? m[1] : null;
+  try { localStorage.removeItem("bingo-host-key"); } catch (e) {}
 })();
 render();
 
@@ -1239,8 +1223,7 @@ async function loadAll() {
     const { data } = await sb.rpc("bingo_host_check", { p_game: GAME, p_key: hostKey });
     isHost = data === true;
     // a home-screen icon saves the current address: make sure it is the host link on a host's phone
-    if (isHost && !/anfitrion=/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search + "#anfitrion=" + hostKey); } catch (e) {} }
-    if (!isHost) { try { localStorage.removeItem("bingo-host-key"); } catch (e) {} hostKey = null; }
+    if (!isHost) hostKey = null;
   }
   try { await loadAll(); } catch (e) { stale = true; loaded = true; renderGame(); }
   sb.channel("bingo-" + GAME)
