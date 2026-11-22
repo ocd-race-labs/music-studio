@@ -171,6 +171,8 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .h-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .h-tools .btn{padding:10px 8px;font-size:14px;min-height:44px}
 .h-tools .btn.warn{background:#ffe9e6;color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red)}
+.ctrls{display:inline-grid;grid-template-columns:auto auto;gap:8px;align-items:stretch}
+.ctrls #changeCards{grid-column:1/-1;background:rgba(255,255,255,.85);padding:8px 10px;font-size:14px;min-height:40px}
 .h-leave{display:block;margin:12px auto 0;border:none;background:none;color:#7a6a58;text-decoration:underline;font-size:13px;font-weight:600;padding:6px}
 .h-leave.warn{color:var(--red);text-decoration:none;font-weight:800}
 .h-hint{font-size:13px;color:#7a6a58;margin-top:10px}
@@ -867,10 +869,10 @@ function render() {
       <section class="panel" id="wrap-board"><h2>Tablero <small id="boardHint"></small></h2><div id="sec-board"></div></section>
       <section id="wrap-cards"><div class="row" style="justify-content:space-between;margin:2px 4px 10px">
         <h2 style="font-family:Oswald;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.35);font-size:20px;text-transform:uppercase">Mis cartones · ${esc(me.name)}</h2>
-        <div class="row">
+        <div class="ctrls">
           <label class="toggle" style="background:rgba(255,255,255,.85);padding:6px 10px;border-radius:10px"><input type="checkbox" id="autoMark" ${me.auto ? "checked" : ""}> Marcar solo</label>
           <button class="vbtn" id="voiceBtn" aria-pressed="false"></button>
-          <button class="btn ghost" id="changeCards" style="background:rgba(255,255,255,.85);padding:6px 10px;font-size:13px">Cambiar cartones</button>
+          <button class="btn ghost" id="changeCards">Cambiar cartones</button>
         </div></div>
         <div id="voiceStatus" class="vstatus">${esc(voiceStatus)}</div>
         <div class="cards" id="sec-cards"></div>
@@ -1187,7 +1189,7 @@ function renderBar() {
 }
 
 /* ---------- updates ---------- */
-const BUILD = "20261122144501";
+const BUILD = "20261122144950";
 let updateShown = false;
 async function checkUpdate() {
   try {
