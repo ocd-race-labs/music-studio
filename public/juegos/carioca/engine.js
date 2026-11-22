@@ -49,28 +49,22 @@ export function validTrio(cards) {
   return nat.every((c) => parse(c).r === parse(nat[0]).r);
 }
 // an escala: 4+ consecutive cards of one suit, at most one joker (two in the 13-card escala real);
-// the ace goes low (A-2-3-4) or high (J-Q-K-A), never around the corner
+// it may go around the corner: Q-K-A-2 is a valid escala
 export function escalaOrder(cards, maxJokers = 1) {
   const n = cards.length;
   if (n < 4 || n > 13) return null;
   const nat = cards.filter((c) => !isJoker(c)), jokers = cards.filter(isJoker);
   if (jokers.length > maxJokers || nat.length < 2) return null;
   if (!nat.every((c) => parse(c).s === parse(nat[0]).s)) return null;
-  for (const aceHigh of [false, true]) {
-    const val = (c) => { const v = rankVal(parse(c).r); return aceHigh && v === 1 ? 14 : v; };
-    const vs = nat.map(val);
-    if (new Set(vs).size !== vs.length) continue;
-    const lo = Math.min(...vs), hi = Math.max(...vs);
-    if (hi - lo + 1 > n) continue;
-    const minV = aceHigh ? 2 : 1, maxV = aceHigh ? 14 : 13;
-    // put the window as low as possible while covering every natural card
-    let start = Math.max(minV, hi - n + 1);
-    if (start > lo || start + n - 1 > maxV) continue;
-    const byVal = new Map(nat.map((c) => [val(c), c]));
-    const js = jokers.slice(), out = [];
-    for (let v = start; v < start + n; v++) out.push(byVal.has(v) ? byVal.get(v) : js.shift());
-    if (js.length) continue;
-    return out;
+  const vs = nat.map((c) => rankVal(parse(c).r));
+  if (new Set(vs).size !== vs.length) return null;
+  const byVal = new Map(nat.map((c) => [rankVal(parse(c).r), c]));
+  // try every starting rank; the window wraps from K back to A
+  for (let s = 1; s <= 13; s++) {
+    const win = Array.from({ length: n }, (_, k) => ((s - 1 + k) % 13) + 1);
+    if (!vs.every((v) => win.includes(v))) continue;
+    const js = jokers.slice();
+    return win.map((v) => (byVal.has(v) ? byVal.get(v) : js.shift()));
   }
   return null;
 }
@@ -161,7 +155,7 @@ export function laydown(s, pi, groups) {
   if (!Array.isArray(groups)) fail("Juego inválido");
   const t = groups.filter((g) => g.type === "trio").length, e = groups.filter((g) => g.type === "escala").length;
   if (t !== R.t || e !== R.e) fail(`Esta ronda pide: ${R.name.toLowerCase()}`);
-  for (const g of groups) if (!validGroup(g.type, g.cards, R.real)) fail(g.type === "trio" ? "Hay un trío que no es válido" : R.real ? "La escala real son 13 cartas seguidas del mismo palo" : "Hay una escala que no es válida");
+  for (const g of groups) if (!validGroup(g.type, g.cards, R.real)) fail(g.type === "trio" ? "Hay un trío que no es válido" : R.real ? "La escala real son 13 cartas seguidas de la misma pinta" : "Hay una escala que no es válida");
   p.hand = takeFromHand(p, groups.flatMap((g) => g.cards));
   for (const g of groups) s.table.push({ owner: pi, type: g.type, cards: g.cards.slice() });
   p.down = true;

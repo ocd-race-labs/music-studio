@@ -68,15 +68,19 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .opp .cnt{display:flex;align-items:center;gap:3px;color:#4a4d53}
 .opp .mini{width:12px;height:17px;border-radius:3px;background:repeating-linear-gradient(45deg,#2f6fb5 0 3px,#2a63a3 3px 6px)}
 .opp .dn{color:#1f7a2a}
-.felt{background:rgba(0,0,0,.14);border-radius:18px;padding:10px;display:flex;flex-wrap:wrap;gap:10px 14px;min-height:60px}
+.felt{background:rgba(0,0,0,.14);border-radius:18px;padding:10px;display:grid;gap:10px;min-height:60px}
 .felt .empty{width:100%;color:rgba(255,255,255,.6);font-size:13px;text-align:center;padding:10px}
-.grp{display:flex;flex-direction:column;gap:4px}
-.grp .own{color:#fff;font-size:11px;font-weight:800;opacity:.75}
+.who-down{background:rgba(255,255,255,.08);border-radius:14px;padding:8px}
+.wd-name{color:#fff;font-size:13px;font-weight:800;margin:0 2px 6px}
+.wd-groups{display:flex;flex-wrap:wrap;gap:8px}
+.grp{display:flex;flex-direction:column;gap:3px;background:rgba(0,0,0,.18);border-radius:12px;padding:5px 6px 6px}
+.grp .gt{color:#ffe28a;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding-left:2px}
+.card.tb{--w:38px}
 .grp .cards{display:flex}
-.grp .cards .card{margin-right:-14px}
+.grp .cards .card{margin-right:-10px}
 .grp .cards .card:last-child{margin-right:0}
-.grp .cards{padding:4px 6px;border-radius:10px}
-.grp.target .cards{background:rgba(255,207,63,.35);box-shadow:0 0 0 2px var(--gold);cursor:pointer}
+.grp .cards{border-radius:8px}
+.grp.target{background:rgba(255,207,63,.3);box-shadow:0 0 0 2px var(--gold);cursor:pointer}
 .piles{display:flex;justify-content:center;gap:22px;align-items:flex-end}
 .pile{display:flex;flex-direction:column;align-items:center;gap:4px;color:#fff;font-size:12px;font-weight:700;background:none;border:none;font-family:inherit;cursor:pointer}
 .pile.on .card{box-shadow:0 0 0 3px var(--gold),0 6px 14px rgba(0,0,0,.4)}
@@ -181,7 +185,7 @@ function renderStart() {
     </section>
     <section class="panel help"><b>Cómo se juega</b><ul>
       <li>Son 9 rondas; en cada una hay que bajarse con un juego distinto (dos tríos, un trío y una escala, …, escala real).</li>
-      <li><b>Trío:</b> 3 cartas del mismo número. <b>Escala:</b> 4 cartas seguidas del mismo palo. Un comodín por juego.</li>
+      <li><b>Trío:</b> 3 cartas del mismo número. <b>Escala:</b> 4 cartas seguidas de la misma pinta; puede dar la vuelta (Q‑K‑A‑2). Un comodín por juego.</li>
       <li>En tu turno robas (del mazo o del pozo), te bajas si puedes, agregas a cualquier juego de la mesa y botas una carta.</li>
       <li>Quien se queda sin cartas gana la ronda; los demás suman lo que tienen en la mano: As 20, J‑Q‑K 10, comodín 30, el resto su número.</li>
       <li>Gana quien termina con menos puntos.</li></ul></section>`;
@@ -272,9 +276,12 @@ function renderTable(was) {
   else if (!V.drew) status = `Tu turno: roba del mazo o del pozo`;
   else status = mine.down ? `Agrega a la mesa o bota una carta` : `Bájate si puedes, o bota una carta`;
 
-  const groupsHTML = V.table.length ? V.table.map((g, gi) => `<div class="grp ${canAdd ? "target" : ""}" data-g="${gi}">
-      <span class="own">${esc(V.players[g.owner].name)} · ${g.type === "trio" ? "trío" : "escala"}</span>
-      <div class="cards">${C.arrange(g).map((c) => cardHTML(c, "sm")).join("")}</div></div>`).join("")
+  const owners = [...new Set(V.table.map((g) => g.owner))];
+  const groupsHTML = V.table.length ? owners.map((o) => `<div class="who-down">
+      <div class="wd-name">${esc(V.players[o].name)}${o === V.me ? " (tú)" : ""}</div>
+      <div class="wd-groups">${V.table.map((g, gi) => ({ g, gi })).filter((x) => x.g.owner === o).map(({ g, gi }) => `<div class="grp ${canAdd ? "target" : ""}" data-g="${gi}">
+        <span class="gt">${g.type === "trio" ? "Trío" : "Escala"}</span>
+        <div class="cards">${C.arrange(g).map((c) => cardHTML(c, "tb")).join("")}</div></div>`).join("")}</div></div>`).join("")
     : `<div class="empty">Nadie se ha bajado todavía</div>`;
 
   const tn = pending.filter((g) => g.type === "trio").length, en = pending.filter((g) => g.type === "escala").length;
@@ -293,10 +300,10 @@ function renderTable(was) {
       <button class="pile ${myTurn && !V.drew ? "on" : ""}" id="deck">${cardHTML("X", "back lg")}<span>Mazo · ${V.deckCount}</span></button>
       <button class="pile ${myTurn && !V.drew && V.discardTop ? "on" : ""}" id="pozo">${V.discardTop ? cardHTML(V.discardTop, "lg") : `<span class="ph"></span>`}<span>Pozo</span></button>
     </div>
-    <div class="status">${status}${!ended ? `<small>${mine.down ? "Ya te bajaste ✓" : "Trío: 3 iguales · Escala: 4 seguidas del mismo palo"}</small>` : ""}</div>
+    <div class="status">${status}${!ended ? `<small>${mine.down ? "Ya te bajaste ✓" : "Trío: 3 iguales · Escala: 4 seguidas de la misma pinta"}</small>` : ""}</div>
     ${ended ? scoreHTML() : ""}
     <div class="mine">${pendHTML}
-      <div class="tools"><span>Tu mano · ${mine.count} cartas · llevas ${mine.total} pts</span><button id="sort">Ordenar por ${sortBy === "rank" ? "palo" : "número"}</button></div>
+      <div class="tools"><span>Tu mano · ${mine.count} cartas · llevas ${mine.total} pts</span><button id="sort">Ordenar por ${sortBy === "rank" ? "pinta" : "número"}</button></div>
       <div class="hand" id="hand">${hand.map((c) => cardHTML(c, (selected.has(c) ? "sel " : "") + (fresh.has(c) ? "new" : ""), `data-c="${c}"`)).join("")}</div>
     </div>
     <div class="log">${(V.log || []).slice(0, 3).map(esc).join(" · ")}</div>`;
@@ -340,7 +347,7 @@ function renderBar(myTurn, mine, R, ended) {
   bar.innerHTML = btns.join("");
   const make = (type) => () => {
     const cards = [...selected];
-    if (!C.validGroup(type, cards, R.real)) return toast(type === "trio" ? "Eso no es un trío: 3 del mismo número, máximo un comodín" : R.real ? "La escala real son 13 cartas seguidas del mismo palo" : "Eso no es una escala: 4 seguidas del mismo palo, máximo un comodín");
+    if (!C.validGroup(type, cards, R.real)) return toast(type === "trio" ? "Eso no es un trío: 3 del mismo número, máximo un comodín" : R.real ? "La escala real son 13 cartas seguidas de la misma pinta" : "Eso no es una escala: 4 seguidas de la misma pinta, máximo un comodín");
     pending.push({ type, cards }); selected.clear(); renderTable();
   };
   const t = $("#b-trio"); if (t) t.onclick = make("trio");
