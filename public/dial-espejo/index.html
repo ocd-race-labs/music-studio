@@ -2310,8 +2310,14 @@ function sqRender(){const q=$("sq").value;
   hlRender();
 let sqT;$("sq").addEventListener("input",()=>{clearTimeout(sqT);sqT=setTimeout(sqRender,120)});
 $("sqF").onsubmit=e=>{e.preventDefault();sqRender();$("sq").blur()};
-function advOpen(){const a=$("adv");if(a.hidden){try{history.pushState({adv:1},"")}catch(e){}}a.hidden=false;document.documentElement.classList.add("adv-open");a.scrollTop=0;if(window.altShow)altShow();requestAnimationFrame(()=>{try{layout()}catch(e){}});setTimeout(()=>$("advClose").focus(),50)}
+function advOpen(){requestAnimationFrame(()=>requestAnimationFrame(advAlign));const a=$("adv");if(a.hidden){try{history.pushState({adv:1},"")}catch(e){}}a.hidden=false;document.documentElement.classList.add("adv-open");a.scrollTop=0;if(window.altShow)altShow();requestAnimationFrame(()=>{try{layout()}catch(e){}});setTimeout(()=>$("advClose").focus(),50)}
 function advClose(fromPop){if($("adv").hidden)return;if(fromPop!==true&&history.state&&history.state.adv){history.back();return}$("adv").hidden=true;document.documentElement.classList.remove("adv-open");closeCard();renderHome()}
+// La barra de título de Búsqueda avanzada parte donde parte el panal/globo y termina con la columna derecha
+function advAlign(){const hd=document.querySelector(".adv-hd"),v=document.querySelector(".adv-in>.vtop"),w=document.querySelector(".adv-in");if(!hd||!v||!w||$("adv").hidden)return;
+  hd.style.marginLeft=hd.style.width=hd.style.maxWidth="";if(innerWidth<1024)return;
+  const P=hd.parentElement,pl=P.getBoundingClientRect().left+(parseFloat(getComputedStyle(P).paddingLeft)||0),a=v.getBoundingClientRect(),b=w.getBoundingClientRect();
+  hd.style.maxWidth="none";hd.style.width=Math.round(b.right-a.left)+"px";hd.style.marginLeft=Math.round(a.left-pl)+"px"}
+addEventListener("resize",()=>requestAnimationFrame(advAlign));
 $("advOpen").onclick=advOpen;$("advClose").onclick=()=>advClose();addEventListener("popstate",()=>advClose(true));
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("adv").hidden&&$("npSheet").hidden)advClose()});
 renderHome();
@@ -2961,7 +2967,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22t";
+const APP_VERSION="2026-11-22u";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
