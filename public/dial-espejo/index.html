@@ -1102,6 +1102,12 @@ html.adv-open #player{z-index:35}
   .np-slp{align-self:center;margin-left:6px}
   .np-slb{top:-16px}
 }
+
+/* La radio que está sonando, en verde flúor en la regla del dial, para ubicarla de un vistazo */
+.nd-mk.now span{color:#39FF14!important;opacity:1!important;text-shadow:0 0 8px rgba(57,255,20,.55)}
+.nd-mk.now span::before{background:#39FF14!important;box-shadow:0 0 6px rgba(57,255,20,.8)}
+.nd-mk.now::after{background:#39FF14!important;opacity:1!important;box-shadow:0 0 6px rgba(57,255,20,.7)}
+.nd-read.cur b::after{color:#39FF14}
 </style>
 </head>
 <body>
@@ -2967,7 +2973,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22w";
+const APP_VERSION="2026-11-22x";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
