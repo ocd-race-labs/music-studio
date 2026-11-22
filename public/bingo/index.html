@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bingo en casa</title>
+<meta name="apple-mobile-web-app-title" content="Bingo">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#c99a5e">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Nunito+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -918,6 +924,7 @@ function renderBall() {
   let msg = "";
   if (!loaded) msg = "Cargando partida…";
   else if (state.phase === "espera") msg = isHost ? "Elige el juego y empieza la partida." : "Esperando que el anfitrión elija el juego.";
+  else if (state.phase === "terminado") msg = isHost ? "Elige el juego para la próxima partida." : "Esperando la próxima partida.";
   else if (!d.length) msg = "Partida lista. ¡Atentos a la primera bola!";
   const phaseTxt = playing() ? "Se juega por: " + esc(pname(cur())) : state.phase === "terminado" ? "Partida terminada" : "";
   const is75 = state.mode === "b75";
@@ -1125,7 +1132,7 @@ function renderBar() {
 }
 
 /* ---------- updates ---------- */
-const BUILD = "20261121184222";
+const BUILD = "20261122142618";
 let updateShown = false;
 async function checkUpdate() {
   try {
@@ -1149,7 +1156,7 @@ setTimeout(checkUpdate, 3000);
 (() => {
   const m = location.hash.match(/anfitrion=([A-Za-z0-9_-]{8,64})/);
   try {
-    if (m) { localStorage.setItem("bingo-host-key", m[1]); history.replaceState(null, "", location.pathname + location.search); }
+    if (m) localStorage.setItem("bingo-host-key", m[1]);
     hostKey = localStorage.getItem("bingo-host-key");
   } catch (e) { hostKey = m ? m[1] : null; }
 })();
@@ -1174,6 +1181,8 @@ async function loadAll() {
   if (hostKey) {
     const { data } = await sb.rpc("bingo_host_check", { p_game: GAME, p_key: hostKey });
     isHost = data === true;
+    // a home-screen icon saves the current address: make sure it is the host link on a host's phone
+    if (isHost && !/anfitrion=/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search + "#anfitrion=" + hostKey); } catch (e) {} }
     if (!isHost) { try { localStorage.removeItem("bingo-host-key"); } catch (e) {} hostKey = null; }
   }
   try { await loadAll(); } catch (e) { stale = true; loaded = true; renderGame(); }
