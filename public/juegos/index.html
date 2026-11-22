@@ -55,6 +55,10 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 .steps i:nth-child(1){left:6px;top:0}
 .steps i:nth-child(2){left:23px;top:9px;color:#d22f3a}
 .steps i:nth-child(3){left:40px;top:18px}
+.a-bg{background:#5a3a20;padding:8px}
+.tri{width:100%;height:100%;background:#2f6b4c;border-radius:8px;display:flex;justify-content:space-around;align-items:flex-start;overflow:hidden}
+.tri i{width:14%;height:80%;clip-path:polygon(0 0,100% 0,50% 100%)}
+.tri i:nth-child(odd){background:#e7d2a8}.tri i:nth-child(even){background:#a8432f}
 .a-soon{background:#e9e6df;font-size:40px}
 .top{display:flex;align-items:flex-start;gap:10px}
 .top .t{flex:1}
@@ -85,7 +89,7 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
     <a class="tile" href="damas/"><span class="go">Jugar</span><div class="art a-damas"><div><span class="pc w"></span><span class="pc b"></span></div></div><b>Damas</b><span>2 jugadores</span></a>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🐍</div><b>Serpientes y escaleras</b></div>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🎲</div><b>Ludo</b></div>
-    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">⚪</div><b>Backgammon</b></div>
+    <a class="tile" href="backgammon/"><span class="go">Jugar</span><div class="art a-bg"><div class="tri"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><b>Backgammon</b><span>2 jugadores</span></a>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🁫</div><b>Dominó</b></div>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">♞</div><b>Ajedrez</b></div>
   </div>
@@ -94,7 +98,7 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 // the host link of the menu (#anfitrion=…) opens the bingo as host; any other link opens it as a player
 (() => {
   const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/);
-  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; document.querySelector('a[href="solitario/"]').href = "solitario/#" + m[0]; }
+  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; document.querySelector('a[href="solitario/"]').href = "solitario/#" + m[0]; document.querySelector('a[href="backgammon/"]').href = "backgammon/#" + m[0]; }
   const nm = () => { try { const y = JSON.parse(localStorage.getItem("juegos-yo")) || {}; document.getElementById("me-n").textContent = y.name || "Tu perfil"; } catch (e) {} };
   nm();
   document.getElementById("me").onclick = () => Perfil.open();
