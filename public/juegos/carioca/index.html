@@ -126,14 +126,18 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
 header .gear{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.9);color:#1d1f23;border:none;font:inherit;font-size:17px;font-weight:800}
+header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
+header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../ayuda.js"></script>
 </head>
 <body>
 <header>
   <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
   <span class="logo">CARIOCA</span><span class="sp"></span>
   <span class="pill" id="pill"></span>
+  <button class="gear" aria-label="Cómo jugar" onclick="Ayuda.open('carioca')" style="font-size:19px">?</button>
   <button class="gear" id="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
 </header>
 <main id="app"></main>

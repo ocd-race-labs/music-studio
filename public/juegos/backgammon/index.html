@@ -38,6 +38,8 @@ main{max-width:560px;margin:0 auto;padding:8px;display:grid;gap:10px}
 input[type=text]{font:inherit;font-size:17px;padding:12px 14px;border-radius:12px;border:1.5px solid #d5d6d8;background:#fff;width:100%}
 label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6c6f75;margin:4px 0 6px}
 .tables{display:grid;gap:8px}
+.mrow{display:grid;grid-template-columns:1fr auto;gap:6px}
+.mrow .del{border:none;border-radius:14px;width:46px;background:#eeefef;font:inherit;font-weight:800;font-size:16px;color:#6c6f75}
 .btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
 .btn.tbl small,.btn.back2 small{font-weight:700;color:#6c6f75;font-size:12px}
 .btn.back2{justify-content:space-between;background:#d9f2e1;text-align:left}
@@ -103,14 +105,18 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .overlay .big{font-size:46px}
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
+header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
+header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../ayuda.js"></script>
 </head>
 <body>
 <header>
   <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
   <span class="logo">BACKGAMMON</span><span class="sp"></span>
   <span class="pill" id="pill"></span>
+  <button class="gear" aria-label="Cómo jugar" onclick="Ayuda.open('backgammon')" style="font-size:19px">?</button>
   <button class="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
 </header>
 <main id="app"></main>
@@ -184,6 +190,11 @@ function takeName(optional) {
   if (v) { me.name = v; store("juegos-yo", Object.assign(load("juegos-yo") || {}, me)); }
   return true;
 }
+async function delTable(id) {
+  if (!client()) return false;
+  const { data, error } = await sb.rpc("bg_delete", { p_id: id, p_player: me.pid, p_key: me.pkey });
+  return !error && data === true;
+}
 let openT = null;
 async function listOpen() {
   clearTimeout(openT);
@@ -194,7 +205,8 @@ async function listOpen() {
   const all = data || [], busyAt = {};
   for (const r of all) if (r.black_id) for (const id of [r.white_id, r.black_id]) busyAt[id] = Math.max(busyAt[id] || 0, Date.parse(r.updated_at));
   const myLobby = all.find((r) => r.white_id === me.pid && !r.black_id && Date.parse(r.updated_at) > fresh && !(busyAt[me.pid] > Date.parse(r.updated_at)));
-  const mine = all.filter((r) => r.black_id && (r.white_id === me.pid || r.black_id === me.pid) && !r.winner).slice(0, 4).concat(myLobby ? [myLobby] : []);
+  const hidden = load("juegos-ocultas") || [];
+  const mine = all.filter((r) => r.black_id && (r.white_id === me.pid || r.black_id === me.pid) && !r.winner).slice(0, 4).concat(myLobby ? [myLobby] : []).filter((r) => !hidden.includes(r.id));
   const seen = new Set();
   const rows = all.filter((r) => {
     if (r.black_id || r.white_id === me.pid || Date.parse(r.updated_at) < fresh || seen.has(r.white_id)) return false;
@@ -202,11 +214,18 @@ async function listOpen() {
   });
   const rival = (r) => (r.white_id === me.pid ? r.black_name : r.white_name) || "alguien";
   box.innerHTML = (mine.length ? `<label class="lbl">Tus partidas</label><div class="tables">${mine.map((r) => `
-      <button class="btn back2" data-join="${esc(r.id)}"><span>${r.black_id ? "Volver a la partida con " + esc(rival(r)) : "Volver a tu mesa"}</span><small>${r.black_id ? "en juego" : "esperando"}</small></button>`).join("")}</div>` : "")
+      <div class="mrow"><button class="btn back2" data-join="${esc(r.id)}"><span>${r.black_id ? "Volver a la partida con " + esc(rival(r)) : "Volver a tu mesa"}</span><small>${r.black_id ? "en juego" : "esperando"}</small></button>
+      <button class="del" data-del="${esc(r.id)}" data-own="${r.black_id ? "" : "1"}" aria-label="${r.black_id ? "Quitar de tu lista" : "Borrar esta mesa"}">✕</button></div>`).join("")}</div>` : "")
     + (rows.length ? `<label class="lbl">Mesas esperando rival</label><div class="tables">${rows.map((r) => `
       <button class="btn tbl" data-join="${esc(r.id)}"><span>Jugar con ${esc(r.white_name || "alguien")}</span><small>esperando</small></button>`).join("")}</div>` : "")
     + (mine.length || rows.length ? `<div class="or">o</div>` : "");
   box.querySelectorAll("[data-join]").forEach((b) => b.onclick = () => { if (!takeName()) return; location.hash = "g=" + b.dataset.join + keepHost(); });
+  box.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    const id = b.dataset.del;
+    if (b.dataset.own && (await delTable(id))) toast("Mesa borrada");
+    else { store("juegos-ocultas", [id].concat(load("juegos-ocultas") || []).slice(0, 40)); toast("La quitamos de tu lista"); }
+    listOpen();
+  });
   openT = setTimeout(listOpen, 4000);
 }
 
@@ -409,6 +428,10 @@ function render() {
   const bm = $("#app").querySelector(".barc.me"); if (bm) bm.onclick = () => tap("bar");
   $("#offme").onclick = () => tap("off");
   const cp = $("#copy"); if (cp) cp.onclick = copyLink;
+  const dt = $("#delt"); if (dt) dt.onclick = async () => {
+    if (dt.dataset.sure !== "1") { dt.dataset.sure = "1"; dt.textContent = "¿Seguro? Toca otra vez para borrarla"; return; }
+    if (await delTable(code)) location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); else toast("No se pudo borrar");
+  };
   const rs = $("#resign"); if (rs) rs.onclick = () => {
     if (rs.dataset.sure !== "1") { rs.dataset.sure = "1"; rs.textContent = "¿Seguro? Toca otra vez"; return; }
     send({ ...S, dice: null, opening: null, phase: "over", winner: G.other(myColor), resigned: myColor });
@@ -463,7 +486,8 @@ function renderActions(ms, waiting) {
 }
 function inviteHTML() {
   return `<div class="invite"><b>Invita a tu rival</b><span class="muted">Mesa ${code}: comparte el link para que entre.</span>
-    <div class="two"><button class="btn primary" id="copy">🔗 Copiar link</button><a class="btn wa" target="_blank" rel="noopener" href="${waLink()}">WhatsApp</a></div></div>`;
+    <div class="two"><button class="btn primary" id="copy">🔗 Copiar link</button><a class="btn wa" target="_blank" rel="noopener" href="${waLink()}">WhatsApp</a></div>
+    ${myColor === "w" ? `<button class="btn" id="delt" style="background:none;color:#a3262f;min-height:36px">Borrar esta mesa</button>` : ""}</div>`;
 }
 function celebrate() {
   const won = mode === "local" || S.winner === myColor;

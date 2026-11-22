@@ -62,14 +62,18 @@ main{max-width:640px;margin:0 auto;padding:10px 8px}
 #toast.on{opacity:1;transform:translateX(-50%)}
 .confetti{position:fixed;top:-20px;width:9px;height:14px;z-index:50;pointer-events:none;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
+header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../ayuda.js"></script>
 </head>
 <body>
 <header>
   <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
   <span class="logo">SOLITARIO</span><span class="sp"></span>
   <span class="pill" id="pill"></span>
+  <button class="gear" aria-label="Cómo jugar" onclick="Ayuda.open('solitario')" style="font-size:19px">?</button>
   <button class="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
 </header>
 <main>

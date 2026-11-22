@@ -311,6 +311,7 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 @media(min-width:820px){.two{grid-template-columns:1.1fr 1fr}}
 </style>
 <script src="../juegos/perfil.js"></script>
+<script src="../juegos/ayuda.js"></script>
 </head>
 <body>
 <header>
@@ -318,6 +319,7 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
   <h1>BINGO</h1><span class="sp"></span>
   <button id="chatFab" class="chat-fab" hidden aria-label="Abrir chat">💬 <span class="chat-lbl">Chat</span><span id="chatBadge" class="chat-badge" hidden></span></button>
   <span class="pill" id="netPill">Conectando…</span>
+  <button aria-label="Cómo jugar" onclick="Ayuda.open('bingo')" style="flex:none;width:34px;height:34px;border:none;border-radius:10px;background:rgba(255,255,255,.85);font:800 18px/1 system-ui,sans-serif;color:#2a1d12">?</button>
 </header>
 <main id="app"></main>
 <div id="bar"></div>
@@ -1177,7 +1179,7 @@ function renderBar() {
 }
 
 /* ---------- updates ---------- */
-const BUILD = "20261122174427";
+const BUILD = "20261122205312";
 let updateShown = false;
 async function checkUpdate() {
   try {
