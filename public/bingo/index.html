@@ -503,7 +503,10 @@ function applyState(next) {
   const prev = state;
   state = next;
   if (me.round !== state.round) {
-    me.round = state.round; me.marks = {}; me.claim = null; persist();
+    const newGame = me.round != null && state.phase === "jugando";
+    me.round = state.round; me.marks = {}; me.claim = null;
+    if (newGame && me.cards.length) me.cards = Array.from({ length: me.ncards || 1 }, () => makeCardFor(state.mode));
+    persist();
   }
   if (me.cards.length && cardMode(me.cards[0]) !== state.mode && (state.phase === "jugando" || prev.mode !== state.mode)) {
     me.cards = Array.from({ length: me.ncards || me.cards.length }, () => makeCardFor(state.mode));
@@ -529,6 +532,7 @@ function applyState(next) {
   }
   pushPresence();
   renderGame();
+  if (typeof chatRound === "function" && chatRoundShown !== null && chatRoundShown !== chatRound()) loadChat();
 }
 
 function save(next) {
@@ -602,7 +606,7 @@ function pushPresence() {
     }).catch((e) => { console.warn(e); }).finally(() => { pendingPush = false; });
   }, 300);
 }
-const ACTIVE_MS = 5 * 60 * 1000;
+const ACTIVE_MS = 75 * 1000;
 function playersHere() {
   const now = Date.now();
   return [...players.values()].filter((r) => r && r.name && now - Date.parse(r.seen_at) < ACTIVE_MS)
@@ -618,6 +622,17 @@ function onPlayerRow(r) {
   }
   renderPlayers(); netPill();
   if (isHost && autoOn && pendingClaims().length) { stopAuto(); toast("Pausa: alguien cantó. Revisa el reclamo."); renderHost(); }
+}
+// one row per person on screen: the newest session of each name in this game
+function playersNow() {
+  const byName = new Map();
+  for (const p of playersHere()) {
+    if (p.round !== state.round) continue;
+    const k = p.name.trim().toLowerCase();
+    const cur0 = byName.get(k);
+    if (!cur0 || p.isMe || (!cur0.isMe && Date.parse(players.get(p.peer)?.seen_at || 0) > Date.parse(players.get(cur0.peer)?.seen_at || 0))) byName.set(k, p);
+  }
+  return [...byName.values()];
 }
 function pendingClaims() {
   if (!playing()) return [];
@@ -752,14 +767,16 @@ function netPill() {
   if (!loaded) { p.textContent = "Conectando…"; p.className = "pill"; return; }
   if (offline && !localMode) { p.textContent = "Sin sesión"; p.className = "pill"; return; }
   if (localMode) { p.textContent = "Sin conexión"; p.className = "pill"; return; }
-  const n = playersHere().length;
+  const n = playersNow().length;
   p.textContent = (isHost ? "Anfitrión" : "Jugador") + ` · ${n} en sala` + (stale ? " · sin conexión" : "");
   p.className = "pill" + (isHost ? " host" : "");
 }
 
 /* ---------- render ---------- */
 /* ---------- chat ---------- */
-let chatMsgs = [], chatOpen = false, chatSending = false, chatLoaded = false;
+let chatMsgs = [], chatOpen = false, chatSending = false, chatLoaded = false, chatRoundShown = null;
+// the chat of the game being played, or of the next one while waiting
+const chatRound = () => (playing() ? state.round : state.round + 1);
 let chatSeen = 0;
 try { chatSeen = Number(localStorage.getItem("bingo-chat-seen")) || 0; } catch (e) {}
 function chatVisible() {
@@ -795,10 +812,13 @@ function renderChat() {
 }
 async function loadChat() {
   if (!sb) return;
-  const { data, error } = await sb.from("bingo_messages").select("id,player_id,name,body,created_at").eq("game_id", GAME).order("id", { ascending: false }).limit(80);
+  const r = chatRound();
+  const { data, error } = await sb.from("bingo_messages").select("id,player_id,name,body,created_at,round").eq("game_id", GAME).eq("round", r).order("id", { ascending: false }).limit(80);
+  if (r !== chatRound()) return;
   if (error) return;
   const next = (data || []).reverse();
   if (!chatLoaded) { chatLoaded = true; chatMsgs = next; renderChat(); return; }
+  if (chatRoundShown !== r) { chatRoundShown = r; chatMsgs = next; renderChat(); return; }
   const changed = next.length !== chatMsgs.length || (next.length && next[next.length - 1].id !== chatMsgs[chatMsgs.length - 1]?.id);
   if (changed) {
     const fresh = next.filter((m) => m.id > (chatMsgs.length ? chatMsgs[chatMsgs.length - 1].id : chatSeen) && m.player_id !== me.pid);
@@ -835,6 +855,7 @@ function render() {
   if (!app.querySelector("#sec-ball")) {
     app.innerHTML = `
       <div id="sec-winners"></div>
+      <section class="panel" id="sec-wait" hidden></section>
       <div class="two">
         <section class="panel" id="sec-ball"></section>
         <section class="panel" id="sec-host" hidden></section>
@@ -873,7 +894,7 @@ function renderGame() {
   // before a game starts (or between games) there is nothing to see on the board or the cards
   const live = playing();
   $("#wrap-board").hidden = !live; $("#wrap-cards").hidden = !live;
-  renderWinners(); renderBall(); renderHost(); renderBoard(); renderCards(); renderPlayers(); renderBar(); renderChat();
+  renderWait(); renderWinners(); renderBall(); renderHost(); renderBoard(); renderCards(); renderPlayers(); renderBar(); renderChat();
 }
 function paintVoiceBtn() {
   const b = $("#voiceBtn"); if (!b) return;
@@ -911,6 +932,20 @@ function renderJoin() {
   $("#go").onclick = go;
   $("#nm").onkeydown = (e) => { if (e.key === "Enter") go(); };
   $("#bar").innerHTML = "";
+}
+function renderWait() {
+  const el = $("#sec-wait"); if (!el) return;
+  if (playing()) { el.hidden = true; return; }
+  el.hidden = false;
+  const n = me.ncards || 1;
+  el.innerHTML = `<h2>Tus cartones <small>para la próxima partida</small></h2>
+    <div class="ncards">${[1, 2, 3, 4].map((k) => `<button data-nc="${k}" class="${k === n ? "on" : ""}">${k}</button>`).join("")}</div>
+    <p class="muted" style="margin-top:8px">Recibes cartones nuevos cada vez que empieza una partida.</p>`;
+  el.querySelectorAll("[data-nc]").forEach((b) => b.onclick = () => {
+    me.ncards = +b.dataset.nc;
+    me.cards = Array.from({ length: me.ncards }, () => makeCardFor(state.mode));
+    me.marks = {}; persist(); pushPresence(); renderWait();
+  });
 }
 function renderWinners() {
   const el = $("#sec-winners");
@@ -1095,7 +1130,7 @@ function renderPlayers() {
   const el = $("#sec-players");
   if (!el) return;
   if (localMode) { el.hidden = true; return; }
-  const list = playersHere().filter((p) => p.round === state.round);
+  const list = playersNow();
   el.hidden = false;
   const claims = new Set(pendingClaims().map((p) => p.peer));
   el.innerHTML = `<h2>Jugadores <small>${list.length} conectados</small></h2>
@@ -1132,7 +1167,7 @@ function renderBar() {
 }
 
 /* ---------- updates ---------- */
-const BUILD = "20261122142618";
+const BUILD = "20261122143430";
 let updateShown = false;
 async function checkUpdate() {
   try {
@@ -1214,7 +1249,7 @@ async function loadAll() {
     } catch (e) { if (++fails >= 5 && !stale) { stale = true; netPill(); renderBall(); } }
   }, 1000);
   setInterval(() => { if (!document.hidden) loadAll().catch(() => {}); }, 5000);
-  setInterval(() => pushPresence(), 60000);
+  setInterval(() => pushPresence(), 30000);
   loadChat();
   setInterval(() => { if (!document.hidden) loadChat(); }, 2500);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadAll().catch(() => {}); pushPresence(); } });
