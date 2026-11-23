@@ -43,6 +43,7 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .btn.tbl small,.btn.back2 small{font-weight:700;color:#6c6f75;font-size:12px}
 .btn.back2{justify-content:space-between;background:#d9f2e1;text-align:left}
 .mrow{display:grid;grid-template-columns:1fr auto;gap:6px}
+.mrow .del.sure{width:auto;padding:0 10px;background:#fde2e1;color:#a3262f;font-size:13px}
 .mrow .del{border:none;border-radius:14px;width:46px;background:#eeefef;font:inherit;font-weight:800;font-size:16px;color:#6c6f75}
 .code{display:grid;grid-template-columns:1fr auto;gap:8px}
 .code input{text-transform:uppercase;letter-spacing:2px;font-weight:800}
@@ -197,14 +198,15 @@ async function listOpen() {
   const rows = all.filter((r) => r.phase === "lobby" && !r.seat_ids.includes(me.pid) && r.seat_ids.length < 4 && Date.parse(r.updated_at) > fresh);
   box.innerHTML = (mine.length ? `<label class="lbl">Tus partidas</label><div class="tables">${mine.map((r) => `
       <div class="mrow"><button class="btn back2" data-join="${esc(r.id)}"><span>${r.phase === "lobby" ? "Volver a tu mesa" : "Volver a la partida"} · ${esc(r.id)}</span><small>${r.phase === "lobby" ? "esperando" : "en juego"} · ${r.seat_ids.length} jug.</small></button>
-      <button class="del" data-del="${esc(r.id)}" data-own="${r.phase === "lobby" && r.host_id === me.pid ? "1" : ""}" aria-label="Borrar o quitar">✕</button></div>`).join("")}</div>` : "")
+      <button class="del" data-del="${esc(r.id)}" data-own="${r.host_id === me.pid ? "1" : ""}" aria-label="Borrar o quitar">✕</button></div>`).join("")}</div>` : "")
     + (rows.length ? `<label class="lbl">Mesas esperando jugadores</label><div class="tables">${rows.map((r) => `
       <button class="btn tbl" data-join="${esc(r.id)}"><span>Unirse a la mesa de ${esc(r.seat_names[0] || "alguien")}</span><small>${r.seat_ids.length} ${r.seat_ids.length === 1 ? "persona" : "personas"}</small></button>`).join("")}</div>` : "")
     + (mine.length || rows.length ? `<div class="or">o</div>` : "");
   box.querySelectorAll("[data-join]").forEach((b) => b.onclick = () => { if (!takeName()) return; location.hash = "l=" + b.dataset.join + keepHost(); });
   box.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
     const id = b.dataset.del;
-    if (b.dataset.own && (await delTable(id))) toast("Mesa borrada");
+    if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "¿Seguro?"; b.classList.add("sure"); return; }
+    if (b.dataset.own && (await delTable(id))) toast("Mesa cerrada");
     else { store("juegos-ocultas", [id].concat(load("juegos-ocultas") || []).slice(0, 40)); toast("La quitamos de tu lista"); }
     listOpen();
   });
