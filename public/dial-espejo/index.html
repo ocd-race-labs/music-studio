@@ -1284,6 +1284,25 @@ html.adv-open #player{z-index:35}
   @keyframes npbm{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   @media (prefers-reduced-motion:reduce){.npb-tr{animation:none}}
 }
+
+/* Radio minimizada como una mini radio LED (misma familia que Sonando ahora): carcasa oscura, pantalla con el texto encendido y play/stop del color del tema */
+.adv{backdrop-filter:none;-webkit-backdrop-filter:none}
+.player{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s}
+html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer-events:none}
+.band{--lc2:var(--s-noticias,#86EFAC);max-width:860px!important;grid-template-columns:46px minmax(0,1fr) auto;gap:8px;padding:7px;border-radius:18px;color:#EDEDF2!important;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),linear-gradient(180deg,#2a2b30,#141518)!important;
+  border:1px solid rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.6),0 18px 40px -16px #000,0 0 0 1px rgba(255,255,255,.03)}
+.band::before{display:none}
+.band .art{width:46px;height:46px;border-radius:11px;box-shadow:0 0 0 1px rgba(0,0,0,.6)}
+.b-led{display:grid;gap:2px;align-content:center;min-height:46px;padding:5px 12px;border-radius:11px;
+  background:radial-gradient(circle,color-mix(in srgb,var(--lc2) 5%,transparent) .6px,transparent 1px) 0 0/3px 3px,linear-gradient(180deg,#0c0d0e,#060607);box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px rgba(255,255,255,.05),inset 0 3px 10px rgba(0,0,0,.85)}
+.b-led .b-t{font:400 14px/1.15 "Share Tech Mono",var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--lc2);text-shadow:0 0 1px var(--lc2),0 0 8px color-mix(in srgb,var(--lc2) 40%,transparent)}
+.b-led .b-a{font:400 11.5px/1.2 "Share Tech Mono",var(--mono);letter-spacing:.05em;color:color-mix(in srgb,var(--lc2) 55%,#a8a8b0)}
+.b-led .b-m{font:400 9.5px/1.2 "Share Tech Mono",var(--mono);letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb,var(--lc2) 40%,#6a6a72)}
+.band .b-btns{gap:6px}
+.band .pp{background:var(--s-radio)!important;color:var(--i-radio)!important;width:46px;height:46px;border-radius:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px -8px var(--s-radio)}
+.band .b-exp{width:40px;height:40px;border-radius:50%;border:1px solid rgba(237,237,242,.14);background:rgba(10,10,14,.5);color:#EDEDF2}
+.band .ib{color:#EDEDF2}
 </style>
 </head>
 <body>
@@ -1401,7 +1420,7 @@ html.adv-open #player{z-index:35}
 <div class="player" id="player" hidden>
   <div class="band" id="band">
     <div class="art" id="art"></div>
-    <div style="min-width:0">
+    <div class="b-led" style="min-width:0">
       <div class="b-t mq" id="bT"></div>
       <div class="b-a mq" id="bA"></div>
       <div class="b-m mq" id="bM"></div>
@@ -2439,6 +2458,13 @@ addEventListener("resize",()=>{document.querySelectorAll(".lcd i").forEach(lcdFi
 function npbSet(){const el=$("npbT");if(!el)return;const s=current||homePick();if(!s)return;const j=current?(np.cur||{}):{};
   const parts=[trText("Sonando ahora"),s.n,j.song?cleanSong(j.song):(j.program||""),j.artist||""].filter(Boolean),txt=parts.join("  ·  ");
   if(el._t===txt)return;el._t=txt;const one=`<span>${esc(txt)}</span><i>✦</i>`;el.innerHTML=one+one;el.style.setProperty("--d",Math.max(12,txt.length*.32).toFixed(1)+"s")}
+
+// La radio minimizada se esconde al bajar (para no tapar el contenido) y vuelve al subir, en la página y en la búsqueda avanzada
+(function(){let last=0,lastA=0;const R=document.documentElement,set=v=>R.classList.toggle("band-hide",v);
+  const on=(y,prev)=>{if(y<80){set(false);return}if(y>prev+8)set(true);else if(y<prev-8)set(false)};
+  addEventListener("scroll",()=>{const y=scrollY;on(y,last);last=y},{passive:true});
+  $("adv").addEventListener("scroll",e=>{const y=e.target.scrollTop;on(y,lastA);lastA=y},{passive:true});
+  $("band").addEventListener("pointerenter",()=>set(false))})();
 function homeOpen(){if(!current){const s=homePick();if(!s)return;F=s;layout();play(s)}openSheet()}
 $("npcOpen").onclick=homeOpen;$("npcArt").onclick=homeOpen;$("npcMore").onclick=homeOpen;
 $("npcPP").onclick=()=>{if(current)toggle();else{const s=homePick();F=s;layout();play(s)}};
@@ -3219,7 +3245,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22zk";
+const APP_VERSION="2026-11-22zl";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
