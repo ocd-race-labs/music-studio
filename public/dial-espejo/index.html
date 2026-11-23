@@ -1258,6 +1258,20 @@ html.adv-open #player{z-index:35}
 .fy-c.on{border-color:rgba(57,255,20,.55)}
 .fy-c.on b{color:#39FF14;text-shadow:0 0 8px rgba(57,255,20,.55)}
 .fy-c.on .fy-p{color:#07070A;background:#39FF14;border-color:transparent}
+@media (min-width:760px){#npCard{padding-bottom:8px}.afc{margin-top:-8px;padding-top:8px}}
+
+/* Lectura más clara en las pantallas LED: menos trama de puntos, títulos y porcentajes más grandes y con más contraste */
+.afc .npc-af,.npc-rad .npc-top{background:radial-gradient(circle,color-mix(in srgb,var(--lc2) 4%,transparent) .6px,transparent 1px) 0 0/3px 3px,linear-gradient(180deg,#0c0d0e,#060607)}
+.afc .npc-af>.hk,.npc-rad .npc-top>.hk{font-size:11px;letter-spacing:.14em;color:color-mix(in srgb,var(--lc2) 80%,#d8d8de);text-shadow:0 0 6px color-mix(in srgb,var(--lc2) 30%,transparent)}
+.fy-m{font:600 14px/1 "Share Tech Mono",var(--mono);letter-spacing:.04em;color:var(--lc2);text-shadow:0 0 6px color-mix(in srgb,var(--lc2) 40%,transparent)}
+.fy-m::after{content:" match";font-size:9.5px;letter-spacing:.12em;opacity:.65}
+.fy-t{font-size:10px;letter-spacing:.12em}
+.fy-c small{font-size:10.5px;color:color-mix(in srgb,var(--lc2) 55%,#a0a0a8)}
+.fy-c small em{color:color-mix(in srgb,var(--lc2) 80%,#c8c8ce)}
+.fy-d{color:color-mix(in srgb,var(--lc2) 35%,#dcdce2)}
+.npc-rad .fav-all{font-size:10.5px;color:color-mix(in srgb,var(--lc2) 75%,#b8b8c0)}
+.pre-k small{font-size:10px;color:color-mix(in srgb,var(--lc2) 50%,#8a8a93)}
+.pre-n{color:color-mix(in srgb,var(--lc2) 75%,#9a9aa3)}
 </style>
 </head>
 <body>
@@ -3188,7 +3202,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22zi";
+const APP_VERSION="2026-11-22zj";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
