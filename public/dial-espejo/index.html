@@ -1228,6 +1228,15 @@ html.adv-open #player{z-index:35}
 @keyframes bank{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .npc-rad .fav-mg .sq-h{margin:0 2px;font:400 9.5px "Share Tech Mono",var(--mono);letter-spacing:.1em;color:color-mix(in srgb,var(--lc2) 40%,#5c5c64)}
 @media (max-width:480px){.npc-rad .npc-top .sq-r{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.pre-k{padding:6px 7px 7px;min-height:58px}.pre-k b{font-size:11.5px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.2;word-break:break-word}}
+
+/* Quitar una favorita desde su memoria: ✕ en la esquina inferior (al pasar el mouse en computador; siempre tenue en pantallas táctiles) */
+.pre-x{position:absolute;right:5px;bottom:5px;width:20px;height:20px;display:grid;place-items:center;padding:0;border-radius:5px;border:1px solid color-mix(in srgb,var(--lc2) 22%,transparent);background:rgba(0,0,0,.55);color:color-mix(in srgb,var(--lc2) 60%,#8a8a93);font:400 10px/1 var(--mono);cursor:pointer;opacity:0;transition:opacity .15s,color .15s}
+.pre:hover .pre-x,.pre-x:focus-visible{opacity:1}
+.pre-x:hover{color:#FF6B5A;border-color:rgba(255,107,90,.5)}
+@media (hover:none){.pre-x{opacity:.7}}
+/* Teléfono: la barra no debe crecer con el tamaño de letra del sistema, y la señal se oculta para que siempre quepa la hora */
+.npc-rad .npc-ctl{-webkit-text-size-adjust:100%;text-size-adjust:100%;min-width:0;overflow:hidden}
+@media (max-width:480px){.npc-rad .npc-sig{display:none}.npc-rad .npc-clk{margin-left:auto;padding-right:6px}.npc-b{flex:0 1 30px;min-width:24px}}
 </style>
 </head>
 <body>
@@ -2411,10 +2420,10 @@ function rowHTML(list,pin,mini){const tp=topGet();return list.map(x=>{if(mini){c
 
 // Memorias de la radio (como los botones de presintonía de una radio de los 90): P1-P3 son el top 3; el banco despliega el resto de favoritas
 function presetHTML(list,start,bank){return list.map((x,i)=>{const cur=current===x,on=cur&&!audio.paused;
-  return `<div class="pre${cur?" cur":""}${on?" on":""}" style="--cc:${FAM[x.g][2]}"><button class="pre-k" data-n="${esc(x.n)}" data-a="p" aria-label="${esc(x.n)}: ${on?"Detener":"Escuchar"}"><span class="pre-n">P${start+i}</span><i class="pre-l" aria-hidden="true"></i><b>${esc(x.n)}</b><small>${esc(flag(x.cc)+" "+(CN[x.cc]||x.cc))}</small></button>${bank?`<button class="pre-t" data-n="${esc(x.n)}" data-a="t" aria-label="Poner en el top 3">TOP</button>`:""}</div>`}).join("")}
+  return `<div class="pre${cur?" cur":""}${on?" on":""}" style="--cc:${FAM[x.g][2]}"><button class="pre-k" data-n="${esc(x.n)}" data-a="p" aria-label="${esc(x.n)}: ${on?"Detener":"Escuchar"}"><span class="pre-n">P${start+i}</span><i class="pre-l" aria-hidden="true"></i><b>${esc(x.n)}</b><small>${esc(flag(x.cc)+" "+(CN[x.cc]||x.cc))}</small></button>${bank?`<button class="pre-t" data-n="${esc(x.n)}" data-a="t" aria-label="Poner en el top 3">TOP</button>`:""}${favs.has(x.n)?`<button class="pre-x" data-n="${esc(x.n)}" data-a="f" aria-label="Quitar de favoritas">✕</button>`:""}</div>`}).join("")}
 function homeAct(b){const x=S.find(y=>y.n===b.dataset.n);if(!x)return;
   if(b.dataset.a==="t"){let t=topGet();if(t.includes(x.n))t=t.filter(n=>n!==x.n);else{if(!t.length)t=topList().map(y=>y.n).filter(n=>n!==x.n).slice(0,2);t.push(x.n);if(t.length>3)t=t.slice(-3)}store.set("dial-top3",t);cfgTouch();sqRender();return}
-  if(b.dataset.a==="f"){favs.has(x.n)?favs.delete(x.n):favs.add(x.n);saveFavs();if(current===x)$("bFav").textContent=favs.has(x.n)?"★":"☆";renderFilters();sqRender()}
+  if(b.dataset.a==="f"){if(favs.has(x.n)){favs.delete(x.n);const t=topGet();if(t.includes(x.n)){store.set("dial-top3",t.filter(n=>n!==x.n));cfgTouch()}}else favs.add(x.n);saveFavs();if(current===x)$("bFav").textContent=favs.has(x.n)?"★":"☆";renderFilters();sqRender()}
   else{if(current===x)toggle();else{F=x;layout();play(x)}}}
 $("view-radio").addEventListener("click",e=>{const b=e.target.closest("button[data-n]");if(b)homeAct(b)});
 
@@ -3126,7 +3135,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22zg";
+const APP_VERSION="2026-11-22zh";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
