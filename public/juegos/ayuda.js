@@ -7,11 +7,36 @@
   const cards = (...a) => `<span class="ay-cs">${a.map((x) => c(x)).join("")}</span>`;
   const back = (n = 1) => `<span class="ay-cs">${'<span class="ay-c bk"></span>'.repeat(n)}</span>`;
   const ck = (col, n = 1) => `<span class="ay-cs">${`<span class="ay-k ${col}"></span>`.repeat(n)}</span>`;
+  const es = (n, e) => `<span class="ay-c es"><b>${n}</b><i>${e}</i></span>`;
   const big = (e) => `<span class="ay-e">${e}</span>`;
   const chip = (t) => `<span class="ay-chip">${t}</span>`;
   const arrow = `<span class="ay-ar">→</span>`;
 
   const G = {
+    escoba: { name: "Escoba", pages: [
+      { t: "Sumar 15", rows: [
+        [chip("1 … 7") + chip("Sota 8") , "Cada carta vale su número; la sota 8, el caballo 9 y el rey 10."],
+        [es("5", "🍷") + arrow + es("3", "🪙") + es("7", "🪵"), "Juegas una carta y te llevas cartas de la mesa que sumen 15 con ella."],
+        [big("🧹"), "Si te llevas todo lo de la mesa, es <b>escoba</b>: un punto."],
+        [big("🃏"), "Si tu carta no suma 15 con nada, queda en la mesa."]] },
+      { t: "Los puntos", rows: [
+        [big("🧹"), "1 punto por cada escoba."],
+        [back(3), "1 punto a quien tiene más cartas."],
+        [es("4", "🪙") + es("6", "🪙"), "1 punto a quien tiene más oros."],
+        [es("7", "🪙"), "1 punto a quien tiene el siete de oros."],
+        [chip("Gana a 15"), "1 punto más por tener más sietes. Gana quien llega primero a 15 puntos."]] },
+    ] },
+    brisca: { name: "Brisca", pages: [
+      { t: "Ganar la baza", rows: [
+        [es("4", "🗡️") + chip("Triunfo"), "La carta dada vuelta marca el <b>triunfo</b>. Un triunfo le gana a cualquier otra pinta."],
+        [chip("As · 3 · Rey · Caballo · Sota · 7 … 2"), "Así es el orden, de mayor a menor."],
+        [es("12", "🍷") + arrow + es("1", "🍷"), "Sin triunfo, gana la más alta de la pinta que salió primero. No es obligatorio seguir la pinta."]] },
+      { t: "Los puntos", rows: [
+        [chip("As 11") + chip("3 10"), "Rey 4 · Caballo 3 · Sota 2 · el resto 0. En total hay 120 puntos."],
+        [back(1) + arrow + big("✋"), "Quien gana la baza roba primero y sale en la siguiente."],
+        [big("👥"), "Con 4 jugadores se juega en parejas: los compañeros quedan enfrentados."],
+        [big("🏆"), "Gana la mano quien junta más de 60 puntos."]] },
+    ] },
     bingo: { name: "Bingo", pages: [
       { t: "Cómo se juega", rows: [
         [big("🎱"), "El anfitrión saca los números; salen en el tablero de todos."],
@@ -115,6 +140,7 @@
 .ay-c{width:26px;height:36px;border-radius:4px;background:#fff;box-shadow:0 1px 0 #cfd1d4,0 2px 4px rgba(0,0,0,.2);display:inline-grid;align-content:center;justify-items:center;line-height:1;color:#1d1f23}
 .ay-c b{font-size:12px;font-weight:800}.ay-c i{font-style:normal;font-size:13px}
 .ay-c.r{color:#d22f3a}
+.ay-c.es i{font-size:14px}
 .ay-c.loco{box-shadow:inset 0 0 0 2px #b18cff,0 2px 4px rgba(0,0,0,.2)}
 .ay-c.bk{background:repeating-linear-gradient(45deg,#2f6fb5 0 4px,#2a63a3 4px 8px);box-shadow:inset 0 0 0 2px #fff,0 2px 4px rgba(0,0,0,.25)}
 .ay-k{width:20px;height:20px;border-radius:50%;display:inline-block}
