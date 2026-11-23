@@ -101,6 +101,7 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 </style>
 <script src="../perfil.js"></script>
 <script src="../ayuda.js"></script>
+<script src="../maquina.js"></script>
 </head>
 <body>
 <header>
@@ -115,6 +116,7 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 <div id="toast"></div>
 <script type="module">
 import * as L from "./rules.js";
+import * as AI from "./ai.js";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const $ = (s) => document.querySelector(s);
@@ -137,9 +139,10 @@ const client = () => (sb || (window.supabase && (sb = window.supabase.createClie
 /* ---------- state ---------- */
 let mode = null, code = null, game = null, version = -1, lastSig = "", mySeat = -1, S = null, busy = false, rolled = false, autoT = null;
 let localCount = 4;
+let cpu = 0;   // the machine's level (0: none, 9: machine without levels); you are seat 0, the machines the rest
 const codeFromHash = () => { const m = location.hash.match(/(?:^#|&)l=([A-Z0-9]{4,10})/); return m ? m[1] : null; };
-const seatName = (i) => (mode === "local" ? L.COLOR_NAME[S.colors[i]] : (game && game.seat_names[i]) || L.COLOR_NAME[S.colors[i]]);
-const myTurn = () => S && S.phase !== "over" && S.phase !== "lobby" && (mode === "local" || S.turn === mySeat);
+const seatName = (i) => (mode === "local" ? (cpu ? (i === 0 ? me.name || "Tú" : L.COLOR_NAME[S.colors[i]] + " 🤖") : L.COLOR_NAME[S.colors[i]]) : (game && game.seat_names[i]) || L.COLOR_NAME[S.colors[i]]);
+const myTurn = () => S && S.phase !== "over" && S.phase !== "lobby" && (mode === "local" ? !cpu || S.turn === 0 : S.turn === mySeat);
 
 /* ---------- start ---------- */
 function renderStart() {
@@ -153,6 +156,7 @@ function renderStart() {
       <div><label class="lbl">En este teléfono</label>
         <div class="count">${[2, 3, 4].map((n) => `<button class="btn ${n === localCount ? "on" : ""}" data-n="${n}">${n} jugadores</button>`).join("")}</div></div>
       <button class="btn" id="local">Jugar en este teléfono</button>
+      <div id="cpubox">${Maquina.html({ note: "Tú y " + (localCount - 1) + (localCount === 2 ? " máquina" : " máquinas") + ", según el número de jugadores de arriba." })}</div>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: K7MP2Q" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
     </section>
@@ -163,8 +167,10 @@ function renderStart() {
       <li>Con un 6, al comer o al llegar a la meta, vuelves a tirar. Tres 6 seguidos pierden el turno.</li>
       <li>Para entrar a la meta necesitas el número exacto. Gana quien lleva sus 4 fichas primero.</li></ul></section>`;
   $("#online").onclick = () => { if (takeName()) createOnline(); };
-  document.querySelectorAll("[data-n]").forEach((b) => b.onclick = () => { localCount = +b.dataset.n; document.querySelectorAll("[data-n]").forEach((x) => x.classList.toggle("on", x === b)); });
-  $("#local").onclick = () => { takeName(true); startLocal(); };
+  const bindCpu = () => Maquina.bind($("#cpubox"), (lv) => { takeName(true); startLocal(lv === 0 ? 9 : lv); });
+  document.querySelectorAll("[data-n]").forEach((b) => b.onclick = () => { localCount = +b.dataset.n; document.querySelectorAll("[data-n]").forEach((x) => x.classList.toggle("on", x === b)); $("#cpubox").innerHTML = Maquina.html({ note: "Tú y " + (localCount - 1) + (localCount === 2 ? " máquina" : " máquinas") + ", según el número de jugadores de arriba." }); bindCpu(); });
+  $("#local").onclick = () => { takeName(true); startLocal(0); };
+  bindCpu();
   const goCode = () => {
     const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (!/^[A-Z0-9]{4,10}$/.test(c)) return toast("Escribe el código de la mesa (6 letras o números)");
@@ -214,7 +220,7 @@ async function listOpen() {
 }
 
 /* ---------- local ---------- */
-function startLocal() { mode = "local"; game = null; mySeat = -1; S = L.newState(localCount); pill("Mismo teléfono"); render(); }
+function startLocal(lv) { if (lv !== undefined) cpu = lv; mode = "local"; game = null; mySeat = -1; S = L.newState(localCount); render(); }
 
 /* ---------- online ---------- */
 function newCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; for (let i = 0; i < 6; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
@@ -370,7 +376,7 @@ function render() {
   $("#app").querySelectorAll(".tok.can").forEach((el) => el.onclick = () => choose(+el.dataset.k));
   const rt = $("#restart"); if (rt) rt.onclick = () => { if (rt.dataset.sure !== "1") { rt.dataset.sure = "1"; rt.textContent = "¿Seguro? Toca otra vez"; return; } startLocal(); };
   if (mode === "online") Perfil.turn(mine);
-  pill(mode === "local" ? "Mismo teléfono" : "Mesa " + code);
+  pill(mode === "local" ? (cpu ? "🤖 " + (Maquina.NAMES[cpu] || "Máquina") : "Mismo teléfono") : "Mesa " + code);
   // the bar
   const a = $("#actions");
   if (S.phase === "over") {
@@ -383,6 +389,14 @@ function render() {
   if (mine && info) {
     if (info.pass) autoT = setTimeout(() => commit(L.pass(S, S.dice, info.pass)), 1500);
     else if (info.moves.length === 1) autoT = setTimeout(() => commit(L.play(S, info.moves[0], S.dice)), 900);
+  }
+  // the machines play by themselves
+  if (cpu && mode === "local" && S.phase !== "over" && S.turn !== 0) {
+    if (S.phase === "roll") autoT = setTimeout(() => { rolled = true; S = { ...S, phase: "move", dice: 1 + Math.floor(Math.random() * 6) }; render(); }, 850);
+    else {
+      const r = L.afterRoll(S, S.dice);
+      autoT = setTimeout(() => commit(r.pass ? L.pass(S, S.dice, r.pass) : L.play(S, AI.choose(S, S.dice, r.moves, cpu), S.dice)), r.pass ? 1300 : 950);
+    }
   }
 }
 function renderLobby() {
@@ -412,9 +426,9 @@ async function again() {
 }
 function celebrate() {
   if (document.querySelector(".overlay")) return;
-  const won = mode === "local" || S.winner === mySeat;
+  const won = mode === "local" ? !cpu || S.winner === 0 : S.winner === mySeat;
   const el = document.createElement("div"); el.className = "overlay";
-  el.innerHTML = `<div class="in"><div class="big">${won ? "🏆" : "🎲"}</div><h2>${mode === "online" ? (won ? "¡Ganaste!" : "Ganó " + esc(seatName(S.winner))) : "Ganó " + esc(seatName(S.winner))}</h2>
+  el.innerHTML = `<div class="in"><div class="big">${won ? "🏆" : "🎲"}</div><h2>${mode === "online" || cpu ? (won ? "¡Ganaste!" : "Ganó " + esc(seatName(S.winner))) : "Ganó " + esc(seatName(S.winner))}</h2>
     <p class="muted">Llevó sus 4 fichas a la meta.</p><button class="btn primary" id="ok">Ver tablero</button></div>`;
   document.body.appendChild(el);
   el.querySelector("#ok").onclick = () => el.remove();

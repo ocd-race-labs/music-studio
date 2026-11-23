@@ -111,6 +111,7 @@ header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
 <script src="../ayuda.js"></script>
+<script src="../maquina.js"></script>
 </head>
 <body>
 <header>
@@ -125,6 +126,7 @@ header .gear{width:36px;flex:none}
 <div id="toast"></div>
 <script type="module">
 import * as G from "./rules.js";
+import * as AI from "./ai.js";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const $ = (s) => document.querySelector(s);
@@ -150,11 +152,12 @@ let code = null, game = null, version = -1, lastSig = "", myColor = null;
 let S = null;             // the shared state as last seen
 let work = null;          // my turn in progress (moves not sent yet)
 let turnStart = null, rolledDice = null, sel = null, moved = [], busy = false, rolling = false;
+let cpu = 0, cpuT = null, cpuPlan = null;   // the machine's level (0: none); it plays black
 const codeFromHash = () => { const m = location.hash.match(/(?:^#|&)g=([A-Z0-9]{4,10})/); return m ? m[1] : null; };
-const nameOf = (c) => (mode === "local" ? (c === "w" ? "Blancas" : "Negras") : c === "w" ? (game && game.white_name) || "Blancas" : (game && game.black_name) || "Esperando rival…");
+const nameOf = (c) => (mode === "local" ? (cpu ? (c === "w" ? me.name || "Tú" : Maquina.label(cpu)) : c === "w" ? "Blancas" : "Negras") : c === "w" ? (game && game.white_name) || "Blancas" : (game && game.black_name) || "Esperando rival…");
 const view = () => work || S;
 const actor = () => (mode === "local" ? S.turn : myColor);
-const myTurn = () => S && !S.winner && S.turn && (mode === "local" || S.turn === myColor) && (mode === "local" || (game.white_id && game.black_id));
+const myTurn = () => S && !S.winner && S.turn && (mode === "local" ? !cpu || S.turn === "w" : S.turn === myColor) && (mode === "local" || (game.white_id && game.black_id));
 
 /* ---------- start ---------- */
 function renderStart() {
@@ -165,6 +168,7 @@ function renderStart() {
       <div id="open"></div>
       <button class="btn primary" id="online">Crear mesa nueva</button>
       <button class="btn" id="local">Dos jugadores en este teléfono</button>
+      ${Maquina.html({ note: "Tú juegas con blancas." })}
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: K7MP2Q" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
     </section>
@@ -175,7 +179,8 @@ function renderStart() {
       <li>Cuando todas tus fichas están en tu casa, las empiezas a sacar. Gana quien saca las 15 primero.</li>
       <li>Hay que usar todos los dados que se puedan; si solo se puede uno, el mayor.</li></ul></section>`;
   $("#online").onclick = () => { if (takeName()) createOnline(); };
-  $("#local").onclick = () => { takeName(true); startLocal(); };
+  $("#local").onclick = () => { takeName(true); startLocal(0); };
+  Maquina.bind($("#app"), (lv) => { takeName(true); startLocal(lv); });
   const goCode = () => {
     const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (!/^[A-Z0-9]{4,10}$/.test(c)) return toast("Escribe el código de la mesa (6 letras o números)");
@@ -232,9 +237,24 @@ async function listOpen() {
 }
 
 /* ---------- local game ---------- */
-function startLocal() {
-  mode = "local"; myColor = null; game = null; S = G.newState(); work = null; sel = null;
-  pill("Mismo teléfono"); render();
+function startLocal(lv) {
+  if (lv === undefined) lv = cpu;
+  mode = "local"; cpu = lv || 0; clearTimeout(cpuT); cpuT = null; cpuPlan = null;
+  myColor = null; game = null; S = G.newState(); work = null; sel = null;
+  render();
+}
+// the machine's turn: roll, then play its moves one by one so they can be followed
+function cpuStep() {
+  if (mode !== "local" || !cpu || !S || S.winner || cpuT) return;
+  if (S.turn !== "b") return;
+  if (S.phase === "roll") { cpuT = setTimeout(() => { cpuT = null; localRoll(); }, 800); return; }
+  if (!work || work.turn !== "b") return;
+  if (!cpuPlan) cpuPlan = AI.choose(work, "b", cpu);
+  cpuT = setTimeout(() => {
+    cpuT = null;
+    if (mode !== "local" || !work || work.turn !== "b") return;
+    if (cpuPlan.length) doMove(cpuPlan.shift()); else { cpuPlan = null; endTurn(); }
+  }, cpuPlan.length ? 650 : 700);
 }
 const rnd = () => 1 + Math.floor(Math.random() * 6);
 function localRoll() {
@@ -402,14 +422,17 @@ function render() {
   if (S.winner) status = (mode === "online" && S.winner === myColor ? "¡Ganaste!" : "Ganó " + esc(nameOf(S.winner))) + (S.resigned ? " (el otro se rindió)" : S.gammon ? " · ¡gammon!" : "");
   else if (waiting) status = "Esperando a tu rival";
   else if (S.phase === "opening") { status = "Tirada inicial"; sub = "Cada uno tira un dado: el mayor empieza"; }
-  else if (myTurn() && S.phase === "roll") status = mode === "local" ? "Turno de " + nameOf(S.turn) + ": tira los dados" : "Tu turno: tira los dados";
+  else if (myTurn() && S.phase === "roll") status = mode === "local" && !cpu ? "Turno de " + nameOf(S.turn) + ": tira los dados" : "Tu turno: tira los dados";
   else if (myTurn() && work) {
-    status = mode === "local" ? "Juegan " + nameOf(work.turn) : "Tu turno";
-    if (work.opening && moved.length === 0) sub = `Tirada inicial: ${work.opening[0]} contra ${work.opening[1]}; empieza ${mode === "local" || work.turn !== myColor ? nameOf(work.turn) : "tú"}`;
+    status = mode === "local" && !cpu ? "Juegan " + nameOf(work.turn) : "Tu turno";
+    if (work.opening && moved.length === 0) sub = `Tirada inicial: ${work.opening[0]} contra ${work.opening[1]}; empieza ${cpu ? "tú" : mode === "local" || work.turn !== myColor ? nameOf(work.turn) : "tú"}`;
     else if (ms.length) sub = sel !== null ? "Toca dónde llevarla" : "Toca una ficha marcada";
     else if (work.winner) sub = "¡Sacaste todas! Confirma";
     else sub = moved.length ? "Listo; confirma tu jugada" : "No puedes mover con estos dados";
-  } else status = "Turno de " + esc(nameOf(S.turn));
+  } else {
+    status = cpu ? "Juega la máquina…" : "Turno de " + esc(nameOf(S.turn));
+    if (cpu && work && work.opening) sub = `Tirada inicial: ${work.opening[0]} contra ${work.opening[1]}; empieza la máquina`;
+  }
 
   $("#app").innerHTML = `
     ${waiting ? inviteHTML() : ""}
@@ -440,8 +463,9 @@ function render() {
   };
   const rt = $("#restart"); if (rt) rt.onclick = () => { if (rt.dataset.sure !== "1") { rt.dataset.sure = "1"; rt.textContent = "¿Seguro? Toca otra vez"; return; } startLocal(); };
   if (mode === "online") Perfil.turn(myTurn() && (S.phase === "roll" || S.phase === "move" || S.phase === "opening"));
-  pill(mode === "local" ? "Mismo teléfono" : "Mesa " + code);
+  pill(mode === "local" ? (cpu ? "🤖 " + (Maquina.NAMES[cpu] || "Máquina") : "Mismo teléfono") : "Mesa " + code);
   renderActions(ms, waiting);
+  cpuStep();
 }
 function barHTML(v, sources, bottom, top) {
   const act = actor(), can = sources.has("bar");
@@ -492,9 +516,9 @@ function inviteHTML() {
     ${myColor === "w" ? `<button class="btn" id="delt" style="background:none;color:#a3262f;min-height:36px">Borrar esta mesa</button>` : ""}</div>`;
 }
 function celebrate() {
-  const won = mode === "local" || S.winner === myColor;
+  const won = mode === "local" ? !cpu || S.winner === "w" : S.winner === myColor;
   const el = document.createElement("div"); el.className = "overlay";
-  el.innerHTML = `<div class="in"><div class="big">${won ? "🏆" : "🎲"}</div><h2>${mode === "online" ? (won ? "¡Ganaste!" : "Ganó " + esc(nameOf(S.winner))) : "Ganaron las " + (S.winner === "w" ? "blancas" : "negras")}</h2>
+  el.innerHTML = `<div class="in"><div class="big">${won ? "🏆" : "🎲"}</div><h2>${mode === "online" || cpu ? (won ? "¡Ganaste!" : "Ganó " + esc(nameOf(S.winner))) : "Ganaron las " + (S.winner === "w" ? "blancas" : "negras")}</h2>
     <p class="muted">${S.resigned ? "El otro jugador se rindió." : S.gammon ? "¡Gammon! El rival no alcanzó a sacar ninguna ficha." : "Sacó sus 15 fichas primero."}</p><button class="btn primary" id="ok">Ver tablero</button></div>`;
   document.body.appendChild(el);
   el.querySelector("#ok").onclick = () => el.remove();

@@ -9,6 +9,8 @@
 <link rel="apple-touch-icon" href="../icon-180.png">
 <script src="../supabase.js"></script>
 <script src="rules.js"></script>
+<script src="ai.js"></script>
+<script src="../maquina.js"></script>
 <style>
 @font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(../fonts/sora-latin-600-normal.woff2) format("woff2")}
 @font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(../fonts/sora-latin-700-normal.woff2) format("woff2")}
@@ -140,6 +142,7 @@ let code = null, game = null, version = -1, myColor = null, sb = null;
 let state = null;         // { board, turn, last, winner, moves, resigned? }
 let sel = null, steps = []; // selected piece and capture steps chosen so far
 let busy = false, flip = false;
+let cpu = 0, cpuT = null;     // level of the machine (0: no machine); the machine plays black
 
 let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2300); }
@@ -155,6 +158,7 @@ function renderStart() {
       <div id="open"></div>
       <button class="btn primary" id="online">Crear mesa nueva</button>
       <button class="btn" id="local">Dos jugadores en este teléfono</button>
+      ${Maquina.html({ note: "Tú juegas con blancas y empiezas." })}
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: K7MP2Q" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
     </section>
@@ -165,6 +169,7 @@ function renderStart() {
       <li>Gana quien deja al otro sin piezas o sin movimientos.</li></ul></section>`;
   $("#online").onclick = async () => { if (!takeName()) return; await createOnline(); };
   $("#local").onclick = () => { if (!takeName(true)) return; startLocal(); };
+  Maquina.bind($("#app"), (lv) => { takeName(true); startLocal(lv); });
   const goCode = () => {
     const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (!/^[A-Z0-9]{4,10}$/.test(c)) return toast("Escribe el código de la mesa (6 letras o números)");
@@ -226,10 +231,11 @@ function takeName(optional) {
 }
 
 /* ---------- local game ---------- */
-function startLocal() {
-  mode = "local"; state = D.newState(); myColor = null; flip = false; sel = null; steps = [];
-  game = { white_name: "Blancas", black_name: "Negras" };
-  pill("Mismo teléfono");
+function startLocal(lv) {
+  if (lv === undefined) lv = cpu;
+  mode = "local"; cpu = lv || 0; clearTimeout(cpuT); state = D.newState(); myColor = null; flip = false; sel = null; steps = [];
+  game = cpu ? { white_name: me.name || "Tú", black_name: Maquina.label(cpu) } : { white_name: "Blancas", black_name: "Negras" };
+  pill(cpu ? "🤖 " + Maquina.NAMES[cpu] : "Mismo teléfono");
   renderGame();
 }
 
@@ -294,7 +300,7 @@ function subscribe() {
 /* ---------- moves ---------- */
 function myTurn() {
   if (!state || state.winner) return false;
-  if (mode === "local") return true;
+  if (mode === "local") return !cpu || state.turn === "w";
   return myColor === state.turn && !!game.white_id && !!game.black_id;
 }
 function legal() { return state && !state.winner ? D.legalMoves(state.board, state.turn) : []; }
@@ -305,6 +311,7 @@ async function commit(mv) {
     state = next; sel = null; steps = [];
     flip = false; renderGame();
     if (state.winner) celebrate();
+    else if (cpu && state.turn === "b") cpuT = setTimeout(() => { if (mode === "local" && cpu && !state.winner && state.turn === "b") commit(DamasAI.choose(state, cpu)); }, 650);
     return;
   }
   busy = true;
@@ -352,6 +359,7 @@ function renderGame() {
   if (state.winner) status = "¡Ganó " + esc(nameOf(state.winner)) + "!" + (state.resigned ? " (el otro se rindió)" : "");
   else if (mode === "online" && !game.black_id) status = "Esperando que entre tu rival";
   else if (mode === "online" && !myColor) status = "Estás mirando la partida";
+  else if (cpu) status = myTurn() ? "Tu turno" : "La máquina está pensando…";
   else status = mode === "local" ? "Juegan " + (state.turn === "w" ? "blancas" : "negras") : myTurn() ? "Tu turno" : "Turno de " + esc(nameOf(state.turn));
   const inv = mode === "online" && !game.black_id ? `<div class="invite"><b>Invita a tu rival</b>
       <div class="two"><button class="btn primary" id="copy">🔗 Copiar link</button><a class="btn wa" id="wa" target="_blank" rel="noopener" href="${waLink()}">WhatsApp</a></div>
@@ -399,7 +407,7 @@ function renderBoard() {
 }
 function celebrate() {
   const w = state.winner;
-  const mine = mode === "online" && myColor === w;
+  const mine = (mode === "online" && myColor === w) || (cpu && w === "w");
   $("#overlay").innerHTML = `<div class="overlay" id="ov"><div class="box"><div class="big">${mine ? "¡Ganaste!" : "¡Ganó " + esc(nameOf(w)) + "!"}</div>
     <p>${state.resigned ? "Su rival se rindió." : "Se quedó sin piezas o sin jugadas el rival."}</p><button class="btn primary" id="ovok">Seguir</button></div></div>`;
   $("#ovok").onclick = () => ($("#overlay").innerHTML = "");
@@ -412,9 +420,9 @@ async function again() {
 }
 async function resign(btn) {
   if (!btn.dataset.sure) { btn.dataset.sure = 1; btn.textContent = "¿Seguro? Toca otra vez"; btn.classList.add("red"); return; }
-  const loser = mode === "local" ? state.turn : myColor;
+  const loser = cpu ? "w" : mode === "local" ? state.turn : myColor;
   const next = Object.assign({}, state, { winner: loser === "w" ? "b" : "w", resigned: loser });
-  if (mode === "local") { state = next; renderGame(); return celebrate(); }
+  if (mode === "local") { clearTimeout(cpuT); state = next; renderGame(); return celebrate(); }
   const { error } = await sb.rpc("damas_move", { p_id: code, p_player: me.pid, p_key: me.pkey, p_state: next, p_version: version });
   if (error) return toast("No se pudo");
   refresh(true);
