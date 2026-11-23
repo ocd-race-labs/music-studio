@@ -8,11 +8,36 @@
   const back = (n = 1) => `<span class="ay-cs">${'<span class="ay-c bk"></span>'.repeat(n)}</span>`;
   const ck = (col, n = 1) => `<span class="ay-cs">${`<span class="ay-k ${col}"></span>`.repeat(n)}</span>`;
   const es = (n, e) => `<span class="ay-c es"><b>${n}</b><i>${e}</i></span>`;
+  const backThen = () => `<span class="ay-cs">${c("9♣")}<span class="ay-c bk"></span></span>`;
   const big = (e) => `<span class="ay-e">${e}</span>`;
   const chip = (t) => `<span class="ay-chip">${t}</span>`;
   const arrow = `<span class="ay-ar">→</span>`;
 
   const G = {
+    poker: { name: "Poker", pages: [
+      { t: "Cómo va una mano", rows: [
+        [cards("A♠", "K♥"), "Recibes 2 cartas que solo tú ves."],
+        [cards("Q♦", "J♣", "10♠") + chip("+1 +1"), "En la mesa salen 5 comunes: el flop (3), el turn (1) y el river (1)."],
+        [chip("Pasar · Pagar · Subir"), "Antes de cada carta se apuesta. Si no quieres seguir, te retiras."],
+        [big("🏆"), "Gana el pozo la mejor jugada de 5 cartas, o quien queda solo porque los demás se retiraron."]] },
+      { t: "Las jugadas, de mayor a menor", rows: [
+        [cards("10♥", "J♥", "Q♥", "K♥", "A♥"), "Escalera de color · Póker (4 iguales) · Full (trío + par)"],
+        [cards("2♣", "7♣", "9♣", "J♣", "K♣"), "Color (5 de la misma pinta) · Escalera (5 seguidas)"],
+        [cards("8♠", "8♥", "8♦"), "Trío · Doble par · Par · Carta alta"],
+        [chip("🪙 1.000"), "Todos parten con 1.000 fichas; ciegas 10 y 20. Gana quien se queda con todas."]] },
+    ] },
+    blackjack: { name: "Blackjack", pages: [
+      { t: "Llegar a 21", rows: [
+        [chip("🪙 5 · 10 · 25 · 50"), "Arma tu apuesta con las fichas y aprieta «Apostar»."],
+        [cards("A♠", "K♥"), "Gana quien se acerca más a 21 sin pasarse. As vale 1 u 11; J, Q y K valen 10."],
+        [big("➕"), "«Pedir carta» para sumar; «Plantarse» para quedarte con lo que tienes."],
+        [chip("Doblar"), "Con tus 2 primeras cartas puedes duplicar la apuesta y recibir una sola carta más."]] },
+      { t: "La banca y los pagos", rows: [
+        [backThen(), "La banca muestra una carta. Al final pide hasta tener 17 o más."],
+        [chip("1 a 1"), "Si le ganas a la banca, ganas lo que apostaste."],
+        [cards("A♦", "Q♠") + chip("3 a 2"), "Blackjack (As + 10 de entrada) paga 3 a 2."],
+        [big("🪙"), "Todos parten con 100 fichas; si te quedas sin, recibes 100 más."]] },
+    ] },
     ludo: { name: "Ludo", pages: [
       { t: "Salir y avanzar", rows: [
         [chip("🎲 6") + arrow + big("🏁"), "Con un 6 sacas una ficha de tu casa a la salida."],

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poker · Juegos en casa</title>
+<meta name="apple-mobile-web-app-title" content="Juegos">
+<meta name="theme-color" content="#1f5a3e">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<script src="../supabase.js"></script>
+<style>
+@font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(../fonts/sora-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(../fonts/sora-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url(../fonts/sora-latin-800-normal.woff2) format("woff2")}
+:root{--felt:#1f5a3e;--felt2:#174a33;--ink:#1d1f23;--red:#d22f3a;--paper:#fbfbfa;--gold:#ffcf3f}
+*{box-sizing:border-box;margin:0;padding:0}
+html{min-height:100%;background:var(--felt2)}
+body{min-height:100vh;font-family:Sora,system-ui,sans-serif;color:var(--ink);padding-bottom:190px;
+  background:radial-gradient(ellipse at 50% 20%,#2a7350,var(--felt) 45%,var(--felt2));background-attachment:fixed}
+header{display:flex;align-items:center;gap:8px;padding:12px 12px 8px;max-width:760px;margin:0 auto;position:sticky;top:0;z-index:10;
+  background:rgba(23,74,51,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-radius:0 0 16px 16px}
+.back{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.9);color:var(--ink);text-decoration:none;font-size:22px;font-weight:800}
+.logo{font-weight:800;font-size:20px;letter-spacing:.5px;color:var(--ink);background:var(--gold);padding:5px 12px;border-radius:10px}
+.sp{flex:1}
+.pill{font-size:12px;font-weight:700;background:rgba(255,255,255,.9);border-radius:999px;padding:6px 10px;white-space:nowrap}
+main{max-width:760px;margin:0 auto;padding:8px 10px;display:grid;gap:10px}
+.panel{background:var(--paper);border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,.25);padding:16px}
+.panel h2{font-size:18px;font-weight:800;margin-bottom:10px}
+.muted{color:#6c6f75;font-size:14px}
+.btn{border:none;border-radius:14px;padding:12px 16px;font:inherit;font-weight:800;font-size:15px;background:#eeefef;color:var(--ink);cursor:pointer;min-height:46px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.gold{background:var(--gold);color:#2a1d00}
+.btn.red{background:var(--red);color:#fff}
+.btn.wa{background:#25d366;color:#08331a}
+.btn:disabled{opacity:.35}
+.stack{display:grid;gap:10px}
+.two{display:grid;grid-template-columns:1fr auto;gap:8px}
+input[type=text]{font:inherit;font-size:17px;padding:12px 14px;border-radius:12px;border:1.5px solid #d5d6d8;background:#fff;width:100%}
+label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6c6f75;margin:4px 0 6px}
+
+/* cards */
+.card{--w:46px;width:var(--w);height:calc(var(--w)*1.42);border-radius:calc(var(--w)*.12);background:#fff;position:relative;flex:none;
+  box-shadow:0 1px 0 #cfd1d4,0 2px 5px rgba(0,0,0,.25);color:#1d1f23;font-weight:800;user-select:none;-webkit-tap-highlight-color:transparent}
+.card.red{color:var(--red)}
+.card .r{position:absolute;top:4%;left:9%;font-size:calc(var(--w)*.36);line-height:1;letter-spacing:-1px}
+.card .s1{position:absolute;top:31%;left:9%;font-size:calc(var(--w)*.26);line-height:1}
+.card .s2{position:absolute;bottom:6%;right:9%;font-size:calc(var(--w)*.56);line-height:1}
+.card.jk{background:linear-gradient(150deg,#fff 40%,#fff2c2)}
+.card.jk .r{color:#7b5cd6;font-size:calc(var(--w)*.28)}
+.card.jk .s2{font-size:calc(var(--w)*.6)}
+.card.back{background:repeating-linear-gradient(45deg,#2f6fb5 0 5px,#2a63a3 5px 10px);box-shadow:inset 0 0 0 3px #fff,0 2px 5px rgba(0,0,0,.3)}
+.card.sm{--w:34px}
+.card.lg{--w:58px}
+.hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.hand .card{--w:clamp(42px,12.5vw,58px);cursor:pointer;transition:transform .12s}
+.hand .card.sel{transform:translateY(-10px);box-shadow:0 0 0 3px var(--gold),0 8px 14px rgba(0,0,0,.35)}
+.hand .card.new{animation:pop .4s ease-out}
+@keyframes pop{from{transform:translateY(-24px);opacity:0}to{transform:none;opacity:1}}
+
+/* table */
+.contract{display:flex;align-items:center;gap:10px;color:#fff}
+.contract b{font-size:17px}
+.contract .rd{font-size:12px;font-weight:800;background:rgba(255,255,255,.15);padding:4px 9px;border-radius:999px}
+.opps{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.opp{flex:none;background:rgba(255,255,255,.92);border-radius:14px;padding:7px 10px;display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700}
+.opp.turn{box-shadow:0 0 0 3px var(--gold)}
+.opp .n{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opp .cnt{display:flex;align-items:center;gap:3px;color:#4a4d53}
+.opp .mini{width:12px;height:17px;border-radius:3px;background:repeating-linear-gradient(45deg,#2f6fb5 0 3px,#2a63a3 3px 6px)}
+.opp .dn{color:#1f7a2a}
+.felt{background:rgba(0,0,0,.14);border-radius:18px;padding:8px;display:grid;gap:8px;min-height:60px}
+.felt .empty{width:100%;color:rgba(255,255,255,.6);font-size:13px;text-align:center;padding:10px}
+.who-down{padding:0}
+.who-down + .who-down{border-top:1px solid rgba(255,255,255,.15);padding-top:8px}
+.wd-name{color:#fff;font-size:12px;font-weight:800;margin:0 2px 4px}
+.wd-groups{display:flex;flex-wrap:wrap;gap:6px}
+.grp{display:flex;flex-direction:column;gap:2px;background:rgba(0,0,0,.18);border-radius:10px;padding:4px 5px 5px}
+.grp .gt{color:#ffe28a;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding-left:2px}
+.card.tb{--w:32px;height:calc(var(--w)*1.18)}
+.card.tb .r{font-size:calc(var(--w)*.33);letter-spacing:-1.5px}
+.card.tb .s1{top:36%}
+.card.tb .s2{font-size:calc(var(--w)*.42);bottom:4%}
+.grp .cards{display:flex}
+.grp .cards .card{margin-right:calc(var(--vis,22px) - var(--w))}
+.grp .cards .card:last-child{margin-right:0}
+.grp .cards{border-radius:8px}
+.grp.target{background:rgba(255,207,63,.3);box-shadow:0 0 0 2px var(--gold);cursor:pointer}
+.piles{display:flex;justify-content:center;gap:22px;align-items:flex-end}
+.pile{display:flex;flex-direction:column;align-items:center;gap:4px;color:#fff;font-size:12px;font-weight:700;background:none;border:none;font-family:inherit;cursor:pointer}
+.pile.on .card{box-shadow:0 0 0 3px var(--gold),0 6px 14px rgba(0,0,0,.4)}
+.pile .ph{width:58px;height:82px;border-radius:7px;border:2px dashed rgba(255,255,255,.35)}
+.status{color:#fff;text-align:center;font-weight:800;font-size:15px;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.status small{display:block;font-weight:600;opacity:.8;font-size:12px;margin-top:2px}
+.mine{background:rgba(255,255,255,.1);border-radius:18px;padding:10px;display:grid;gap:10px}
+.tools{display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:13px;font-weight:700}
+.tools button{border:none;background:rgba(255,255,255,.18);color:#fff;font:inherit;font-weight:700;border-radius:999px;padding:6px 12px}
+.pend{display:grid;gap:6px;background:rgba(255,207,63,.16);border:1.5px dashed rgba(255,207,63,.7);border-radius:14px;padding:8px}
+.pend .ph{color:#fff;font-size:12px;font-weight:800}
+.pend .row{display:flex;align-items:center;gap:8px}
+.pend .row .cards{display:flex}
+.pend .row .cards .card{margin-right:-12px}
+.pend .x{border:none;background:rgba(255,255,255,.85);border-radius:999px;width:26px;height:26px;font-weight:800}
+.bar:empty{display:none}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:12;padding:10px 12px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,rgba(10,30,20,.65) 30%);display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.bar .btn{flex:1;max-width:220px;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.score{width:100%;border-collapse:collapse;font-size:13px}
+.score th,.score td{padding:6px 4px;text-align:center;border-bottom:1px solid #eee}
+.score th:first-child,.score td:first-child{text-align:left}
+.score tr.best td{font-weight:800;color:#1f7a2a}
+.log{color:rgba(255,255,255,.75);font-size:12px;text-align:center}
+.plist{display:grid;gap:6px}
+.plist div{background:#f1f1f0;border-radius:10px;padding:9px 12px;font-weight:700;display:flex;justify-content:space-between}
+.help{font-size:13px;color:#4a4d53;line-height:1.5}
+.help li{margin-left:18px}
+.tables{display:grid;gap:8px}
+.btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
+.btn.tbl small{font-weight:700;color:#6c6f75;font-size:12px}
+.btn.back2{justify-content:space-between;background:#d9f2e1;text-align:left}
+.mrow{display:grid;grid-template-columns:1fr auto;gap:6px}
+.mrow .del{border:none;border-radius:14px;width:46px;background:#eeefef;font:inherit;font-weight:800;font-size:16px;color:#6c6f75}
+.btn.back2 small{font-weight:700;color:#2d6a43;font-size:12px}
+.code{display:grid;grid-template-columns:1fr auto;gap:8px}
+.code input{text-transform:uppercase;letter-spacing:2px;font-weight:800}
+.or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
+:root{--felt:#1d5a46;--felt2:#123f31}
+.seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:6px}
+.seat{background:rgba(255,255,255,.92);border-radius:12px;padding:6px 8px;font-size:12px;display:grid;gap:2px}
+.seat.turn{box-shadow:0 0 0 3px var(--gold)}
+.seat.gone{opacity:.5}
+.seat.won{box-shadow:0 0 0 3px #7dffa0}
+.seat .nm{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seat .ch b{color:#1f7a2a}
+.seat .st{color:#6c6f75;font-weight:700;display:flex;align-items:center;gap:2px;min-height:18px}
+.seat .st .card{position:relative}
+.tg{background:#1d1f23;color:#fff;border-radius:999px;font-size:9px;padding:1px 5px;font-weight:800}
+.tg.d{background:var(--gold);color:#2a1d00}
+.felt.pk .pot{color:#fff;font-weight:700;font-size:14px}
+.felt.pk .pot b{color:var(--gold);font-size:18px}
+.board{display:flex;gap:5px}
+.board .card{position:relative}
+.board .slot{width:clamp(40px,11.5vw,52px);height:calc(clamp(40px,11.5vw,52px)*1.42);border-radius:6px;border:2px dashed rgba(255,255,255,.25)}
+.mine{display:grid;justify-items:center;gap:6px;background:rgba(255,255,255,.08);border-radius:18px;padding:10px}
+.mycards{display:flex;gap:8px}.mycards .card{position:relative}
+.hn{color:#fff;font-size:14px}.hn b{color:var(--gold)}
+.raise{background:var(--paper);border-radius:16px;padding:12px;display:grid;gap:8px}
+.raise .rt{font-weight:700}.raise .rt b{font-size:20px}
+.raise input{width:100%}
+.ro{display:flex;gap:6px;flex-wrap:wrap}
+.ro button{border:none;border-radius:999px;background:#eeefef;padding:8px 12px;font:inherit;font-weight:700;font-size:13px}
+.btn.red{background:#c0392b;color:#fff}
+.card.xs{--w:24px}.card.sm{--w:32px}.card.md{--w:clamp(40px,11.5vw,52px)}.card.lg{--w:clamp(58px,17vw,74px)}
+.card.xs .s1,.card.xs .s2{display:none}.card.xs .r{font-size:11px}
+.card.new{animation:pop .35s ease-out}
+.felt{background:rgba(0,0,0,.18);border-radius:18px;padding:12px;display:grid;gap:8px;justify-items:center}
+.empty{color:rgba(255,255,255,.6);font-size:13px}
+#toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+header .gear{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.9);color:#1d1f23;border:none;font:inherit;font-size:17px;font-weight:800}
+header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
+header .gear{width:36px;flex:none}
+</style>
+<script src="../perfil.js"></script>
+<script src="../ayuda.js"></script>
+</head>
+<body>
+<header>
+  <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
+  <span class="logo" style="background:#1d1f23;color:#fff;white-space:nowrap;font-size:17px">POKER</span><span class="sp"></span>
+  <span class="pill" id="pill"></span>
+  <button class="gear" aria-label="Cómo jugar" onclick="Ayuda.open('poker')" style="font-size:19px">?</button>
+  <button class="gear" id="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
+</header>
+<main id="app"></main>
+<div id="bar" class="bar"></div>
+<div id="toast"></div>
+<script type="module">
+import * as O from "./engine.js";
+const GAME = "poker";
+const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
+const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
+const FN = SB_URL + "/functions/v1/casino";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); }));
+function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+const me = Object.assign({ name: "", pid: null, pkey: null }, load("juegos-yo") || {});
+if (!me.name) { const b = load("bingo-casa-v1"); if (b && b.name) me.name = b.name; }
+if (!me.pid) { me.pid = uid(); me.pkey = uid() + uid(); }
+store("juegos-yo", me);
+(() => { const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/); if (m) $("#back").href = "../#" + m[0]; })();
+
+let toastT;
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2400); }
+const pill = (t) => ($("#pill").textContent = t);
+let sb = null;
+
+/* ---------- server ---------- */
+async function call(action, extra = {}) {
+  try {
+    const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY },
+      body: JSON.stringify(Object.assign({ action, code, player: me.pid, key: me.pkey, name: me.name }, extra)) });
+    const j = await r.json();
+    if (j.error) { toast(j.error); return null; }
+    return j;
+  } catch (e) { toast("Sin conexión"); return null; }
+}
+
+/* ---------- state ---------- */
+let code = null, V = null, lastVersion = -1;
+let busy = false;
+const codeFromHash = () => { const m = location.hash.match(/(?:^#|&)m=([A-Z0-9]{4,10})/); return m ? m[1] : null; };
+const keepHost = () => { const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/); return m ? "&" + m[0] : ""; };
+
+/* ---------- cards ---------- */
+const SUIT = { S: "♠", H: "♥", D: "♦", C: "♣" };
+function cardHTML(id, cls = "", attrs = "") {
+  const [r, x] = String(id).split("-");
+  return `<div class="card ${x === "H" || x === "D" ? "red" : ""} ${cls}" ${attrs}><span class="r">${r}</span><span class="s1">${SUIT[x]}</span><span class="s2">${SUIT[x]}</span></div>`;
+}
+const backHTML = (cls = "") => `<div class="card back ${cls}"></div>`;
+
+/* ---------- start / lobby ---------- */
+function renderStart() {
+  pill("Cartas");
+  $("#bar").innerHTML = "";
+  $("#app").innerHTML = `<section class="panel stack">
+      <h2>Poker</h2>
+      <p class="muted">Texas Hold'em de 2 a 8 jugadores, cada uno en su teléfono. Todos parten con 1.000 fichas; ciegas 10/20.</p>
+      <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
+      <div id="mine"></div>
+      <div id="open"></div>
+      <button class="btn primary" id="create">Crear mesa nueva</button>
+      <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
+        <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: 3WFVTE" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
+    </section>
+    <section class="panel help"><b>Cómo se juega</b><ul>
+      <li>Cada uno recibe 2 cartas propias; en la mesa salen 5 comunes (flop 3, turn 1, river 1).</li>
+      <li>En cada vuelta apuestas: pasar, pagar, subir o retirarte. Quien gana se lleva el pozo.</li>
+      <li>Al final gana la mejor jugada de 5 cartas: escalera de color, póker, full, color, escalera, trío, doble par, par, carta alta.</li>
+      <li>Si alguien va con todo, se arman pozos aparte. Gana la partida quien se queda con todas las fichas.</li></ul></section>`;
+  $("#create").onclick = async () => {
+    if (!takeName()) return;
+    const v = await call("create", { game: GAME }); if (!v) return;
+    remember(v.code);
+    code = v.code; location.hash = "m=" + code + keepHost(); show(v); watch();
+  };
+  const goCode = () => {
+    const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!/^[A-Z0-9]{4,10}$/.test(c)) return toast("Escribe el código de la mesa (6 letras o números)");
+    if (!takeName()) return;
+    location.hash = "m=" + c + keepHost();
+  };
+  $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  listMine();
+  listOpen();
+}
+const hide = (id) => store("juegos-ocultas", [id].concat(load("juegos-ocultas") || []).slice(0, 40));
+async function delTable(id) {
+  if (!client()) return false;
+  const { data, error } = await sb.rpc("naipe_delete", { p_id: id, p_player: me.pid, p_key: me.pkey });
+  return !error && data === true;
+}
+/* the tables you are already in come first, so leaving and coming back is one tap */
+async function listMine() {
+  const box = $("#mine");
+  if (!box || !client()) return;
+  const since = new Date(Date.now() - 12 * 3600 * 1000).toISOString();
+  const { data } = await sb.from("naipe_pulse").select("id,host_name,phase,players,updated_at").eq("game", GAME).contains("player_ids", [me.pid]).in("phase", ["lobby", "playing"]).gt("updated_at", since).order("updated_at", { ascending: false }).limit(5);
+  if (!$("#mine")) return;
+  const hidden = load("juegos-ocultas") || [];
+  const rows = (data || []).filter((r) => !hidden.includes(r.id));
+  mineOpen = new Set(rows.map((r) => r.id));
+  box.innerHTML = rows.length ? `<label class="lbl">Tus partidas</label><div class="tables">${rows.map((r) => `
+      <div class="mrow"><button class="btn back2" data-back="${esc(r.id)}"><span>${r.phase === "lobby" ? "Volver a tu mesa" : "Volver a la partida"}${r.host_name && r.host_name !== me.name ? " de " + esc(r.host_name) : ""} · ${esc(r.id)}</span>
+      <small>${r.phase === "lobby" ? "esperando" : "en juego"} · ${r.players} jug.</small></button><button class="del" data-del="${esc(r.id)}" data-ph="${r.phase}" aria-label="${r.phase === "lobby" ? "Borrar esta mesa" : "Quitar de tu lista"}">✕</button></div>`).join("")}</div>` : "";
+  box.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    const id = b.dataset.del;
+    if (b.dataset.ph === "lobby" && (await delTable(id))) toast("Mesa borrada");
+    else { hide(id); toast("La quitamos de tu lista"); }
+    listMine();
+  });
+  box.querySelectorAll("[data-back]").forEach((b) => b.onclick = () => { location.hash = "m=" + b.dataset.back + keepHost(); });
+  listOpen();
+}
+let mineOpen = new Set();
+const client = () => (sb || (window.supabase && (sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } }))));
+/* tables waiting for players: join one, or create a new one */
+const mine0 = () => load("poker-mias") || [];
+function remember(c) { store("poker-mias", [c].concat(mine0().filter((x) => x !== c)).slice(0, 10)); }
+let openT = null;
+async function listOpen() {
+  clearTimeout(openT);
+  const box = $("#open"); if (!box) return;
+  if (!sb && window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+  if (!sb) return;
+  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { data } = await sb.from("naipe_pulse").select("id,host_name,players,updated_at").eq("game", GAME).in("phase", GAME === "blackjack" ? ["lobby", "playing"] : ["lobby"]).gt("updated_at", since).order("updated_at", { ascending: false }).limit(15);
+  if (!$("#open")) return;
+  const rows = (data || []).filter((r) => r.players < O.MAX_PLAYERS && !mineOpen.has(r.id));
+  const mine = mine0();
+  box.innerHTML = rows.length ? `<label class="lbl">Mesas esperando jugadores</label><div class="tables">${rows.map((r) => `
+      <button class="btn tbl" data-join="${esc(r.id)}"><span>${mine.includes(r.id) ? "Volver a tu mesa" : "Unirse a la mesa de " + esc(r.host_name || "alguien")}</span>
+      <small>${r.players} ${r.players === 1 ? "persona" : "personas"}</small></button>`).join("")}</div>
+      <div class="or">o</div>` : "";
+  box.querySelectorAll("[data-join]").forEach((b) => b.onclick = async () => {
+    if (!takeName()) return;
+    code = b.dataset.join;
+    const v = await call("join"); if (!v) { code = null; return listOpen(); }
+    location.hash = "m=" + code + keepHost(); show(v); watch();
+  });
+  openT = setTimeout(listOpen, 4000);
+}
+function takeName() {
+  const v = ($("#nm").value || "").trim().slice(0, 24);
+  if (!v) { $("#nm").focus(); toast("Escribe tu nombre"); return false; }
+  me.name = v; store("juegos-yo", me); return true;
+}
+async function openTable(c) {
+  code = c;
+  const v = await call("view");
+  if (!v) { $("#app").innerHTML = `<section class="panel stack"><h2>No encontré esa mesa</h2><a class="btn primary" href="./">Crear una nueva</a></section>`; return; }
+  if (v.outsider) return renderJoin(v);
+  show(v); watch();
+}
+function renderJoin(v) {
+  pill("Te invitaron");
+  $("#bar").innerHTML = "";
+  if (v.phase !== "lobby") { $("#app").innerHTML = `<section class="panel stack"><h2>Esta mesa ya empezó</h2><p class="muted">Pide que te inviten a la próxima.</p><a class="btn primary" href="./">Crear una mesa</a></section>`; return; }
+  $("#app").innerHTML = `<section class="panel stack"><h2>Te invitaron a jugar poker</h2>
+    <p class="muted">En la mesa: ${v.players.map(esc).join(", ")}</p>
+    <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Rodrigo" value="${esc(me.name)}"></div>
+    <button class="btn primary" id="go">Sentarme a la mesa</button></section>`;
+  $("#go").onclick = async () => { if (!takeName()) return; const j = await call("join"); if (j) { show(j); watch(); } };
+}
+
+/* ---------- live updates: a tiny public version number says when to ask for a fresh view ---------- */
+let watching = false;
+function watch() {
+  if (watching) return; watching = true;
+  if (window.supabase) {
+    if (!sb) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+    sb.channel("poker-" + code).on("postgres_changes", { event: "*", schema: "public", table: "naipe_pulse", filter: "id=eq." + code }, () => poll()).subscribe();
+  }
+  setInterval(() => { if (!document.hidden) poll(); }, 1500);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+}
+async function poll() {
+  if (busy || !sb) return;
+  const { data } = await sb.from("naipe_pulse").select("version").eq("id", code).maybeSingle();
+  if (data && data.version !== lastVersion) { const v = await call("view"); if (v && !v.outsider) show(v); }
+}
+
+/* ---------- render ---------- */
+function show(v) {
+  if (code && (!V || V.code !== v.code)) remember(code);
+  const was = V;
+  V = v; lastVersion = v.version;
+  if (V.phase === "lobby") return renderLobby();
+  renderTable(was);
+}
+function renderLobby() {
+  const isHost = V.players[V.me].host;
+  pill("Mesa " + code);
+  $("#app").innerHTML = `<section class="panel stack"><h2>Mesa ${code}</h2>
+      <div class="plist">${V.players.map((p, i) => `<div><span>${esc(p.name)}${i === V.me ? " (tú)" : ""}</span><span class="muted">${p.host ? "creó la mesa" : ""}</span></div>`).join("")}</div>
+      <p class="muted">${V.players.length < 2 ? "Invita al menos a una persona." : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(V.players.find((p) => p.host).name) + " empiece."}</p>
+      <div class="two"><button class="btn primary" id="copy">🔗 Copiar link</button><a class="btn wa" target="_blank" rel="noopener" href="${waLink()}">WhatsApp</a></div>
+      ${isHost ? `<button class="btn" id="del" style="background:none;color:#a3262f;min-height:36px">Borrar esta mesa</button>` : ""}
+    </section>`;
+  const dl = $("#del");
+  if (dl) dl.onclick = async () => {
+    if (dl.dataset.sure !== "1") { dl.dataset.sure = "1"; dl.textContent = "¿Seguro? Toca otra vez para borrarla"; return; }
+    if (await delTable(code)) { location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); } else toast("No se pudo borrar");
+  };
+  $("#copy").onclick = copyLink;
+  $("#bar").innerHTML = isHost ? `<button class="btn gold" id="start" ${V.players.length < 2 ? "disabled" : ""}>Empezar partida (${V.players.length})</button>` : "";
+  const s = $("#start"); if (s) s.onclick = () => act("start");
+}
+let raiseTo = 0, raising = false;
+function renderTable(was) {
+  const me = V.players[V.me], playing = V.phase === "playing", hand = V.stage === "hand", myTurn = playing && hand && V.turn === V.me;
+  if (window.Perfil) Perfil.turn(myTurn);
+  pill("Mesa " + code);
+  if (!myTurn) raising = false;
+  const R = V.result;
+  const won = (i) => (R && R.winnings ? R.winnings[i] : 0);
+  const shown = new Map((R && R.hands ? R.hands : []).map((h) => [h.seat, h]));
+  const seats = V.players.map((p, i) => {
+    const tags = [];
+    if (i === V.dealer) tags.push(`<span class="tg d">D</span>`);
+    if (hand && i === V.sbSeat) tags.push(`<span class="tg">CP</span>`);
+    if (hand && i === V.bbSeat) tags.push(`<span class="tg">CG</span>`);
+    const st = p.out ? "fuera" : p.folded ? "se retiró" : p.allin ? "con todo" : p.bet ? "apuesta " + p.bet : "";
+    const h = shown.get(i);
+    return `<div class="seat ${V.turn === i && hand ? "turn" : ""} ${p.folded || p.out ? "gone" : ""} ${won(i) ? "won" : ""}">
+      <div class="nm">${esc(p.name)}${i === V.me ? " (tú)" : ""} ${tags.join("")}</div>
+      <div class="ch">🪙 ${p.chips}${won(i) ? ` <b>+${won(i)}</b>` : ""}</div>
+      <div class="st">${h && i !== V.me ? `${cardHTML(h.hole[0], "xs")}${cardHTML(h.hole[1], "xs")} <span>${esc(h.name)}</span>` : st}</div></div>`;
+  }).join("");
+  const board = Array.from({ length: 5 }, (_, k) => (V.board[k] ? cardHTML(V.board[k], "md" + (was && !(was.board || []).includes(V.board[k]) ? " new" : "")) : `<span class="slot"></span>`)).join("");
+  let mine = "";
+  if (me.hole) {
+    const b = V.board.length >= 3 ? O.best(me.hole.concat(V.board)) : null;
+    mine = `<div class="mycards">${me.hole.map((c) => cardHTML(c, "lg")).join("")}</div>${b ? `<div class="hn">Tienes: <b>${O.handName(b.score)}</b></div>` : ""}`;
+  }
+  let status = "";
+  if (V.phase === "finished") status = `🏆 ${V.winner === V.me ? "¡Ganaste! Te quedaste con todas las fichas" : esc(V.players[V.winner].name) + " se quedó con todas las fichas"}`;
+  else if (V.stage === "result") status = (R.winnings || []).map((w, i) => (w ? `${i === V.me ? "Ganas" : esc(V.players[i].name) + " gana"} ${w}` : "")).filter(Boolean).join(" · ") + (R.showdown ? "" : " (los demás se retiraron)");
+  else if (myTurn) status = V.toCall ? `Tu turno: pagar ${Math.min(V.toCall, me.chips)} o retirarte` : "Tu turno";
+  else status = `Turno de ${esc(V.players[V.turn].name)}`;
+  const streetName = { preflop: "Antes del flop", flop: "Flop", turn: "Turn", river: "River" }[V.street] || "";
+  $("#app").innerHTML = `
+    <div class="seats">${seats}</div>
+    <div class="felt pk"><div class="pot">Pozo <b>${V.pot}</b>${hand ? ` · ${streetName}` : ""}</div><div class="board">${board}</div></div>
+    <div class="status">${status}</div>
+    ${R && R.showdown && V.stage === "result" ? `<div class="log">${R.hands.map((h) => `${esc(V.players[h.seat].name)}: ${esc(h.name)}`).join(" · ")}</div>` : ""}
+    <div class="mine">${mine || `<span class="muted" style="color:#fff">${me.out ? "Te quedaste sin fichas" : ""}</span>`}</div>
+    ${raising ? raiseHTML(me) : ""}
+    <div class="log">Mano ${V.handNo} · ciegas 10/20 · ${(V.log || []).slice(0, 2).map(esc).join(" · ")}</div>`;
+  if (raising) bindRaise(me);
+  renderBar(myTurn, me);
+}
+function raiseHTML(me) {
+  const min = Math.min(V.minTo, V.maxTo), max = V.maxTo, pot = V.pot + V.toCall;
+  raiseTo = Math.max(min, Math.min(raiseTo || min, max));
+  const opts = [["Mínimo", min], ["½ pozo", V.currentBet + Math.floor(pot / 2)], ["Pozo", V.currentBet + pot], ["Todo", max]].filter(([, v]) => v >= min && v <= max);
+  return `<div class="raise"><div class="rt">Subir a <b id="rv">${raiseTo}</b></div>
+    <input type="range" id="rr" min="${min}" max="${max}" step="10" value="${raiseTo}">
+    <div class="ro">${opts.map(([l, v]) => `<button data-v="${v}">${l}</button>`).join("")}</div></div>`;
+}
+function bindRaise() {
+  const r = $("#rr"); if (!r) return;
+  r.oninput = () => { raiseTo = +r.value; $("#rv").textContent = raiseTo; const b = $("#b-raise"); if (b) b.textContent = "Subir a " + raiseTo; };
+  document.querySelectorAll(".ro [data-v]").forEach((b) => b.onclick = () => { raiseTo = +b.dataset.v; renderTable(); });
+}
+function renderBar(myTurn, me) {
+  const bar = $("#bar");
+  if (V.phase === "finished") { bar.innerHTML = V.hostId && V.players[V.me].host ? `<button class="btn gold" id="nx">Nueva partida</button>` : ""; const n = $("#nx"); if (n) n.onclick = () => act("act", { move: "next" }); return; }
+  if (V.stage === "result") { bar.innerHTML = `<button class="btn gold" id="nx">Siguiente mano</button>`; $("#nx").onclick = () => act("act", { move: "next" }); return; }
+  if (!myTurn) { bar.innerHTML = ""; return; }
+  const call = Math.min(V.toCall, me.chips);
+  if (raising) {
+    bar.innerHTML = `<button class="btn" id="b-back">Volver</button><button class="btn gold" id="b-raise">${raiseTo >= V.maxTo ? "Todo (" + raiseTo + ")" : "Subir a " + raiseTo}</button>`;
+    $("#b-back").onclick = () => { raising = false; renderTable(); };
+    $("#b-raise").onclick = () => act("act", raiseTo >= V.maxTo ? { move: "allin" } : { move: "raise", amount: raiseTo });
+    return;
+  }
+  const canRaise = V.maxTo > V.currentBet && me.chips > V.toCall;
+  bar.innerHTML = `<button class="btn red" id="b-fold">Retirarse</button>
+    <button class="btn" id="b-call">${V.toCall ? (call >= me.chips ? "Todo (" + call + ")" : "Pagar " + call) : "Pasar"}</button>
+    <button class="btn gold" id="b-up" ${canRaise ? "" : "disabled"}>Subir</button>`;
+  $("#b-fold").onclick = () => act("act", { move: "fold" });
+  $("#b-call").onclick = () => act("act", { move: V.toCall ? (call >= me.chips ? "allin" : "call") : "check" });
+  $("#b-up").onclick = () => { raising = true; raiseTo = Math.min(V.minTo, V.maxTo); renderTable(); };
+}
+async function act(action, extra) {
+  if (busy) return false;
+  busy = true;
+  const v = await call(action, extra);
+  busy = false;
+  if (!v) return false;
+  raising = false;
+  show(v);
+  return true;
+}
+
+/* ---------- invitations ---------- */
+const playLink = () => location.origin + location.pathname + "#m=" + code;
+const inviteText = () => "¿Jugamos poker? Entra aquí: " + playLink();
+const waLink = () => "https://wa.me/?text=" + encodeURIComponent(inviteText());
+async function copyLink() {
+  try { await navigator.clipboard.writeText(inviteText()); return toast("Link copiado; pégalo en WhatsApp"); } catch (e) {}
+  try { const ta = document.createElement("textarea"); ta.value = inviteText(); document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); toast("Link copiado"); }
+  catch (e) { toast("No se pudo copiar; usa WhatsApp"); }
+}
+
+/* ---------- boot ---------- */
+const c0 = codeFromHash();
+if (c0) openTable(c0); else renderStart();
+window.addEventListener("hashchange", () => { const c = codeFromHash(); if (c !== code) location.reload(); });
+</script>
+</body>
+</html>
