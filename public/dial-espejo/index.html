@@ -1183,6 +1183,13 @@ html.adv-open #player{z-index:35}
 .npc-rad .hslx button[aria-pressed="true"]{background:var(--lc2);color:#07070A;text-shadow:none;border-color:transparent}
 .npc-rad .hslx .np-slc{font:400 10px "Share Tech Mono",var(--mono);letter-spacing:.14em;text-transform:uppercase;text-shadow:none;color:color-mix(in srgb,var(--lc2) 60%,#8a8a93);border-color:color-mix(in srgb,var(--lc2) 18%,transparent)}
 @media (max-width:480px){.npc-rad .hslx{gap:6px;padding:0 6px}.npc-rad .hslx>span{display:none}.npc-rad .hslx button{font-size:15px;padding:8px 8px 7px}}
+
+.npc-clk{display:flex;align-items:center;margin-left:auto;padding:0 4px;font:800 20px/1 "Doto",var(--mono);letter-spacing:.02em;color:var(--lc2);text-shadow:0 0 1px var(--lc2),0 0 8px color-mix(in srgb,var(--lc2) 55%,transparent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.npc-clk i{font-style:normal;margin:0 1px;animation:clkb 2s steps(1) infinite}
+@keyframes clkb{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.npc-clk i{animation:none}}
+.npc-rad .npc-sig{margin-left:8px}
+@media (max-width:480px){.npc-clk{font-size:16px;padding:0 2px}.npc-rad .hslp:not(.on) .hslb::after{display:none}.npc-b{width:30px}}
 </style>
 </head>
 <body>
@@ -1200,7 +1207,7 @@ html.adv-open #player{z-index:35}
     <button class="lcd" id="npcOpen" aria-label="Abrir la pantalla de la radio">
       <span class="lcd-scr"><span class="lcd-hint" aria-hidden="true"><span class="h-f">Clic para abrir</span><span class="h-t">Toca para abrir</span> ↗</span><span class="lcd-chip" id="npcM"></span><span class="lcd-l1"><i id="npcT"></i></span><span class="lcd-l2"><i id="npcA"></i></span><span class="lcd-l3" id="npcS"></span></span>
     </button>
-    <div class="npc-ctl"><button class="lcd-art" id="npcArt" aria-label="Abrir la pantalla de la radio"></button><button class="npc-more" id="npcMore">Ver la radio <span aria-hidden="true">›</span></button><div class="hslp" id="hSlp"><button class="hslb" id="hSlpB" aria-label="Temporizador para dormir" aria-expanded="false" aria-controls="hSlpBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.6 7.6 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1Z"/></svg><span id="hSlpT"></span></button><div class="np-slx hslx" id="hSlpBox" hidden role="group" aria-label="Apagar en"><span>Apagar en</span><button data-m="15">15 min</button><button data-m="30">30 min</button><button data-m="60">60 min</button><button data-m="0" class="np-slc">Cancelar</button></div></div><button class="npc-pp" id="npcPP" aria-label="Reproducir">▶</button><button class="npc-b" id="npcPrev" aria-label="Radio afín anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6v12M18 6l-8 6 8 6z"/></svg></button><button class="npc-b" id="npcNext" aria-label="Radio afín siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 6v12M6 6l8 6-8 6z"/></svg></button><button class="npc-b" id="npcFav" aria-label="Favorita" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6L12 16.3 6.9 19l1.1-5.6-4.2-3.9 5.7-.7z"/></svg></button><button class="npc-b" id="npcShr" aria-label="Compartir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></svg></button><span class="npc-sig" id="npcSig" aria-hidden="true"><span><i></i><i></i><i></i><i></i></span><b></b></span></div>
+    <div class="npc-ctl"><button class="lcd-art" id="npcArt" aria-label="Abrir la pantalla de la radio"></button><button class="npc-more" id="npcMore">Ver la radio <span aria-hidden="true">›</span></button><div class="hslp" id="hSlp"><button class="hslb" id="hSlpB" aria-label="Temporizador para dormir" aria-expanded="false" aria-controls="hSlpBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.6 7.6 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1Z"/></svg><span id="hSlpT"></span></button><div class="np-slx hslx" id="hSlpBox" hidden role="group" aria-label="Apagar en"><span>Apagar en</span><button data-m="15">15 min</button><button data-m="30">30 min</button><button data-m="60">60 min</button><button data-m="0" class="np-slc">Cancelar</button></div></div><button class="npc-pp" id="npcPP" aria-label="Reproducir">▶</button><button class="npc-b" id="npcPrev" aria-label="Radio afín anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6v12M18 6l-8 6 8 6z"/></svg></button><button class="npc-b" id="npcNext" aria-label="Radio afín siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 6v12M6 6l8 6-8 6z"/></svg></button><button class="npc-b" id="npcFav" aria-label="Favorita" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6L12 16.3 6.9 19l1.1-5.6-4.2-3.9 5.7-.7z"/></svg></button><button class="npc-b" id="npcShr" aria-label="Compartir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></svg></button><span class="npc-clk" id="npcClk" role="timer" aria-label="Hora"><span id="npcClkH">--</span><i>:</i><span id="npcClkM">--</span></span><span class="npc-sig" id="npcSig" aria-hidden="true"><span><i></i><i></i><i></i><i></i></span><b></b></span></div>
     </div>
     <div class="npc-top"><div class="hk">Tus top 3</div><div class="sq-r" id="topR"></div>
       <button class="fav-all" id="favAll" aria-expanded="false" aria-controls="favMg"><span>Todas tus favoritas <b id="favN"></b></span><span class="fav-chev" aria-hidden="true">›</span></button>
@@ -2341,6 +2348,14 @@ $("npcShr").onclick=async()=>{const s=current||homePick();if(!s)return;if(curren
   const url=shareURL(s),text=`${s.n} · ${FAM[s.g][0]} · ${CN[s.cc]||s.cc}`;
   if(navigator.share){try{await navigator.share({title:s.n+" en Dial Espejo",text,url});return}catch(e){if(e&&e.name==="AbortError")return}}
   try{await navigator.clipboard.writeText(url)}catch(e){window.open("https://wa.me/?text="+encodeURIComponent(text+" "+url),"_blank","noopener")}};
+
+// Reloj LED: siempre se lee de la hora del teléfono (nunca se suma tiempo), así que no se atrasa aunque la app quede sonando en segundo plano;
+// se redibuja al cambiar el minuto y apenas la app vuelve a primer plano
+(function(){const H=$("npcClkH"),M=$("npcClkM");let t=null;
+  const draw=()=>{const d=new Date(),hh=String(d.getHours()).padStart(2,"0"),mm=String(d.getMinutes()).padStart(2,"0");if(H.textContent!==hh)H.textContent=hh;if(M.textContent!==mm)M.textContent=mm;$("npcClk").setAttribute("aria-label",hh+":"+mm)};
+  const sched=()=>{clearTimeout(t);draw();const d=new Date();t=setTimeout(sched,60000-(d.getSeconds()*1000+d.getMilliseconds())+30)};
+  sched();setInterval(draw,5000);
+  ["visibilitychange","pageshow","focus"].forEach(ev=>addEventListener(ev,()=>{if(!document.hidden)sched()}));document.addEventListener("visibilitychange",()=>{if(!document.hidden)sched()})})();
 function npcBar(s,on){const f=favs.has(s.n),b=$("npcFav");b.classList.toggle("on",f);b.setAttribute("aria-pressed",f);
   const sig=current?curList[curIdx]:null,k=sig&&sig.bitrate?+sig.bitrate:0,lv=!on?0:k>=128?4:k>=96?3:k>=64?2:1;
   $("npcSig").dataset.l=lv;$("npcSig").querySelector("b").textContent=on&&k?k+"K":on?"LIVE":"OFF"}
@@ -3069,7 +3084,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22zd";
+const APP_VERSION="2026-11-22ze";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
