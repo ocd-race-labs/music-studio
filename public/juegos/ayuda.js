@@ -14,6 +14,16 @@
   const arrow = `<span class="ay-ar">→</span>`;
 
   const G = {
+    culebras: { name: "Culebras y escaleras", pages: [
+      { t: "Cómo se juega", rows: [
+        [chip("🎲") + arrow + big("👣"), "Por turno tiras el dado y tu ficha avanza esas casillas, sola."],
+        [big("🪜"), "Si caes al pie de una escalera, subes hasta arriba."],
+        [big("🐍"), "Si caes en la cabeza de una culebra, bajas hasta su cola."]] },
+      { t: "Llegar al 100", rows: [
+        [chip("97") + arrow + chip("🎲 5") + arrow + chip("98"), "Hay que llegar justo al 100: si te pasas, rebotas hacia atrás lo que sobra."],
+        [big("🏆"), "Gana quien llega primero al 100."],
+        [big("👨‍👩‍👧"), "De 2 a 4 jugadores, cada uno en su teléfono o todos en uno."]] },
+    ] },
     poker: { name: "Poker", pages: [
       { t: "Cómo va una mano", rows: [
         [cards("A♠", "K♥"), "Recibes 2 cartas que solo tú ves."],

@@ -189,7 +189,7 @@ async function listOpen() {
   clearTimeout(openT);
   const box = $("#open"); if (!box || mode || !client()) return;
   const since = new Date(Date.now() - 12 * 3600 * 1000).toISOString(), fresh = Date.now() - 30 * 60 * 1000;
-  const { data } = await sb.from("ludo_games").select("id,host_id,seat_ids,seat_names,updated_at,phase:state->>phase").gt("updated_at", since).order("updated_at", { ascending: false }).limit(40);
+  const { data } = await sb.from("ludo_games").select("id,host_id,seat_ids,seat_names,updated_at,phase:state->>phase").eq("game", "ludo").gt("updated_at", since).order("updated_at", { ascending: false }).limit(40);
   if (!$("#open") || mode) return;
   const hidden = load("juegos-ocultas") || [];
   const all = data || [];
