@@ -13,6 +13,17 @@
   const arrow = `<span class="ay-ar">→</span>`;
 
   const G = {
+    ludo: { name: "Ludo", pages: [
+      { t: "Salir y avanzar", rows: [
+        [chip("🎲 6") + arrow + big("🏁"), "Con un 6 sacas una ficha de tu casa a la salida."],
+        [big("🔁"), "Avanzas lo que dice el dado. Das la vuelta al tablero y entras por tu pasillo de color a la meta."],
+        [chip("🎲 6") + arrow + big("🎲"), "Con un 6 vuelves a tirar. Tres 6 seguidos: pierdes el turno."]] },
+      { t: "Comer y ganar", rows: [
+        [big("💥"), "Si caes donde hay una ficha rival, vuelve a su casa. Y tú tiras otra vez."],
+        [big("★"), "En las salidas y en las estrellas nadie puede comerte."],
+        [chip("Exacto"), "Para entrar a la meta necesitas el número justo."],
+        [big("🏆"), "Gana quien lleva sus 4 fichas a la meta primero."]] },
+    ] },
     escoba: { name: "Escoba", pages: [
       { t: "Sumar 15", rows: [
         [chip("1 … 7") + chip("Sota 8") , "Cada carta vale su número; la sota 8, el caballo 9 y el rey 10."],
