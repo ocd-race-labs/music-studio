@@ -118,6 +118,18 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
   </div>
 </div>
 <script>
+// a newer menu on the server reloads this one, so a home-screen icon never stays behind
+(() => {
+  const BUILD = "20261122234057";
+  const check = () => fetch("version.txt?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.text() : "")).then((v) => {
+    v = v.trim();
+    if (v && BUILD.indexOf("__") !== 0 && v !== BUILD) location.reload();
+  }).catch(() => {});
+  check();
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
+})();
+</script>
+<script>
 // the host link of the menu (#anfitrion=…) opens the bingo as host; any other link opens it as a player
 (() => {
   const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/);
