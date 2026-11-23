@@ -1141,7 +1141,7 @@ html.adv-open #player{z-index:35}
 .npc-rad .hslx{left:auto;right:-6px}
 
 /* Teléfono: la pantalla ocupa todo el ancho y debajo va una barra horizontal de botones (play/stop y temporizador) */
-@media (max-width:760px){
+@media all{
   .npc-rad{grid-template-columns:minmax(0,1fr);gap:8px}
   .npc-rad .npc-ctl{flex-direction:row;justify-content:flex-start;align-items:center;gap:10px;padding:7px 8px}
   .npc-rad .npc-pp{width:52px;height:46px;border-radius:13px;order:-1}
@@ -1154,7 +1154,7 @@ html.adv-open #player{z-index:35}
 
 /* Barra LED del teléfono: botones extra (en computador no caben en la columna, quedan ocultos) */
 .npc-b,.npc-sig{display:none}
-@media (max-width:760px){
+@media all{
   .npc-rad .npc-ctl{gap:4px;padding:7px 7px}
   .npc-rad .npc-pp{margin-right:2px}
   .npc-rad .hslb{padding:0 8px;gap:5px}
@@ -1172,6 +1172,7 @@ html.adv-open #player{z-index:35}
   .npc-sig b{font:400 8.5px "Share Tech Mono",var(--mono);letter-spacing:.08em;color:color-mix(in srgb,var(--lc2) 55%,#6a6a72)}
   .npc-sig:not([data-l="0"]) b{color:var(--lc2)}
 }
+.npc-b:hover{color:var(--lc2)}
 </style>
 </head>
 <body>
@@ -3058,7 +3059,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22zb";
+const APP_VERSION="2026-11-22zc";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
