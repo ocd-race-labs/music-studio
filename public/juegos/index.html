@@ -77,6 +77,11 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 .lg i::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);box-shadow:inset 0 -2px 0 rgba(0,0,0,.15)}
 .a-cu{background:repeating-conic-gradient(#fff6dc 0 25%,#dff0e6 0 50%) 0 0/24px 24px}
 .cu{display:flex;gap:10px;font-size:36px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.a-dom{background:radial-gradient(ellipse at 50% 30%,#3d7566,#22463c)}
+.dmi{display:flex;flex-direction:column;background:#fffaf0;border-radius:8px;box-shadow:0 3px 6px rgba(0,0,0,.35);transform:rotate(-12deg)}
+.dmi i{width:44px;height:30px;display:flex;align-items:center;justify-content:space-around;padding:0 6px}
+.dmi i+i{border-top:2px solid #bdb39a}
+.dmi b{width:7px;height:7px;border-radius:50%;background:#1d1f23}
 .a-soon{background:#e9e6df;font-size:40px}
 .top{display:flex;align-items:flex-start;gap:10px}
 .top .t{flex:1}
@@ -113,14 +118,14 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
     <a class="tile" href="backgammon/"><span class="go">Jugar</span><div class="art a-bg"><div class="tri"><i></i><i></i><i></i><i></i><i></i><i></i></div></div><b>Backgammon</b><span>2 jugadores</span></a>
     <a class="tile" href="ludo/"><span class="go">Jugar</span><div class="art a-ludo"><div class="lg"><i></i><i></i><i></i><i></i></div></div><b>Ludo</b><span>2 a 4 jugadores</span></a>
     <a class="tile" href="culebras/"><span class="go">Jugar</span><div class="art a-cu"><div class="cu"><span>🪜</span><span>🐍</span></div></div><b>Culebras y escaleras</b><span>2 a 4 jugadores</span></a>
-    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">🁫</div><b>Dominó</b></div>
+    <a class="tile" href="domino/"><span class="go">Jugar</span><div class="art a-dom"><div class="dmi"><i><b></b><b></b></i><i><b></b><b></b><b></b></i></div></div><b>Dominó</b><span>2 a 4 · doble seis</span></a>
     <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">♞</div><b>Ajedrez</b></div>
   </div>
 </div>
 <script>
 // a newer menu on the server reloads this one, so a home-screen icon never stays behind
 (() => {
-  const BUILD = "20261122234057";
+  const BUILD = "20261123003826";
   const check = () => fetch("version.txt?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.text() : "")).then((v) => {
     v = v.trim();
     if (v && BUILD.indexOf("__") !== 0 && v !== BUILD) location.reload();
@@ -133,7 +138,7 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 // the host link of the menu (#anfitrion=…) opens the bingo as host; any other link opens it as a player
 (() => {
   const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/);
-  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; document.querySelector('a[href="solitario/"]').href = "solitario/#" + m[0]; document.querySelector('a[href="backgammon/"]').href = "backgammon/#" + m[0]; document.querySelector('a[href="ocholoco/"]').href = "ocholoco/#" + m[0]; document.querySelector('a[href="escoba/"]').href = "escoba/#" + m[0]; document.querySelector('a[href="brisca/"]').href = "brisca/#" + m[0]; document.querySelector('a[href="ludo/"]').href = "ludo/#" + m[0]; document.querySelector('a[href="culebras/"]').href = "culebras/#" + m[0]; document.querySelector('a[href="poker/"]').href = "poker/#" + m[0]; document.querySelector('a[href="blackjack/"]').href = "blackjack/#" + m[0]; }
+  if (m) { document.getElementById("t-bingo").href = "../bingo/#" + m[0]; document.querySelector('a[href="damas/"]').href = "damas/#" + m[0]; document.querySelector('a[href="carioca/"]').href = "carioca/#" + m[0]; document.querySelector('a[href="nerviosito/"]').href = "nerviosito/#" + m[0]; document.querySelector('a[href="solitario/"]').href = "solitario/#" + m[0]; document.querySelector('a[href="backgammon/"]').href = "backgammon/#" + m[0]; document.querySelector('a[href="ocholoco/"]').href = "ocholoco/#" + m[0]; document.querySelector('a[href="escoba/"]').href = "escoba/#" + m[0]; document.querySelector('a[href="brisca/"]').href = "brisca/#" + m[0]; document.querySelector('a[href="ludo/"]').href = "ludo/#" + m[0]; document.querySelector('a[href="culebras/"]').href = "culebras/#" + m[0]; document.querySelector('a[href="domino/"]').href = "domino/#" + m[0]; document.querySelector('a[href="poker/"]').href = "poker/#" + m[0]; document.querySelector('a[href="blackjack/"]').href = "blackjack/#" + m[0]; }
   const nm = () => { try { const y = JSON.parse(localStorage.getItem("juegos-yo")) || {}; document.getElementById("me-n").textContent = y.name || "Tu perfil"; } catch (e) {} };
   nm();
   document.getElementById("me").onclick = () => Perfil.open();

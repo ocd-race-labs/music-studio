@@ -14,6 +14,18 @@
   const arrow = `<span class="ay-ar">→</span>`;
 
   const G = {
+    domino: { name: "Dominó", pages: [
+      { t: "Poner fichas", rows: [
+        [chip("🁢 × 7"), "Cada uno recibe 7 fichas. La primera mano la abre el doble más alto."],
+        [chip("3 ▶") + arrow + chip("3 | 5"), "Pones una ficha que calce con una de las dos puntas de la mesa."],
+        [chip("◀ ▶"), "Si calza en las dos puntas, eliges dónde ponerla."],
+        [big("🫳"), "Si no tienes ficha: con 2 o 3 jugadores robas del pozo; con 4 pasas."]] },
+      { t: "Los puntos", rows: [
+        [big("🏁"), "Quien se queda sin fichas gana la mano y suma los puntos que les quedan a los rivales."],
+        [big("🔒"), "Tranque: si nadie puede jugar, gana quien suma menos en su mano."],
+        [big("👥"), "Con 4 jugadores se juega en parejas; los compañeros quedan enfrentados."],
+        [chip("100"), "Gana quien llega primero a 100 puntos."]] },
+    ] },
     culebras: { name: "Culebras y escaleras", pages: [
       { t: "Cómo se juega", rows: [
         [chip("🎲") + arrow + big("👣"), "Por turno tiras el dado y tu ficha avanza esas casillas, sola."],
