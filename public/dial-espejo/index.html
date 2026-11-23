@@ -1125,6 +1125,20 @@ html.adv-open #player{z-index:35}
 .lcd:hover .lcd-hint{opacity:1;color:var(--lc2)}
 .lcd-hint .h-t{display:none}
 @media (pointer:coarse){.lcd-hint .h-f{display:none}.lcd-hint .h-t{display:inline}}
+
+/* La columna derecha es una pantalla LED secundaria: el temporizador se lee como dígitos encendidos */
+.npc-rad .npc-ctl{--lc:var(--s-radio,#B06BFF);--lc2:var(--s-noticias,#86EFAC);justify-content:space-between;padding:8px 6px 10px;
+  background:radial-gradient(circle,color-mix(in srgb,var(--lc2) 9%,transparent) .7px,transparent 1.1px) 0 0/3px 3px,radial-gradient(120% 90% at 50% 80%,color-mix(in srgb,var(--lc2) 10%,#0a0c0b),#040405 85%);
+  box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px rgba(255,255,255,.05),inset 0 4px 14px rgba(0,0,0,.85)}
+.npc-rad .hslp{width:100%;display:grid;place-items:center}
+.npc-rad .hslb{width:100%;height:auto;min-height:44px;flex-direction:column;gap:2px;padding:4px 0;border:0;border-radius:8px;background:transparent;color:color-mix(in srgb,var(--lc2) 35%,#55555c)}
+.npc-rad .hslb:hover{background:rgba(255,255,255,.04);color:color-mix(in srgb,var(--lc2) 70%,#8a8a93)}
+.npc-rad .hslb svg{width:15px;height:15px}
+.npc-rad .hslb span{display:block;font:800 17px/1 "Doto",var(--mono);letter-spacing:.02em;color:var(--lc2);text-shadow:0 0 1px var(--lc2),0 0 8px color-mix(in srgb,var(--lc2) 60%,transparent)}
+.npc-rad .hslb span:empty{display:none}
+.npc-rad .hslp:not(.on) .hslb::after{content:"SLEEP";font:400 8.5px "Share Tech Mono",var(--mono);letter-spacing:.16em}
+.npc-rad .hslp.on .hslb{color:var(--lc2);border:0;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--lc2) 50%,transparent))}
+.npc-rad .hslx{left:auto;right:-6px}
 </style>
 </head>
 <body>
@@ -2992,7 +3006,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22y";
+const APP_VERSION="2026-11-22z";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
