@@ -1173,6 +1173,16 @@ html.adv-open #player{z-index:35}
   .npc-sig:not([data-l="0"]) b{color:var(--lc2)}
 }
 .npc-b:hover{color:var(--lc2)}
+
+/* Opciones del temporizador como pantalla LED encima de la misma barra, en vez de una píldora suelta */
+.npc-rad .hslx{position:absolute;inset:0;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 10px;border-radius:14px;border:0;box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px rgba(255,255,255,.05),inset 0 4px 14px rgba(0,0,0,.85);
+  background:radial-gradient(circle,color-mix(in srgb,var(--lc2) 9%,transparent) .7px,transparent 1.1px) 0 0/3px 3px,radial-gradient(120% 90% at 50% 80%,color-mix(in srgb,var(--lc2) 12%,#0a0c0b),#040405 85%)}
+.npc-rad .hslx>span{font:400 9.5px "Share Tech Mono",var(--mono);letter-spacing:.16em;color:color-mix(in srgb,var(--lc2) 55%,#6a6a72);margin-right:4px}
+.npc-rad .hslx button{font:800 18px/1 "Doto",var(--mono);letter-spacing:.02em;color:var(--lc2);background:transparent;border:1px solid color-mix(in srgb,var(--lc2) 28%,transparent);border-radius:8px;padding:9px 11px 8px;text-shadow:0 0 1px var(--lc2),0 0 8px color-mix(in srgb,var(--lc2) 55%,transparent);cursor:pointer;transition:background .15s,color .15s}
+.npc-rad .hslx button:hover{background:color-mix(in srgb,var(--lc2) 12%,transparent)}
+.npc-rad .hslx button[aria-pressed="true"]{background:var(--lc2);color:#07070A;text-shadow:none;border-color:transparent}
+.npc-rad .hslx .np-slc{font:400 10px "Share Tech Mono",var(--mono);letter-spacing:.14em;text-transform:uppercase;text-shadow:none;color:color-mix(in srgb,var(--lc2) 60%,#8a8a93);border-color:color-mix(in srgb,var(--lc2) 18%,transparent)}
+@media (max-width:480px){.npc-rad .hslx{gap:6px;padding:0 6px}.npc-rad .hslx>span{display:none}.npc-rad .hslx button{font-size:15px;padding:8px 8px 7px}}
 </style>
 </head>
 <body>
@@ -2736,7 +2746,7 @@ $("npSlpBox").querySelectorAll("button").forEach(b=>b.onclick=e=>{e.stopPropagat
 npSheet.addEventListener("click",e=>{if(!$("npSlp").contains(e.target))slpBox(false)});
 $("hSlpB").onclick=e=>{e.stopPropagation();slpBox($("hSlpBox").hidden,"h")};
 $("hSlpBox").querySelectorAll("button").forEach(b=>b.onclick=e=>{e.stopPropagation();slpSet(+b.dataset.m);slpBox(false,"h")});
-document.addEventListener("click",e=>{if(!$("hSlp").contains(e.target))slpBox(false,"h")});
+document.addEventListener("click",e=>{if(!$("hSlp").contains(e.target))slpBox(false,"h")});$("hSlpBox").addEventListener("click",e=>{if(e.target===e.currentTarget){e.stopPropagation();slpBox(false,"h")}});
 addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("npSlpBox").hidden){e.stopPropagation();slpBox(false)}if(!$("hSlpBox").hidden){e.stopPropagation();slpBox(false,"h")}},true);
 
 // Deslizar hacia abajo para cerrar
@@ -3059,7 +3069,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22zc";
+const APP_VERSION="2026-11-22zd";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
