@@ -1305,6 +1305,17 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .band .ib{color:#EDEDF2}
 /* El panal/globo se mueve con el resto de la página (antes quedaba fijo y pasaba por debajo de la barra y sobre el pie) */
 @media (min-width:1024px){.adv-in .radio-grid>.hive{position:relative;top:auto}}
+
+/* Cuenta regresiva del temporizador en ámbar, para distinguirla de la hora; dos puntos dibujados como en el reloj */
+.npc-rad .hslp.on .hslb,.npc-rad .hslb span{--amb:#FFC23A}
+.npc-rad .hslp.on .hslb{color:var(--amb);filter:drop-shadow(0 0 4px rgba(255,194,58,.45))}
+.npc-rad .hslb span{color:var(--amb);text-shadow:0 0 1px var(--amb),0 0 8px rgba(255,194,58,.55)}
+.npc-rad .hslb span .clk-c{display:inline-grid;align-content:center;gap:.22em;width:.22em;height:.9em;margin:0 .12em;vertical-align:-.08em}
+.npc-rad .hslb span .clk-c::before,.npc-rad .hslb span .clk-c::after{content:"";width:.15em;height:.15em;border-radius:50%;background:currentColor;box-shadow:0 0 6px rgba(255,194,58,.7)}
+.npc-rad .hslb span{white-space:nowrap;display:inline-flex;align-items:center}.npc-rad .hslb span:empty{display:none}.npc-rad .hslb span .clk-c{vertical-align:0}
+.npc-rad .hslb svg{flex:none}.npc-rad .hslp{flex:none}
+@media (max-width:480px){.npc-rad .npc-pp{flex:none;width:46px}.npc-rad .hslp.on .hslb svg{display:none}.npc-rad .hslp.on .hslb{padding:0 4px}.npc-b{flex:0 1 28px;min-width:22px}}
+@media (max-width:380px){.npc-rad .hslb span,.npc-clk{font-size:14px}.npc-rad .npc-ctl{gap:2px}}
 </style>
 </head>
 <body>
@@ -2912,7 +2923,7 @@ function slpPaint(){const on=!!SLP.at,w=$("npSlp");w.classList.toggle("on",on);
   w.style.setProperty("--sp",on?(l/SLP.dur*100).toFixed(2):0);
   $("npSlpB").setAttribute("aria-label",on?({en:"Stops in ",pt:"Desliga em "}[UIL]||"Se apaga en ")+Math.max(1,Math.ceil(l/60000))+" min":trText("Temporizador para dormir"));
   document.querySelectorAll("#npSlpBox button[data-m],#hSlpBox button[data-m]").forEach(b=>b.setAttribute("aria-pressed",on&&+b.dataset.m===SLP.min));
-  const h=$("hSlp");if(h){h.classList.toggle("on",on);$("hSlpT").textContent=$("npSlpT").textContent;$("hSlpB").setAttribute("aria-label",$("npSlpB").getAttribute("aria-label"))}}
+  const h=$("hSlp");if(h){h.classList.toggle("on",on);{const t=$("npSlpT").textContent;$("hSlpT").innerHTML=t?esc(t).replace(":",'<i class="clk-c" aria-hidden="true"></i>'):"";}$("hSlpB").setAttribute("aria-label",$("npSlpB").getAttribute("aria-label"))}}
 function slpTick(){if(!SLP.at)return;const l=slpLeft();
   if(l<=8000&&!audio.paused)audio.volume=Math.max(0,l/8000);
   if(l<=0){slpSet(0);wantPlay=false;audio.pause();setTimeout(()=>{audio.volume=1},400);setStatus("apagada por el temporizador");return}
@@ -3247,7 +3258,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22zm";
+const APP_VERSION="2026-11-22zn";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
