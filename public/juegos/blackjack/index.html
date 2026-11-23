@@ -123,31 +123,57 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .code{display:grid;grid-template-columns:1fr auto;gap:8px}
 .code input{text-transform:uppercase;letter-spacing:2px;font-weight:800}
 .or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
-:root{--felt:#1b4d7a;--felt2:#123657}
+:root{--felt:#1e6b4a;--felt2:#124230}
 html{background:var(--felt2)}
-body{background:radial-gradient(ellipse at 50% 20%,#2a6aa3,var(--felt) 45%,var(--felt2))!important;background-attachment:fixed}
-header{background:rgba(18,54,87,.92)!important}
-.felt.dealer .dl{color:#fff;font-weight:800}.felt.dealer .dl b{color:var(--gold);font-size:18px}
-.hd{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+body{background:radial-gradient(ellipse at 50% 30%,#2a8a5f,var(--felt) 50%,var(--felt2))!important;background-attachment:fixed}
+header{background:rgba(18,66,48,.92)!important}
+main{padding-bottom:0}
+.tablebj{display:grid;gap:10px}
+.dealer{display:grid;justify-items:center;gap:6px;padding:8px 0 10px;border-bottom:2px solid rgba(255,207,63,.35);border-radius:0 0 50% 50%/0 0 30px 30px}
+.dealer .dl{color:#fff;font-weight:800}.dealer .dl b{color:var(--gold);font-size:18px}
+.dealer .rule{color:rgba(255,230,150,.75);font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.hd{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center;min-height:30px}
 .hd .card{position:relative}
+.ghost{opacity:.38;filter:saturate(.6)}
+.slot{width:clamp(40px,11.5vw,52px);height:calc(clamp(40px,11.5vw,52px)*1.42);border-radius:6px;border:2px dashed rgba(255,255,255,.22)}
 .card.back{background:repeating-linear-gradient(45deg,#8a2230 0 5px,#761c29 5px 10px)!important}
-.table{display:grid;gap:8px}
-.bj{background:rgba(255,255,255,.92);border-radius:14px;padding:8px 10px;display:grid;gap:6px}
-.bj.turn{box-shadow:0 0 0 3px var(--gold)}
-.bj.me{background:#fff}
-.bj .top{display:flex;gap:8px;align-items:center;font-size:13px}
-.bj .nm{font-weight:800;flex:1}
-.bj .bt{font-weight:700;color:#6c6f75;font-size:12px}
+.others{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.seat{background:rgba(0,0,0,.18);border-radius:12px;padding:6px 8px;display:grid;gap:4px;justify-items:center;color:#fff;min-width:96px}
+.seat.turn{box-shadow:0 0 0 3px var(--gold)}
+.seat .nm{font-weight:800;font-size:12px}.seat small{opacity:.85}
+.seat .muted{color:rgba(255,255,255,.7);font-size:11px}
+.myseat{display:grid;justify-items:center;gap:8px;padding:6px;border-radius:18px}
+.myseat.turn{box-shadow:0 0 0 3px var(--gold)}
 .tt{background:#1d1f23;color:#fff;border-radius:999px;padding:3px 9px;font-weight:800;font-size:14px;margin-left:4px}
 .tt.x{background:#c0392b}
 .oc{border-radius:999px;padding:3px 9px;font-weight:800;font-size:12px}
-.oc.w{background:#d9f2e1;color:#1f7a2a}.oc.p{background:#eeefef}.oc.l{background:#fde2e1;color:#a3262f}
-.betbox{background:var(--paper);border-radius:16px;padding:12px;display:grid;gap:10px;justify-items:center}
-.stake b{font-size:22px}.stake small{color:#6c6f75}
-.chips{display:flex;gap:8px}
-.chip{width:52px;height:52px;border-radius:50%;border:4px dashed rgba(255,255,255,.8);font:inherit;font-weight:800;color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25)}
-.chip.c5{background:#c0392b}.chip.c10{background:#2f6fb5}.chip.c25{background:#2e7d32}.chip.c50{background:#1d1f23}
-.chip.clr{background:#eeefef;color:#6c6f75;border-color:#d5d6d8}
+.oc.w{background:#d9f2e1;color:#1f7a2a}.oc.p{background:#eeefef;color:#1d1f23}.oc.l{background:#fde2e1;color:#a3262f}
+.circle{position:relative;width:132px;height:84px;border-radius:50%;border:2px solid rgba(255,230,150,.55);display:flex;align-items:flex-end;justify-content:center;gap:6px;padding-bottom:16px;box-shadow:inset 0 0 0 6px rgba(0,0,0,.08)}
+.circle.open{border-style:dashed;cursor:pointer;animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:inset 0 0 0 6px rgba(255,207,63,.25)}}
+.circle .ph{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,230,150,.75);font-size:12px;font-weight:700;white-space:nowrap}
+.circle .sum{position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);background:#1d1f23;color:#fff;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:800}
+/* chips: flat discs stacked upward, each a little higher than the last */
+.pile{position:relative;display:inline-block;width:38px;height:14px;cursor:pointer}
+.ck.out{opacity:.28;box-shadow:none}
+.pile .ck{position:absolute;left:0;bottom:calc(var(--k) * 4px);width:38px;height:14px;border-radius:50%;box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 -3px 0 rgba(0,0,0,.25);
+  background:var(--c);background-image:repeating-conic-gradient(from 0deg,rgba(255,255,255,.85) 0 12deg,transparent 12deg 45deg)}
+.pile .ck::after{content:"";position:absolute;inset:3px 7px;border-radius:50%;background:var(--c)}
+.ck.c5{--c:#c0392b}.ck.c10{--c:#2f6fb5}.ck.c25{--c:#2e7d32}.ck.c50{--c:#24272d}
+.pile em{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;font-weight:800;color:#fff}
+.pile.bet .ck{width:30px;height:11px}.pile.bet{width:30px}
+.ck.drop{animation:drop .3s ease-out}
+@keyframes drop{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.pile.come{animation:come .7s ease-out}
+@keyframes come{from{transform:translateY(-160px);opacity:0}to{transform:none;opacity:1}}
+.pile.away{animation:away .8s ease-in forwards}
+@keyframes away{to{transform:translateY(-180px);opacity:0}}
+.pile.gone{opacity:0}
+.tray{background:linear-gradient(#5a3a20,#3d2714);border-radius:16px;padding:10px 12px 8px;display:grid;gap:6px;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 4px 10px rgba(0,0,0,.3)}
+.stacks{display:flex;gap:14px;justify-content:center;align-items:flex-end;min-height:70px;padding-top:18px}
+.pile.bank{transition:transform .12s}.pile.bank:active{transform:translateY(-4px)}
+.rest{color:#fff;font-weight:800;font-size:12px;align-self:center}
+.bal{text-align:center;color:rgba(255,230,150,.9);font-size:12px;font-weight:700}.bal b{color:#fff;font-size:15px}
 .card.xs{--w:24px}.card.sm{--w:32px}.card.md{--w:clamp(40px,11.5vw,52px)}.card.lg{--w:clamp(58px,17vw,74px)}
 .card.xs .s1,.card.xs .s2{display:none}.card.xs .r{font-size:11px}
 .card.new{animation:pop .35s ease-out}
@@ -377,52 +403,107 @@ function renderLobby() {
   $("#bar").innerHTML = isHost ? `<button class="btn gold" id="start" >Empezar partida (${V.players.length})</button>` : "";
   const s = $("#start"); if (s) s.onclick = () => act("start");
 }
-let stake = 0;
+let stake = [], lastRound = null, seenVersion = -1;
 const OUT = { win: ["Ganas", "w", "Gana"], blackjack: ["¡Blackjack!", "w", "¡Blackjack!"], push: ["Empate", "p", "Empate"], lose: ["Pierdes", "l", "Pierde"], bust: ["Te pasaste", "l", "Se pasó"] };
-function renderTable(was) {
-  const me = V.players[V.me], playing = V.phase === "playing", myTurn = playing && V.stage === "turns" && V.turn === V.me;
-  if (window.Perfil) Perfil.turn(myTurn || (V.stage === "betting" && !me.inRound));
-  pill("Mesa " + code);
-  if (V.stage !== "betting" || me.inRound) stake = 0;
-  const dealer = V.dealer.map((c) => (c ? cardHTML(c, "md") : backHTML("md"))).join("");
-  const rows = V.players.map((p, i) => {
-    const o = p.outcome && OUT[p.outcome];
-    return `<div class="bj ${V.turn === i ? "turn" : ""} ${i === V.me ? "me" : ""}">
-      <div class="top"><span class="nm">${esc(p.name)}${i === V.me ? " (tú)" : ""}</span><span class="ch">🪙 ${p.chips}</span>
-        ${p.bet ? `<span class="bt">apuesta ${p.bet}${p.doubled ? " (doble)" : ""}</span>` : V.stage === "betting" ? `<span class="bt w8">${p.inRound ? "" : "apostando…"}</span>` : ""}</div>
-      ${p.hand.length ? `<div class="hd">${p.hand.map((c) => cardHTML(c, i === V.me ? "md" : "sm")).join("")}<span class="tt ${p.total > 21 ? "x" : ""}">${p.total}</span>
-        ${o ? `<span class="oc ${o[1]}">${i === V.me ? o[0] : o[2]}${p.paid > 0 ? " +" + p.paid : p.paid < 0 ? " " + p.paid : ""}</span>` : ""}</div>` : ""}</div>`;
+const DEN = [50, 25, 10, 5];
+// a balance as chips, like a rack: a few of each small value first, the rest in the biggest that fit
+function split(n, rack) {
+  const out = [];
+  if (rack) for (const [d, k] of [[5, 4], [10, 3], [25, 2]]) for (let i = 0; i < k && n >= d; i++) { out.push(d); n -= d; }
+  for (const d of DEN) { const k = Math.floor(n / d); for (let i = 0; i < k; i++) out.push(d); n -= k * d; }
+  return { chips: out, rest: n };
+}
+function stackHTML(chips, cls = "", all = false, max = 14) {
+  // chips of one value pile up; each pile shows at most `max`, the rest as a number; the rack shows every value
+  const by = {}; chips.forEach((c) => (by[c] = (by[c] || 0) + 1));
+  const keys = all ? DEN.slice().reverse() : Object.keys(by).map(Number).sort((a, b) => b - a);
+  return keys.map((d) => {
+    const n = by[d] || 0, shown = Math.min(n, max);
+    if (!n) return `<span class="pile ${cls} empty" data-d="${d}"><i class="ck c${d} out" style="--k:0"></i></span>`;
+    return `<span class="pile ${cls}" data-d="${d}" style="height:${(cls.includes("bet") ? 11 : 14) + (shown - 1) * 4}px">${Array.from({ length: shown }, (_, k) => `<i class="ck c${d}" style="--k:${k}"></i>`).join("")}${n > max ? `<em>×${n}</em>` : ""}</span>`;
   }).join("");
+}
+function renderTable(was) {
+  const me = V.players[V.me], playing = V.phase === "playing", betting = V.stage === "betting";
+  const myTurn = playing && V.stage === "turns" && V.turn === V.me;
+  if (window.Perfil) Perfil.turn(myTurn || (betting && !me.inRound));
+  pill("Mesa " + code);
+  // keep the finished hand on the table, faded, until the next deal
+  if (V.stage === "result") lastRound = { dealer: V.dealer, dealerTotal: V.dealerTotal, players: V.players.map((p) => ({ hand: p.hand, total: p.total, outcome: p.outcome, paid: p.paid, bet: p.bet })) };
+  if (!betting) stake = [];
+  const ghost = betting && lastRound;
+  const fresh = was && was.version !== V.version && V.stage === "result" && was.stage !== "result";
+  const dealerCards = ghost ? lastRound.dealer : V.dealer;
+  const stakeSum = stake.reduce((a, b) => a + b, 0);
+  const seatView = (p, i) => {
+    const g = ghost ? lastRound.players[i] : null;
+    const hand = g ? g.hand : p.hand, total = g ? g.total : p.total, oc = g ? g.outcome : p.outcome, paid = g ? g.paid : p.paid;
+    return { hand, total, oc, paid };
+  };
+  const others = V.players.map((p, i) => ({ p, i })).filter((x) => x.i !== V.me);
+  const mine = seatView(me, V.me);
+  const o = mine.oc && OUT[mine.oc];
+  // what sits in my betting circle
+  let circle = "";
+  if (betting && !me.inRound) circle = stackHTML(stake, "bet");
+  else if (me.bet) {
+    const won = V.stage === "result" && (mine.oc === "win" || mine.oc === "blackjack");
+    const lost = V.stage === "result" && (mine.oc === "lose" || mine.oc === "bust");
+    circle = stackHTML(split(me.bet).chips, "bet" + (lost && fresh ? " away" : lost ? " gone" : ""));
+    if (won) circle += stackHTML(split(mine.paid).chips, "bet prize" + (fresh ? " come" : ""));
+  }
+  const bank = split(betting && !me.inRound ? me.chips - stakeSum : me.chips, true);
   let status = "";
-  if (V.stage === "betting") status = me.inRound ? "Esperando que los demás apuesten" : "Haz tu apuesta";
+  if (betting) status = me.inRound ? "Esperando que los demás apuesten" : stakeSum ? `Apuestas ${stakeSum}: toca «Apostar»` : "Toca tus fichas para apostar";
   else if (V.stage === "turns") status = myTurn ? `Tu turno: tienes ${me.total}` : `Turno de ${esc(V.players[V.turn].name)}`;
   else status = V.dealerTotal > 21 ? `La banca se pasó (${V.dealerTotal})` : `La banca tiene ${V.dealerTotal}`;
   $("#app").innerHTML = `
-    <div class="felt dealer"><div class="dl">Banca${V.dealerTotal != null && V.dealer.length ? ` · <b>${V.dealerTotal}</b>` : ""}</div><div class="hd">${dealer || `<span class="empty">La banca reparte cuando todos apuesten</span>`}</div></div>
-    <div class="status">${status}</div>
-    ${V.stage === "betting" && !me.inRound ? betHTML(me) : ""}
-    <div class="table">${rows}</div>
+    <div class="tablebj">
+      <div class="dealer ${ghost ? "ghost" : ""}">
+        <div class="dl">Banca${(ghost ? lastRound.dealerTotal : V.dealerTotal) != null && dealerCards.length ? ` · <b>${ghost ? lastRound.dealerTotal : V.dealerTotal}</b>` : ""}</div>
+        <div class="hd">${dealerCards.length ? dealerCards.map((c) => (c ? cardHTML(c, "md") : backHTML("md"))).join("") : `<span class="slot"></span><span class="slot"></span>`}</div>
+        <div class="rule">La banca pide hasta 17 · Blackjack paga 3 a 2</div>
+      </div>
+      <div class="status">${status}</div>
+      ${others.length ? `<div class="others">${others.map(({ p, i }) => { const s = seatView(p, i), oo = s.oc && OUT[s.oc]; return `
+        <div class="seat ${V.turn === i ? "turn" : ""}"><div class="nm">${esc(p.name)} <small>🪙${p.chips}</small></div>
+          <div class="hd ${ghost ? "ghost" : ""}">${s.hand.map((c) => cardHTML(c, "xs")).join("")}${s.hand.length ? `<span class="tt ${s.total > 21 ? "x" : ""}">${s.total}</span>` : `<span class="muted">${betting ? (p.inRound ? "apostó " + p.bet : "apostando…") : ""}</span>`}</div>
+          ${oo && !ghost ? `<span class="oc ${oo[1]}">${oo[2]}</span>` : ""}</div>`; }).join("")}</div>` : ""}
+      <div class="myseat ${myTurn ? "turn" : ""}">
+        <div class="hd ${ghost ? "ghost" : ""}">${mine.hand.map((c) => cardHTML(c, "md")).join("")}${mine.hand.length ? `<span class="tt ${mine.total > 21 ? "x" : ""}">${mine.total}</span>` : ""}
+          ${o && !ghost ? `<span class="oc ${o[1]}">${o[0]}${mine.paid > 0 ? " +" + mine.paid : mine.paid < 0 ? " " + mine.paid : ""}</span>` : ""}</div>
+        <div class="circle ${betting && !me.inRound ? "open" : ""}" id="circle">${circle || `<span class="ph">${betting && !me.inRound ? "Apuesta aquí" : ""}</span>`}
+          ${betting && !me.inRound && stakeSum ? `<span class="sum">${stakeSum}</span>` : !betting && me.bet && !(V.stage === "result" && (mine.oc === "lose" || mine.oc === "bust")) ? `<span class="sum">${me.bet}</span>` : ""}</div>
+      </div>
+      <div class="tray">
+        <div class="stacks" id="tray">${stackHTML(bank.chips, "bank", true)}${bank.rest ? `<span class="rest">+${bank.rest}</span>` : ""}</div>
+        <div class="bal">Tus fichas <b>${me.chips}</b></div>
+      </div>
+    </div>
     <div class="log">${(V.log || []).slice(0, 2).map(esc).join(" · ")}</div>`;
   document.querySelectorAll(".card.back").forEach((e) => (e.innerHTML = ""));
-  document.querySelectorAll("[data-chip]").forEach((b) => b.onclick = () => { stake = Math.min(me.chips, stake + +b.dataset.chip); renderTable(); });
-  const cl = $("#clear"); if (cl) cl.onclick = () => { stake = 0; renderTable(); };
-  renderBar(myTurn, me);
+  if (betting && !me.inRound) {
+    // tap a pile in the tray: one chip of that value goes to the circle; tap the circle to take the last one back
+    $("#tray").querySelectorAll(".pile").forEach((p) => p.onclick = () => {
+      const d = +p.dataset.d;
+      if (stakeSum + d > me.chips) return toast("No te alcanza");
+      stake.push(d); renderTable(); const top = $("#circle .pile:last-of-type .ck:last-child"); if (top) top.classList.add("drop");
+    });
+    $("#circle").onclick = () => { if (stake.length) { stake.pop(); renderTable(); } };
+  }
+  renderBar(myTurn, me, stakeSum);
 }
-function betHTML(me) {
-  return `<div class="betbox"><div class="stake">Apuesta: <b>${stake}</b> <small>de ${me.chips}</small></div>
-    <div class="chips">${[5, 10, 25, 50].map((v) => `<button class="chip c${v}" data-chip="${v}" ${me.chips < v - 0 && stake + v > me.chips ? "disabled" : ""}>${v}</button>`).join("")}
-    <button class="chip clr" id="clear">✕</button></div></div>`;
-}
-function renderBar(myTurn, me) {
+function renderBar(myTurn, me, stakeSum) {
   const bar = $("#bar");
   if (V.stage === "result") { bar.innerHTML = `<button class="btn gold" id="nx">Siguiente mano</button>`; $("#nx").onclick = () => act("act", { move: "next" }); return; }
   if (V.stage === "betting") {
     const host = V.players[V.me].host, someone = V.players.some((p) => p.inRound);
     const btns = [];
-    if (!me.inRound) btns.push(`<button class="btn gold" id="b-bet" ${stake >= O.MIN_BET ? "" : "disabled"}>Apostar ${stake || ""}</button>`);
+    if (!me.inRound) btns.push(`<button class="btn" id="b-clear" ${stakeSum ? "" : "disabled"}>Quitar</button><button class="btn gold" id="b-bet" ${stakeSum >= O.MIN_BET ? "" : "disabled"}>Apostar ${stakeSum || ""}</button>`);
     if (host && someone && V.players.some((p) => !p.inRound)) btns.push(`<button class="btn" id="b-deal">Repartir ya</button>`);
     bar.innerHTML = btns.join("");
-    const b = $("#b-bet"); if (b) b.onclick = () => act("act", { move: "bet", amount: stake });
+    const c = $("#b-clear"); if (c) c.onclick = () => { stake = []; renderTable(); };
+    const b = $("#b-bet"); if (b) b.onclick = () => act("act", { move: "bet", amount: stakeSum });
     const d = $("#b-deal"); if (d) d.onclick = () => act("act", { move: "deal" });
     return;
   }
@@ -439,7 +520,7 @@ async function act(action, extra) {
   const v = await call(action, extra);
   busy = false;
   if (!v) return false;
-  stake = 0;
+  if (extra && extra.move === "next") stake = [];
   show(v);
   return true;
 }
