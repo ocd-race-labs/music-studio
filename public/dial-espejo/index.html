@@ -3258,7 +3258,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-22zn";
+const APP_VERSION="2026-11-23fx";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -3901,7 +3901,7 @@ const note=x=>`<p class="note">${x}</p>`;
 let sportTok=0;
 function sportChips(){const c=$("stabs");c.innerHTML="";c.style.setProperty("--n",SPORT_TABS.length);SPORT_TABS.forEach(([k,l])=>{const b=document.createElement("button");b.className="chip";b.textContent=l;b.setAttribute("aria-pressed",k===sport);
   b.onclick=()=>{sport=k;store.set("dial-sport",k);loadSports()};c.appendChild(b)})}
-async function loadSports(){sportChips();upcM=0;const tok=++sportTok;const b=$("sbody");b.innerHTML=note("Cargando…");
+async function loadSports(){sportChips();upcM=0;const tok=++sportTok;const b=$("sbody");b.classList.remove("fc-on");b.innerHTML=note("Cargando…");
   try{if(sport==="mtb")await mtb(b,tok);else if(sport==="f1")await f1(b,tok);else if(sport==="motogp")await motogp(b,tok);else if(sport==="soccer")await soccer(b,tok);else await usSport(b,sport,tok)}
   catch(e){if(tok===sportTok)b.innerHTML=note("No se pudieron traer los datos ahora. Inténtalo de nuevo en un rato.")}}
 // Solo titulares de MTB de competencia: downhill, enduro y cross country (Google News a veces trae noticias generales)
