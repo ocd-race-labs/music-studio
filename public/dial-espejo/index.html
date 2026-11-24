@@ -1510,6 +1510,8 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .np-meta .np-song,.np-meta .np-artist{white-space:nowrap;overflow:hidden;overflow-wrap:normal;padding-right:0!important;margin-right:54px}
 .np-meta .np-song.mq-on,.np-meta .np-artist.mq-on{-webkit-mask:linear-gradient(90deg,#000 0,#000 88%,transparent);mask:linear-gradient(90deg,#000 0,#000 88%,transparent)}
 .mq-i{display:inline-block;will-change:transform}
+
+.appv{grid-column:1/-1;margin:4px 0 0;text-align:center;font:400 10px var(--mono);letter-spacing:.08em;color:var(--dim);opacity:.6}
 </style>
 </head>
 <body>
@@ -1554,6 +1556,7 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
       <p class="sg-e" id="sgE"></p>
     </div>
   </section>
+  <p class="appv" id="appV" data-noi18n></p>
 </div>
 <div class="adv" id="adv" hidden role="dialog" aria-modal="true" aria-label="Búsqueda avanzada">
  <div class="adv-hd"><h2>Búsqueda avanzada</h2><button class="adv-x" id="advClose" aria-label="Cerrar búsqueda avanzada">×</button></div>
@@ -3240,7 +3243,7 @@ function ndStep(dir){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.ma
 /* Canción y artista en la pantalla de la radio: una sola línea; si no cabe, se desliza de lado (pausa al inicio y al final) para no empujar los botones */
 function mqSet(el,txt){txt=String(txt||"");if(el._t===txt&&el.firstChild)return;el._t=txt;el.innerHTML='<span class="mq-i"></span>';el.firstChild.textContent=txt;requestAnimationFrame(()=>mqRun(el))}
 function mqRun(el){const i=el.firstChild;if(!i||!el.clientWidth)return;if(el._an){el._an.cancel();el._an=null}
-  const d=Math.ceil(i.scrollWidth-el.clientWidth);el.classList.toggle("mq-on",d>4);if(d<=4||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const d=Math.ceil(i.scrollWidth-el.clientWidth);el.classList.toggle("mq-on",d>4);if(d<=4)return;
   const hold=2200,run=Math.max(1500,d/42*1000),tot=2*(hold+run),o=x=>x/tot;
   el._an=i.animate([{transform:"translateX(0)"},{transform:"translateX(0)",offset:o(hold)},{transform:`translateX(${-d}px)`,offset:o(hold+run)},{transform:`translateX(${-d}px)`,offset:o(2*hold+run)},{transform:"translateX(0)"}],{duration:tot,iterations:Infinity,easing:"ease-in-out"})}
 const mqAll=()=>["npSong","npArtist"].forEach(id=>{const e=$(id);if(e&&e.firstChild)mqRun(e)});
@@ -3255,14 +3258,13 @@ const KT={st:"",sg:"",t:null,busy:false};
 function ktSet(st,sg){const ch=KT.st!==st;KT.st=st;KT.sg=sg;if(ch){KT.busy=false;ktStation()}else if(!KT.busy&&!KT.t&&sg)KT.t=setTimeout(ktSong,6000)}
 // La radio pasa como carrusel horizontal (letras corridas de derecha a izquierda); sin canción informada, queda fija
 function ktStation(){clearTimeout(KT.t);KT.t=null;KT.busy=false;const e=$("kCn");e.classList.remove("tk","tv","wipe");e.style.removeProperty("--kz");
-  if(!KT.sg||npSheet.hidden||!npSheet.classList.contains("dialv")||matchMedia("(prefers-reduced-motion: reduce)").matches){e.textContent=KT.st;void e.offsetWidth;e.classList.add("wipe");requestAnimationFrame(fitK);if(KT.sg)KT.t=setTimeout(ktSong,6000);return}
+  if(!KT.sg||npSheet.hidden||!npSheet.classList.contains("dialv")){e.textContent=KT.st;void e.offsetWidth;e.classList.add("wipe");requestAnimationFrame(fitK);if(KT.sg)KT.t=setTimeout(ktSong,6000);return}
   e.classList.add("tk");e.style.setProperty("--kz","1.12");e.innerHTML="<i></i>";const i=e.firstChild;i.textContent=KT.st;
   const w=e.clientWidth,tw=i.offsetWidth,cw=tw/Math.max(1,KT.st.length),n=Math.max(1,Math.round((w+tw)/cw));
   i.style.setProperty("--kx0",w+"px");i.style.setProperty("--kx1",-tw+"px");i.style.setProperty("--ks",n);i.style.setProperty("--kd",(n*.13).toFixed(2)+"s");
   i.addEventListener("animationend",()=>{if(!KT.busy&&KT.sg)ktSong()},{once:true})}
 function ktSong(){KT.t=null;const e=$("kCn");if(!KT.sg)return;if(npSheet.hidden||!npSheet.classList.contains("dialv")||document.hidden){KT.t=setTimeout(ktSong,3000);return}
   KT.busy=true;e.classList.remove("wipe","tk");
-  if(matchMedia("(prefers-reduced-motion: reduce)").matches){e.textContent=KT.sg;void e.offsetWidth;e.classList.add("wipe");requestAnimationFrame(fitK);KT.t=setTimeout(ktStation,5000);return}
   // La canción sube como un teleprompter: se ve el comienzo, sube hasta el final, pausa y vuelve a la radio. Si cabe entera, queda fija.
   e.classList.add("tv");e.style.removeProperty("--kz");e.innerHTML="<i></i>";const i=e.firstChild;i.textContent=KT.sg;
   const d=Math.round(i.offsetHeight-e.clientHeight),lh=parseFloat(getComputedStyle(i).lineHeight)||20;
@@ -3683,7 +3685,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24v";
+const APP_VERSION="2026-11-24w";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -3704,6 +3706,7 @@ async function checkVersion(){
   }catch(e){}
 }
 checkVersion();
+try{$("appV").textContent="Dial Espejo · v"+APP_VERSION}catch(e){}
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkVersion(); });
 
 /* ---- Pestañas del banner (agregar aquí futuras secciones) ---- */
