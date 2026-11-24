@@ -2491,8 +2491,8 @@ $("bPP").onclick=toggle;
 const nrm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 function homePick(){return current||pzStartStation()||(typeof topList==="function"&&topList()[0])||S.find(x=>favs.has(x.n))||S.find(x=>x.cc==="CL"&&x.l>=4)||S[0]}
 // Sin señal: la app no logró conectarla, o la sonda la ve caída ahora (y no está sonando)
-function nosig(s){if(!s)return false;if(current===s&&!audio.paused&&statusTxt.startsWith("en vivo"))return false;
-  return !!(s.dead||(current===s&&statusTxt==="sin señal ahora")||HEALTH[s.n]==="down")}
+function nosig(s){if(!s)return false;if(current===s)return statusTxt==="sin señal ahora";
+  return !!(s.dead||HEALTH[s.n]==="down")}
 function altFor(s){let b=null,bv=-1;for(const x of S){if(x===s||x.dead||HEALTH[x.n])continue;const v=sim(s,x).v;if(v>bv){bv=v;b=x}}return b}
 function renderHome(){const s=homePick();if(!s)return;const live=!!current,on=live&&!audio.paused,j=live?(np.cur||{}):{};
   const song=j.song&&j.artist;const t=song?cleanSong(j.song):(live&&j.program)?j.program:s.n;
@@ -3363,7 +3363,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-23c";
+const APP_VERSION="2026-11-23d";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -4360,7 +4360,7 @@ async function soccer(b,tok){b.innerHTML=`<div class="ssel" id="ssel"></div><div
       const dd=dt.toLocaleDateString(LOCALE,{weekday:"short",day:"numeric",month:"short"});
       if(done&&w)h+=`<div class="sp-card champ won cupw"><div class="chk">🏆 ${esc("Campeón")} ${esc(String(yr))}</div><div class="chn">${tlogo(w.team)}${tname(w.team)}</div><p class="chd">${esc("Final")}: ${esc(w.score??"")}–${esc(l?.score??"")} ${esc(l?.team?.shortDisplayName||l?.team?.displayName||"")}${(c.status?.type?.detail||"").match(/pen|AET|ET/i)?" · "+esc(c.status.type.detail):""} · ${esc(dd)}${ven?" · "+esc(ven):""}</p></div>`;
       else if(!done)h+=`<div class="sp-card champ cupf"><div class="chk">${esc("Final")} · ${esc(dd)} ${esc(dt.toLocaleTimeString(LOCALE,{hour:"2-digit",minute:"2-digit"}))}</div><div class="chn cupvs">${cs.map(x=>`<span>${tlogo(x.team)}${tname(x.team)}</span>`).join('<em>vs</em>')}</div>${ven?`<p class="chd">${esc(ven)}</p>`:""}</div>`}
-    h+=koSec+(done?`<details class="topic grp-fold"><summary><h2 class="sph">${esc("Fase de grupos")}</h2><span class="meta">${esc("Ver tabla de grupos")} ›</span></summary>${tbl.replace(/^<section class="topic">/,"<div>").replace(/<\/section>$/,"</div>")}</details>`:tbl)}
+    h+=koSec+(done?`<details class="topic grp-fold"><summary><h2 class="sph">${esc("Fase de grupos")}</h2><span class="meta"><span>${esc("Ver tabla de grupos")}</span> ›</span></summary>${tbl.replace(/^<section class="topic">/,"<div>").replace(/<\/section>$/,"</div>")}</details>`:tbl)}
   else h+=tbl+koSec;
   h+=UPC;
   // Goleadores y asistencias
