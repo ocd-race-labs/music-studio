@@ -1387,6 +1387,27 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .nb-fav:active{transform:scale(.88)}
 .nb-fav.on{color:#F2B544;border-color:color-mix(in srgb,#F2B544 55%,transparent);background:rgba(242,181,68,.12)}
 .nbw .nb .ft{padding-right:34px}
+
+/* Resultados de la búsqueda avanzada con el mismo panel LED de las memorias del inicio */
+#nbs{--lc2:var(--s-noticias,#86EFAC);gap:6px;padding:8px;border-radius:14px;
+  background:radial-gradient(circle,color-mix(in srgb,var(--lc2) 8%,transparent) .7px,transparent 1.1px) 0 0/3px 3px,linear-gradient(180deg,#0b0c0d,#050506);
+  box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px rgba(255,255,255,.05),inset 0 4px 14px rgba(0,0,0,.85)}
+#nbs>.note{grid-column:1/-1;padding:6px}
+#nbs .nb{aspect-ratio:auto;min-height:96px;gap:3px;padding:8px 9px 9px;border-radius:9px;color:inherit;
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.25));border:1px solid color-mix(in srgb,var(--lc2) 16%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 2px 0 rgba(0,0,0,.6)}
+#nbs .nb:hover{border-color:color-mix(in srgb,var(--lc2) 40%,transparent);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.2))}
+#nbs .nb .led{top:9px;right:9px;width:6px;height:6px;background:color-mix(in srgb,var(--c) 45%,#1a1a1e);box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+#nbs .nb .fl{font-size:13px}
+#nbs .nb .n{font:400 12px/1.18 "Share Tech Mono",var(--mono);letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--lc2) 78%,#b9b9c0)}
+#nbs .nb .p{font:800 14px/1 "Doto",var(--mono);letter-spacing:0;color:color-mix(in srgb,var(--lc2) 60%,#6a6a72)}
+#nbs .nb .w{font:400 9.5px "Share Tech Mono",var(--mono);letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--lc2) 38%,#5c5c64)}
+#nbs .nb.on{background:linear-gradient(180deg,rgba(57,255,20,.08),rgba(0,0,0,.2));border-color:rgba(57,255,20,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 2px 0 rgba(0,0,0,.6)}
+#nbs .nb.on .n,#nbs .nb.on .p{color:#39FF14;text-shadow:0 0 8px rgba(57,255,20,.55)}
+#nbs .nb.on .w{color:rgba(57,255,20,.6)}
+#nbs .nb.on .led{background:#39FF14;box-shadow:0 0 8px rgba(57,255,20,.9)}
+#nbs .nb-fav{right:5px;bottom:5px;width:26px;height:26px;border-radius:6px;font-size:13px;background:rgba(0,0,0,.55);border-color:color-mix(in srgb,var(--lc2) 22%,transparent);color:color-mix(in srgb,var(--lc2) 60%,#8a8a93)}
+#nbs .nb-fav.on{color:#F2B544;border-color:color-mix(in srgb,#F2B544 55%,transparent);background:rgba(242,181,68,.1);text-shadow:0 0 6px rgba(242,181,68,.6)}
+#nbs .nbw .nb .ft{padding-right:28px}
 </style>
 </head>
 <body>
@@ -3444,7 +3465,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24h";
+const APP_VERSION="2026-11-24i";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
