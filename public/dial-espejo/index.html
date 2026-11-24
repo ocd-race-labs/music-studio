@@ -3281,7 +3281,7 @@ function ktStation(){clearTimeout(KT.t);KT.t=null;KT.busy=false;const e=$("kCn")
   if(!KT.sg||npSheet.hidden||!npSheet.classList.contains("dialv")){e.textContent=KT.st;void e.offsetWidth;e.classList.add("wipe");requestAnimationFrame(fitK);if(KT.sg)KT.t=setTimeout(()=>ktGap(ktSong),6000);return}
   e.classList.add("tk");e.style.setProperty("--kz","1.12");e.innerHTML="<i></i>";const i=e.firstChild;i.textContent=KT.st;
   const w=e.clientWidth,tw=i.offsetWidth,cw=tw/Math.max(1,KT.st.length),n=Math.max(1,Math.round((w+tw)/cw));
-  KT.sd=ktDur();
+  KT.sd=ktDur();e.dataset.dur=KT.sd;
   i.style.setProperty("--kx0",w+"px");i.style.setProperty("--kx1",-tw+"px");i.style.setProperty("--ks",n);i.style.setProperty("--kd",(KT.sd/1000).toFixed(2)+"s");
   i.addEventListener("animationend",()=>{if(!KT.busy&&KT.sg)ktGap(ktSong)},{once:true})}
 // Duración del nombre de la radio (su recorrido + 1 s), medida con una copia invisible; la canción usa exactamente la misma
@@ -3295,7 +3295,7 @@ function ktSong(){KT.t=null;const e=$("kCn");if(!KT.sg)return;if(npSheet.hidden|
   e.classList.add("tv");e.style.removeProperty("--kz");e.innerHTML="<i></i>";const i=e.firstChild;i.textContent=KT.sg;
   const d=Math.round(i.offsetHeight-e.clientHeight),lh=parseFloat(getComputedStyle(i).lineHeight)||20;
   // Misma duración que el nombre de la radio (incluye su segundo extra); si no se ha medido aún, se estima por el largo del nombre
-  const tot=ktDur();
+  const tot=ktDur();e.dataset.dur=tot;
   if(d<=2){KT.t=setTimeout(()=>ktGap(ktStation),tot);return}
   const hold=Math.min(1800,tot*.22),run=tot-2*hold;
   const an=i.animate([{transform:"translateY(0)"},{transform:"translateY(0)",offset:hold/tot},{transform:`translateY(${-d}px)`,offset:(hold+run)/tot},{transform:`translateY(${-d}px)`}],{duration:tot,easing:"linear",fill:"forwards"});
