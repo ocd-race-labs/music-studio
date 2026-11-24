@@ -2878,13 +2878,18 @@ setInterval(()=>{if(!wantPlay||(audio.paused&&!CU.hold)||!FO.p0||navigator.onLin
    espera a juntar ~8 s antes de seguir; como máximo 12 s de espera. Si en 4 s no llega ni 1 s de audio, cuenta como corte largo y cambia de señal. */
 const CU={hold:false,t0:0,iv:null};
 const ahead=()=>{try{const b=audio.buffered;return b.length?b.end(b.length-1)-audio.currentTime:0}catch(e){return 0}};
-function cushion(){if(CU.hold||!wantPlay)return;CU.hold=true;CU.t0=Date.now();let back=false;try{audio.pause()}catch(e){}
+/* En el teléfono (o con la app en segundo plano) NO se pausa a propósito: iOS congela los temporizadores con la pantalla apagada
+   y la radio quedaba detenida sin que nadie la reanudara. Ahí el propio reproductor retoma solo al llegar audio; el colchón queda para el computador. */
+const cuCanHold=()=>!document.hidden&&!matchMedia("(pointer:coarse)").matches;
+function cushion(){if(CU.hold||!wantPlay)return;CU.hold=true;CU.t0=Date.now();CU.paused=cuCanHold();let back=false;if(CU.paused){try{audio.pause()}catch(e){}}
   clearInterval(CU.iv);CU.iv=setInterval(()=>{const a=ahead(),w=Date.now()-CU.t0;
     if(!wantPlay||!current){cuEnd(false);return}
     if(!back&&a>=1){back=true;clearTimeout(stallT)}
     if(!back&&w>=4000){cuEnd(false);failover("corte de 4 s o más");return}
     if(a>=8||(back&&w>=12000)){cuEnd(true)}},250)}
-function cuEnd(play){clearInterval(CU.iv);const was=CU.hold;CU.hold=false;if(play&&was&&wantPlay){audio.play().catch(()=>{})}}
+function cuEnd(play){clearInterval(CU.iv);const was=CU.hold,pz=CU.paused;CU.hold=false;CU.paused=false;if(play&&was&&pz&&wantPlay){audio.play().catch(()=>{})}}
+// Si la app vuelve a primer plano con la radio detenida sin que la persona la haya parado (corte con la pantalla apagada), se reanuda
+document.addEventListener("visibilitychange",()=>{if(document.hidden||!wantPlay||!current||!audio.paused)return;if(CU.hold)cuEnd(false);audio.play().catch(()=>{})});
 audio.addEventListener("loadstart",()=>{clearInterval(CU.iv);CU.hold=false});
 
 /* Registro anónimo de cada escucha en Supabase (radio, cuánto tardó en sonar, cortes, cambios de señal; sin datos de la persona).
@@ -3606,7 +3611,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24n";
+const APP_VERSION="2026-11-24o";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
