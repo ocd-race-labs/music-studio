@@ -1349,6 +1349,9 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .grp-fold>summary::-webkit-details-marker{display:none}
 .grp-fold>summary .meta{opacity:.7}
 .grp-fold[open]>summary .meta{opacity:.45}
+
+/* Memorias: la ✕ no se monta sobre el país */
+.pre:has(.pre-x) .pre-k small{padding-right:24px}
 </style>
 </head>
 <body>
@@ -2072,16 +2075,26 @@ let favT=null;
 // La configuración de "Tu Dial" viaja junto a las favoritas, como un elemento marcado de la misma lista, para que sobreviva
 // aunque el navegador borre su almacenamiento (o se abra desde el ícono de inicio, que guarda aparte de Safari)
 const CFGP="\u0001cfg:";
-function cfgNow(){return{t:store.get("dial-cfg-t",0),theme:store.get("dial-theme",null),start:store.get("dial-start-radio",null),open:store.get("dial-open",null),bg:store.get("dial-bg",null),txt:store.get("dial-txt",null),top:store.get("dial-top3",null)}}
-function cfgTouch(){store.set("dial-cfg-t",Date.now());saveFavs()}
-function saveFavs(){store.set("dial-favs",[...favs]);try{renderSync()}catch(e){}clearTimeout(favT);favT=setTimeout(()=>rpc("dial_prefs_put",{p_key:DKEY,p_favs:[...favs,CFGP+JSON.stringify(cfgNow())]}).catch(()=>{}),600)}
+function cfgNow(){return{t:store.get("dial-cfg-t",0),ft:store.get("dial-favs-t",0),theme:store.get("dial-theme",null),start:store.get("dial-start-radio",null),open:store.get("dial-open",null),bg:store.get("dial-bg",null),txt:store.get("dial-txt",null),top:store.get("dial-top3",null)}}
+function cfgTouch(){store.set("dial-cfg-t",Date.now());saveFavs(false)}
+// Cada cambio de favoritas lleva su hora: al sincronizar gana la versión más reciente (antes se sumaban y lo borrado volvía)
+const favPut=()=>rpc("dial_prefs_put",{p_key:DKEY,p_favs:[...favs,CFGP+JSON.stringify(cfgNow())]});
+function saveFavs(touch=true){if(touch)store.set("dial-favs-t",Date.now());store.set("dial-favs",[...favs]);try{renderSync()}catch(e){}clearTimeout(favT);favT=setTimeout(()=>{favT=null;favPut().catch(()=>{})},600)}
+// Si la app se cierra o pasa a segundo plano con un cambio pendiente, se envía al tiro (iOS congela la página y el envío se perdía)
+function favFlush(){if(!favT)return;clearTimeout(favT);favT=null;try{fetch(SB+"/rest/v1/rpc/dial_prefs_put",{method:"POST",keepalive:true,headers:{apikey:SBKEY,Authorization:"Bearer "+SBKEY,"Content-Type":"application/json"},body:JSON.stringify({p_key:DKEY,p_favs:[...favs,CFGP+JSON.stringify(cfgNow())]})}).catch(()=>{})}catch(e){}}
+addEventListener("pagehide",favFlush);document.addEventListener("visibilitychange",()=>{if(document.hidden)favFlush();else if(!favT)syncFavs().then(()=>{try{sqRender()}catch(e){}})});
 async function rpc(fn,body){const r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SBKEY,Authorization:"Bearer "+SBKEY,"Content-Type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);return r.status===204?null:r.json()}
-async function syncFavs(){try{const srv=await rpc("dial_prefs_get",{p_key:DKEY});const before=favs.size;let cfg=null;
-  if(Array.isArray(srv))srv.forEach(n=>{if(String(n).startsWith(CFGP)){try{cfg=JSON.parse(n.slice(CFGP.length))}catch(e){}}else favs.add(n)});store.set("dial-favs",[...favs]);
+async function syncFavs(merge){try{const srv=await rpc("dial_prefs_get",{p_key:DKEY});if(favT)return;const before=[...favs].sort().join("|");let cfg=null;const sl=[];
+  if(Array.isArray(srv))srv.forEach(n=>{if(String(n).startsWith(CFGP)){try{cfg=JSON.parse(n.slice(CFGP.length))}catch(e){}}else sl.push(n)});
+  const lt=store.get("dial-favs-t",0),st=(cfg&&cfg.ft)||0;
+  if(!merge&&st>lt){favs.clear();sl.forEach(n=>favs.add(n));store.set("dial-favs-t",st)}   // el servidor tiene lo último (otro dispositivo o el ícono de inicio)
+  else if(merge||(!st&&!lt))sl.forEach(n=>favs.add(n));                                   // vincular otro dispositivo, o datos antiguos sin hora: se suman
+  store.set("dial-favs",[...favs]);const changed=[...favs].sort().join("|")!==before;
   if(cfg&&(cfg.t||0)>store.get("dial-cfg-t",0)){store.set("dial-cfg-t",cfg.t);store.set("dial-theme",cfg.theme);store.set("dial-start-radio",cfg.start);store.set("dial-open",cfg.open);store.set("dial-bg",cfg.bg??null);store.set("dial-txt",cfg.txt??null);if(cfg.top)store.set("dial-top3",cfg.top);
     if(typeof pzReload==="function")pzReload()}
-  if(!Array.isArray(srv)||srv.length!==favs.size+1||(!cfg&&store.get("dial-cfg-t",0)))saveFavs();
-  if(favs.size!==before){layout()}}catch(e){}}
+  const same=Array.isArray(srv)&&sl.length===favs.size&&sl.every(n=>favs.has(n));
+  if(!same||!cfg||(cfg.ft||0)!==store.get("dial-favs-t",0)||(cfg.t||0)<store.get("dial-cfg-t",0))saveFavs(false);
+  if(changed){layout()}}catch(e){}}
 function profileOf(list){
   if(!list.length) return null;
   const cnt=(f)=>{const m={};list.forEach(s=>[].concat(f(s)).forEach(x=>m[x]=(m[x]||0)+1));return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(x=>x[0])};
@@ -3054,7 +3067,7 @@ function renderSync(mode){const box=$("sync");const short=DKEY.slice(0,4).toUppe
     $("syncNo").onclick=()=>renderSync();
     $("syncOk").onclick=async()=>{const v=$("syncIn").value.trim();const m=v.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
       if(!m){$("syncMsg").textContent="No reconozco esa clave";return}
-      DKEY=m[0].toLowerCase();store.set("dial-key",DKEY);keyInUrl();await syncFavs();layout();renderSync();$("sync").insertAdjacentHTML("beforeend","<span>· vinculado</span>")};return}
+      DKEY=m[0].toLowerCase();store.set("dial-key",DKEY);keyInUrl();await syncFavs(true);layout();renderSync();$("sync").insertAdjacentHTML("beforeend","<span>· vinculado</span>")};return}
   box.innerHTML=`<span>★ Tus favoritas (${favs.size}) se respaldan en la nube con tu clave <b>${short}</b>. Para no perderlas, abre siempre la app desde el ícono o guarda tu enlace.</span><button id="syncCopy">Copiar mi enlace</button><button id="syncLink">Usar otra clave</button>`;
   $("syncCopy").onclick=async e=>{try{await navigator.clipboard.writeText(link);e.target.textContent="Copiado"}catch(_){prompt?.("Tu enlace",link)}};
   $("syncLink").onclick=()=>renderSync("link");
@@ -3363,7 +3376,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-23f";
+const APP_VERSION="2026-11-24a";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
