@@ -83,6 +83,7 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
 .dmi i+i{border-top:2px solid #bdb39a}
 .dmi b{width:7px;height:7px;border-radius:50%;background:#1d1f23}
 .a-soon{background:#e9e6df;font-size:40px}
+.a-ajz{background:repeating-conic-gradient(#ecd9b9 0 25%,#ae7c50 0 50%) 0 0/28px 28px;font-size:48px;color:#24272d;text-shadow:0 2px 0 #fff,0 4px 8px rgba(0,0,0,.3)}
 .top{display:flex;align-items:flex-start;gap:10px}
 .top .t{flex:1}
 .me{display:flex;align-items:center;gap:8px;border:none;background:rgba(255,255,255,.92);border-radius:999px;padding:6px 12px 6px 6px;font:inherit;font-weight:800;font-size:14px;color:#1d1f23;box-shadow:0 2px 8px rgba(40,30,20,.2);max-width:46vw}
@@ -119,13 +120,13 @@ h1{font-size:30px;font-weight:800;color:#fff;text-shadow:0 2px 0 rgba(80,40,0,.3
     <a class="tile" href="ludo/"><span class="go">Jugar</span><div class="art a-ludo"><div class="lg"><i></i><i></i><i></i><i></i></div></div><b>Ludo</b><span>2 a 4 jugadores</span></a>
     <a class="tile" href="culebras/"><span class="go">Jugar</span><div class="art a-cu"><div class="cu"><span>🪜</span><span>🐍</span></div></div><b>Culebras y escaleras</b><span>2 a 4 jugadores</span></a>
     <a class="tile" href="domino/"><span class="go">Jugar</span><div class="art a-dom"><div class="dmi"><i><b></b><b></b></i><i><b></b><b></b><b></b></i></div></div><b>Dominó</b><span>2 a 4 · doble seis</span></a>
-    <div class="tile soon"><span class="badge">Pronto</span><div class="art a-soon">♞</div><b>Ajedrez</b></div>
+    <a class="tile" href="ajedrez/"><span class="go">Jugar</span><div class="art a-ajz"><span>♞</span></div><b>Ajedrez</b><span>2 jugadores · o contra la máquina</span></a>
   </div>
 </div>
 <script>
 // a newer menu on the server reloads this one, so a home-screen icon never stays behind
 (() => {
-  const BUILD = "20261123003826";
+  const BUILD = "1795533246";
   const check = () => fetch("version.txt?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.text() : "")).then((v) => {
     v = v.trim();
     if (v && BUILD.indexOf("__") !== 0 && v !== BUILD) location.reload();

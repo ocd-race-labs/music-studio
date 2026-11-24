@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ajedrez · Juegos en casa</title>
+<meta name="apple-mobile-web-app-title" content="Juegos">
+<meta name="theme-color" content="#c99a5e">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<script src="../supabase.js"></script>
+<style>
+@font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(../fonts/sora-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(../fonts/sora-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url(../fonts/sora-latin-800-normal.woff2) format("woff2")}
+:root{--wood1:#c99a5e;--wood2:#b98748;--wood3:#d6aa6f;--ink:#1d1f23;--red:#d9363e;--paper:#fbfbfa;
+  --light:#ead8b8;--dark:#8a5a32;--white:#f6f1e7;--black:#24272d}
+*{box-sizing:border-box;margin:0;padding:0}
+html{min-height:100%;background:var(--wood1)}
+body{min-height:100vh;font-family:Sora,system-ui,sans-serif;color:var(--ink);
+  background:repeating-linear-gradient(92deg,rgba(255,255,255,.05) 0 2px,transparent 2px 9px),repeating-linear-gradient(88deg,rgba(90,50,10,.07) 0 1px,transparent 1px 23px),linear-gradient(180deg,var(--wood3),var(--wood1) 40%,var(--wood2));
+  background-attachment:fixed;padding-bottom:24px}
+header{display:flex;align-items:center;gap:8px;padding:12px 12px 8px;max-width:640px;margin:0 auto;position:sticky;top:0;z-index:10;
+  background:rgba(201,154,94,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-radius:0 0 16px 16px}
+.back{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.85);color:var(--ink);text-decoration:none;font-size:22px;font-weight:800}
+.logo{font-weight:800;font-size:22px;letter-spacing:.5px;color:#fff;background:var(--black);padding:4px 12px;border-radius:10px}
+.sp{flex:1}
+.pill{font-size:12px;font-weight:700;background:rgba(255,255,255,.85);border-radius:999px;padding:6px 10px;white-space:nowrap}
+main{max-width:640px;margin:0 auto;padding:8px 12px;display:grid;gap:12px}
+.panel{background:var(--paper);border-radius:20px;box-shadow:0 1px 2px rgba(0,0,0,.14),0 8px 20px rgba(40,30,20,.16);padding:16px}
+.panel h2{font-size:18px;font-weight:800;margin-bottom:10px}
+.muted{color:#6c6f75;font-size:14px}
+.btn{border:none;border-radius:14px;padding:13px 16px;font:inherit;font-weight:800;font-size:16px;background:#eeefef;color:var(--ink);cursor:pointer;min-height:48px;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--black);color:#fff}
+.btn.red{background:var(--red);color:#fff}
+.btn.wa{background:#25d366;color:#08331a}
+.btn:disabled{opacity:.4}
+.stack{display:grid;gap:10px}
+.two{display:grid;grid-template-columns:1fr auto;gap:8px}
+input[type=text]{font:inherit;font-size:17px;padding:12px 14px;border-radius:12px;border:1.5px solid #d5d6d8;background:#fff;width:100%}
+label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6c6f75;margin:4px 0 6px}
+
+
+/* players */
+.who{display:flex;align-items:center;gap:10px;background:var(--paper);border-radius:16px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,.12);min-height:48px}
+.who .ico{width:28px;height:28px;flex:none}
+.who .nm{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.who .caps{margin-left:auto;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:52%}
+.who .caps svg{width:17px;height:17px;margin-left:-5px}
+.who .caps b{font-size:12px;color:#6c6f75;margin-left:4px}
+.who.turn{box-shadow:0 0 0 3px #ffcf3f,0 1px 2px rgba(0,0,0,.12)}
+.who .tag{font-size:11px;font-weight:800;background:#ffcf3f;color:#3b2a00;border-radius:999px;padding:3px 8px;flex:none}
+
+/* board */
+.boardwrap{background:#5a3a20;border-radius:18px;padding:8px;box-shadow:0 10px 26px rgba(40,20,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
+.board{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden;aspect-ratio:1;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.sq{position:relative;display:grid;place-items:center;min-width:0;min-height:0;overflow:hidden;background:#ecd9b9;border:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sq.d{background:#ae7c50}
+.sq.last{background:#e7d27a}.sq.d.last{background:#c4a44a}
+.sq.sel{background:#f0dc6e}.sq.d.sel{background:#cfaf3e}
+.sq.hint{box-shadow:inset 0 0 0 4px #3b82f6}
+.sq svg{width:92%;height:92%;position:relative;z-index:1;pointer-events:none;filter:drop-shadow(0 2px 1px rgba(0,0,0,.25))}
+.sq.chk::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(230,30,30,.9) 0,rgba(230,30,30,.45) 45%,transparent 72%)}
+.sq.to::after{content:"";position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(20,30,20,.28);z-index:2}
+.sq.to.cap::after{width:88%;height:88%;background:none;box-shadow:inset 0 0 0 5px rgba(20,30,20,.3)}
+.sq .lf,.sq .lr{position:absolute;font-size:9px;font-weight:800;opacity:.75;z-index:0}
+.sq .lf{right:3px;bottom:1px}.sq .lr{left:3px;top:1px}
+.sq .lf,.sq .lr{color:#ae7c50}.sq.d .lf,.sq.d .lr{color:#ecd9b9}
+.status{text-align:center;font-weight:800;font-size:16px;padding:4px 0 0;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.sub{text-align:center;font-weight:700;font-size:13px;color:#fff;opacity:.92;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.actions .btn{min-height:42px;font-size:14px;padding:9px 14px;background:rgba(255,255,255,.88)}
+.actions .btn.red{background:var(--red);color:#fff}
+.moves{background:rgba(255,255,255,.88);border-radius:14px;padding:8px 10px;font-size:13px;font-weight:700;line-height:1.8;max-height:120px;overflow:auto;color:#34373d}
+.moves span{white-space:nowrap;margin-right:10px}.moves i{font-style:normal;color:#8a8d93;margin-right:3px}
+.moves .now{background:#ffcf3f;border-radius:6px;padding:1px 4px}
+.offer{background:#fff8dc;border-radius:16px;padding:12px;display:grid;gap:8px;text-align:center;font-weight:800}
+.invite{background:#fff8dc;border-radius:16px;padding:12px;display:grid;gap:8px}
+.invite b{font-size:15px}
+.rules{font-size:13px;color:#4a4d53;line-height:1.5}
+.rules li{margin-left:18px}
+.credit{font-size:11px;color:#6c6f75;line-height:1.4}
+.credit a{color:inherit}
+.tables{display:grid;gap:8px}
+.btn.back2{justify-content:space-between;background:#d9f2e1;text-align:left}
+.btn.back2 small{font-weight:700;color:#2d6a43;font-size:12px}
+.code{display:grid;grid-template-columns:1fr auto;gap:8px}
+.code input{text-transform:uppercase;letter-spacing:2px;font-weight:800}
+.mrow{display:grid;grid-template-columns:1fr auto;gap:6px}
+.mrow .del.sure{width:auto;padding:0 10px;background:#fde2e1;color:#a3262f;font-size:13px}
+.mrow .del{border:none;border-radius:14px;width:46px;background:#eeefef;font:inherit;font-weight:800;font-size:16px;color:#6c6f75}
+.btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
+.btn.tbl small{font-weight:700;color:#6c6f75;font-size:12px}
+.or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg button{border:none;border-radius:12px;min-height:44px;font:inherit;font-weight:800;font-size:14px;background:#eeefef;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:6px}
+.seg button.on{background:var(--black);color:#fff}
+.seg svg{width:22px;height:22px}
+.lv{display:grid;gap:6px}
+.lv button{border:none;border-radius:14px;min-height:50px;font:inherit;font-weight:800;font-size:15px;color:#1d1f23;display:flex;align-items:center;justify-content:space-between;padding:0 14px;cursor:pointer}
+.lv button small{font-weight:700;font-size:12px;color:#4a4d53}
+.lv [data-lv="1"]{background:#e3f5e8}.lv [data-lv="2"]{background:#d9f2e1}.lv [data-lv="3"]{background:#fff0c2}.lv [data-lv="4"]{background:#fde2e1}
+.lv [data-lv="5"]{background:#24272d;color:#ffd75e}.lv [data-lv="5"] small{color:#c9b98a}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--black);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+.overlay{position:fixed;inset:0;background:rgba(20,10,0,.55);display:grid;place-items:center;z-index:20;padding:20px}
+.overlay .box{background:var(--paper);border-radius:22px;padding:24px 20px;text-align:center;max-width:340px;width:100%}
+.overlay .big{font-size:34px;font-weight:800}
+.overlay p{margin:8px 0 16px;color:#4a4d53}
+.promo{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.promo button{border:none;border-radius:14px;background:#ecd9b9;aspect-ratio:1;display:grid;place-items:center}
+.promo svg{width:80%;height:80%}
+header .gear{display:grid;place-items:center;width:36px;height:38px;flex:none;border-radius:12px;background:rgba(255,255,255,.9);color:#1d1f23;border:none;font:inherit;font-size:17px;font-weight:800}
+header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
+</style>
+<script src="../perfil.js"></script>
+<script src="../ayuda.js"></script>
+</head>
+<body>
+<header>
+  <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
+  <span class="logo">AJEDREZ</span><span class="sp"></span>
+  <span class="pill" id="pill"></span>
+  <button class="gear" aria-label="Cómo jugar" onclick="Ayuda.open('ajedrez')" style="font-size:19px">?</button>
+  <button class="gear" id="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
+</header>
+<main id="app"></main>
+<div id="overlay"></div>
+<div id="toast"></div>
+<script type="module">
+import { Chess } from "./chess.js";
+import { Engine, LEVELS } from "./engine.js";
+
+const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
+const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); }));
+const FILES = "abcdefgh";
+const VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+const PNAME = { q: "Dama", r: "Torre", b: "Alfil", n: "Caballo" };
+const piece = (color, type) => `<svg viewBox="0 0 40 40"><use href="pieces.svg#${color}${type}"/></svg>`;
+
+/* ---------- this device ---------- */
+function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+const me = Object.assign({ name: "", pid: null, pkey: null }, load("juegos-yo") || {});
+if (!me.name) { const bingo = load("bingo-casa-v1"); if (bingo && bingo.name) me.name = bingo.name; }
+if (!me.pid) { me.pid = uid(); me.pkey = uid() + uid(); }
+save("juegos-yo", me);
+(() => { const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/); if (m) $("#back").href = "../#" + m[0]; })();
+const prefs = Object.assign({ color: "w", level: 3 }, load("ajedrez-prefs") || {});
+
+/* ---------- state ---------- */
+// state (shared online): { moves: [{from,to,promotion?}], turn, winner: null|"w"|"b"|"d", reason, offer: null|"w"|"b" }
+let mode = null;               // "local" | "online"
+let code = null, game = null, version = -1, myColor = null, sb = null;
+let state = null, chess = null;
+let sel = null, flip = false, busy = false, hint = null;
+let cpu = 0, cpuColor = null, cpuToken = 0, engine = null;
+
+let toastT;
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2500); }
+function pill(t) { $("#pill").textContent = t; }
+const newState = () => ({ moves: [], turn: "w", winner: null, reason: null, offer: null });
+function rebuild() {
+  chess = new Chess();
+  for (const m of state.moves) { try { chess.move(m); } catch (e) { break; } }
+}
+// result after a move
+function judge(s) {
+  const c = chess;
+  s.turn = c.turn();
+  if (c.isCheckmate()) { s.winner = c.turn() === "w" ? "b" : "w"; s.reason = "mate"; }
+  else if (c.isStalemate()) { s.winner = "d"; s.reason = "ahogado"; }
+  else if (c.isInsufficientMaterial()) { s.winner = "d"; s.reason = "material"; }
+  else if (c.isThreefoldRepetition()) { s.winner = "d"; s.reason = "repeticion"; }
+  else if (c.isDrawByFiftyMoves()) { s.winner = "d"; s.reason = "cincuenta"; }
+  return s;
+}
+
+/* ---------- start screen ---------- */
+function codeFromHash() { const m = location.hash.match(/(?:^#|&)p=([A-Z0-9]{4,10})/); return m ? m[1] : null; }
+function renderStart() {
+  mode = null; pill("Elige cómo jugar");
+  const segc = (c, t) => `<button data-col="${c}" class="${prefs.color === c ? "on" : ""}">${c === "r" ? "🎲" : piece(c, "k")}${t}</button>`;
+  $("#app").innerHTML = `<section class="panel stack">
+      <h2>Ajedrez</h2>
+      <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
+      <div id="open"></div>
+      <button class="btn primary" id="online">Crear mesa nueva</button>
+      <button class="btn" id="local">Dos jugadores en este teléfono</button>
+      <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
+        <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: K7MP2Q" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
+    </section>
+    <section class="panel stack">
+      <h2>Contra la máquina</h2>
+      <div><label class="lbl">Juegas con</label><div class="seg">${segc("w", "Blancas")}${segc("b", "Negras")}${segc("r", "Azar")}</div></div>
+      <div><label class="lbl">Nivel</label><div class="lv">${LEVELS.map((l, i) => `<button data-lv="${i + 1}"><span>${l.name}</span><small>${l.note}</small></button>`).join("")}</div></div>
+      <p class="credit">La máquina es <a href="https://stockfishchess.org" target="_blank" rel="noopener">Stockfish</a>, que corre en tu teléfono. La primera vez descarga unos 2 MB.</p>
+    </section>
+    <section class="panel rules"><b>Reglas</b><ul>
+      <li>Gana quien da jaque mate: el rey atacado no tiene cómo escapar.</li>
+      <li>Si el que mueve no tiene jugadas y no está en jaque, es ahogado: tablas.</li>
+      <li>También hay tablas por repetir tres veces la posición, por 50 jugadas sin capturas ni peones, o si no queda material para dar mate.</li>
+      <li>Toca una pieza para ver dónde puede ir; toca el destino para moverla.</li></ul>
+      <p class="credit" style="margin-top:8px">Piezas: Cburnett, Wikimedia Commons, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>. Motor: Stockfish, <a href="STOCKFISH-COPYING.txt" target="_blank">GPL v3</a>.</p></section>`;
+  $("#online").onclick = async () => { if (!takeName()) return; await createOnline(); };
+  $("#local").onclick = () => { takeName(true); startLocal(0); };
+  document.querySelectorAll("[data-col]").forEach((b) => b.onclick = () => { prefs.color = b.dataset.col; save("ajedrez-prefs", prefs); document.querySelectorAll("[data-col]").forEach((x) => x.classList.toggle("on", x === b)); });
+  document.querySelectorAll("[data-lv]").forEach((b) => b.onclick = () => { takeName(true); prefs.level = +b.dataset.lv; save("ajedrez-prefs", prefs); startLocal(prefs.level); });
+  const goCode = () => {
+    const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!/^[A-Z0-9]{4,10}$/.test(c)) return toast("Escribe el código de la mesa (6 letras o números)");
+    if (!takeName()) return;
+    location.hash = "p=" + c + keepHost();
+  };
+  $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  listOpen();
+  // warm the engine up while the player chooses
+  setTimeout(() => { if (!mode) getEngine(); }, 1500);
+}
+async function delTable(id) {
+  if (!client()) return false;
+  const { data, error } = await sb.rpc("ajedrez_delete", { p_id: id, p_player: me.pid, p_key: me.pkey });
+  return !error && data === true;
+}
+let openT = null;
+async function listOpen() {
+  clearTimeout(openT);
+  const box = $("#open"); if (!box || mode) return;
+  if (!client()) return;
+  const since = new Date(Date.now() - 12 * 3600 * 1000).toISOString(), fresh = Date.now() - 30 * 60 * 1000;
+  const { data } = await sb.from("ajedrez_games").select("id,host_id,white_id,black_id,white_name,black_name,updated_at,winner:state->winner").gt("updated_at", since).order("updated_at", { ascending: false }).limit(60);
+  if (!$("#open") || mode) return;
+  const all = data || [];
+  const full = (r) => r.white_id && r.black_id;
+  const hostName = (r) => (r.white_id === r.host_id ? r.white_name : r.black_name) || "alguien";
+  const busyAt = {};
+  for (const r of all) if (full(r)) for (const id of [r.white_id, r.black_id]) busyAt[id] = Math.max(busyAt[id] || 0, Date.parse(r.updated_at));
+  const myLobby = all.find((r) => r.host_id === me.pid && !full(r) && Date.parse(r.updated_at) > fresh && !(busyAt[me.pid] > Date.parse(r.updated_at)));
+  const hidden = load("juegos-ocultas") || [];
+  const mine = all.filter((r) => full(r) && (r.white_id === me.pid || r.black_id === me.pid) && !r.winner).slice(0, 4).concat(myLobby ? [myLobby] : []).filter((r) => !hidden.includes(r.id));
+  const seen = new Set();
+  const rows = all.filter((r) => {
+    if (full(r) || r.host_id === me.pid || Date.parse(r.updated_at) < fresh || seen.has(r.host_id) || hidden.includes(r.id)) return false;
+    seen.add(r.host_id);
+    return !(busyAt[r.host_id] > Date.parse(r.updated_at));
+  });
+  const rival = (r) => (r.white_id === me.pid ? r.black_name : r.white_name) || "alguien";
+  box.innerHTML = (mine.length ? `<label class="lbl">Tus partidas</label><div class="tables">${mine.map((r) => `
+      <div class="mrow"><button class="btn back2" data-join="${esc(r.id)}"><span>${full(r) ? "Volver a la partida con " + esc(rival(r)) : "Volver a tu mesa"}</span><small>${full(r) ? "en juego" : "esperando"}</small></button>
+      <button class="del" data-del="${esc(r.id)}" aria-label="Cerrar o quitar esta mesa">✕</button></div>`).join("")}</div>` : "")
+    + (rows.length ? `<label class="lbl">Mesas esperando rival</label><div class="tables">${rows.map((r) => `
+      <button class="btn tbl" data-join="${esc(r.id)}"><span>Jugar con ${esc(hostName(r))}</span><small>esperando</small></button>`).join("")}</div>` : "")
+    + (mine.length || rows.length ? `<div class="or">o</div>` : "");
+  box.querySelectorAll("[data-join]").forEach((b) => b.onclick = () => { if (!takeName()) return; location.hash = "p=" + b.dataset.join + keepHost(); });
+  box.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    const id = b.dataset.del;
+    if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "¿Seguro?"; b.classList.add("sure"); return; }
+    if (await delTable(id)) toast("Mesa cerrada");
+    else { save("juegos-ocultas", [id].concat(load("juegos-ocultas") || []).slice(0, 40)); toast("La quitamos de tu lista"); }
+    listOpen();
+  });
+  openT = setTimeout(listOpen, 4000);
+}
+function takeName(optional) {
+  const el = $("#nm"); if (!el) return true;
+  const v = (el.value || "").trim().slice(0, 24);
+  if (!v && !optional) { el.focus(); toast("Escribe tu nombre"); return false; }
+  if (v) { me.name = v; save("juegos-yo", me); }
+  return true;
+}
+
+/* ---------- the machine ---------- */
+function getEngine() {
+  if (!engine) { try { engine = new Engine("stockfish-19-lite-single.js"); } catch (e) { engine = null; } }
+  return engine;
+}
+async function cpuMove() {
+  if (mode !== "local" || !cpu || state.winner || state.turn !== cpuColor) return;
+  const token = ++cpuToken, t0 = Date.now();
+  renderGame();
+  let mv = null;
+  try { const e = getEngine(); if (e) mv = await e.levelMove(chess.fen(), cpu, chess.moves({ verbose: true })); } catch (e) { mv = null; }
+  if (!mv) { const all = chess.moves({ verbose: true }); const r = all[Math.floor(Math.random() * all.length)]; mv = { from: r.from, to: r.to, promotion: r.promotion }; }
+  const wait = 450 - (Date.now() - t0);
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  if (token !== cpuToken || mode !== "local" || state.winner || state.turn !== cpuColor) return;
+  apply(mv);
+}
+async function giveHint() {
+  if (!myTurn()) return;
+  const e = getEngine(); if (!e) return toast("La máquina no está disponible");
+  const fen = chess.fen(), n = state.moves.length;
+  toast("Pensando una pista…");
+  let mv = null; try { mv = await e.best(fen, { movetime: 900 }); } catch (err) {}
+  if (!mv || state.moves.length !== n) return;
+  hint = [mv.from, mv.to];
+  const san = new Chess(fen).move(mv).san;
+  renderBoard(); toast("Pista: " + san);
+}
+
+/* ---------- local game ---------- */
+function startLocal(lv) {
+  mode = "local"; cpu = lv || 0; cpuToken++;
+  cpuColor = cpu ? (prefs.color === "r" ? (Math.random() < 0.5 ? "w" : "b") : prefs.color === "w" ? "b" : "w") : null;
+  state = newState(); rebuild(); myColor = null; sel = null; hint = null;
+  flip = cpu ? cpuColor === "w" : false;
+  const you = me.name || "Tú";
+  game = cpu ? (cpuColor === "w" ? { white_name: "Máquina · " + LEVELS[cpu - 1].name, black_name: you } : { white_name: you, black_name: "Máquina · " + LEVELS[cpu - 1].name }) : { white_name: "Blancas", black_name: "Negras" };
+  pill(cpu ? "🤖 " + LEVELS[cpu - 1].name : "Mismo teléfono");
+  renderGame();
+  if (cpu) cpuMove();
+}
+
+/* ---------- online game ---------- */
+function client() {
+  if (!sb && window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+  return sb;
+}
+function newCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; for (let i = 0; i < 6; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+async function createOnline() {
+  if (!client()) return toast("Sin conexión");
+  for (let i = 0; i < 3; i++) {
+    const c = newCode();
+    const { error } = await sb.rpc("ajedrez_create", { p_id: c, p_player: me.pid, p_key: me.pkey, p_name: me.name, p_state: newState(), p_color: "w" });
+    if (!error) { location.hash = "p=" + c + keepHost(); return openOnline(c); }
+    if (!String(error.message || "").includes("duplicate")) { toast("No se pudo crear la partida"); return; }
+  }
+}
+const keepHost = () => { const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/); return m ? "&" + m[0] : ""; };
+async function openOnline(c) {
+  mode = "online"; code = c; sel = null;
+  if (!client()) { $("#app").innerHTML = `<section class="panel">Sin conexión. Revisa internet y vuelve a abrir el link.</section>`; return; }
+  if (!me.name) return renderJoin(c);
+  const { data, error } = await sb.rpc("ajedrez_join", { p_id: c, p_player: me.pid, p_key: me.pkey, p_name: me.name });
+  if (error) { $("#app").innerHTML = `<section class="panel stack"><h2>No encontré esa partida</h2><p class="muted">Puede que haya expirado. Crea una nueva.</p><a class="btn primary" href="./">Nueva partida</a></section>`; return; }
+  myColor = data === "w" || data === "b" ? data : null;
+  await refresh(true);
+  subscribe();
+}
+function renderJoin(c) {
+  pill("Te invitaron");
+  $("#app").innerHTML = `<section class="panel stack"><h2>Te invitaron a jugar ajedrez</h2>
+    <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Rodrigo"></div>
+    <button class="btn primary" id="go">Entrar</button></section>`;
+  const go = () => { if (takeName()) openOnline(c); };
+  $("#go").onclick = go; $("#nm").onkeydown = (e) => { if (e.key === "Enter") go(); };
+}
+let channel = null, lastSig = "";
+async function refresh(force) {
+  const { data, error } = await sb.from("ajedrez_games").select("*").eq("id", code).maybeSingle();
+  if (error || !data) return;
+  const sig = [data.version, data.white_id, data.black_id, data.white_name, data.black_name].join("|");
+  if (!force && sig === lastSig) return;
+  lastSig = sig;
+  const prevWinner = state && state.winner;
+  game = data; version = data.version; state = data.state; rebuild();
+  myColor = data.white_id === me.pid ? "w" : data.black_id === me.pid ? "b" : null;
+  flip = myColor === "b";
+  if (!busy) { sel = null; hint = null; }
+  renderGame();
+  if (state.winner && !prevWinner && !force) celebrate();
+}
+function subscribe() {
+  if (channel) return;
+  channel = sb.channel("ajedrez-" + code)
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "ajedrez_games", filter: "id=eq." + code }, () => refresh())
+    .subscribe();
+  setInterval(() => { if (!document.hidden) refresh(); }, 1500);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+}
+async function push(next) {
+  busy = true;
+  const prev = state; state = next; rebuild(); sel = null; hint = null; renderGame();
+  const { error } = await sb.rpc("ajedrez_move", { p_id: code, p_player: me.pid, p_key: me.pkey, p_state: next, p_version: version });
+  busy = false;
+  if (error) { state = prev; rebuild(); toast(String(error.message).includes("stale") ? "El tablero cambió; inténtalo de nuevo" : "No se pudo"); await refresh(true); return false; }
+  await refresh(true);
+  return true;
+}
+
+/* ---------- moves ---------- */
+function myTurn() {
+  if (!state || state.winner) return false;
+  if (mode === "local") return !cpu || state.turn !== cpuColor;
+  return myColor === state.turn && !!game.white_id && !!game.black_id;
+}
+async function apply(mv) {
+  let res;
+  try { res = chess.move(mv); } catch (e) { return; }
+  const next = judge({ ...state, moves: state.moves.concat([{ from: res.from, to: res.to, ...(res.promotion ? { promotion: res.promotion } : {}) }]), offer: null });
+  if (mode === "local") {
+    state = next; sel = null; hint = null; renderGame();
+    if (state.winner) return celebrate();
+    if (cpu && state.turn === cpuColor) cpuMove();
+    return;
+  }
+  chess.undo();
+  if ((await push(next)) && state.winner) celebrate();
+}
+function tap(sq) {
+  if (!myTurn()) {
+    if (mode === "online" && state && !state.winner) toast(!(game.white_id && game.black_id) ? "Espera a que entre tu rival" : "Es el turno de " + nameOf(state.turn));
+    return;
+  }
+  const p = chess.get(sq);
+  if (sel) {
+    const opts = chess.moves({ square: sel, verbose: true }).filter((m) => m.to === sq);
+    if (opts.length) {
+      if (opts.some((m) => m.promotion)) return askPromotion(sel, sq);
+      return apply({ from: sel, to: sq });
+    }
+  }
+  if (p && p.color === state.turn) {
+    if (!chess.moves({ square: sq }).length) { sel = null; renderBoard(); return toast(chess.inCheck() ? "Estás en jaque: esa pieza no lo evita" : "Esa pieza no se puede mover"); }
+    sel = sel === sq ? null : sq; renderBoard(); return;
+  }
+  if (sel) { sel = null; renderBoard(); }
+}
+function askPromotion(from, to) {
+  const c = state.turn;
+  $("#overlay").innerHTML = `<div class="overlay"><div class="box"><b>¿En qué se convierte tu peón?</b>
+    <div class="promo">${["q", "r", "b", "n"].map((t) => `<button data-pr="${t}" aria-label="${PNAME[t]}">${piece(c, t)}</button>`).join("")}</div>
+    <button class="btn" id="prno">Cancelar</button></div></div>`;
+  document.querySelectorAll("[data-pr]").forEach((b) => b.onclick = () => { $("#overlay").innerHTML = ""; apply({ from, to, promotion: b.dataset.pr }); });
+  $("#prno").onclick = () => { $("#overlay").innerHTML = ""; sel = null; renderBoard(); };
+}
+function undo() {
+  if (mode !== "local" || !state.moves.length) return;
+  cpuToken++;
+  let n = 1;
+  if (cpu) {
+    // back to your previous turn: your last move, and the machine's answer if it already played
+    n = state.turn === cpuColor ? 1 : 2;
+    if (state.moves.length - n < (cpuColor === "w" ? 1 : 0)) return toast("Todavía no hay jugadas tuyas para deshacer");
+  }
+  state = { ...newState(), moves: state.moves.slice(0, state.moves.length - n) };
+  rebuild(); state.turn = chess.turn(); sel = null; hint = null; renderGame();
+  if (cpu && state.turn === cpuColor) cpuMove();
+}
+
+/* ---------- render ---------- */
+const nameOf = (c) => (c === "w" ? game.white_name || "Blancas" : game.black_name || (mode === "online" ? "Esperando rival…" : "Negras"));
+function captured() {
+  // pieces each side has taken, and the material difference
+  const took = { w: [], b: [] };
+  for (const m of chess.history({ verbose: true })) if (m.captured) took[m.color].push(m.captured);
+  const sum = (a) => a.reduce((s, t) => s + VALUE[t], 0);
+  const order = "qrbnp";
+  for (const c of ["w", "b"]) took[c].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  return { took, diff: sum(took.w) - sum(took.b) };
+}
+function renderGame() {
+  if (window.Perfil) Perfil.turn(mode === "online" && myTurn());
+  const top = flip ? "w" : "b", bot = flip ? "b" : "w";
+  const turn = state.winner ? null : state.turn;
+  const cap = captured();
+  const isMe = (c) => (mode === "online" && myColor === c) || (cpu && c !== cpuColor);
+  const who = (c) => {
+    const other = c === "w" ? "b" : "w", d = c === "w" ? cap.diff : -cap.diff;
+    return `<div class="who ${turn === c ? "turn" : ""}"><span class="ico">${piece(c, "k")}</span>
+    <span class="nm">${esc(nameOf(c))}${mode === "online" && myColor === c ? " (tú)" : ""}</span>
+    ${turn === c ? `<span class="tag">${cpu && c === cpuColor ? "Piensa…" : "Juega"}</span>` : ""}
+    <span class="caps">${cap.took[c].map((t) => piece(other, t)).join("")}${d > 0 ? `<b>+${d}</b>` : ""}</span></div>`;
+  };
+  let status = "", sub = "";
+  const R = { mate: "Jaque mate", ahogado: "Ahogado: tablas", material: "Tablas: no queda material para dar mate", repeticion: "Tablas por repetición", cincuenta: "Tablas por la regla de 50 jugadas", acuerdo: "Tablas de mutuo acuerdo", rendicion: "Abandono" };
+  if (state.winner) {
+    status = state.winner === "d" ? "Tablas" : isMe(state.winner) ? "¡Ganaste!" : "Ganó " + esc(nameOf(state.winner));
+    sub = R[state.reason] || "";
+  } else if (mode === "online" && !(game.white_id && game.black_id)) status = "Esperando que entre tu rival";
+  else if (mode === "online" && !myColor) status = "Estás mirando la partida";
+  else if (cpu) status = myTurn() ? "Tu turno" : "La máquina está pensando…";
+  else status = mode === "local" ? "Juegan " + (state.turn === "w" ? "blancas" : "negras") : myTurn() ? "Tu turno" : "Turno de " + esc(nameOf(state.turn));
+  if (!state.winner && chess.inCheck()) sub = "¡Jaque!";
+  const inv = mode === "online" && !(game.white_id && game.black_id) ? `<div class="invite"><b>Invita a tu rival</b>
+      <div class="two"><button class="btn primary" id="copy">🔗 Copiar link</button><a class="btn wa" target="_blank" rel="noopener" href="${waLink()}">WhatsApp</a></div>
+      ${game.host_id === me.pid ? `<button class="btn" id="delt" style="background:none;color:#a3262f;min-height:36px">Borrar esta mesa</button>` : ""}</div>` : "";
+  const offer = mode === "online" && !state.winner && state.offer && myColor && state.offer !== myColor
+    ? `<div class="offer">${esc(nameOf(state.offer))} te ofrece tablas<div class="two" style="grid-template-columns:1fr 1fr"><button class="btn primary" id="acc">Aceptar</button><button class="btn" id="rej">Seguir jugando</button></div></div>` : "";
+  const playing = !state.winner && (mode === "local" || myColor) && (mode === "local" || (game.white_id && game.black_id));
+  const acts = [];
+  if (state.winner) acts.push(`<button class="btn red" id="again">${mode === "online" ? "Revancha" : "Jugar otra"}</button>`);
+  else if (playing) {
+    if (mode === "local" && state.moves.length) acts.push(`<button class="btn" id="undo">↶ Deshacer</button>`);
+    if (cpu) acts.push(`<button class="btn" id="hint">💡 Pista</button>`);
+    if (mode === "local" && !cpu) acts.push(`<button class="btn" id="flip">⇅ Girar</button>`);
+    if (mode === "online" && state.moves.length > 1 && state.offer !== myColor) acts.push(`<button class="btn" id="draw">½ Ofrecer tablas</button>`);
+    if (state.moves.length > 0 || mode === "online") acts.push(`<button class="btn" id="resign">Rendirse</button>`);
+  }
+  acts.push(`<a class="btn" href="./${keepHost() ? "#" + keepHost().slice(1) : ""}">Salir</a>`);
+  $("#app").innerHTML = `${inv}${offer}${who(top)}
+    <div class="boardwrap"><div class="board" id="board"></div></div>
+    ${who(bot)}
+    <div class="status">${status}</div>${sub ? `<div class="sub">${sub}</div>` : ""}
+    <div class="actions">${acts.join("")}</div>
+    ${state.moves.length ? `<div class="moves" id="mv">${moveList()}</div>` : ""}`;
+  if (mode === "online") pill(myColor ? "Partida " + code : "Mirando " + code);
+  renderBoard();
+  const mv = $("#mv"); if (mv) mv.scrollTop = mv.scrollHeight;
+  const on = (id, f) => { const e = $("#" + id); if (e) e.onclick = () => f(e); };
+  on("copy", copyLink);
+  on("delt", async (dt) => {
+    if (dt.dataset.sure !== "1") { dt.dataset.sure = "1"; dt.textContent = "¿Seguro? Toca otra vez para borrarla"; return; }
+    if (await delTable(code)) location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); else toast("No se pudo borrar");
+  });
+  on("again", again); on("resign", resign); on("undo", undo); on("hint", giveHint);
+  on("flip", () => { flip = !flip; renderGame(); });
+  on("draw", async () => { if (await push({ ...state, offer: myColor })) toast("Ofreciste tablas"); });
+  on("acc", async () => { if (await push({ ...state, offer: null, winner: "d", reason: "acuerdo" })) celebrate(); });
+  on("rej", () => push({ ...state, offer: null }));
+}
+function moveList() {
+  const h = chess.history();
+  let out = "";
+  for (let i = 0; i < h.length; i += 2) out += `<span><i>${i / 2 + 1}.</i>${esc(h[i])}${h[i + 1] ? " " + esc(h[i + 1]) : ""}</span>`;
+  return out;
+}
+function renderBoard() {
+  const el = $("#board"); if (!el) return;
+  const board = chess.board();
+  const targets = new Map();
+  if (sel && myTurn()) for (const m of chess.moves({ square: sel, verbose: true })) targets.set(m.to, !!m.captured);
+  const hist = chess.history({ verbose: true }), lastM = hist[hist.length - 1];
+  const last = lastM ? [lastM.from, lastM.to] : [];
+  let chk = null;
+  if (chess.inCheck()) for (const row of board) for (const p of row) if (p && p.type === "k" && p.color === chess.turn()) chk = p.square;
+  let h = "";
+  for (let k = 0; k < 64; k++) {
+    const r = flip ? 7 - Math.floor(k / 8) : Math.floor(k / 8), c = flip ? 7 - (k % 8) : k % 8;
+    const sq = FILES[c] + (8 - r), p = board[r][c], dark = (r + c) % 2 === 1;
+    const cls = ["sq", dark ? "d" : "", last.includes(sq) ? "last" : "", sel === sq ? "sel" : "", targets.has(sq) ? "to" : "", targets.get(sq) ? "cap" : "",
+      chk === sq ? "chk" : "", hint && hint.includes(sq) ? "hint" : ""].join(" ");
+    const lf = (flip ? r === 0 : r === 7) ? `<span class="lf">${FILES[c]}</span>` : "";
+    const lr = (flip ? c === 7 : c === 0) ? `<span class="lr">${8 - r}</span>` : "";
+    h += `<button class="${cls}" data-sq="${sq}" aria-label="${sq}">${lf}${lr}${p ? piece(p.color, p.type) : ""}</button>`;
+  }
+  el.innerHTML = h;
+  el.querySelectorAll(".sq").forEach((b) => b.onclick = () => tap(b.dataset.sq));
+}
+function celebrate() {
+  const w = state.winner;
+  const isMe = (mode === "online" && myColor === w) || (cpu && w !== "d" && w !== cpuColor);
+  const R = { mate: "Jaque mate.", ahogado: "Ahogado: el que movía no tenía jugadas y no estaba en jaque.", material: "No queda material para dar mate.", repeticion: "La misma posición se repitió tres veces.", cincuenta: "50 jugadas sin capturas ni movimientos de peón.", acuerdo: "De mutuo acuerdo.", rendicion: "Su rival se rindió." };
+  const title = w === "d" ? "Tablas" : isMe ? "¡Ganaste!" : "¡Ganó " + esc(nameOf(w)) + "!";
+  $("#overlay").innerHTML = `<div class="overlay" id="ov"><div class="box"><div class="big">${title}</div>
+    <p>${R[state.reason] || ""}</p><button class="btn primary" id="ovok">Seguir</button></div></div>`;
+  $("#ovok").onclick = () => ($("#overlay").innerHTML = "");
+}
+async function again() {
+  if (mode === "local") return startLocal(cpu);
+  const { error } = await sb.rpc("ajedrez_rematch", { p_id: code, p_player: me.pid, p_key: me.pkey, p_state: newState() });
+  if (error) return toast("No se pudo empezar la revancha");
+  refresh(true);
+}
+async function resign(btn) {
+  if (!btn.dataset.sure) { btn.dataset.sure = 1; btn.textContent = "¿Seguro? Toca otra vez"; btn.classList.add("red"); return; }
+  const loser = cpu ? (cpuColor === "w" ? "b" : "w") : mode === "local" ? state.turn : myColor;
+  const next = { ...state, winner: loser === "w" ? "b" : "w", reason: "rendicion", offer: null };
+  if (mode === "local") { cpuToken++; state = next; renderGame(); return celebrate(); }
+  if (await push(next)) celebrate();
+}
+const playLink = () => location.origin + location.pathname + "#p=" + code;
+const inviteText = () => "¿Jugamos ajedrez? Entra aquí: " + playLink();
+const waLink = () => "https://wa.me/?text=" + encodeURIComponent(inviteText());
+async function copyLink() {
+  try { await navigator.clipboard.writeText(inviteText()); return toast("Link copiado; pégalo en WhatsApp"); } catch (e) {}
+  try { const ta = document.createElement("textarea"); ta.value = inviteText(); document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); toast("Link copiado"); }
+  catch (e) { toast("No se pudo copiar; usa WhatsApp"); }
+}
+
+/* ---------- boot ---------- */
+const c0 = codeFromHash();
+if (c0) openOnline(c0); else renderStart();
+window.addEventListener("hashchange", () => { const c = codeFromHash(); if (c && c !== code) location.reload(); if (!c && mode === "online") location.reload(); });
+</script>
+</body>
+</html>

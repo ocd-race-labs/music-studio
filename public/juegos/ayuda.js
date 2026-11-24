@@ -14,6 +14,18 @@
   const arrow = `<span class="ay-ar">→</span>`;
 
   const G = {
+    ajedrez: { name: "Ajedrez", pages: [
+      { t: "Cómo se mueven", rows: [
+        [big("♙"), "El peón avanza 1 casilla (2 en su primera jugada) y come en diagonal. Al llegar al fondo se corona: eliges en qué se convierte."],
+        [big("♘"), "El caballo salta en L: dos casillas y una al lado. Es la única pieza que salta."],
+        [big("♗") + big("♖"), "El alfil va en diagonal y la torre en línea recta, todo lo que quieran mientras no haya piezas en medio."],
+        [big("♕") + big("♔"), "La dama combina torre y alfil. El rey avanza una casilla en cualquier dirección."]] },
+      { t: "Ganar o empatar", rows: [
+        [chip("Jaque"), "Si atacan a tu rey, tienes que salvarlo en tu jugada."],
+        [chip("Mate") + big("🏆"), "Jaque mate: el rey atacado no tiene cómo escapar. Gana quien lo da."],
+        [chip("½"), "Tablas: ahogado, repetir 3 veces la posición, 50 jugadas sin capturas ni peones, o sin material para dar mate."],
+        [big("🤖"), "Contra la máquina: 5 niveles, Pista te sugiere una jugada y Deshacer vuelve a tu turno anterior."]] },
+    ] },
     domino: { name: "Dominó", pages: [
       { t: "Poner fichas", rows: [
         [chip("🁢 × 7"), "Cada uno recibe 7 fichas. La primera mano la abre el doble más alto."],
