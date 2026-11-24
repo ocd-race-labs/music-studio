@@ -1519,6 +1519,17 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .np.dialv .k-c span.tv{height:calc(11.6cqw*1.12*4)}
 .np.dialv .k-c span.tv i{font-size:11.6cqw}
 .np.dialv .k-c em{margin-top:7.6cqw;padding-top:4.9cqw;font-size:6.1cqw}
+
+/* Fila de botones de la radio: ★ ⇄ ■ ♫ 👍 — el play al centro y dos botones cuadrados a cada lado; ↗ (web) pasa a la fila de íconos redondos */
+.np-meta .np-song,.np-meta .np-artist{margin-right:0}
+.np-ctl .likew{display:flex}
+.np-ctl .np-likew{position:relative;top:auto;right:auto}
+.np-ctl .np-like{all:unset;box-sizing:border-box;width:48px;height:48px;border-radius:16px;border:1px solid rgba(237,237,242,.14);background:rgba(237,237,242,.06);display:grid;place-items:center;cursor:pointer;color:#EDEDF2}
+.np-ctl .np-like svg{width:22px;height:22px}
+.np-ctl .np-likew .like-pick{top:auto;bottom:calc(100% + 8px);right:0}
+.np-web{font:500 17px/1 var(--sans,system-ui)!important;font-style:normal!important;text-decoration:none;color:var(--muted)}
+.np-web[hidden]{display:none}
+.np-lkt{margin-top:2px;min-height:0}
 </style>
 </head>
 <body>
@@ -1629,19 +1640,18 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
     </div>
     <div class="np-stage"><div class="np-knob" id="npKnob" aria-hidden="true"><b class="k-tk"></b><b class="k-led"></b><i></i><b class="k-gl"></b><b class="k-c"><span id="kCn"></span><small id="kCs"></small><em>toca para ver la carátula</em></b></div><div class="np-cover" id="npCover"></div><span class="np-stat" id="npStat" hidden></span><button class="np-dv" id="npDV" aria-label="Ver el dial en vez de la carátula"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Dial</button></div>
     <div class="np-meta">
-      <div class="likew np-likew"><button class="np-like" id="npLike" aria-label="Me gusta esta canción" title="Me gusta · mantén apretado para elegir el ícono"></button><div class="like-pick" id="npLikePick" hidden role="group" aria-label="Ícono para me gusta"><button data-i="up" aria-label="Pulgar arriba"></button><button data-i="heart" aria-label="Corazón"></button></div></div>
       <div class="np-song" id="npSong"></div>
       <div class="np-artist" id="npArtist"></div>
       <div class="np-album" id="npAlbum"></div>
       <div class="lk-toast np-lkt" id="npLkT" role="status" aria-live="polite"></div>
     </div>
-    <div class="np-lrow"><div class="np-links" id="npLinks"></div><button class="np-it np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button><button class="np-it" id="npInfoT" aria-label="Información de la radio" aria-expanded="false">i</button></div>
+    <div class="np-lrow"><div class="np-links" id="npLinks"></div><a class="np-it np-web" id="npWeb" target="_blank" rel="noopener" aria-label="Web de la radio">↗</a><button class="np-it np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button><button class="np-it" id="npInfoT" aria-label="Información de la radio" aria-expanded="false">i</button></div>
     <div class="np-ctl">
       <button class="np-b" id="npFav" aria-label="Favorita">☆</button>
       <button class="np-b" id="npAlt" aria-label="Probar otra señal">⇄</button>
       <button class="np-pp" id="npPP" aria-label="Detener">■</button>
-      <a class="np-b" id="npWeb" target="_blank" rel="noopener" aria-label="Web de la radio">↗</a>
       <button class="np-b np-sgt" id="npSongsT" aria-label="Mis canciones" aria-pressed="false" aria-controls="npSongs"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M4 10.5h9M4 15h6"/><path d="M17 17.5V5.5l4-1"/><circle cx="15" cy="17.5" r="2"/></svg><b class="sgt-n" id="npSongsN"></b></button>
+      <div class="likew np-likew"><button class="np-b np-like" id="npLike" aria-label="Me gusta esta canción" title="Me gusta · mantén apretado para elegir el ícono"></button><div class="like-pick" id="npLikePick" hidden role="group" aria-label="Ícono para me gusta"><button data-i="up" aria-label="Pulgar arriba"></button><button data-i="heart" aria-label="Corazón"></button></div></div>
     </div>
     <div class="np-info" id="npInfo" hidden></div>
     <div class="np-songs" id="npSongs" hidden><div class="nps-h"><span>Mis canciones</span><b id="npSongsC"></b></div><div class="nps-l" id="npSongsL" data-noi18n></div><p class="sg-e" id="npSongsE"></p></div>
@@ -3695,7 +3705,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24z";
+const APP_VERSION="2026-11-25a";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
