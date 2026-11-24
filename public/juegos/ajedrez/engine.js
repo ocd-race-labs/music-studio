@@ -22,9 +22,11 @@ export class Engine {
     this.w = new Worker(path);
     this.lines = [];
     this.waiters = [];
+    this.listeners = [];
     this.dead = false;
     this.w.onmessage = (e) => {
       const line = typeof e.data === "string" ? e.data : String(e.data);
+      for (const f of this.listeners) f(line);
       for (const wt of this.waiters.slice()) if (wt.test(line)) { this.waiters.splice(this.waiters.indexOf(wt), 1); wt.done(line); }
     };
     this.w.onerror = () => { this.dead = true; for (const wt of this.waiters.splice(0)) wt.fail(new Error("engine")); };
@@ -57,6 +59,7 @@ export class Engine {
       this.send("setoption name UCI_LimitStrength value " + (opt.elo ? "true" : "false"));
       if (opt.elo) this.send("setoption name UCI_Elo value " + opt.elo);
       this.send("setoption name Skill Level value " + (full || opt.elo ? 20 : opt.skill));
+      this.send("setoption name MultiPV value 1");
       const ready = this.wait((l) => l === "readyok");
       this.send("isready"); await ready;
       const bm = this.wait((l) => l.startsWith("bestmove"), 30000);
@@ -66,6 +69,37 @@ export class Engine {
       const uci = line.split(/\s+/)[1];
       if (!uci || uci === "(none)") return null;
       return { from: uci.slice(0, 2), to: uci.slice(2, 4), ...(uci[4] ? { promotion: uci[4] } : {}) };
+    });
+  }
+  // full-strength look at a position: the n best moves with their score for the side to move
+  // → [{ move: {from,to,promotion?}, cp, mate }] best first (cp in centipawns; mate in moves, negative when getting mated)
+  analyse(fen, opt = {}) {
+    const n = opt.multipv || 1;
+    return this.queue(async () => {
+      if (this.dead) throw new Error("engine");
+      this.send("setoption name UCI_LimitStrength value false");
+      this.send("setoption name Skill Level value 20");
+      this.send("setoption name MultiPV value " + n);
+      const ready = this.wait((l) => l === "readyok");
+      this.send("isready"); await ready;
+      const lines = {};
+      const f = (l) => {
+        if (!l.startsWith("info") || l.indexOf(" pv ") < 0 || /bound/.test(l)) return;
+        const k = +((l.match(/ multipv (\d+)/) || [])[1] || 1);
+        const sc = l.match(/ score (cp|mate) (-?\d+)/), pv = l.match(/ pv (\S+)/);
+        if (!sc || !pv) return;
+        lines[k] = { uci: pv[1], cp: sc[1] === "cp" ? +sc[2] : null, mate: sc[1] === "mate" ? +sc[2] : null };
+      };
+      this.listeners.push(f);
+      const bm = this.wait((l) => l.startsWith("bestmove"), 30000);
+      this.send("position fen " + fen);
+      this.send(opt.depth ? "go depth " + opt.depth : "go movetime " + (opt.movetime || 800));
+      try { await bm; } finally { this.listeners.splice(this.listeners.indexOf(f), 1); }
+      this.send("setoption name MultiPV value 1");
+      return Object.keys(lines).map(Number).sort((a, b) => a - b).map((k) => {
+        const u = lines[k].uci;
+        return { move: { from: u.slice(0, 2), to: u.slice(2, 4), ...(u[4] ? { promotion: u[4] } : {}) }, cp: lines[k].cp, mate: lines[k].mate };
+      });
     });
   }
   // a move at one of the five levels; legal: chess.js verbose moves for the position

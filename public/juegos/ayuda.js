@@ -24,7 +24,8 @@
         [chip("Jaque"), "Si atacan a tu rey, tienes que salvarlo en tu jugada."],
         [chip("Mate") + big("🏆"), "Jaque mate: el rey atacado no tiene cómo escapar. Gana quien lo da."],
         [chip("½"), "Tablas: ahogado, repetir 3 veces la posición, 50 jugadas sin capturas ni peones, o sin material para dar mate."],
-        [big("🤖"), "Contra la máquina: 5 niveles, Pista te sugiere una jugada y Deshacer vuelve a tu turno anterior."]] },
+        [big("🤖"), "Contra la máquina: 5 niveles. En Muy fácil, Fácil y Medio, Alternativas te muestra tus 3 mejores jugadas."],
+        [big("⏱") + big("📚"), "Reloj opcional (obligatorio en Campeón mundial). Tus partidas se guardan solas: repásalas, analízalas o bórralas en Mis partidas."]] },
     ] },
     domino: { name: "Dominó", pages: [
       { t: "Poner fichas", rows: [

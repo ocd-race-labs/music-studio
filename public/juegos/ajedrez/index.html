@@ -44,7 +44,7 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .who{display:flex;align-items:center;gap:10px;background:var(--paper);border-radius:16px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,.12);min-height:48px}
 .who .ico{width:28px;height:28px;flex:none}
 .who .nm{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.who .caps{margin-left:auto;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:52%}
+.who .caps{margin-left:auto;min-height:1px;display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:52%}
 .who .caps svg{width:17px;height:17px;margin-left:-5px}
 .who .caps b{font-size:12px;color:#6c6f75;margin-left:4px}
 .who.turn{box-shadow:0 0 0 3px #ffcf3f,0 1px 2px rgba(0,0,0,.12)}
@@ -109,6 +109,29 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .promo{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
 .promo button{border:none;border-radius:14px;background:#ecd9b9;aspect-ratio:1;display:grid;place-items:center}
 .promo svg{width:80%;height:80%}
+.seg.tc{grid-template-columns:repeat(5,1fr)}.seg.tc button{font-size:12px;padding:0 2px}
+.clk{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;background:#eeefef;border-radius:8px;padding:3px 7px;flex:none}
+.who.turn .clk.run{background:#24272d;color:#fff}.clk.low{background:#d9363e !important;color:#fff !important}
+.alts{background:rgba(255,255,255,.92);border-radius:16px;padding:10px;display:grid;gap:6px}
+.alts b{font-size:13px}.alts button{border:none;border-radius:12px;background:#eef3fb;font:inherit;font-weight:800;font-size:14px;min-height:42px;display:flex;justify-content:space-between;align-items:center;padding:0 12px;color:#1d1f23}
+.alts button.on{box-shadow:inset 0 0 0 3px #3b82f6}.alts small{font-weight:700;color:#4a4d53;font-size:12px}
+.arch{display:grid;gap:8px}
+.arow{display:grid;grid-template-columns:1fr auto;gap:6px}
+.arow .btn{justify-content:space-between;text-align:left;background:#f3f3f1;font-size:14px;min-height:54px}
+.arow .btn small{display:block;font-weight:600;color:#6c6f75;font-size:12px}
+.res{font-size:12px;font-weight:800;border-radius:999px;padding:4px 9px;flex:none}
+.res.win{background:#d9f2e1;color:#1f6b3a}.res.loss{background:#fde2e1;color:#a3262f}.res.draw{background:#eeefef;color:#4a4d53}
+.arow .del{border:none;border-radius:14px;width:46px;background:#eeefef;font:inherit;font-weight:800;font-size:16px;color:#6c6f75}
+.arow .del.sure{width:auto;padding:0 10px;background:#fde2e1;color:#a3262f;font-size:13px}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.nav .btn{min-height:44px;background:rgba(255,255,255,.9);font-size:18px}
+.graph{width:100%;height:64px;display:block;border-radius:10px;background:#3a3d44;cursor:pointer}
+.note{background:rgba(255,255,255,.92);border-radius:14px;padding:10px 12px;font-size:14px;font-weight:700;text-align:center}
+.moves span.mk{cursor:pointer}.moves b.err{color:#d9363e}.moves b.inac{color:#d98a00}
+.rank{display:grid;gap:6px}
+.rk{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;background:#f3f3f1;border-radius:12px;padding:8px 10px;font-size:14px}
+.rk.me{background:#fff4d0}.rk .p{font-weight:800;color:#6c6f75;text-align:center}.rk .n{font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .n small{display:block;font-weight:600;color:#6c6f75;font-size:12px}.rk .e{font-weight:800;font-size:16px}
 header .gear{display:grid;place-items:center;width:36px;height:38px;flex:none;border-radius:12px;background:rgba(255,255,255,.9);color:#1d1f23;border:none;font:inherit;font-size:17px;font-weight:800}
 header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 </style>
@@ -138,6 +161,8 @@ const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx
 const FILES = "abcdefgh";
 const VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 const PNAME = { q: "Dama", r: "Torre", b: "Alfil", n: "Caballo" };
+// moves in Spanish notation: C caballo, A alfil, T torre, D dama, R rey
+const es = (san) => String(san).replace(/[NBRQK]/g, (m) => ({ N: "C", B: "A", R: "T", Q: "D", K: "R" }[m]));
 const piece = (color, type) => `<svg viewBox="0 0 40 40"><use href="pieces.svg#${color}${type}"/></svg>`;
 
 /* ---------- this device ---------- */
@@ -148,7 +173,10 @@ if (!me.name) { const bingo = load("bingo-casa-v1"); if (bingo && bingo.name) me
 if (!me.pid) { me.pid = uid(); me.pkey = uid() + uid(); }
 save("juegos-yo", me);
 (() => { const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/); if (m) $("#back").href = "../#" + m[0]; })();
-const prefs = Object.assign({ color: "w", level: 3 }, load("ajedrez-prefs") || {});
+const prefs = Object.assign({ color: "w", level: 3, tc: "0" }, load("ajedrez-prefs") || {});
+const TCS = [["0", "Sin reloj"], ["3+2", "3 + 2"], ["5+0", "5 min"], ["10+0", "10 min"], ["15+10", "15 + 10"]];
+const tcOf = (ck) => (ck && ck.base ? ck.base / 60000 + "+" + ck.inc / 1000 : "0");
+const tcName = (t) => (TCS.find((x) => x[0] === t) || [0, t])[1];
 
 /* ---------- state ---------- */
 // state (shared online): { moves: [{from,to,promotion?}], turn, winner: null|"w"|"b"|"d", reason, offer: null|"w"|"b" }
@@ -157,11 +185,61 @@ let code = null, game = null, version = -1, myColor = null, sb = null;
 let state = null, chess = null;
 let sel = null, flip = false, busy = false, hint = null;
 let cpu = 0, cpuColor = null, cpuToken = 0, engine = null;
+let alts = null, altsBusy = false;          // the machine's suggestions (levels 1 to 3)
+let offset = load("ajedrez-offset");       // this phone's clock minus the server's, in ms
+let flagging = 0;
 
 let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2500); }
 function pill(t) { $("#pill").textContent = t; }
-const newState = () => ({ moves: [], turn: "w", winner: null, reason: null, offer: null });
+function newState(tc) {
+  const s = { moves: [], turn: "w", winner: null, reason: null, offer: null };
+  const m = String(tc || "0").match(/^(\d+)\+(\d+)$/);
+  if (m && +m[1] > 0) { const base = +m[1] * 60000; s.clock = { base, inc: +m[2] * 1000, w: base, b: base, since: null }; }
+  return s;
+}
+/* ---------- clock ---------- */
+const timed = (c) => !(mode === "local" && cpu && c === cpuColor);
+const nowMs = () => (mode === "online" ? Date.now() - (offset || 0) : Date.now());
+function remaining(c) {
+  const ck = state && state.clock; if (!ck) return null;
+  let r = ck[c];
+  if (!state.winner && state.turn === c && ck.since != null && state.moves.length >= 2 && timed(c)) r -= nowMs() - ck.since;
+  return Math.max(0, r);
+}
+function clockAfterMove(st) {
+  if (!st.clock) return undefined;
+  const ck = { ...st.clock }, mover = st.turn, now = Date.now();
+  // each side's first move is not timed
+  if (timed(mover) && st.moves.length >= 2 && ck.since != null) ck[mover] = ck[mover] - (now - ck.since) + ck.inc;
+  ck.since = now;
+  return ck;
+}
+const fmt = (ms) => { const t = Math.ceil(ms / 1000), m = Math.floor(t / 60), x = t % 60; return ms < 10000 ? (ms / 1000).toFixed(1).replace(".", ",") : m + ":" + String(x).padStart(2, "0"); };
+// can this side still give mate?
+function canMate(c) {
+  const left = []; for (const row of chess.board()) for (const p of row) if (p && p.color === c && p.type !== "k") left.push(p.type);
+  return !(left.length === 0 || (left.length === 1 && (left[0] === "b" || left[0] === "n")));
+}
+function tick() {
+  if (!state || !state.clock || state.winner || !chess) return;
+  for (const el of document.querySelectorAll(".clk[data-c]")) {
+    const r = remaining(el.dataset.c); el.textContent = fmt(r); el.classList.toggle("low", r < 20000);
+  }
+  const c = state.turn, other = c === "w" ? "b" : "w";
+  if (!timed(c) || state.moves.length < 2 || remaining(c) > 0) return;
+  if (mode === "local") {
+    cpuToken++;
+    state = { ...state, clock: { ...state.clock, [c]: 0, since: null }, winner: canMate(other) ? other : "d", reason: "tiempo", offer: null };
+    renderGame(); celebrate();
+  } else if (mode === "online" && myColor && flagging !== version) {
+    flagging = version;
+    sb.rpc("ajedrez_flag", { p_id: code, p_player: me.pid, p_key: me.pkey, p_draw: !canMate(other) }).then(({ error }) => {
+      if (error) setTimeout(() => { if (flagging === version) flagging = 0; }, 1000); else refresh(true);
+    });
+  }
+}
+setInterval(tick, 200);
 function rebuild() {
   chess = new Chess();
   for (const m of state.moves) { try { chess.move(m); } catch (e) { break; } }
@@ -181,12 +259,13 @@ function judge(s) {
 /* ---------- start screen ---------- */
 function codeFromHash() { const m = location.hash.match(/(?:^#|&)p=([A-Z0-9]{4,10})/); return m ? m[1] : null; }
 function renderStart() {
-  mode = null; pill("Elige cómo jugar");
+  mode = null; rv = null; pill("Elige cómo jugar");
   const segc = (c, t) => `<button data-col="${c}" class="${prefs.color === c ? "on" : ""}">${c === "r" ? "🎲" : piece(c, "k")}${t}</button>`;
   $("#app").innerHTML = `<section class="panel stack">
       <h2>Ajedrez</h2>
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="open"></div>
+      <div><label class="lbl">Reloj</label><div class="seg tc">${TCS.map(([k, t]) => `<button data-tc="${k}" class="${prefs.tc === k ? "on" : ""}">${t}</button>`).join("")}</div></div>
       <button class="btn primary" id="online">Crear mesa nueva</button>
       <button class="btn" id="local">Dos jugadores en este teléfono</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
@@ -196,7 +275,11 @@ function renderStart() {
       <h2>Contra la máquina</h2>
       <div><label class="lbl">Juegas con</label><div class="seg">${segc("w", "Blancas")}${segc("b", "Negras")}${segc("r", "Azar")}</div></div>
       <div><label class="lbl">Nivel</label><div class="lv">${LEVELS.map((l, i) => `<button data-lv="${i + 1}"><span>${l.name}</span><small>${l.note}</small></button>`).join("")}</div></div>
-      <p class="credit">La máquina es <a href="https://stockfishchess.org" target="_blank" rel="noopener">Stockfish</a>, que corre en tu teléfono. La primera vez descarga unos 2 MB.</p>
+      <p class="credit">Muy fácil, Fácil y Medio tienen el botón Alternativas, que te muestra tus mejores jugadas. Contra la máquina solo corre tu reloj; en Campeón mundial el reloj es obligatorio (10 minutos si elegiste Sin reloj). La máquina es <a href="https://stockfishchess.org" target="_blank" rel="noopener">Stockfish</a>, que corre en tu teléfono. La primera vez descarga unos 2 MB.</p>
+    </section>
+    <section class="panel stack">
+      <button class="btn" id="arch">📚 Mis partidas</button>
+      <div id="rank"></div>
     </section>
     <section class="panel rules"><b>Reglas</b><ul>
       <li>Gana quien da jaque mate: el rey atacado no tiene cómo escapar.</li>
@@ -206,6 +289,9 @@ function renderStart() {
       <p class="credit" style="margin-top:8px">Piezas: Cburnett, Wikimedia Commons, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>. Motor: Stockfish, <a href="STOCKFISH-COPYING.txt" target="_blank">GPL v3</a>.</p></section>`;
   $("#online").onclick = async () => { if (!takeName()) return; await createOnline(); };
   $("#local").onclick = () => { takeName(true); startLocal(0); };
+  $("#arch").onclick = () => { takeName(true); renderArchive(); };
+  document.querySelectorAll("[data-tc]").forEach((b) => b.onclick = () => { prefs.tc = b.dataset.tc; save("ajedrez-prefs", prefs); document.querySelectorAll("[data-tc]").forEach((x) => x.classList.toggle("on", x === b)); });
+  renderRanking();
   document.querySelectorAll("[data-col]").forEach((b) => b.onclick = () => { prefs.color = b.dataset.col; save("ajedrez-prefs", prefs); document.querySelectorAll("[data-col]").forEach((x) => x.classList.toggle("on", x === b)); });
   document.querySelectorAll("[data-lv]").forEach((b) => b.onclick = () => { takeName(true); prefs.level = +b.dataset.lv; save("ajedrez-prefs", prefs); startLocal(prefs.level); });
   const goCode = () => {
@@ -288,23 +374,32 @@ async function cpuMove() {
   if (token !== cpuToken || mode !== "local" || state.winner || state.turn !== cpuColor) return;
   apply(mv);
 }
-async function giveHint() {
-  if (!myTurn()) return;
+// levels 1 to 3: the three best moves for you, said in words
+function altLabel(a) {
+  if (a.mate != null) return a.mate > 0 ? "¡Mate en " + a.mate + "!" : "Te dan mate";
+  const v = a.cp, n = Math.abs(v) < 5 ? "0,0" : (v > 0 ? "+" : "") + (v / 100).toFixed(1).replace(".", ",");
+  const w = v >= 300 ? "Ganas con claridad" : v >= 100 ? "Te da ventaja" : v > -100 ? "Parejo" : v > -300 ? "Quedas peor" : "Pierdes material";
+  return w + " (" + n + ")";
+}
+async function giveAlts() {
+  if (!myTurn() || altsBusy) return;
   const e = getEngine(); if (!e) return toast("La máquina no está disponible");
   const fen = chess.fen(), n = state.moves.length;
-  toast("Pensando una pista…");
-  let mv = null; try { mv = await e.best(fen, { movetime: 900 }); } catch (err) {}
-  if (!mv || state.moves.length !== n) return;
-  hint = [mv.from, mv.to];
-  const san = new Chess(fen).move(mv).san;
-  renderBoard(); toast("Pista: " + san);
+  altsBusy = true; alts = []; renderGame();
+  let list = null; try { list = await e.analyse(fen, { multipv: 3, movetime: 900 }); } catch (err) {}
+  altsBusy = false;
+  if (!list || state.moves.length !== n || mode !== "local") { alts = null; return renderGame(); }
+  alts = list.map((a) => ({ ...a, san: new Chess(fen).move(a.move).san }));
+  hint = null; renderGame();
 }
 
 /* ---------- local game ---------- */
 function startLocal(lv) {
   mode = "local"; cpu = lv || 0; cpuToken++;
   cpuColor = cpu ? (prefs.color === "r" ? (Math.random() < 0.5 ? "w" : "b") : prefs.color === "w" ? "b" : "w") : null;
-  state = newState(); rebuild(); myColor = null; sel = null; hint = null;
+  // Campeón mundial is always played with a clock (10 minutes when none was chosen)
+  const tc = cpu === 5 && prefs.tc === "0" ? "10+0" : prefs.tc;
+  state = newState(tc); rebuild(); myColor = null; sel = null; hint = null; alts = null;
   flip = cpu ? cpuColor === "w" : false;
   const you = me.name || "Tú";
   game = cpu ? (cpuColor === "w" ? { white_name: "Máquina · " + LEVELS[cpu - 1].name, black_name: you } : { white_name: you, black_name: "Máquina · " + LEVELS[cpu - 1].name }) : { white_name: "Blancas", black_name: "Negras" };
@@ -323,7 +418,7 @@ async function createOnline() {
   if (!client()) return toast("Sin conexión");
   for (let i = 0; i < 3; i++) {
     const c = newCode();
-    const { error } = await sb.rpc("ajedrez_create", { p_id: c, p_player: me.pid, p_key: me.pkey, p_name: me.name, p_state: newState(), p_color: "w" });
+    const { error } = await sb.rpc("ajedrez_create", { p_id: c, p_player: me.pid, p_key: me.pkey, p_name: me.name, p_state: newState(prefs.tc), p_color: "w" });
     if (!error) { location.hash = "p=" + c + keepHost(); return openOnline(c); }
     if (!String(error.message || "").includes("duplicate")) { toast("No se pudo crear la partida"); return; }
   }
@@ -336,6 +431,7 @@ async function openOnline(c) {
   const { data, error } = await sb.rpc("ajedrez_join", { p_id: c, p_player: me.pid, p_key: me.pkey, p_name: me.name });
   if (error) { $("#app").innerHTML = `<section class="panel stack"><h2>No encontré esa partida</h2><p class="muted">Puede que haya expirado. Crea una nueva.</p><a class="btn primary" href="./">Nueva partida</a></section>`; return; }
   myColor = data === "w" || data === "b" ? data : null;
+  await syncClock();
   await refresh(true);
   subscribe();
 }
@@ -362,7 +458,15 @@ async function refresh(force) {
   renderGame();
   if (state.winner && !prevWinner && !force) celebrate();
 }
+// this phone's clock against the server's, so both players see the same time left
+async function syncClock() {
+  const t0 = Date.now();
+  const { data, error } = await sb.rpc("ajedrez_now");
+  const t1 = Date.now();
+  if (!error && data) { offset = Math.round((t0 + t1) / 2 - Number(data)); save("ajedrez-offset", offset); }
+}
 function subscribe() {
+  setInterval(() => { if (!document.hidden) syncClock(); }, 60000);
   if (channel) return;
   channel = sb.channel("ajedrez-" + code)
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "ajedrez_games", filter: "id=eq." + code }, () => refresh())
@@ -389,7 +493,9 @@ function myTurn() {
 async function apply(mv) {
   let res;
   try { res = chess.move(mv); } catch (e) { return; }
-  const next = judge({ ...state, moves: state.moves.concat([{ from: res.from, to: res.to, ...(res.promotion ? { promotion: res.promotion } : {}) }]), offer: null });
+  const ck = clockAfterMove(state);
+  const next = judge({ ...state, moves: state.moves.concat([{ from: res.from, to: res.to, ...(res.promotion ? { promotion: res.promotion } : {}) }]), offer: null, ...(ck ? { clock: ck } : {}) });
+  alts = null;
   if (mode === "local") {
     state = next; sel = null; hint = null; renderGame();
     if (state.winner) return celebrate();
@@ -435,8 +541,9 @@ function undo() {
     n = state.turn === cpuColor ? 1 : 2;
     if (state.moves.length - n < (cpuColor === "w" ? 1 : 0)) return toast("Todavía no hay jugadas tuyas para deshacer");
   }
-  state = { ...newState(), moves: state.moves.slice(0, state.moves.length - n) };
-  rebuild(); state.turn = chess.turn(); sel = null; hint = null; renderGame();
+  const ck = state.clock ? { ...state.clock, since: Date.now() } : null;
+  state = { ...newState(), moves: state.moves.slice(0, state.moves.length - n), ...(ck ? { clock: ck } : {}) };
+  rebuild(); state.turn = chess.turn(); sel = null; hint = null; alts = null; renderGame();
   if (cpu && state.turn === cpuColor) cpuMove();
 }
 
@@ -462,10 +569,10 @@ function renderGame() {
     return `<div class="who ${turn === c ? "turn" : ""}"><span class="ico">${piece(c, "k")}</span>
     <span class="nm">${esc(nameOf(c))}${mode === "online" && myColor === c ? " (tú)" : ""}</span>
     ${turn === c ? `<span class="tag">${cpu && c === cpuColor ? "Piensa…" : "Juega"}</span>` : ""}
-    <span class="caps">${cap.took[c].map((t) => piece(other, t)).join("")}${d > 0 ? `<b>+${d}</b>` : ""}</span></div>`;
+    <span class="caps">${cap.took[c].map((t) => piece(other, t)).join("")}${d > 0 ? `<b>+${d}</b>` : ""}</span>${state.clock && timed(c) ? `<span class="clk ${turn === c && state.moves.length >= 2 ? "run" : ""}" data-c="${c}">${fmt(remaining(c))}</span>` : ""}</div>`;
   };
   let status = "", sub = "";
-  const R = { mate: "Jaque mate", ahogado: "Ahogado: tablas", material: "Tablas: no queda material para dar mate", repeticion: "Tablas por repetición", cincuenta: "Tablas por la regla de 50 jugadas", acuerdo: "Tablas de mutuo acuerdo", rendicion: "Abandono" };
+  const R = { tiempo: "Se acabó el tiempo", mate: "Jaque mate", ahogado: "Ahogado: tablas", material: "Tablas: no queda material para dar mate", repeticion: "Tablas por repetición", cincuenta: "Tablas por la regla de 50 jugadas", acuerdo: "Tablas de mutuo acuerdo", rendicion: "Abandono" };
   if (state.winner) {
     status = state.winner === "d" ? "Tablas" : isMe(state.winner) ? "¡Ganaste!" : "Ganó " + esc(nameOf(state.winner));
     sub = R[state.reason] || "";
@@ -484,7 +591,7 @@ function renderGame() {
   if (state.winner) acts.push(`<button class="btn red" id="again">${mode === "online" ? "Revancha" : "Jugar otra"}</button>`);
   else if (playing) {
     if (mode === "local" && state.moves.length) acts.push(`<button class="btn" id="undo">↶ Deshacer</button>`);
-    if (cpu) acts.push(`<button class="btn" id="hint">💡 Pista</button>`);
+    if (cpu && cpu <= 3 && myTurn()) acts.push(`<button class="btn" id="alt">🔎 Alternativas</button>`);
     if (mode === "local" && !cpu) acts.push(`<button class="btn" id="flip">⇅ Girar</button>`);
     if (mode === "online" && state.moves.length > 1 && state.offer !== myColor) acts.push(`<button class="btn" id="draw">½ Ofrecer tablas</button>`);
     if (state.moves.length > 0 || mode === "online") acts.push(`<button class="btn" id="resign">Rendirse</button>`);
@@ -495,6 +602,7 @@ function renderGame() {
     ${who(bot)}
     <div class="status">${status}</div>${sub ? `<div class="sub">${sub}</div>` : ""}
     <div class="actions">${acts.join("")}</div>
+    ${alts && !state.winner ? `<div class="alts"><b>${altsBusy ? "Buscando tus mejores jugadas…" : "Tus mejores jugadas"}</b>${alts.map((a, i) => `<button data-alt="${i}" class="${hint && hint[0] === a.move.from && hint[1] === a.move.to ? "on" : ""}"><span>${i + 1}. ${esc(es(a.san))}</span><small>${altLabel(a)}</small></button>`).join("")}</div>` : ""}
     ${state.moves.length ? `<div class="moves" id="mv">${moveList()}</div>` : ""}`;
   if (mode === "online") pill(myColor ? "Partida " + code : "Mirando " + code);
   renderBoard();
@@ -505,7 +613,8 @@ function renderGame() {
     if (dt.dataset.sure !== "1") { dt.dataset.sure = "1"; dt.textContent = "¿Seguro? Toca otra vez para borrarla"; return; }
     if (await delTable(code)) location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); else toast("No se pudo borrar");
   });
-  on("again", again); on("resign", resign); on("undo", undo); on("hint", giveHint);
+  on("again", again); on("resign", resign); on("undo", undo); on("alt", giveAlts);
+  document.querySelectorAll("[data-alt]").forEach((b) => b.onclick = () => { const a = alts[+b.dataset.alt]; hint = [a.move.from, a.move.to]; renderGame(); });
   on("flip", () => { flip = !flip; renderGame(); });
   on("draw", async () => { if (await push({ ...state, offer: myColor })) toast("Ofreciste tablas"); });
   on("acc", async () => { if (await push({ ...state, offer: null, winner: "d", reason: "acuerdo" })) celebrate(); });
@@ -514,43 +623,216 @@ function renderGame() {
 function moveList() {
   const h = chess.history();
   let out = "";
-  for (let i = 0; i < h.length; i += 2) out += `<span><i>${i / 2 + 1}.</i>${esc(h[i])}${h[i + 1] ? " " + esc(h[i + 1]) : ""}</span>`;
+  for (let i = 0; i < h.length; i += 2) out += `<span><i>${i / 2 + 1}.</i>${esc(es(h[i]))}${h[i + 1] ? " " + esc(es(h[i + 1])) : ""}</span>`;
   return out;
+}
+function boardHTML(c, o) {
+  const board = c.board(), fl = o.flip;
+  const hist = c.history({ verbose: true }), lastM = hist[hist.length - 1];
+  const last = lastM ? [lastM.from, lastM.to] : [];
+  let chk = null;
+  if (c.inCheck()) for (const row of board) for (const p of row) if (p && p.type === "k" && p.color === c.turn()) chk = p.square;
+  const targets = o.targets || new Map(), hn = o.hint;
+  let h = "";
+  for (let k = 0; k < 64; k++) {
+    const r = fl ? 7 - Math.floor(k / 8) : Math.floor(k / 8), cc = fl ? 7 - (k % 8) : k % 8;
+    const sq = FILES[cc] + (8 - r), p = board[r][cc], dark = (r + cc) % 2 === 1;
+    const cls = ["sq", dark ? "d" : "", last.includes(sq) ? "last" : "", o.sel === sq ? "sel" : "", targets.has(sq) ? "to" : "", targets.get(sq) ? "cap" : "",
+      chk === sq ? "chk" : "", hn && hn.includes(sq) ? "hint" : ""].join(" ");
+    const lf = (fl ? r === 0 : r === 7) ? `<span class="lf">${FILES[cc]}</span>` : "";
+    const lr = (fl ? cc === 7 : cc === 0) ? `<span class="lr">${8 - r}</span>` : "";
+    h += `<button class="${cls}" data-sq="${sq}" aria-label="${sq}">${lf}${lr}${p ? piece(p.color, p.type) : ""}</button>`;
+  }
+  return h;
 }
 function renderBoard() {
   const el = $("#board"); if (!el) return;
-  const board = chess.board();
   const targets = new Map();
   if (sel && myTurn()) for (const m of chess.moves({ square: sel, verbose: true })) targets.set(m.to, !!m.captured);
-  const hist = chess.history({ verbose: true }), lastM = hist[hist.length - 1];
-  const last = lastM ? [lastM.from, lastM.to] : [];
-  let chk = null;
-  if (chess.inCheck()) for (const row of board) for (const p of row) if (p && p.type === "k" && p.color === chess.turn()) chk = p.square;
-  let h = "";
-  for (let k = 0; k < 64; k++) {
-    const r = flip ? 7 - Math.floor(k / 8) : Math.floor(k / 8), c = flip ? 7 - (k % 8) : k % 8;
-    const sq = FILES[c] + (8 - r), p = board[r][c], dark = (r + c) % 2 === 1;
-    const cls = ["sq", dark ? "d" : "", last.includes(sq) ? "last" : "", sel === sq ? "sel" : "", targets.has(sq) ? "to" : "", targets.get(sq) ? "cap" : "",
-      chk === sq ? "chk" : "", hint && hint.includes(sq) ? "hint" : ""].join(" ");
-    const lf = (flip ? r === 0 : r === 7) ? `<span class="lf">${FILES[c]}</span>` : "";
-    const lr = (flip ? c === 7 : c === 0) ? `<span class="lr">${8 - r}</span>` : "";
-    h += `<button class="${cls}" data-sq="${sq}" aria-label="${sq}">${lf}${lr}${p ? piece(p.color, p.type) : ""}</button>`;
-  }
-  el.innerHTML = h;
+  el.innerHTML = boardHTML(chess, { flip, sel, targets, hint });
   el.querySelectorAll(".sq").forEach((b) => b.onclick = () => tap(b.dataset.sq));
+}
+
+/* ---------- my saved games ---------- */
+let archive = [], rv = null;   // rv: the game being reviewed
+const dateTxt = (t) => new Date(t).toLocaleDateString("es-CL", { day: "numeric", month: "short" }) + " " + new Date(t).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+function myColorIn(g) {
+  if (g.mode === "online") return g.white_id === me.pid ? "w" : g.black_id === me.pid ? "b" : null;
+  if (g.mode === "maquina") return /^Máquina/.test(g.white_name || "") ? "b" : "w";
+  return null;
+}
+function resultTag(g) {
+  const mc = myColorIn(g);
+  if (g.result === "d") return `<span class="res draw">Tablas</span>`;
+  if (!mc) return `<span class="res draw">Ganan ${g.result === "w" ? "blancas" : "negras"}</span>`;
+  return g.result === mc ? `<span class="res win">Ganaste</span>` : `<span class="res loss">Perdiste</span>`;
+}
+function rivalOf(g) {
+  const mc = myColorIn(g);
+  if (g.mode === "local") return "Mismo teléfono";
+  return mc === "w" ? g.black_name || "Negras" : g.white_name || "Blancas";
+}
+async function renderArchive() {
+  mode = "archivo"; rv = null; clearTimeout(openT); pill("Mis partidas");
+  $("#app").innerHTML = `<section class="panel stack"><h2>Mis partidas</h2><p class="muted">Cargando…</p></section>`;
+  if (!client()) return toast("Sin conexión");
+  const { data, error } = await sb.rpc("ajedrez_mine", { p_player: me.pid, p_key: me.pkey });
+  if (mode !== "archivo") return;
+  archive = error ? [] : data || [];
+  $("#app").innerHTML = `<section class="panel stack"><h2>Mis partidas</h2>
+    ${error ? `<p class="muted">No se pudieron cargar. Revisa internet.</p>` : archive.length ? `<p class="muted">Toca una partida para repasarla jugada por jugada. Con ✕ la borras; nadie más la verá.</p>` : `<p class="muted">Todavía no tienes partidas terminadas. Se guardan solas al terminar cada una.</p>`}
+    <div class="arch">${archive.map((g) => `<div class="arow"><button class="btn" data-see="${g.id}"><span>${esc(rivalOf(g))}<small>${dateTxt(g.created_at)} · ${Math.ceil(g.moves.length / 2)} jugadas${g.tc && g.tc !== "0" ? " · ⏱ " + esc(tcName(g.tc)) : ""}</small></span>${resultTag(g)}</button>
+      <button class="del" data-forget="${g.id}" aria-label="Borrar esta partida">✕</button></div>`).join("")}</div>
+    ${archive.length > 1 ? `<button class="btn" id="forgetall" style="background:none;color:#a3262f;min-height:36px">Borrar todas mis partidas</button>` : ""}
+    <button class="btn" id="aback">Volver</button></section>`;
+  $("#aback").onclick = renderStart;
+  document.querySelectorAll("[data-see]").forEach((b) => b.onclick = () => renderReview(archive.find((g) => g.id === b.dataset.see)));
+  const forget = async (btn, id, label) => {
+    if (btn.dataset.sure !== "1") { btn.dataset.sure = "1"; btn.textContent = label; btn.classList.add("sure"); return; }
+    const { error: e } = await sb.rpc("ajedrez_forget", { p_player: me.pid, p_key: me.pkey, p_id: id });
+    if (e) return toast("No se pudo borrar");
+    toast(id ? "Partida borrada" : "Borramos todas tus partidas"); renderArchive();
+  };
+  document.querySelectorAll("[data-forget]").forEach((b) => b.onclick = () => forget(b, b.dataset.forget, "¿Seguro?"));
+  const fa = $("#forgetall"); if (fa) fa.onclick = () => forget(fa, null, "¿Seguro? Toca otra vez para borrar todas");
+}
+function renderReview(g) {
+  if (!g) return;
+  const full = new Chess(); const sans = [];
+  for (const m of g.moves) { try { sans.push(full.move(m).san); } catch (e) { break; } }
+  rv = { g, ply: sans.length, sans, flip: myColorIn(g) === "b", evals: null, best: [], marks: [], busy: false };
+  drawReview();
+}
+function reviewChess(n) { const c = new Chess(); for (let i = 0; i < n; i++) c.move(rv.g.moves[i]); return c; }
+const evalTxt = (v) => (Math.abs(v) >= 9000 ? (v > 0 ? "Mate para blancas" : "Mate para negras") : (v > 0 ? "+" : "") + (v / 100).toFixed(1).replace(".", ","));
+function graphSVG() {
+  const E = rv.evals, n = E.length - 1; if (n < 1) return "";
+  const y = (v) => 32 - Math.max(-800, Math.min(800, v)) / 800 * 30;
+  const pts = E.map((v, i) => `${(i / n * 300).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const x = (rv.ply / n * 300).toFixed(1);
+  return `<svg class="graph" id="graph" viewBox="0 0 300 64" preserveAspectRatio="none"><polygon points="0,64 ${pts} 300,64" fill="#f6f1e7"/><line x1="0" y1="32" x2="300" y2="32" stroke="#999" stroke-width=".5"/><line x1="${x}" y1="0" x2="${x}" y2="64" stroke="#ffcf3f" stroke-width="2"/></svg>`;
+}
+function drawReview() {
+  const { g, ply, sans } = rv;
+  const c = reviewChess(ply);
+  const mark = ply > 0 && rv.marks[ply] ? rv.marks[ply] : null;
+  let note = "";
+  if (rv.busy) note = `Analizando… ${rv.done || 0} de ${sans.length + 1}`;
+  else if (rv.evals) {
+    note = "Evaluación: " + evalTxt(rv.evals[ply]);
+    if (mark) note = `<span style="color:${mark === "??" ? "#d9363e" : "#d98a00"}">${mark === "??" ? "Error grave" : "Imprecisión"}</span>; era mejor ${esc(es(rv.best[ply - 1] || ""))}. ` + note;
+  }
+  const hn = rv.evals && mark && rv.bestMove[ply - 1] ? [rv.bestMove[ply - 1].from, rv.bestMove[ply - 1].to] : null;
+  const mc = myColorIn(g);
+  const top = rv.flip ? "w" : "b", bot = rv.flip ? "b" : "w";
+  const nm = (col) => (col === "w" ? g.white_name : g.black_name) || (col === "w" ? "Blancas" : "Negras");
+  const R = { tiempo: "se acabó el tiempo", mate: "jaque mate", ahogado: "ahogado", material: "sin material", repeticion: "repetición", cincuenta: "50 jugadas", acuerdo: "de mutuo acuerdo", rendicion: "abandono" };
+  let ml = "";
+  for (let i = 0; i < sans.length; i++) {
+    const mk = rv.marks[i + 1];
+    if (i % 2 === 0) ml += `<i>${i / 2 + 1}.</i>`;
+    ml += `<span class="mk ${ply === i + 1 ? "now" : ""}" data-ply="${i + 1}">${esc(es(sans[i]))}${mk ? `<b class="${mk === "??" ? "err" : "inac"}">${mk}</b>` : ""}</span>`;
+  }
+  pill("Repaso");
+  $("#app").innerHTML = `<div class="who"><span class="ico">${piece(top, "k")}</span><span class="nm">${esc(nm(top))}${mc === top ? " (tú)" : ""}</span></div>
+    <div class="boardwrap"><div class="board" id="board">${boardHTML(c, { flip: rv.flip, hint: hn })}</div></div>
+    <div class="who"><span class="ico">${piece(bot, "k")}</span><span class="nm">${esc(nm(bot))}${mc === bot ? " (tú)" : ""}</span></div>
+    <div class="nav"><button class="btn" data-go="0" aria-label="Al inicio">⏮</button><button class="btn" data-go="-1" aria-label="Atrás">◀</button><button class="btn" data-go="1" aria-label="Adelante">▶</button><button class="btn" data-go="end" aria-label="Al final">⏭</button></div>
+    <div class="status">${ply === 0 ? "Posición inicial" : "Jugada " + Math.ceil(ply / 2) + (ply % 2 ? " de blancas" : " de negras")} · ${ply}/${sans.length}</div>
+    ${rv.evals ? graphSVG() : ""}
+    ${note ? `<div class="note">${note}</div>` : ""}
+    <div class="moves" id="mv">${ml || "Sin jugadas"}</div>
+    <div class="sub">${g.result === "d" ? "Tablas" : "Ganaron " + (g.result === "w" ? "blancas" : "negras")}${R[g.reason] ? " · " + R[g.reason] : ""}</div>
+    <div class="actions">${!rv.evals && !rv.busy && sans.length ? `<button class="btn" id="anl">🧠 Analizar</button>` : ""}
+      <button class="btn" id="pgn">📤 Compartir</button><button class="btn" id="rflip">⇅ Girar</button><button class="btn" id="rback">Volver</button></div>`;
+  const nowEl = document.querySelector(".moves .now"); if (nowEl) nowEl.scrollIntoView({ block: "nearest" });
+  document.querySelectorAll("[data-go]").forEach((b) => b.onclick = () => {
+    const v = b.dataset.go; rv.ply = v === "0" ? 0 : v === "end" ? sans.length : Math.max(0, Math.min(sans.length, rv.ply + +v)); drawReview();
+  });
+  document.querySelectorAll("[data-ply]").forEach((b) => b.onclick = () => { rv.ply = +b.dataset.ply; drawReview(); });
+  const gr = $("#graph"); if (gr) gr.onclick = (e) => { const r = gr.getBoundingClientRect(); rv.ply = Math.round((e.clientX - r.left) / r.width * sans.length); drawReview(); };
+  const on = (id, f) => { const e = $("#" + id); if (e) e.onclick = f; };
+  on("rback", renderArchive); on("rflip", () => { rv.flip = !rv.flip; drawReview(); });
+  on("anl", analyseGame); on("pgn", sharePGN);
+}
+async function analyseGame() {
+  const e = getEngine(); if (!e) return toast("La máquina no está disponible");
+  const g = rv.g, n = rv.sans.length, mine = rv;
+  rv.busy = true; rv.done = 0; drawReview();
+  const E = [], best = [], bestMove = [];
+  for (let i = 0; i <= n; i++) {
+    if (rv !== mine) return;
+    const c = reviewChess(i);
+    let v = 0;
+    if (c.isCheckmate()) v = c.turn() === "w" ? -10000 : 10000;
+    else if (c.isGameOver()) v = 0;
+    else {
+      let a = null; try { a = (await e.analyse(c.fen(), { movetime: 160 }))[0]; } catch (err) {}
+      if (a) {
+        const sv = a.mate != null ? (a.mate > 0 ? 10000 - a.mate * 10 : -10000 - a.mate * 10) : a.cp;
+        v = c.turn() === "w" ? sv : -sv;
+        bestMove[i] = a.move; try { best[i] = new Chess(c.fen()).move(a.move).san; } catch (err) {}
+      }
+    }
+    E.push(v); rv.done = i + 1;
+    if (i % 4 === 0) drawReview();
+  }
+  // how much each move lost for the side that played it
+  const marks = [], cl = (v) => Math.max(-1000, Math.min(1000, v));
+  for (let i = 1; i <= n; i++) {
+    const white = i % 2 === 1, loss = white ? cl(E[i - 1]) - cl(E[i]) : cl(E[i]) - cl(E[i - 1]);
+    const played = g.moves[i - 1], bm = bestMove[i - 1];
+    if (bm && bm.from === played.from && bm.to === played.to) continue;
+    if (loss >= 300) marks[i] = "??"; else if (loss >= 150) marks[i] = "?";
+  }
+  if (rv !== mine) return;
+  Object.assign(rv, { evals: E, best, bestMove, marks, busy: false });
+  drawReview();
+  const mc = myColorIn(g), mineErr = marks.filter((m, i) => m === "??" && (!mc || (i % 2 === 1) === (mc === "w"))).length;
+  toast(mineErr ? "Encontré " + mineErr + (mineErr === 1 ? " error grave" : " errores graves") + (mc ? " tuyos" : "") : "Sin errores graves");
+}
+async function sharePGN() {
+  const g = rv.g, c = new Chess();
+  for (const m of g.moves) c.move(m);
+  const H = { Event: "Juegos en casa", Site: "ocd-race-labs.github.io", Date: g.created_at.slice(0, 10).replace(/-/g, "."), White: g.white_name || "Blancas", Black: g.black_name || "Negras", Result: g.result === "w" ? "1-0" : g.result === "b" ? "0-1" : "1/2-1/2" };
+  for (const [k, v] of Object.entries(H)) (c.setHeader || c.header).call(c, k, v);
+  const pgn = c.pgn();
+  try { if (navigator.share) { await navigator.share({ title: "Partida de ajedrez", text: pgn }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  try { await navigator.clipboard.writeText(pgn); toast("Partida copiada en formato PGN"); } catch (e) { toast("No se pudo copiar"); }
+}
+
+/* ---------- family ranking ---------- */
+async function renderRanking() {
+  const box = $("#rank"); if (!box || !client()) return;
+  const { data } = await sb.from("ajedrez_rating").select("player_id,name,elo,games,wins,draws,losses,best_level").order("elo", { ascending: false }).limit(40);
+  if (!$("#rank") || mode) return;
+  const rows = (data || []).filter((r) => r.games > 0 || r.best_level > 0).sort((a, b) => (b.games > 0) - (a.games > 0) || b.elo - a.elo || b.best_level - a.best_level);
+  box.innerHTML = `<label class="lbl">Ranking familiar</label>` + (rows.length ? `<div class="rank">${rows.map((r, i) => `<div class="rk ${r.player_id === me.pid ? "me" : ""}"><span class="p">${i + 1}</span>
+      <span class="n">${esc(r.name || "Alguien")}<small>${r.games ? `${r.wins} G · ${r.draws} T · ${r.losses} P` : "Sin partidas en línea"}${r.best_level ? " · 🤖 le ganó a " + LEVELS[r.best_level - 1].name : ""}</small></span>
+      <span class="e">${r.games ? r.elo : "—"}</span></div>`).join("")}</div>` : `<p class="muted">Aún vacío. El puntaje parte en 1.200 y sube o baja con cada partida en línea entre personas; ganarle a la máquina también queda anotado.</p>`)
+    + (rows.length ? `<p class="credit" style="margin-top:6px">Puntaje Elo: parte en 1.200 y cambia con las partidas en línea entre personas. Borrar una partida guardada no cambia el ranking.</p>` : "");
 }
 function celebrate() {
   const w = state.winner;
   const isMe = (mode === "online" && myColor === w) || (cpu && w !== "d" && w !== cpuColor);
-  const R = { mate: "Jaque mate.", ahogado: "Ahogado: el que movía no tenía jugadas y no estaba en jaque.", material: "No queda material para dar mate.", repeticion: "La misma posición se repitió tres veces.", cincuenta: "50 jugadas sin capturas ni movimientos de peón.", acuerdo: "De mutuo acuerdo.", rendicion: "Su rival se rindió." };
+  const R = { tiempo: "Se acabó el tiempo.", mate: "Jaque mate.", ahogado: "Ahogado: el que movía no tenía jugadas y no estaba en jaque.", material: "No queda material para dar mate.", repeticion: "La misma posición se repitió tres veces.", cincuenta: "50 jugadas sin capturas ni movimientos de peón.", acuerdo: "De mutuo acuerdo.", rendicion: "Su rival se rindió." };
   const title = w === "d" ? "Tablas" : isMe ? "¡Ganaste!" : "¡Ganó " + esc(nameOf(w)) + "!";
   $("#overlay").innerHTML = `<div class="overlay" id="ov"><div class="box"><div class="big">${title}</div>
     <p>${R[state.reason] || ""}</p><button class="btn primary" id="ovok">Seguir</button></div></div>`;
   $("#ovok").onclick = () => ($("#overlay").innerHTML = "");
+  saveLocal();
+}
+async function saveLocal() {
+  if (mode !== "local" || state.saved || !state.moves.length || !client()) return;
+  state.saved = true;
+  const g = { mode: cpu ? "maquina" : "local", level: cpu || null, white_name: nameOf("w"), black_name: nameOf("b"), result: state.winner,
+    reason: state.reason, tc: tcOf(state.clock), moves: state.moves, me: cpu ? (cpuColor === "w" ? "b" : "w") : null };
+  const { error } = await sb.rpc("ajedrez_save", { p_player: me.pid, p_key: me.pkey, p_name: me.name || "", p_game: g });
+  if (error) state.saved = false;
 }
 async function again() {
   if (mode === "local") return startLocal(cpu);
-  const { error } = await sb.rpc("ajedrez_rematch", { p_id: code, p_player: me.pid, p_key: me.pkey, p_state: newState() });
+  const { error } = await sb.rpc("ajedrez_rematch", { p_id: code, p_player: me.pid, p_key: me.pkey, p_state: newState(tcOf(state.clock)) });
   if (error) return toast("No se pudo empezar la revancha");
   refresh(true);
 }
