@@ -1498,6 +1498,9 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .nps-a{font-size:13px;color:var(--muted);margin-top:2px}
 .nps-s{font:400 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-top:3px}
 .nps-r .sg-del{position:absolute;right:0;top:50%;transform:translateY(-50%);color:var(--dim)}
+
+/* Pantalla del dial circular: sin el recuadro de estado (el estado ya está arriba, junto al nombre de la radio) */
+.k-c small{display:none}
 </style>
 </head>
 <body>
@@ -3652,7 +3655,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24q";
+const APP_VERSION="2026-11-24r";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
