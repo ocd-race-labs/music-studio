@@ -3274,22 +3274,26 @@ function dialView(on){store.set("dial-dialview",on);npSheet.classList.toggle("di
 function fitK(){const e=$("kCn");if(!e||!e.offsetWidth||e.classList.contains("tk")||e.classList.contains("tv"))return;let k=1;e.style.setProperty("--kz",1);while(k>.5&&e.scrollWidth>e.clientWidth+1){k-=.04;e.style.setProperty("--kz",k.toFixed(2))}}
 addEventListener("resize",()=>requestAnimationFrame(fitK));document.fonts&&document.fonts.ready.then(fitK);
 // Pantalla del dial: alterna radio y canción con texto corrido, como los equipos de los 90
-const KT={st:"",sg:"",t:null,busy:false};
-function ktSet(st,sg){const ch=KT.st!==st;KT.st=st;KT.sg=sg;if(ch){KT.busy=false;ktStation()}else if(!KT.busy&&!KT.t&&sg)KT.t=setTimeout(ktSong,6000)}
+const KT={st:"",sg:"",t:null,busy:false,sd:0};
+function ktSet(st,sg){const ch=KT.st!==st;KT.st=st;KT.sg=sg;if(ch){KT.busy=false;KT.sd=0;ktStation()}else if(!KT.busy&&!KT.t&&sg)KT.t=setTimeout(ktSong,6000)}
 // La radio pasa como carrusel horizontal (letras corridas de derecha a izquierda); sin canción informada, queda fija
 function ktStation(){clearTimeout(KT.t);KT.t=null;KT.busy=false;const e=$("kCn");e.classList.remove("tk","tv","wipe");e.style.removeProperty("--kz");
   if(!KT.sg||npSheet.hidden||!npSheet.classList.contains("dialv")){e.textContent=KT.st;void e.offsetWidth;e.classList.add("wipe");requestAnimationFrame(fitK);if(KT.sg)KT.t=setTimeout(ktSong,6000);return}
   e.classList.add("tk");e.style.setProperty("--kz","1.12");e.innerHTML="<i></i>";const i=e.firstChild;i.textContent=KT.st;
   const w=e.clientWidth,tw=i.offsetWidth,cw=tw/Math.max(1,KT.st.length),n=Math.max(1,Math.round((w+tw)/cw));
-  i.style.setProperty("--kx0",w+"px");i.style.setProperty("--kx1",-tw+"px");i.style.setProperty("--ks",n);i.style.setProperty("--kd",(n*.13).toFixed(2)+"s");
+  // Duración del nombre de la radio: su recorrido base + 1 s; la canción usa esta misma duración
+  KT.sd=Math.round(n*130)+1000;
+  i.style.setProperty("--kx0",w+"px");i.style.setProperty("--kx1",-tw+"px");i.style.setProperty("--ks",n);i.style.setProperty("--kd",(KT.sd/1000).toFixed(2)+"s");
   i.addEventListener("animationend",()=>{if(!KT.busy&&KT.sg)ktSong()},{once:true})}
 function ktSong(){KT.t=null;const e=$("kCn");if(!KT.sg)return;if(npSheet.hidden||!npSheet.classList.contains("dialv")||document.hidden){KT.t=setTimeout(ktSong,3000);return}
   KT.busy=true;e.classList.remove("wipe","tk");
   // La canción sube como un teleprompter: se ve el comienzo, sube hasta el final, pausa y vuelve a la radio. Si cabe entera, queda fija.
   e.classList.add("tv");e.style.removeProperty("--kz");e.innerHTML="<i></i>";const i=e.firstChild;i.textContent=KT.sg;
   const d=Math.round(i.offsetHeight-e.clientHeight),lh=parseFloat(getComputedStyle(i).lineHeight)||20;
-  if(d<=2){KT.t=setTimeout(ktStation,6000);return}
-  const hold=1800,run=Math.max(1600,d/lh*1300),tot=hold*2+run;
+  // Misma duración que el nombre de la radio (incluye su segundo extra); si no se ha medido aún, se estima por el largo del nombre
+  const tot=KT.sd||Math.max(5000,Math.round((KT.st.length+12)*130)+1000);
+  if(d<=2){KT.t=setTimeout(ktStation,tot);return}
+  const hold=Math.min(1800,tot*.22),run=tot-2*hold;
   const an=i.animate([{transform:"translateY(0)"},{transform:"translateY(0)",offset:hold/tot},{transform:`translateY(${-d}px)`,offset:(hold+run)/tot},{transform:`translateY(${-d}px)`}],{duration:tot,easing:"linear",fill:"forwards"});
   an.onfinish=()=>{if(KT.busy)ktStation()}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&KT.busy&&!$("kCn").classList.contains("tv"))ktStation()});
@@ -3705,7 +3709,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-25a";
+const APP_VERSION="2026-11-25b";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
