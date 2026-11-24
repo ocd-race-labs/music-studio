@@ -3261,7 +3261,7 @@ function ktStation(){clearTimeout(KT.t);KT.t=null;KT.busy=false;const e=$("kCn")
   i.style.setProperty("--kx0",w+"px");i.style.setProperty("--kx1",-tw+"px");i.style.setProperty("--ks",n);i.style.setProperty("--kd",(n*.13).toFixed(2)+"s");
   i.addEventListener("animationend",()=>{if(!KT.busy&&KT.sg)ktSong()},{once:true})}
 function ktSong(){KT.t=null;const e=$("kCn");if(!KT.sg)return;if(npSheet.hidden||!npSheet.classList.contains("dialv")||document.hidden){KT.t=setTimeout(ktSong,3000);return}
-  KT.busy=true;e.classList.remove("wipe");
+  KT.busy=true;e.classList.remove("wipe","tk");
   if(matchMedia("(prefers-reduced-motion: reduce)").matches){e.textContent=KT.sg;void e.offsetWidth;e.classList.add("wipe");requestAnimationFrame(fitK);KT.t=setTimeout(ktStation,5000);return}
   // La canción sube como un teleprompter: se ve el comienzo, sube hasta el final, pausa y vuelve a la radio. Si cabe entera, queda fija.
   e.classList.add("tv");e.style.removeProperty("--kz");e.innerHTML="<i></i>";const i=e.firstChild;i.textContent=KT.sg;
@@ -3683,7 +3683,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24u";
+const APP_VERSION="2026-11-24v";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
