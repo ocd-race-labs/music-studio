@@ -1467,6 +1467,19 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
   .sg-t .c-x{position:absolute;right:6px;top:50%;transform:translateY(-50%)}
 }
 @media (min-width:900px){#view-radio>.songs{grid-column:1/-1;grid-row:3}#view-radio{grid-template-rows:auto auto auto}}
+
+/* Me gusta en la pantalla de la radio: al lado del título de la canción */
+.np-meta{position:relative}
+.np-likew{position:absolute;top:2px;right:0}
+.np-meta .np-song,.np-meta .np-artist{padding-right:52px}
+.np-like{all:unset;box-sizing:border-box;cursor:pointer;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.28);color:#EDEDF2;transition:transform .12s}
+.np-like:active{transform:scale(.9)}
+.np-like svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}
+.np-like.on svg{fill:#F2B544;stroke:#F2B544;filter:drop-shadow(0 0 6px rgba(242,181,68,.6))}
+.np-like.busy{opacity:.5}
+.np-likew .like-pick{left:auto;right:0;transform:none;bottom:auto;top:calc(100% + 6px)}
+.np-lkt{height:auto;margin-top:6px;text-align:left;transform:none}
+.np-lkt.show{transform:none}
 </style>
 </head>
 <body>
@@ -1576,9 +1589,11 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
     </div>
     <div class="np-stage"><div class="np-knob" id="npKnob" aria-hidden="true"><b class="k-tk"></b><b class="k-led"></b><i></i><b class="k-gl"></b><b class="k-c"><span id="kCn"></span><small id="kCs"></small><em>toca para ver la carátula</em></b></div><div class="np-cover" id="npCover"></div><span class="np-stat" id="npStat" hidden></span><button class="np-dv" id="npDV" aria-label="Ver el dial en vez de la carátula"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Dial</button></div>
     <div class="np-meta">
+      <div class="likew np-likew"><button class="np-like" id="npLike" aria-label="Me gusta esta canción" title="Me gusta · mantén apretado para elegir el ícono"></button><div class="like-pick" id="npLikePick" hidden role="group" aria-label="Ícono para me gusta"><button data-i="up" aria-label="Pulgar arriba"></button><button data-i="heart" aria-label="Corazón"></button></div></div>
       <div class="np-song" id="npSong"></div>
       <div class="np-artist" id="npArtist"></div>
       <div class="np-album" id="npAlbum"></div>
+      <div class="lk-toast np-lkt" id="npLkT" role="status" aria-live="polite"></div>
     </div>
     <div class="np-lrow"><div class="np-links" id="npLinks"></div><button class="np-it np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button><button class="np-it" id="npInfoT" aria-label="Información de la radio" aria-expanded="false">i</button></div>
     <div class="np-ctl">
@@ -3379,8 +3394,8 @@ let SONGS=null,SGS={k:"at",d:-1};
 const LK_SVG={up:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10.5v9.5H4v-9.5h3.5zM9.5 20h8.1a2 2 0 0 0 2-1.6l1.2-6.2a2 2 0 0 0-2-2.4h-4.9l.7-3.6a2.1 2.1 0 0 0-3.8-1.5L9.5 10.4V20z"/></svg>',
   heart:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.4-4.5-9-9.1C1.9 7.6 4.2 4.6 7.4 4.6c2 0 3.5 1.1 4.6 2.6 1.1-1.5 2.6-2.6 4.6-2.6 3.2 0 5.5 3 4.4 6.3C19.4 15.5 12 20 12 20z"/></svg>'};
 let LKI=store.get("dial-like-ico","up");if(!LK_SVG[LKI])LKI="up";
-function lkIco(){$("npcLike").innerHTML=LK_SVG[LKI];$("likePick").querySelectorAll("button").forEach(b=>{b.innerHTML=LK_SVG[b.dataset.i];b.classList.toggle("on",b.dataset.i===LKI)});songsRender()}
-let lkT=null;function lkSay(t,ok){const el=$("lkToast");el.textContent=trText(t);el.className="lk-toast show"+(ok?" ok":"");clearTimeout(lkT);lkT=setTimeout(()=>el.className="lk-toast",2400)}
+function lkIco(){["npcLike","npLike"].forEach(id=>{const b=$(id);if(b)b.innerHTML=LK_SVG[LKI]});document.querySelectorAll(".like-pick button").forEach(b=>{b.innerHTML=LK_SVG[b.dataset.i];b.classList.toggle("on",b.dataset.i===LKI)});songsRender()}
+let lkT=null;function lkSay(t,ok){const els=[$("lkToast"),$("npLkT")].filter(Boolean);els.forEach(el=>{el.textContent=trText(t);el.classList.add("show");el.classList.toggle("ok",!!ok)});clearTimeout(lkT);lkT=setTimeout(()=>els.forEach(el=>el.classList.remove("show","ok")),2400)}
 // Álbum y número de pista desde el catálogo público de Apple; si la coincidencia no es clara (o es un recopilatorio) se deja vacío
 async function itLook(t,a){const base=x=>qn(String(x||"").replace(/\s*[\(\[].*?[\)\]]/g,"").replace(/\s+-\s+.*$/,"")).replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
   const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),4500);
@@ -3390,23 +3405,23 @@ async function itLook(t,a){const base=x=>qn(String(x||"").replace(/\s*[\(\[].*?[
       .sort((p,q)=>String(p.releaseDate).localeCompare(String(q.releaseDate)));
     const x=ok[0];if(!x)return{};return{album:x.collectionName||"",track:x.trackNumber||"",art:(x.artworkUrl100||"").replace(/100x100bb/,"600x600bb"),link:x.trackViewUrl||""}}
   catch(e){return{}}finally{clearTimeout(tm)}}
-async function likeSong(){const s=current,j=s?(np.cur||{}):{},t=(j.song?cleanSong(j.song):"").trim(),a=(j.artist||"").trim(),b=$("npcLike");
+async function likeSong(){const s=current,j=s?(np.cur||{}):{},t=(j.song?cleanSong(j.song):"").trim(),a=(j.artist||"").trim(),b=$("npcLike"),b2=$("npLike");
   if(!s||audio.paused||!t||qn(t)===qn(s.n)||/^(en vivo|live|publicidad|comercial|anuncio|tanda)\b/i.test(t)){lkSay("Canción no identificada");return}
-  if(b.classList.contains("busy"))return;b.classList.add("busy");
+  if(b.classList.contains("busy"))return;b.classList.add("busy");b2.classList.add("busy");
   const ex=await itLook(t,a),p={station:s.n,title:t,artist:a,album:ex.album||(j.album||""),track:ex.track||"",art:ex.art||(j.artwork||""),link:ex.link||""};
-  try{const r=await rpc("dial_song_like",{p_key:DKEY,p});lkSay(r==="dup"?"Ya estaba en tus canciones":"Canción guardada con éxito",true);b.classList.add("on");setTimeout(()=>b.classList.remove("on"),1800);songsLoad()}
+  try{const r=await rpc("dial_song_like",{p_key:DKEY,p});lkSay(r==="dup"?"Ya estaba en tus canciones":"Canción guardada con éxito",true);[b,b2].forEach(x=>{x.classList.add("on");setTimeout(()=>x.classList.remove("on"),1800)});songsLoad()}
   catch(e){lkSay("No se pudo guardar, intenta de nuevo")}
-  b.classList.remove("busy")}
+  b.classList.remove("busy");b2.classList.remove("busy")}
 // Tocar = me gusta; mantener apretado (o clic derecho) = elegir pulgar o corazón
-(function(){const b=$("npcLike"),pk=$("likePick");let hold=null,long=false;
+[["npcLike","likePick"],["npLike","npLikePick"]].forEach(([bi,pi])=>{const b=$(bi),pk=$(pi);let hold=null,long=false;
   const open=()=>{pk.hidden=false;long=true};
   b.addEventListener("pointerdown",()=>{long=false;clearTimeout(hold);hold=setTimeout(open,520)});
   ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,()=>clearTimeout(hold)));
   b.addEventListener("contextmenu",e=>{e.preventDefault();open()});
   b.addEventListener("click",e=>{if(long){long=false;e.preventDefault();return}if(!pk.hidden){pk.hidden=true;return}likeSong()});
   pk.addEventListener("click",e=>{const x=e.target.closest("button");if(!x)return;LKI=x.dataset.i;store.set("dial-like-ico",LKI);pk.hidden=true;lkIco()});
-  document.addEventListener("pointerdown",e=>{if(!pk.hidden&&!e.target.closest(".likew"))pk.hidden=true});
-  lkIco()})();
+  document.addEventListener("pointerdown",e=>{if(!pk.hidden&&!e.target.closest(".likew"))pk.hidden=true})});
+lkIco();
 async function songsLoad(){try{const r=await rpc("dial_song_list",{p_key:DKEY});SONGS=Array.isArray(r)?r:[]}catch(e){if(!SONGS)SONGS=[]}songsRender()}
 function songsRender(){const n=$("sgN");if(!n)return;const L=SONGS||[];n.textContent=L.length?`(${L.length})`:"";
   const body=$("sgB"),e=$("sgE");if($("sgBody").hidden)return;
@@ -3611,7 +3626,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24o";
+const APP_VERSION="2026-11-24p";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
