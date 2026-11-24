@@ -3193,6 +3193,11 @@ ${((store.get("dial-bg",null)||{}).b)==="Del tema"?`<label class="pz-tint"><span
 $("homeBtn").onclick=pzOpen;
 function pzReload(){PZ=store.get("dial-theme",null)||{k:"sol",n:"Lima"};applyTheme();armStart();pzRender();const o=store.get("dial-open",null);if(o&&!location.hash)location.hash=o}
 resetView();layout();openShared();armStart();syncFavs().then(()=>renderSync());renderSync();
+/* Contador anónimo: un número al azar por dispositivo y una marca por día; sin nombres, sin IP, sin favoritas */
+(function(){try{if(navigator.webdriver||/[?&]debug=1/.test(location.search)||store.get("dial-novisit",false))return;
+  let v=store.get("dial-vid",null);if(!/^[a-z0-9]{20}$/.test(v||"")){const a="abcdefghijklmnopqrstuvwxyz0123456789",r=crypto.getRandomValues(new Uint8Array(20));v=[...r].map(x=>a[x%36]).join("");store.set("dial-vid",v)}
+  const d=new Date().toLocaleDateString("sv",{timeZone:"America/Santiago"});if(store.get("dial-visit-day","")===d)return;
+  rpc("dial_visit",{p:{vid:v,tz:Intl.DateTimeFormat().resolvedOptions().timeZone||"",lang:navigator.language||"",mob:/Mobi|iPhone|Android/i.test(navigator.userAgent),view:(location.hash||"#radio").slice(1)}}).then(()=>store.set("dial-visit-day",d)).catch(()=>{})}catch(e){}})();
 setTimeout(()=>(window.requestIdleCallback||(f=>f()))(()=>healthCheck()),1500);
 
 </script>
@@ -3376,7 +3381,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24a";
+const APP_VERSION="2026-11-24b";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
