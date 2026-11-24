@@ -3363,7 +3363,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-23e";
+const APP_VERSION="2026-11-23f";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
@@ -3659,19 +3659,19 @@ const Q={
   aviacion:["aviación Chile LATAM OR JetSMART OR DGAC OR aeropuerto","aviación aerolíneas OR Boeing OR Airbus"],
   cultura:["cultura Chile -música -concierto","cultura cine OR libros OR arte OR teatro -música"],
   musica:["música Chile concierto OR disco OR festival OR banda","música concierto OR álbum OR gira OR Grammy"],
-  guerra:["guerra Ucrania OR Gaza OR \"conflicto armado\"","guerra ofensiva OR bombardeo OR \"alto el fuego\" OR tropas"]
+  guerra:["guerra Irán OR Ucrania OR Gaza OR Líbano OR \"conflicto armado\"","guerra Irán OR Ucrania OR Gaza OR Sudán OR ofensiva OR bombardeo OR \"alto el fuego\""]
 };
 // Búsquedas en inglés y portugués: misma intención que las de español, en el idioma de la edición de Google News elegida
 const QL={en:{politica:["Chile politics government","world politics"],economia:["Chile economy","global economy markets"],
   deportes_extremos:["Chile (downhill OR \"enduro MTB\" OR \"mountain bike\" OR XCO)","\"mountain bike\" (downhill OR enduro OR \"cross country\" OR \"world cup\" OR \"world series\")"],
   nba:[null,"NBA"],nfl:[null,"NFL"],tecnologia:["Chile technology","technology"],ia:["Chile artificial intelligence","artificial intelligence"],
   educacion:["Chile education","education"],salud:["Chile health","health WHO OR medicine"],ciencias:["Chile science","science discovery OR NASA OR research"],
-  aviacion:["Chile aviation LATAM OR JetSMART OR airport","aviation airlines OR Boeing OR Airbus"],cultura:["Chile culture -music -concert","culture film OR books OR art OR theater -music"],musica:["Chile music concert OR album OR festival","music concert OR album OR tour OR Grammy"],guerra:["war Ukraine OR Gaza OR Sudan OR \"armed conflict\"","war offensive OR airstrike OR ceasefire OR troops"]},
+  aviacion:["Chile aviation LATAM OR JetSMART OR airport","aviation airlines OR Boeing OR Airbus"],cultura:["Chile culture -music -concert","culture film OR books OR art OR theater -music"],musica:["Chile music concert OR album OR festival","music concert OR album OR tour OR Grammy"],guerra:["war Iran OR Ukraine OR Gaza OR Lebanon OR Sudan","war Iran OR Ukraine OR Gaza OR offensive OR airstrike OR ceasefire OR troops"]},
  pt:{politica:["Chile política governo","política internacional"],economia:["Chile economia","economia mundial mercados"],
   deportes_extremos:["Chile (downhill OR \"enduro MTB\" OR \"mountain bike\" OR XCO)","\"mountain bike\" (downhill OR enduro OR \"cross country\" OR \"world cup\" OR \"world series\")"],
   nba:[null,"NBA"],nfl:[null,"NFL"],tecnologia:["Chile tecnologia","tecnologia"],ia:["Chile inteligência artificial","inteligência artificial"],
   educacion:["Chile educação","educação"],salud:["Chile saúde","saúde OMS OR medicina"],ciencias:["Chile ciência","ciência descoberta OR NASA OR pesquisa"],
-  aviacion:["Chile aviação LATAM OR JetSMART OR aeroporto","aviação companhias aéreas OR Boeing OR Airbus"],cultura:["Chile cultura -música -show","cultura cinema OR livros OR arte OR teatro -música"],musica:["Chile música show OR álbum OR festival","música show OR álbum OR turnê OR Grammy"],guerra:["guerra Ucrânia OR Gaza OR \"conflito armado\"","guerra ofensiva OR bombardeio OR \"cessar-fogo\" OR tropas"]}};
+  aviacion:["Chile aviação LATAM OR JetSMART OR aeroporto","aviação companhias aéreas OR Boeing OR Airbus"],cultura:["Chile cultura -música -show","cultura cinema OR livros OR arte OR teatro -música"],musica:["Chile música show OR álbum OR festival","música show OR álbum OR turnê OR Grammy"],guerra:["guerra Irã OR Ucrânia OR Gaza OR Líbano OR \"conflito armado\"","guerra Irã OR Ucrânia OR Gaza OR Sudão OR ofensiva OR bombardeio OR \"cessar-fogo\""]}};
 if(QL[UIL])Object.assign(Q,QL[UIL]);
 let sec=store.get("dial-news-sec","mis"); if(sec!=="mis" && (!LABEL[sec]||["nba","nfl","deportes_extremos"].includes(sec))) sec="mis";
 const NEWS_SECTIONS=SECTIONS.filter(([k])=>!["nba","nfl","deportes_extremos"].includes(k));
@@ -3722,15 +3722,15 @@ const CTX={politica:"(gobierno OR política OR sanciones OR diplomacia OR elecci
   aviacion:"(aviación OR aerolínea OR avión OR aeropuerto OR vuelo OR aeronave)",
   cultura:"(cultura OR cine OR libro OR arte OR teatro OR museo)",
   musica:"(música OR concierto OR disco OR canción OR banda OR festival)",
-  guerra:"(guerra OR conflicto OR bombardeo OR ofensiva OR misil OR tropas OR \"alto el fuego\")"};
+  guerra:"(guerra OR conflicto OR bombardeo OR ofensiva OR misil OR tropas OR \"alto el fuego\" OR Irán)"};
 const CTXL={en:{politica:"(government OR politics OR sanctions OR diplomacy OR elections OR congress)",economia:"(economy OR markets OR prices OR oil OR trade OR inflation OR stocks)",
   deportes_extremos:"(downhill OR enduro OR \"mountain bike\" OR XCO OR race)",nba:"(NBA OR basketball)",nfl:"(NFL OR football)",tecnologia:"(technology OR company OR launch OR software OR device)",
   ia:"(\"artificial intelligence\" OR AI OR model OR algorithm)",educacion:"(education OR schools OR university OR students)",salud:"(health OR hospital OR patients OR doctors OR disease)",
-  ciencias:"(science OR research OR study OR scientists)",aviacion:"(aviation OR airline OR aircraft OR airport OR flight)",cultura:"(culture OR film OR book OR art OR theater OR museum)",musica:"(music OR concert OR album OR song OR band OR festival)",guerra:"(war OR conflict OR airstrike OR offensive OR missile OR troops OR ceasefire)"},
+  ciencias:"(science OR research OR study OR scientists)",aviacion:"(aviation OR airline OR aircraft OR airport OR flight)",cultura:"(culture OR film OR book OR art OR theater OR museum)",musica:"(music OR concert OR album OR song OR band OR festival)",guerra:"(war OR conflict OR airstrike OR offensive OR missile OR troops OR ceasefire OR Iran)"},
  pt:{politica:"(governo OR política OR sanções OR diplomacia OR eleições OR congresso)",economia:"(economia OR mercados OR preços OR petróleo OR comércio OR inflação OR bolsa)",
   deportes_extremos:"(downhill OR enduro OR \"mountain bike\" OR XCO OR competição)",nba:"(NBA OR basquete)",nfl:"(NFL OR futebol americano)",tecnologia:"(tecnologia OR empresa OR lançamento OR software OR dispositivo)",
   ia:"(\"inteligência artificial\" OR IA OR modelo OR algoritmo)",educacion:"(educação OR escolas OR universidade OR estudantes)",salud:"(saúde OR hospital OR pacientes OR médicos OR doença)",
-  ciencias:"(ciência OR pesquisa OR estudo OR cientistas)",aviacion:"(aviação OR companhia aérea OR avião OR aeroporto OR voo)",cultura:"(cultura OR cinema OR livro OR arte OR teatro OR museu)",musica:"(música OR show OR álbum OR canção OR banda OR festival)",guerra:"(guerra OR conflito OR bombardeio OR ofensiva OR míssil OR tropas OR \"cessar-fogo\")"}};
+  ciencias:"(ciência OR pesquisa OR estudo OR cientistas)",aviacion:"(aviação OR companhia aérea OR avião OR aeroporto OR voo)",cultura:"(cultura OR cinema OR livro OR arte OR teatro OR museu)",musica:"(música OR show OR álbum OR canção OR banda OR festival)",guerra:"(guerra OR conflito OR bombardeio OR ofensiva OR míssil OR tropas OR \"cessar-fogo\" OR Irã)"}};
 if(CTXL[UIL])Object.assign(CTX,CTXL[UIL]);
 const quoted=t=>/\s/.test(t.trim())?`"${t.trim()}"`:t.trim();
 function topicQueries(topic,section){const ctx=CTX[section]||"";const q=quoted(topic);return[`${q} Chile ${ctx}`.trim(),`${q} ${ctx}`.trim()]}
