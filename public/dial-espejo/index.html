@@ -1408,6 +1408,10 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 #nbs .nb-fav{right:5px;bottom:5px;width:26px;height:26px;border-radius:6px;font-size:13px;background:rgba(0,0,0,.55);border-color:color-mix(in srgb,var(--lc2) 22%,transparent);color:color-mix(in srgb,var(--lc2) 60%,#8a8a93)}
 #nbs .nb-fav.on{color:#F2B544;border-color:color-mix(in srgb,#F2B544 55%,transparent);background:rgba(242,181,68,.1);text-shadow:0 0 6px rgba(242,181,68,.6)}
 #nbs .nbw .nb .ft{padding-right:28px}
+
+/* Resultados: marca discreta para las radios que ya escuchaste en esta sesión */
+#nbs .nb.heard{opacity:.62}
+#nbs .nb .hd{position:absolute;top:7px;right:20px;font:400 10px "Share Tech Mono",var(--mono);color:color-mix(in srgb,var(--lc2) 70%,#8a8a93)}
 </style>
 </head>
 <body>
@@ -2325,16 +2329,21 @@ function layout(){
   $("coreT").textContent=filtering()?String(matches.length):"tú";
   const desc=(FAV?["Favoritas"]:[]).concat([...SEL.fam].map(k=>FAM[k][0]),[...SEL.sty].map(k=>STY[k][0])).concat([...SEL.lang].map(k=>LANG[k]),[...SEL.reg],[...SEL.cc].map(cnName),query?[`“${query}”`]:[]);
   $("hTitle").textContent=F?`${F.n}${desc.length?" · "+desc.join(" + "):""}`:desc.length?`${matches.length} radios · ${desc.join(" + ")}`:(MOVE==="vivo"?"Tú al centro · órbitas por afinidad":"Constelación estable · las afines se iluminan");
-  $("nbTitle").textContent=desc.length?(F?`Coincidencias, de más a menos afín a ${F.n}`:"Coincidencias, de más a menos afín"):F?`Más afines a ${F.n}`:"Más afines a ti";
+  $("nbTitle").textContent=desc.length?"Coincidencias, de más a menos afín":F?`Más afines a ${F.n}`:"Más afines a ti";
   const nbs=$("nbs");nbs.innerHTML="";
   // Con filtros activos la radio elegida (la que suena) sigue en los resultados, primera y en verde; sin filtros, la grilla son sus afines
-  const keepF=F&&filtering();
-  const list=scored.filter(o=>(keepF?o.m:o.s!==F&&(!filtering()||o.m))).sort((a,b)=>((b.s===F)-(a.s===F))||((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v)).slice(0,12);
+  let list;
+  if(filtering()){
+    // Con filtros, el orden se fija al cambiar los filtros y no se reordena al tocar una radio: cada una conserva su lugar en la grilla
+    const fk=JSON.stringify([FAV,[...SEL.fam],[...SEL.sty],[...SEL.lang],[...SEL.reg],[...SEL.cc],query]);
+    if(NBO.k!==fk)NBO={k:fk,o:scored.filter(o=>o.m).sort((a,b)=>((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v)).map(o=>o.s.n)};
+    const by=new Map(scored.filter(o=>o.m).map(o=>[o.s.n,o]));list=NBO.o.map(n=>by.get(n)).filter(Boolean).slice(0,12);
+  }else list=scored.filter(o=>o.s!==F).sort((a,b)=>((!!a.s.dead)-(!!b.s.dead))||(b.v-a.v)).slice(0,12);
   if(!list.length){nbs.innerHTML='<p class="note">Ninguna radio cumple todos los filtros. Quita uno para ampliar.</p>'}
-  list.forEach(o=>{const b=document.createElement("button");b.className="nb"+(o.s.dead?" dead":"")+(o.s===current?" on":"");b.style.setProperty("--c",FAM[o.s.g][2]);
+  list.forEach(o=>{const b=document.createElement("button");b.className="nb"+(o.s.dead?" dead":"")+(o.s===current?" on":"")+(HEARD.has(o.s.n)&&o.s!==current?" heard":"");b.style.setProperty("--c",FAM[o.s.g][2]);
     const why=o.s.dead?"sin señal por ahora":(o.shared.slice(0,2).map(t=>t.replace("-"," ")).join(", ")||FAM[o.s.g][0]);
     b.setAttribute("aria-label",`${o.s.n}, ${Math.round(o.v*100)}% afín`);b.title=`${o.s.n} · ${LANG[o.s.lang]} · ${why}`;
-    b.innerHTML=`<span class="led"></span><span class="fl">${flag(o.s.cc)}</span><span class="n">${esc(o.s.n)}</span><span class="ft"><span class="p">${Math.round(o.v*100)}%</span><span class="w">${esc(o.s.dead?"sin señal":FAM[o.s.g][0])}</span></span>`;
+    b.innerHTML=`<span class="led"></span><span class="fl">${flag(o.s.cc)}</span><span class="n">${esc(o.s.n)}</span><span class="ft"><span class="p">${Math.round(o.v*100)}%</span><span class="w">${esc(o.s.dead?"sin señal":FAM[o.s.g][0])}</span></span>${HEARD.has(o.s.n)&&o.s!==current?'<span class="hd" aria-hidden="true">✓</span>':""}`;
     b.onclick=()=>pick(o.s);
     // ☆ directo en la tarjeta: guardar o quitar de favoritas sin abrir la radio
     const w=document.createElement("div");w.className="nbw";const fv=favs.has(o.s.n),st=document.createElement("button");
@@ -2542,7 +2551,7 @@ function fitMq(el){const tr=el.firstChild;if(!tr)return;const txt=el._t;const fi
   }else{if(el._a){el._a.cancel();el._a=null}if(tr.children.length>1)tr.innerHTML=`<span>${esc(txt)}</span>`;el.classList.remove("run")}}
 const refitMq=()=>["bT","bA","bM"].forEach(id=>{const el=$(id);if(el._t!=null)fitMq(el)});
 window.addEventListener("resize",refitMq);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(refitMq);
-var HEALTH={};const foLog={s:null,host:"",t0:0,first:0,play:0,lastT:0,stalls:0,stallS:0,longest:0,fo:0,wS:0,sent:true};
+var HEALTH={};var NBO={k:null,o:[]};const HEARD=new Set();const foLog={s:null,host:"",t0:0,first:0,play:0,lastT:0,stalls:0,stallS:0,longest:0,fo:0,wS:0,sent:true};
 let current=null,playToken=0,curList=[],curIdx=0,statusTxt="";let wantPlay=false,stallT=null,recovering=false,trying=0;
 // Descripción que manda el servidor de la radio; se ignoran los textos de fábrica ("My station description", etc.)
 const realDesc=(d,s)=>!!d&&d!==s.n&&!/^\s*(my |this is my )?(station|stream|server|radio)?\s*description\s*$|^\s*(unspecified|no) description|^\s*(unspecified|n\/?a|-+|null|undefined)\s*$/i.test(d);
@@ -2562,7 +2571,7 @@ function tryUrl(url,token){trying++;return new Promise((res,rej)=>{
   let fin=false;const done=ok=>{if(fin)return;fin=true;audio.removeEventListener("playing",on);audio.removeEventListener("error",off);clearTimeout(t);trying=Math.max(0,trying-1);ok?res():rej()};
   const on=()=>done(true),off=()=>done(false);const t=setTimeout(()=>done(false),12000);
   audio.addEventListener("playing",on);audio.addEventListener("error",off);audio.src=url;const p=audio.play();if(p)p.catch(()=>{if(token===playToken)done(false)})})}
-async function play(s){
+async function play(s){HEARD.add(s.n);
   const token=++playToken;lgStart(s);current=s;wantPlay=true;foNew();if(window.altSync)altSync();curList=[];curIdx=0;npReset(s);setBand(s);
   mset("bT",s.n);mset("bA",stationDesc(s));setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
   if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:[FAM[s.g][0],cnName(s.cc)].join(" · "),album:"Dial Espejo",artwork:[{src:"icon-hex-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
@@ -3483,7 +3492,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24l";
+const APP_VERSION="2026-11-24m";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
