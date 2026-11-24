@@ -52,7 +52,7 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 
 /* board */
 .boardwrap{background:#5a3a20;border-radius:18px;padding:8px;box-shadow:0 10px 26px rgba(40,20,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
-.board{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden;aspect-ratio:1;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.board{position:relative;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:6px;overflow:hidden;aspect-ratio:1;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .sq{position:relative;display:grid;place-items:center;min-width:0;min-height:0;overflow:hidden;background:#ecd9b9;border:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sq.d{background:#ae7c50}
 .sq.last{background:#e7d27a}.sq.d.last{background:#c4a44a}
@@ -132,6 +132,8 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .rk{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;background:#f3f3f1;border-radius:12px;padding:8px 10px;font-size:14px}
 .rk.me{background:#fff4d0}.rk .p{font-weight:800;color:#6c6f75;text-align:center}.rk .n{font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rk .n small{display:block;font-weight:600;color:#6c6f75;font-size:12px}.rk .e{font-weight:800;font-size:16px}
+.arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.arrows text{font:800 .3px system-ui,sans-serif;fill:#fff;text-anchor:middle;dominant-baseline:central}
 header .gear{display:grid;place-items:center;width:36px;height:38px;flex:none;border-radius:12px;background:rgba(255,255,255,.9);color:#1d1f23;border:none;font:inherit;font-size:17px;font-weight:800}
 header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 </style>
@@ -602,7 +604,7 @@ function renderGame() {
     ${who(bot)}
     <div class="status">${status}</div>${sub ? `<div class="sub">${sub}</div>` : ""}
     <div class="actions">${acts.join("")}</div>
-    ${alts && !state.winner ? `<div class="alts"><b>${altsBusy ? "Buscando tus mejores jugadas…" : "Tus mejores jugadas"}</b>${alts.map((a, i) => `<button data-alt="${i}" class="${hint && hint[0] === a.move.from && hint[1] === a.move.to ? "on" : ""}"><span>${i + 1}. ${esc(es(a.san))}</span><small>${altLabel(a)}</small></button>`).join("")}</div>` : ""}
+    ${alts && !state.winner ? `<div class="alts"><b>${altsBusy ? "Buscando tus mejores jugadas…" : "Tus mejores jugadas"}</b>${alts.map((a, i) => `<button data-alt="${i}" class="${hint && hint[0] === a.move.from && hint[1] === a.move.to ? "on" : ""}"><span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${ALT_COLORS[i]};margin-right:8px"></i>${i + 1}. ${esc(es(a.san))}</span><small>${altLabel(a)}</small></button>`).join("")}</div>` : ""}
     ${state.moves.length ? `<div class="moves" id="mv">${moveList()}</div>` : ""}`;
   if (mode === "online") pill(myColor ? "Partida " + code : "Mirando " + code);
   renderBoard();
@@ -643,13 +645,43 @@ function boardHTML(c, o) {
     const lr = (fl ? cc === 7 : cc === 0) ? `<span class="lr">${8 - r}</span>` : "";
     h += `<button class="${cls}" data-sq="${sq}" aria-label="${sq}">${lf}${lr}${p ? piece(p.color, p.type) : ""}</button>`;
   }
+  if (o.arrows && o.arrows.length) h += arrowsSVG(o.arrows, fl);
   return h;
+}
+// semi-transparent arrows for suggested moves: [{ from, to, color, label, alpha }]
+function arrowsSVG(list, fl) {
+  const pos = (sq) => { const c = FILES.indexOf(sq[0]), r = 8 - +sq[1]; return fl ? [7 - c + 0.5, 7 - r + 0.5] : [c + 0.5, r + 0.5]; };
+  let out = `<svg class="arrows" viewBox="0 0 8 8" aria-hidden="true">`;
+  // weakest first so the strongest is drawn on top
+  for (const a of list.slice().reverse()) {
+    const [x1, y1] = pos(a.from), [x2, y2] = pos(a.to);
+    const dx = x2 - x1, dy = y2 - y1;
+    // a knight's arrow bends in an L: first along the long side, then the short one
+    const knight = (Math.abs(dx) === 1 && Math.abs(dy) === 2) || (Math.abs(dx) === 2 && Math.abs(dy) === 1);
+    const pts = [[x1, y1]];
+    if (knight) pts.push(Math.abs(dx) > Math.abs(dy) ? [x2, y1] : [x1, y2]);
+    const [px, py] = pts[pts.length - 1], len = Math.hypot(x2 - px, y2 - py), ux = (x2 - px) / len, uy = (y2 - py) / len;
+    const rad = a.label ? 0.21 : 0, tip = [x2 - ux * rad, y2 - uy * rad], base = [tip[0] - ux * 0.38, tip[1] - uy * 0.38];
+    pts.push(base);
+    const wx = -uy * 0.24, wy = ux * 0.24;
+    out += `<g opacity="${a.alpha}"><polyline points="${pts.map((q) => q[0].toFixed(3) + "," + q[1].toFixed(3)).join(" ")}" fill="none" stroke="${a.color}" stroke-width="0.17" stroke-linecap="round" stroke-linejoin="round"/>
+      <polygon points="${tip[0].toFixed(3)},${tip[1].toFixed(3)} ${(base[0] + wx).toFixed(3)},${(base[1] + wy).toFixed(3)} ${(base[0] - wx).toFixed(3)},${(base[1] - wy).toFixed(3)}" fill="${a.color}"/>
+      ${a.label ? `<circle cx="${x2}" cy="${y2}" r="${rad}" fill="${a.color}"/><text x="${x2}" y="${y2 + 0.01}">${a.label}</text>` : ""}</g>`;
+  }
+  return out + "</svg>";
+}
+const ALT_COLORS = ["#1f9d55", "#2f6fdf", "#6b7078"];
+function altArrows() {
+  if (!alts || altsBusy || !alts.length || state.winner) return null;
+  const chosen = hint ? alts.findIndex((a) => a.move.from === hint[0] && a.move.to === hint[1]) : -1;
+  return alts.map((a, i) => ({ from: a.move.from, to: a.move.to, color: ALT_COLORS[i] || ALT_COLORS[2], label: String(i + 1), alpha: chosen < 0 ? 0.62 : i === chosen ? 0.92 : 0.22 }));
 }
 function renderBoard() {
   const el = $("#board"); if (!el) return;
   const targets = new Map();
   if (sel && myTurn()) for (const m of chess.moves({ square: sel, verbose: true })) targets.set(m.to, !!m.captured);
-  el.innerHTML = boardHTML(chess, { flip, sel, targets, hint });
+  const arrows = altArrows();
+  el.innerHTML = boardHTML(chess, { flip, sel, targets, hint: arrows ? null : hint, arrows });
   el.querySelectorAll(".sq").forEach((b) => b.onclick = () => tap(b.dataset.sq));
 }
 
@@ -722,7 +754,8 @@ function drawReview() {
     note = "Evaluación: " + evalTxt(rv.evals[ply]);
     if (mark) note = `<span style="color:${mark === "??" ? "#d9363e" : "#d98a00"}">${mark === "??" ? "Error grave" : "Imprecisión"}</span>; era mejor ${esc(es(rv.best[ply - 1] || ""))}. ` + note;
   }
-  const hn = rv.evals && mark && rv.bestMove[ply - 1] ? [rv.bestMove[ply - 1].from, rv.bestMove[ply - 1].to] : null;
+  const bm = rv.evals && mark ? rv.bestMove[ply - 1] : null;
+  const arrows = bm ? [{ from: bm.from, to: bm.to, color: ALT_COLORS[0], label: "", alpha: 0.7 }] : null;
   const mc = myColorIn(g);
   const top = rv.flip ? "w" : "b", bot = rv.flip ? "b" : "w";
   const nm = (col) => (col === "w" ? g.white_name : g.black_name) || (col === "w" ? "Blancas" : "Negras");
@@ -735,7 +768,7 @@ function drawReview() {
   }
   pill("Repaso");
   $("#app").innerHTML = `<div class="who"><span class="ico">${piece(top, "k")}</span><span class="nm">${esc(nm(top))}${mc === top ? " (tú)" : ""}</span></div>
-    <div class="boardwrap"><div class="board" id="board">${boardHTML(c, { flip: rv.flip, hint: hn })}</div></div>
+    <div class="boardwrap"><div class="board" id="board">${boardHTML(c, { flip: rv.flip, arrows })}</div></div>
     <div class="who"><span class="ico">${piece(bot, "k")}</span><span class="nm">${esc(nm(bot))}${mc === bot ? " (tú)" : ""}</span></div>
     <div class="nav"><button class="btn" data-go="0" aria-label="Al inicio">⏮</button><button class="btn" data-go="-1" aria-label="Atrás">◀</button><button class="btn" data-go="1" aria-label="Adelante">▶</button><button class="btn" data-go="end" aria-label="Al final">⏭</button></div>
     <div class="status">${ply === 0 ? "Posición inicial" : "Jugada " + Math.ceil(ply / 2) + (ply % 2 ? " de blancas" : " de negras")} · ${ply}/${sans.length}</div>
