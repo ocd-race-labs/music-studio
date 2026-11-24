@@ -1371,6 +1371,13 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .pre-d{font-size:12px!important}
 .pre-d:hover{color:#FFC23A!important;border-color:rgba(255,194,58,.5)!important}
 @media (prefers-reduced-motion:reduce){.pre-e.pk .pre-k{animation:none}}
+
+/* Rótulo de país en las memorias */
+.pre-gh{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:6px 2px -1px;font:400 10px "Share Tech Mono",var(--mono);letter-spacing:.14em;text-transform:uppercase;color:color-mix(in srgb,var(--lc2,#86EFAC) 55%,#8a8a93)}
+.pre-gh:first-child{margin-top:0}
+.pre-gh::after{content:"";flex:1;height:1px;background:color-mix(in srgb,var(--lc2,#86EFAC) 14%,transparent)}
+.pre-gh i{font-style:normal;opacity:.55;order:2}
+.pre-gh::after{order:1}
 </style>
 </head>
 <body>
@@ -2606,9 +2613,11 @@ function rowHTML(list,pin,mini){const tp=topGet();return list.map(x=>{if(mini){c
       ${pin?`<button class="sq-b sq-tp${it?" on":""}" data-n="${esc(x.n)}" data-a="t" aria-pressed="${it}" aria-label="${it?"Quitar del top 3":"Poner en el top 3"}">${it?"Top":"+Top"}</button>`:""}<button class="sq-b sq-fv${fv?" on":""}" data-n="${esc(x.n)}" data-a="f" aria-label="${fv?"Quitar de favoritas":"Agregar a favoritas"}">${fv?"★":"☆"}</button><button class="sq-b sq-pl${on?" on":""}" data-n="${esc(x.n)}" data-a="p" aria-label="${on?"Detener":"Escuchar"}">${on?"■":"▶"}</button></div>`}).join("")}
 
 // Memorias de la radio (como los botones de presintonía de una radio de los 90): P1-P3 son el top 3; el banco despliega el resto de favoritas
+// En las memorias el país ya va en el rótulo del grupo: la tarjeta muestra el estilo
+const styLab=x=>{const k=[...(x.st||[])].sort()[0];return k&&STY[k]?STY[k][0]:FAM[x.g][0]};
 function presetHTML(list,start,bank){return list.map((x,i)=>{if(!x){const pk=PICK===i;return `<div class="pre pre-e${pk?" pk":""}"><button class="pre-k" data-n="" data-a="slot" data-i="${i}" aria-label="P${start+i}: puesto libre${pk?", cancelar":", elegir una radio"}"><span class="pre-n">P${start+i}</span><i class="pre-l" aria-hidden="true"></i><b>${pk?"Elige abajo":"Libre"}</b><small>${pk?"Cancelar ✕":"+ toca para llenar"}</small></button></div>`}
   const cur=current===x,on=cur&&!audio.paused;
-  return `<div class="pre${cur?" cur":""}${on?" on":""}${nosig(x)?" ns":""}" style="--cc:${FAM[x.g][2]}"><button class="pre-k" data-n="${esc(x.n)}" data-a="p" aria-label="${esc(x.n)}: ${on?"Detener":"Escuchar"}"><span class="pre-n">P${start+i}</span><i class="pre-l" aria-hidden="true"></i><b>${esc(x.n)}</b><small>${esc(flag(x.cc)+" "+(CN[x.cc]||x.cc))}</small></button>${bank?`<button class="pre-t" data-n="${esc(x.n)}" data-a="t" aria-label="Poner en el top 3">TOP</button>`:""}${favs.has(x.n)?(bank?`<button class="pre-x" data-n="${esc(x.n)}" data-a="f" aria-label="Quitar de favoritas">✕</button>`:`<button class="pre-x pre-d" data-n="${esc(x.n)}" data-a="d" aria-label="Sacar del top 3 (sigue en favoritas)">↓</button>`):""}</div>`}).join("")}
+  return `<div class="pre${cur?" cur":""}${on?" on":""}${nosig(x)?" ns":""}" style="--cc:${FAM[x.g][2]}"><button class="pre-k" data-n="${esc(x.n)}" data-a="p" aria-label="${esc(x.n)}: ${on?"Detener":"Escuchar"}"><span class="pre-n">P${start+i}</span><i class="pre-l" aria-hidden="true"></i><b>${esc(x.n)}</b><small>${esc(bank?styLab(x):flag(x.cc)+" "+(CN[x.cc]||x.cc))}</small></button>${bank?`<button class="pre-t" data-n="${esc(x.n)}" data-a="t" aria-label="Poner en el top 3">TOP</button>`:""}${favs.has(x.n)?(bank?`<button class="pre-x" data-n="${esc(x.n)}" data-a="f" aria-label="Quitar de favoritas">✕</button>`:`<button class="pre-x pre-d" data-n="${esc(x.n)}" data-a="d" aria-label="Sacar del top 3 (sigue en favoritas)">↓</button>`):""}</div>`}).join("")}
 
 /* Para ti: de todas tus favoritas, 3 radios nuevas, una por cada tipo que más escuchas (familia, o estilo si todo es de una familia).
    Cada una se elige por su afinidad media con las favoritas de ese grupo (top-k), un poco de afinidad con el perfil completo,
@@ -2687,7 +2696,10 @@ function sqRender(){const q=$("sq").value;
   const ts=topSlots(),tl=ts.filter(Boolean);if(!fl.length)PICK=null;$("topR").innerHTML=fl.length?presetHTML(ts,1,false):presetHTML(popular().slice(0,3),1,false);
   const bk=fl.filter(x=>!tl.includes(x));$("favAll").hidden=!bk.length;$("npCard").classList.toggle("picking",PICK!==null);
   $("favH").textContent=PICK!==null?(bk.length?`Toca una memoria para ponerla en P${PICK+1}.`:"No quedan memorias libres: marca ☆ en otra radio."):bk.length?"Toca TOP en una memoria para subirla a P1-P3.":"";
-  $("favR").innerHTML=presetHTML(bk,4,true);
+  // Memorias agrupadas por país (alfabético) y, dentro de cada país, por estilo; un rótulo por país; la numeración P4… sigue corrida
+  const cnm=x=>CN[x.cc]||x.cc;const sty=x=>FAM[x.g][0]+"|"+styLab(x);bk.sort((a,b)=>cnm(a).localeCompare(cnm(b),"es")||sty(a).localeCompare(sty(b),"es")||a.n.localeCompare(b.n,"es"));
+  {let h="",i=0;while(i<bk.length){const c=bk[i].cc,g=[];while(i<bk.length&&bk[i].cc===c)g.push(bk[i++]);
+    h+=`<div class="pre-gh"><span>${esc(flag(c)+" "+(CN[c]||c))}</span><i>${g.length}</i></div>`+presetHTML(g,4+i-g.length,true)}$("favR").innerHTML=h}
   document.querySelector(".npc-top .hk").textContent=fl.length?"Tus top 3":"Para empezar · toca ☆ para guardar favoritas";
   fyRender();}
   hlRender();
@@ -3414,7 +3426,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24d";
+const APP_VERSION="2026-11-24f";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
