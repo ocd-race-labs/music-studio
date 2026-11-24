@@ -1352,6 +1352,11 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 
 /* Memorias: la ✕ no se monta sobre el país */
 .pre:has(.pre-x) .pre-k small{padding-right:24px}
+
+/* Memorias: cada recuadro ocupa toda la altura de su fila (los nombres cortos dejaban el marco más bajo y la ✕ quedaba afuera) */
+.sq-r .pre{display:grid}
+.sq-r .pre-k{height:100%;grid-template-rows:auto auto 1fr;align-content:stretch}
+.sq-r .pre-k small{align-self:end}
 </style>
 </head>
 <body>
@@ -3381,7 +3386,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24b";
+const APP_VERSION="2026-11-24c";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
