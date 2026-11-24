@@ -1505,6 +1505,11 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 /* Pantalla del dial: la canción en modo teleprompter (sube de abajo hacia arriba), hasta 3 líneas visibles */
 .k-c span.tv{display:block;width:100%;height:calc(15cqw*1.12*3);overflow:hidden;text-wrap:wrap;-webkit-mask:linear-gradient(180deg,transparent 0,#000 7%,#000 93%,transparent);mask:linear-gradient(180deg,transparent 0,#000 7%,#000 93%,transparent)}
 .k-c span.tv i{display:block;font-style:normal;font-size:15cqw;line-height:1.12;text-align:center;overflow-wrap:anywhere;will-change:transform}
+
+/* Título y artista en una línea con desplazamiento lateral cuando no caben */
+.np-meta .np-song,.np-meta .np-artist{white-space:nowrap;overflow:hidden;overflow-wrap:normal;padding-right:0!important;margin-right:54px}
+.np-meta .np-song.mq-on,.np-meta .np-artist.mq-on{-webkit-mask:linear-gradient(90deg,#000 0,#000 88%,transparent);mask:linear-gradient(90deg,#000 0,#000 88%,transparent)}
+.mq-i{display:inline-block;will-change:transform}
 </style>
 </head>
 <body>
@@ -3107,7 +3112,7 @@ function renderSheet(){if(npSheet.hidden||!current)return;const s=current,j=np.c
   const song=cleanSong(j.song&&j.artist?j.song:(j.program||j.raw||s.n));
   const artist=j.song&&j.artist?j.artist:(j.program?(j.program_desc||s.n):(j.raw?s.n:stationDesc(s)));
   $("npSt").textContent=`${flag(s.cc)} ${s.n}${s.f?" · "+s.f.toFixed(1)+" FM":""} · ${statusTxt||""}`;
-  $("npSong").textContent=song;$("npArtist").textContent=artist;
+  mqSet($("npSong"),song);mqSet($("npArtist"),artist);
   {const st=$("npStat");st.textContent=statusTxt||"";st.hidden=!statusTxt||/^en vivo/i.test(statusTxt)}
   ktSet(s.n,j.song&&j.artist?j.artist+" · "+cleanSong(j.song):(j.program||""));$("kCs").textContent=[s.f?s.f.toFixed(1)+" FM":"",statusTxt].filter(Boolean).join(" · ").replace(/ · /g,"·");npSheet.style.setProperty("--fc",FAM[s.g][2]);npSheet.classList.toggle("dialv",!!store.get("dial-dialview",false));
   $("npAlbum").textContent=j.song&&j.artist?[j.album,j.year,j.genre].filter(Boolean).join(" · "):"";
@@ -3232,6 +3237,16 @@ function ndStep(dir){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.ma
      if(t!=null){k.classList.add("snap");kSet((t-ci)*KSTEP)}}
     setTimeout(()=>{kDrag=false;ND.kTarget=null;ND.kBusy=false;k.classList.add("snap");kSet(kFromScroll());setTimeout(()=>k.classList.remove("snap"),300);const sc=$("ndSc");if(!ndAnim)sc.style.scrollSnapType=""},320)};
   k.addEventListener("pointerup",end);k.addEventListener("pointercancel",end)})();
+/* Canción y artista en la pantalla de la radio: una sola línea; si no cabe, se desliza de lado (pausa al inicio y al final) para no empujar los botones */
+function mqSet(el,txt){txt=String(txt||"");if(el._t===txt&&el.firstChild)return;el._t=txt;el.innerHTML='<span class="mq-i"></span>';el.firstChild.textContent=txt;requestAnimationFrame(()=>mqRun(el))}
+function mqRun(el){const i=el.firstChild;if(!i||!el.clientWidth)return;if(el._an){el._an.cancel();el._an=null}
+  const d=Math.ceil(i.scrollWidth-el.clientWidth);el.classList.toggle("mq-on",d>4);if(d<=4||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const hold=2200,run=Math.max(1500,d/42*1000),tot=2*(hold+run),o=x=>x/tot;
+  el._an=i.animate([{transform:"translateX(0)"},{transform:"translateX(0)",offset:o(hold)},{transform:`translateX(${-d}px)`,offset:o(hold+run)},{transform:`translateX(${-d}px)`,offset:o(2*hold+run)},{transform:"translateX(0)"}],{duration:tot,iterations:Infinity,easing:"ease-in-out"})}
+const mqAll=()=>["npSong","npArtist"].forEach(id=>{const e=$(id);if(e&&e.firstChild)mqRun(e)});
+addEventListener("resize",()=>requestAnimationFrame(mqAll));
+new MutationObserver(()=>{if(!npSheet.hidden)requestAnimationFrame(mqAll)}).observe(npSheet,{attributes:true,attributeFilter:["hidden","class"]});
+document.fonts&&document.fonts.ready.then(mqAll);
 function dialView(on){store.set("dial-dialview",on);npSheet.classList.toggle("dialv",on)}
 function fitK(){const e=$("kCn");if(!e||!e.offsetWidth||e.classList.contains("tk")||e.classList.contains("tv"))return;let k=1;e.style.setProperty("--kz",1);while(k>.5&&e.scrollWidth>e.clientWidth+1){k-=.04;e.style.setProperty("--kz",k.toFixed(2))}}
 addEventListener("resize",()=>requestAnimationFrame(fitK));document.fonts&&document.fonts.ready.then(fitK);
@@ -3662,7 +3677,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24s";
+const APP_VERSION="2026-11-24t";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
