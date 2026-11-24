@@ -1378,6 +1378,15 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .pre-gh::after{content:"";flex:1;height:1px;background:color-mix(in srgb,var(--lc2,#86EFAC) 14%,transparent)}
 .pre-gh i{font-style:normal;opacity:.55;order:2}
 .pre-gh::after{order:1}
+
+/* Estrella directa en las tarjetas de la búsqueda avanzada */
+.nbw{position:relative;min-width:0;display:grid}
+.nbw>.nb{width:100%}
+.nb-fav{all:unset;box-sizing:border-box;cursor:pointer;position:absolute;right:7px;bottom:7px;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;font-size:16px;line-height:1;color:#9a9aa6;background:rgba(10,10,14,.55);border:1px solid #2E2E38;transition:transform .12s,color .15s,border-color .15s}
+.nb-fav:hover{color:#EDEDF2;border-color:#4a4a56}
+.nb-fav:active{transform:scale(.88)}
+.nb-fav.on{color:#F2B544;border-color:color-mix(in srgb,#F2B544 55%,transparent);background:rgba(242,181,68,.12)}
+.nbw .nb .ft{padding-right:34px}
 </style>
 </head>
 <body>
@@ -2287,7 +2296,12 @@ function layout(){
     const why=o.s.dead?"sin señal por ahora":(o.shared.slice(0,2).map(t=>t.replace("-"," ")).join(", ")||FAM[o.s.g][0]);
     b.setAttribute("aria-label",`${o.s.n}, ${Math.round(o.v*100)}% afín`);b.title=`${o.s.n} · ${LANG[o.s.lang]} · ${why}`;
     b.innerHTML=`<span class="led"></span><span class="fl">${flag(o.s.cc)}</span><span class="n">${esc(o.s.n)}</span><span class="ft"><span class="p">${Math.round(o.v*100)}%</span><span class="w">${esc(o.s.dead?"sin señal":FAM[o.s.g][0])}</span></span>`;
-    b.onclick=()=>pick(o.s);nbs.appendChild(b)});
+    b.onclick=()=>pick(o.s);
+    // ☆ directo en la tarjeta: guardar o quitar de favoritas sin abrir la radio
+    const w=document.createElement("div");w.className="nbw";const fv=favs.has(o.s.n),st=document.createElement("button");
+    st.className="nb-fav"+(fv?" on":"");st.textContent=fv?"★":"☆";st.setAttribute("aria-pressed",fv);st.setAttribute("aria-label",(fv?"Quitar de favoritas: ":"Agregar a favoritas: ")+o.s.n);
+    st.onclick=e=>{e.stopPropagation();favToggle(o.s);const on=favs.has(o.s.n);st.classList.toggle("on",on);st.textContent=on?"★":"☆";st.setAttribute("aria-pressed",on);st.setAttribute("aria-label",(on?"Quitar de favoritas: ":"Agregar a favoritas: ")+o.s.n)};
+    w.appendChild(b);w.appendChild(st);nbs.appendChild(w)});
   S.forEach(s=>s.el.querySelector(".sel").setAttribute("opacity",s===F?1:0));
   renderFilters();
   document.querySelectorAll("#hMove button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===MOVE));
@@ -2641,6 +2655,8 @@ function fyDesc(x){const st=x.st?[...x.st].slice(0,2).map(k=>STY[k][0]):[...x.ta
 function fyRender(){const box=$("npcAf");if(!box)return;const P=forYou();const nf=S.filter(x=>favs.has(x.n)).length;
   box.innerHTML=`<div class="hk">${nf?`Para ti · Según tus ${nf} favoritas`:"Para ti · Según lo que escuchas"}</div><div class="fy">`+P.map(o=>{const x=o.x,on=current===x&&!audio.paused;
     return `<button class="fy-c${on?" on":""}" data-n="${esc(x.n)}" data-a="p" style="--cc:${FAM[x.g][2]}"><span class="fy-t">${esc(o.g.lab)}</span><span class="fy-m">${Math.round(o.v*100)}%</span><b>${esc(x.n)}</b><span class="fy-d">${fyDesc(x).map(esc).join(" · ")}</span><small>${esc(flag(x.cc)+" "+(CN[x.cc]||x.cc))} · Porque escuchas <em>${o.by.map(m=>esc(m.n)).join(" · ")}</em></small><span class="fy-p" aria-hidden="true">${on?"■":"▶"}</span></button>`}).join("")+`</div>`}
+function favToggle(x){if(favs.has(x.n)){const t=topSlots(),i=t.indexOf(x);favs.delete(x.n);if(i>=0){t[i]=null;topSet(t)}}else favs.add(x.n);saveFavs();
+  if(current===x)$("bFav").textContent=favs.has(x.n)?"★":"☆";try{renderFilters()}catch(e){}try{sqRender()}catch(e){}}
 function homeAct(b){
   if(b.dataset.a==="slot"){const i=+b.dataset.i;PICK=PICK===i?null:i;if(PICK!==null){$("favMg").hidden=false;$("favAll").setAttribute("aria-expanded","true")}sqRender();return}
   const x=S.find(y=>y.n===b.dataset.n);if(!x)return;
@@ -3426,7 +3442,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-24f";
+const APP_VERSION="2026-11-24g";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
