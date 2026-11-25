@@ -2709,6 +2709,7 @@ async function play(s){HEARD.add(s.n);
   mset("bT",s.n);mset("bA",stationDesc(s));setStatus("sintonizando…");setBtn(true);$("bAlt").disabled=true;
   if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:s.n,artist:[FAM[s.g][0],cnName(s.cc)].join(" · "),album:"Dial Espejo",artwork:[{src:"icon-hex-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
   let list=[];try{list=await candidates(s)}catch(e){if(token===playToken){setStatus("sin conexión al directorio");setBtn(false)}return}
+  {const h=hlsFor(s,list);if(h)list=[{url:h,uuid:"",codec:"AAC",bitrate:0,hls:true},...list.filter(c=>c.url!==h)]}
   for(let attempt=0;attempt<2;attempt++){
     for(const[i,c]of list.entries()){if(token!==playToken)return;
       try{await tryUrl(c.url,token);if(token!==playToken)return;curList=list;curIdx=i;$("bAlt").disabled=list.length<2;setStatus("en vivo");setBtn(true);npStart(s,c);
@@ -2988,8 +2989,19 @@ async function failover(why){if(FO.busy||!current||!wantPlay||trying||recovering
     FO.quiet=Date.now()+120000;FO.tried=new Set();setStatus("señal inestable ahora");
     if(audio.paused&&wantPlay&&cur){const token=++playToken;try{await tryUrl(cur.url,token)}catch(e){}}
   }finally{FO.busy=false}}
+/* Señal en bloques (HLS) para el iPhone y Safari: guarda ~30 s de reserva y sobrevive a los cambios de antena en carretera.
+   Solo las verificadas el 2026-11-24 (Triton/StreamTheWorld en su versión AAC, Radio France y ABC). En otros navegadores se usa la señal de siempre. */
+const UA=navigator.userAgent,CAN_HLS=!!audio.canPlayType("application/vnd.apple.mpegurl")&&(/iP(hone|ad|od)/.test(UA)||(/Macintosh/.test(UA)&&"ontouchend" in document)||(/Safari/.test(UA)&&!/Chrome|Chromium|Edg|Firefox|OPR/.test(UA)));
+const STW_HLS=new Set("5FM 6IX BANDFM_SP BANDNEWSFM_SP BHFM CARACOL_RADIO CBN_BH CBN_SP DISNEY_BRA_SP GAZETA_FM METROFM NATIVA_SP OBSERVADOR OLP_CALI RADIO_89FM RADIO_ALPHAFM RADIO_ELDORADO RADIO_KISSFM WRCAAM".split(" "));
+const RF="https://stream.radiofrance.fr/",ABCH="https://streaming.abc-cdn.net.au/audio/hls/";
+const HLS_BY_NAME={"FIP":RF+"fip/fip_hifi.m3u8?id=radiofrance","FIP Jazz":RF+"fipjazz/fipjazz_hifi.m3u8?id=radiofrance","FIP Rock":RF+"fiprock/fiprock_hifi.m3u8?id=radiofrance","FIP Reggae":RF+"fipreggae/fipreggae_hifi.m3u8?id=radiofrance","FIP Monde":RF+"fipworld/fipworld_hifi.m3u8?id=radiofrance","FIP Electro":RF+"fipelectro/fipelectro_hifi.m3u8?id=radiofrance","FIP Hip Hop":RF+"fiphiphop/fiphiphop_hifi.m3u8?id=radiofrance","triple j":ABCH+"triplejnsw.m3u8?source=web","Double J":ABCH+"doublejnsw.m3u8?source=web"};
+function hlsFor(s,list){if(!CAN_HLS)return null;if(HLS_BY_NAME[s.n])return HLS_BY_NAME[s.n];
+  for(const c of list||[]){const m=String(c.url).match(/^(https:\/\/playerservices\.streamtheworld\.com\/api\/livestream-redirect\/)([A-Z0-9_]+)\.(mp3|aac)$/i);if(!m)continue;
+    if(m[2]==="FM702_192AAC")return m[1]+"FM702_192AAC.m3u8";if(m[2]==="RADIO_GLOBO_RJ")return m[1]+"RADIO_GLOBO_RJ_ADP.m3u8";if(STW_HLS.has(m[2]))return m[1]+m[2]+"AAC.m3u8"}
+  return null}
 function armStall(){clearTimeout(stallT);stallT=setTimeout(()=>{if(wantPlay&&current&&!trying)recover()},9000)}
-audio.addEventListener("stalled",()=>{if(wantPlay&&current)armStall()});
+// Con la pantalla apagada los temporizadores se congelan: si la señal se ahoga, se reconecta de inmediato desde el propio aviso del reproductor
+audio.addEventListener("stalled",()=>{if(!wantPlay||!current)return;if(document.hidden&&!trying&&!recovering){recover();return}armStall()});
 audio.addEventListener("playing",()=>clearTimeout(stallT));
 audio.addEventListener("error",()=>{if(wantPlay&&current&&!trying)recover()});
 audio.addEventListener("ended",()=>{if(wantPlay&&current&&!trying)recover()});   // una señal en vivo que "termina" se retoma sola
@@ -3714,7 +3726,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-25f";
+const APP_VERSION="2026-11-25g";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
