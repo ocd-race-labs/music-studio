@@ -1568,6 +1568,14 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .nd-read .nd-sw b::before,.nd-read .nd-sw b::after{content:none!important}
 .nd-read .nd-sw b{color:inherit!important;font-size:11px!important;text-shadow:none}
 .nd-sw:active{transform:translateY(1px);background:color-mix(in srgb,var(--uc) 22%,#08090a)!important}
+
+/* Pantalla de la radio: sin los enlaces a Spotify/Apple de canción y artista (viven en Mis canciones) */
+.np-links{display:none!important}
+.np-lrow{justify-content:flex-end}
+/* Título blanco de la canción: 2 líneas visibles; si no cabe, sube de abajo hacia arriba */
+.np-meta .np-song{white-space:normal!important;overflow:hidden;height:calc(1.2em*2);display:flex;align-items:flex-start}
+.np-meta .np-song .mq-i{display:block;width:100%;white-space:normal;overflow-wrap:anywhere}
+.np-meta .np-song.mq-on{-webkit-mask:linear-gradient(180deg,#000 0,#000 82%,transparent);mask:linear-gradient(180deg,#000 0,#000 82%,transparent)}
 </style>
 </head>
 <body>
@@ -1684,7 +1692,7 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
       <div class="np-album" id="npAlbum"></div>
       <div class="lk-toast np-lkt" id="npLkT" role="status" aria-live="polite"></div>
     </div>
-    <div class="np-lrow"><div class="np-links" id="npLinks"></div><a class="np-it np-web" id="npWeb" target="_blank" rel="noopener" aria-label="Web de la radio">↗</a><button class="np-it np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button><button class="np-it" id="npInfoT" aria-label="Información de la radio" aria-expanded="false">i</button></div>
+    <div class="np-lrow"><div class="np-links" id="npLinks" hidden></div><a class="np-it np-web" id="npWeb" target="_blank" rel="noopener" aria-label="Web de la radio">↗</a><button class="np-it np-sh" id="npShare" aria-label="Compartir esta radio"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button><button class="np-it" id="npInfoT" aria-label="Información de la radio" aria-expanded="false">i</button></div>
     <div class="np-ctl">
       <button class="np-b" id="npFav" aria-label="Favorita">☆</button>
       <button class="np-b" id="npAlt" aria-label="Probar otra señal">⇄</button>
@@ -3314,6 +3322,10 @@ function ndStep(dir){const sc=$("ndSc"),c=sc.scrollLeft+sc.clientWidth/2,o=ND.ma
 /* Canción y artista en la pantalla de la radio: una sola línea; si no cabe, se desliza de lado (pausa al inicio y al final) para no empujar los botones */
 function mqSet(el,txt){txt=String(txt||"");if(el._t===txt&&el.firstChild)return;el._t=txt;el.innerHTML='<span class="mq-i"></span>';el.firstChild.textContent=txt;requestAnimationFrame(()=>mqRun(el))}
 function mqRun(el){const i=el.firstChild;if(!i||!el.clientWidth)return;if(el._an){el._an.cancel();el._an=null}
+  // El título de la canción: hasta 2 líneas visibles y, si es más largo, sube como teleprompter (igual que la pantalla LED del dial)
+  if(el.id==="npSong"){const d=Math.ceil(i.offsetHeight-el.clientHeight);el.classList.toggle("mq-on",d>2);if(d<=2)return;
+    const lh=parseFloat(getComputedStyle(i).lineHeight)||28,hold=2200,run=Math.max(1400,d/lh*1300),tot=2*(hold+run),o=x=>x/tot;
+    el._an=i.animate([{transform:"translateY(0)"},{transform:"translateY(0)",offset:o(hold)},{transform:`translateY(${-d}px)`,offset:o(hold+run)},{transform:`translateY(${-d}px)`,offset:o(2*hold+run)},{transform:"translateY(0)"}],{duration:tot,iterations:Infinity,easing:"ease-in-out"});return}
   const d=Math.ceil(i.scrollWidth-el.clientWidth);el.classList.toggle("mq-on",d>4);if(d<=4)return;
   const hold=2200,run=Math.max(1500,d/42*1000),tot=2*(hold+run),o=x=>x/tot;
   el._an=i.animate([{transform:"translateX(0)"},{transform:"translateX(0)",offset:o(hold)},{transform:`translateX(${-d}px)`,offset:o(hold+run)},{transform:`translateX(${-d}px)`,offset:o(2*hold+run)},{transform:"translateX(0)"}],{duration:tot,iterations:Infinity,easing:"ease-in-out"})}
@@ -3777,7 +3789,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-25j";
+const APP_VERSION="2026-11-25k";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
