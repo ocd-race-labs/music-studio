@@ -1530,6 +1530,10 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .np-web{font:500 17px/1 var(--sans,system-ui)!important;font-style:normal!important;text-decoration:none;color:var(--muted)}
 .np-web[hidden]{display:none}
 .np-lkt{margin-top:2px;min-height:0}
+
+/* Pantalla del dial: el área de texto tiene siempre el alto de 4 líneas, así "Tap to see the cover" no salta (ni en el medio segundo negro ni al pasar de radio a canción) */
+.np.dialv .k-c span{min-height:calc(11.6cqw*1.12*4);display:grid;align-content:center}
+.np.dialv .k-c span.tk i{justify-self:start}
 </style>
 </head>
 <body>
@@ -3726,7 +3730,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-25g";
+const APP_VERSION="2026-11-25h";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
