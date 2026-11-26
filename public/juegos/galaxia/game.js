@@ -1,0 +1,267 @@
+// Galaxia: the game itself, with no drawing. Everything is counts and rates per minute, so an hour
+// or a month of play weighs the same; when the game opens it catches up on the time that passed.
+
+/* ---------- what exists ---------- */
+export const MATS = {
+  hierro: { name: "Hierro", tier: 0, color: "#d9d4cc" },
+  cobre: { name: "Cobre", tier: 0, color: "#c9864f" },
+  silicio: { name: "Silicio", tier: 1, color: "#9fb8c8" },
+  titanio: { name: "Titanio", tier: 1, color: "#e6e2da" },
+  iridio: { name: "Iridio", tier: 2, color: "#a879ff" },
+  plasma: { name: "Cristal de plasma", tier: 3, color: "#ffcf6b" },
+};
+export const SUPPLY = {
+  alimentos: { name: "Alimentos", color: "#f1e9dc" },
+  combustible: { name: "Combustible", color: "#ff9f2e" },
+};
+export const TIER = ["COMÚN", "MEDIO", "RARO", "LEGENDARIO"];
+export const RAD = { baja: 1, media: 0.9, alta: 0.75, extrema: 0.55 };
+
+// veins: what they give, where they sit on the field (360×460), size, purity; deep ones need the lab to be seen
+// and the heavy excavator to be worked
+export const PLANETS = [
+  { id: "kalon", name: "Kalon", kind: "Rocoso", c1: "#d98a5a", c2: "#6a2e16", ground: "#3a271d", x: 22, y: 62,
+    desc: "Mundo de roca con vetas de metal a flor de piel. La radiación de su estrella castiga a la tripulación.",
+    grav: 0.6, atm: 0.1, rad: "alta", temp: -40, o2: false, luz: 0.8, storm: 0.6, radio: 0.35, day: 31,
+    veins: [
+      { id: "k1", mat: "hierro", x: 90, y: 120, size: 2400, purity: 0.62 },
+      { id: "k2", mat: "cobre", x: 285, y: 150, size: 1800, purity: 0.55 },
+      { id: "k3", mat: "hierro", x: 180, y: 70, size: 1600, purity: 0.8 },
+      { id: "k4", mat: "iridio", x: 300, y: 70, size: 600, purity: 0.4, deep: true },
+    ] },
+  { id: "velia", name: "Velia", kind: "Selva", c1: "#9cc98a", c2: "#2f5a2a", ground: "#22301c", x: 46, y: 80,
+    desc: "Selva húmeda con aire respirable. Suelos fértiles y arenas ricas en silicio.",
+    grav: 0.9, atm: 1.1, rad: "baja", temp: 24, o2: true, luz: 0.6, storm: 0.3, radio: 0.05, day: 22,
+    veins: [
+      { id: "v1", mat: "alimentos", x: 80, y: 120, size: 99999, purity: 0.9, crop: true },
+      { id: "v2", mat: "silicio", x: 280, y: 110, size: 2000, purity: 0.6 },
+      { id: "v3", mat: "alimentos", x: 190, y: 70, size: 99999, purity: 0.7, crop: true },
+      { id: "v4", mat: "silicio", x: 300, y: 190, size: 1200, purity: 0.75 },
+    ] },
+  { id: "brumar", name: "Brumar", kind: "Gigante gaseoso", c1: "#c9b0e8", c2: "#4a2f7a", ground: "#241c33", gas: true, x: 62, y: 42,
+    desc: "Gigante de gas con lunas heladas. Tormentas de energía en las capas altas; titanio y hielo en las lunas.",
+    grav: 0.3, atm: 9, rad: "baja", temp: -150, o2: false, luz: 0.4, storm: 0.9, radio: 0.1, day: 10,
+    veins: [
+      { id: "b1", mat: "titanio", x: 90, y: 110, size: 1800, purity: 0.5 },
+      { id: "b2", mat: "combustible", x: 280, y: 120, size: 3000, purity: 0.8, ice: true },
+      { id: "b3", mat: "titanio", x: 190, y: 60, size: 1200, purity: 0.65 },
+    ] },
+  { id: "tessa", name: "Tessa", kind: "Helado", c1: "#e3eefa", c2: "#6f88a6", ground: "#2a3644", x: 14, y: 22,
+    desc: "Bola de hielo silenciosa. Su agua congelada se refina en combustible para el motor de pliegue.",
+    grav: 0.4, atm: 0.02, rad: "media", temp: -190, o2: false, luz: 0.3, storm: 0.1, radio: 0.2, day: 70,
+    veins: [
+      { id: "t1", mat: "combustible", x: 100, y: 120, size: 5000, purity: 0.9, ice: true },
+      { id: "t2", mat: "silicio", x: 270, y: 120, size: 1500, purity: 0.5 },
+      { id: "t3", mat: "cobre", x: 190, y: 66, size: 1500, purity: 0.6 },
+    ] },
+  { id: "eco", name: "Eco", kind: "Desconocido", c1: "#ffcf6b", c2: "#6a3a10", ground: "#2a1c10", x: 90, y: 14, far: true,
+    desc: "La señal que brillaba tras la nebulosa: un mundo de cristales que vibran. Radiación extrema.",
+    grav: 1.4, atm: 0.4, rad: "extrema", temp: 60, o2: false, luz: 1, storm: 0.8, radio: 0.9, day: 12,
+    veins: [
+      { id: "e1", mat: "iridio", x: 90, y: 120, size: 1500, purity: 0.7 },
+      { id: "e2", mat: "plasma", x: 270, y: 110, size: 800, purity: 0.5, deep: true },
+    ] },
+];
+export const P = Object.fromEntries(PLANETS.map((p) => [p.id, p]));
+
+// buildings on the base, with their cost and seconds to build
+export const BUILD = {
+  cuartel: { name: "Cuartel", cost: {}, time: 0, note: "La nave convertida en base. Guarda 200." },
+  paneles: { name: "Paneles solares", cost: { hierro: 20, cobre: 10 }, time: 20, note: "Energía según la luz del planeta" },
+  colector: { name: "Colector de tormentas", cost: { hierro: 40, cobre: 20 }, time: 30, note: "+8 energía · solo en gigantes de gas", gas: true },
+  habitat: { name: "Hábitat", cost: { hierro: 40, cobre: 10 }, time: 30, note: "Oxígeno y camas: +10 tripulantes; donde no hay aire, sin hábitat se rinde 25 % menos" },
+  bodega: { name: "Bodega", cost: { hierro: 60 }, time: 25, note: "+300 de capacidad" },
+  fabrica: { name: "Fábrica", cost: { hierro: 120, cobre: 40 }, time: 45, note: "Abre la fabricación de máquinas" },
+  refugio: { name: "Refugio blindado", cost: { hierro: 80, titanio: 10 }, time: 40, note: "Turnos más largos: +20 % de rendimiento con radiación" },
+  laboratorio: { name: "Laboratorio", cost: { hierro: 60, cobre: 30, silicio: 20 }, time: 60, note: "Escaneo profundo: revela vetas raras", needs: "lab" },
+  reactor: { name: "Reactor", cost: { titanio: 30, silicio: 20, iridio: 5 }, time: 60, note: "+12 energía, de día y de noche" },
+};
+// machines, made at the factory
+export const MACH = {
+  excavadora: { name: "Excavadora", cost: { hierro: 50, cobre: 20 }, time: 30, rate: 40, crew: 2, ene: 1, note: "Vetas de superficie" },
+  cosechadora: { name: "Cosechadora", cost: { hierro: 40, cobre: 30 }, time: 30, rate: 30, crew: 2, ene: 1, note: "Suelos fértiles: alimentos" },
+  pesada: { name: "Excavadora pesada", cost: { hierro: 80, cobre: 30, titanio: 20, silicio: 15 }, time: 60, rate: 15, crew: 2, ene: 2, note: "Llega a las vetas profundas" },
+  robot: { name: "Robot minero", cost: { silicio: 30, titanio: 20, cobre: 20 }, time: 45, rate: 25, crew: 0, ene: 2, note: "Sin tripulación; no le afecta la radiación" },
+};
+export const ITEMS = {
+  modulo: { name: "Módulo de base", cost: { hierro: 150, cobre: 60 }, time: 60, note: "Para fundar una base en otro planeta" },
+  pliegue2: { name: "Motor de pliegue II", cost: { titanio: 40, iridio: 20, silicio: 30 }, time: 90, note: "Saltos sin límite de distancia", needs: "lab" },
+};
+export const RANGE1 = 45;
+
+/* ---------- a new game ---------- */
+export function newGame(now = Date.now()) {
+  return {
+    v: 1, t: now, created: now,
+    inv: { hierro: 60, cobre: 30, silicio: 0, titanio: 0, iridio: 0, plasma: 0, alimentos: 120, combustible: 35 },
+    got: {},                        // everything ever collected, for the missions
+    crew: 24, machines: { excavadora: 2, cosechadora: 1, pesada: 0, robot: 0 }, items: { modulo: 1, pliegue2: 0 },
+    ship: { at: "kalon", jump: null },
+    bases: {},                      // planet id -> { buildings: [{type, slot, done}], jobs: [{id, type, vein}], veins: {id: left} }
+    craft: null, nextId: 1, grow: 0, log: [],
+  };
+}
+
+/* ---------- numbers derived from the state ---------- */
+const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+export const has = (s, cost) => Object.entries(cost).every(([k, v]) => (s.inv[k] || 0) >= v);
+const pay = (s, cost) => { for (const [k, v] of Object.entries(cost)) s.inv[k] -= v; };
+export const built = (b, type) => b.buildings.filter((x) => x.type === type && x.done >= 1).length;
+export const anyBuilt = (s, type) => Object.values(s.bases).some((b) => built(b, type) > 0);
+export function capacity(s) {
+  let c = 0; for (const b of Object.values(s.bases)) c += 200 * built(b, "cuartel") + 300 * built(b, "bodega");
+  return Math.max(c, 150);
+}
+export const supplyCap = (s) => { let c = 400; for (const b of Object.values(s.bases)) c += 100 * built(b, "bodega"); return c; };
+export const stored = (s) => Object.keys(MATS).reduce((a, k) => a + s.inv[k], 0);
+export function crewCap(s) { let c = 20; for (const b of Object.values(s.bases)) c += 10 * built(b, "cuartel") + 10 * built(b, "habitat"); return c; }
+export function crewBusy(s) { let n = 0; for (const b of Object.values(s.bases)) for (const j of b.jobs) n += MACH[j.type].crew; return n; }
+export function machinesFree(s, type) { let n = s.machines[type]; for (const b of Object.values(s.bases)) n -= b.jobs.filter((j) => j.type === type).length; return n; }
+export function energy(s, pid) {
+  const b = s.bases[pid], p = P[pid]; if (!b) return { prod: 0, cons: 0, f: 1 };
+  const prod = 2 * built(b, "cuartel") + 3 * p.luz * built(b, "paneles") + 8 * built(b, "colector") + 12 * built(b, "reactor");
+  const cons = b.jobs.reduce((a, j) => a + MACH[j.type].ene, 0) + built(b, "habitat") + built(b, "laboratorio") + (s.craft && built(b, "fabrica") ? 1 : 0);
+  return { prod, cons, f: cons ? Math.min(1, prod / cons) : 1 };
+}
+// how well the crew works on this planet: radiation (helped by a shelter) and air (helped by a habitat)
+export function crewFactor(s, pid) {
+  const b = s.bases[pid], p = P[pid];
+  let f = Math.min(1, RAD[p.rad] + (b && built(b, "refugio") ? 0.2 : 0));
+  if (!p.o2 && !(b && built(b, "habitat"))) f *= 0.75;
+  if (s.inv.alimentos <= 0) f *= 0.5;
+  return f;
+}
+export const shiftHours = (s, pid) => Math.round(8 * crewFactor(s, pid) * 2) / 2;
+// what a job makes per minute right now
+export function jobRate(s, pid, j) {
+  const b = s.bases[pid], v = P[pid].veins.find((x) => x.id === j.vein), m = MACH[j.type];
+  if (!v || b.veins[v.id] <= 0) return 0;
+  if (MATS[v.mat] ? stored(s) >= capacity(s) : s.inv[v.mat] >= supplyCap(s)) return 0;
+  const people = m.crew ? crewFactor(s, pid) : 1;
+  return m.rate * v.purity * people * energy(s, pid).f;
+}
+export function income(s) {
+  const o = {}; for (const k of [...Object.keys(MATS), ...Object.keys(SUPPLY)]) o[k] = 0;
+  for (const [pid, b] of Object.entries(s.bases)) for (const j of b.jobs) { const v = P[pid].veins.find((x) => x.id === j.vein); o[v.mat] += jobRate(s, pid, j); }
+  o.alimentos -= s.crew * 0.05;
+  return o;
+}
+export const visibleVeins = (s, pid) => P[pid].veins.filter((v) => !v.deep || anyBuilt(s, "laboratorio"));
+export function canWork(type, v) {
+  if (v.crop) return type === "cosechadora";
+  if (type === "cosechadora") return false;
+  if (v.deep) return type === "pesada";
+  return true;
+}
+
+/* ---------- orders ---------- */
+const fail = (why) => ({ ok: false, why });
+export function establish(s) {
+  const pid = s.ship.at;
+  if (s.ship.jump) return fail("La nave está saltando");
+  if (s.bases[pid]) return fail("Ya tienes una base aquí");
+  if (s.items.modulo < 1) return fail("Necesitas un módulo de base (se fabrica)");
+  s.items.modulo--;
+  s.bases[pid] = { buildings: [{ type: "cuartel", slot: 0, done: 1 }], jobs: [], veins: Object.fromEntries(P[pid].veins.map((v) => [v.id, v.size])) };
+  return { ok: true };
+}
+export const SLOTS = 8;
+export function build(s, pid, type, slot) {
+  const b = s.bases[pid], d = BUILD[type];
+  if (!b || !d || type === "cuartel") return fail("No se puede");
+  if (b.buildings.some((x) => x.slot === slot)) return fail("Ese terreno está ocupado");
+  if (d.gas && !P[pid].gas) return fail("Solo en un gigante de gas");
+  if (d.needs === "lab" && !missionDone(s, "m7")) return fail("Primero reúne 4 materiales distintos");
+  if (!has(s, d.cost)) return fail("Faltan materiales");
+  pay(s, d.cost); b.buildings.push({ type, slot, done: 0 });
+  return { ok: true };
+}
+export function assign(s, pid, type, vein) {
+  const b = s.bases[pid], v = P[pid].veins.find((x) => x.id === vein);
+  if (!b || !v) return fail("No se puede");
+  if (v.deep && !anyBuilt(s, "laboratorio")) return fail("Aún no la ves");
+  if (!canWork(type, v)) return fail(v.crop ? "Aquí se cosecha: usa una cosechadora" : v.deep ? "Veta profunda: necesita excavadora pesada" : "Esa máquina no sirve aquí");
+  if (machinesFree(s, type) < 1) return fail("No tienes " + MACH[type].name.toLowerCase() + " libre");
+  if (MACH[type].crew && crewBusy(s) + MACH[type].crew > s.crew) return fail("No hay tripulantes libres");
+  b.jobs.push({ id: s.nextId++, type, vein });
+  return { ok: true };
+}
+export function unassign(s, pid, id) { const b = s.bases[pid]; b.jobs = b.jobs.filter((j) => j.id !== id); return { ok: true }; }
+export function craft(s, key) {
+  const d = MACH[key] || ITEMS[key];
+  if (!anyBuilt(s, "fabrica")) return fail("Necesitas una fábrica");
+  if (s.craft) return fail("La fábrica está ocupada");
+  if (d.needs === "lab" && !anyBuilt(s, "laboratorio")) return fail("Necesitas un laboratorio");
+  if (!has(s, d.cost)) return fail("Faltan materiales");
+  pay(s, d.cost); s.craft = { key, left: d.time, total: d.time };
+  return { ok: true };
+}
+export const jumpCost = (s, to) => { const a = P[s.ship.at], b = P[to]; return Math.max(5, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * 0.35)); };
+export const inRange = (s, to) => { const a = P[s.ship.at], b = P[to]; return s.items.pliegue2 > 0 || (!b.far && Math.hypot(a.x - b.x, a.y - b.y) <= RANGE1); };
+export function jump(s, to) {
+  if (s.ship.jump) return fail("Ya estás saltando");
+  if (to === s.ship.at) return fail("Ya estás aquí");
+  if (!inRange(s, to)) return fail("Fuera de alcance: necesitas el motor de pliegue II");
+  const c = jumpCost(s, to);
+  if (s.inv.combustible < c) return fail("Falta combustible");
+  s.inv.combustible -= c; s.ship.jump = { to, left: 8 };
+  return { ok: true };
+}
+
+/* ---------- missions: always one at a time, and then the game keeps growing ---------- */
+const distinct = (s) => ["hierro", "cobre", "silicio", "titanio"].filter((k) => (s.got[k] || 0) > 0).length;
+export const MISSIONS = [
+  { id: "m1", t: "Establece tu primera base", h: "En la cabina: «Establecer base»", ok: (s) => Object.keys(s.bases).length > 0 },
+  { id: "m2", t: "Instala paneles solares", h: "En la base, toca un terreno libre", ok: (s) => anyBuilt(s, "paneles") },
+  { id: "m3", t: "Pon una excavadora a trabajar", h: "Toca una veta de hierro y asigna una excavadora", ok: (s) => Object.values(s.bases).some((b) => b.jobs.some((j) => j.type === "excavadora")) },
+  { id: "m4", t: "Junta 150 de hierro", h: "Más excavadoras rinden más", ok: (s) => (s.got.hierro || 0) >= 150, n: (s) => [Math.floor(s.got.hierro || 0), 150] },
+  { id: "m5", t: "Construye una fábrica", h: "Abre la fabricación", ok: (s) => anyBuilt(s, "fabrica") },
+  { id: "m6", t: "Funda una base en Velia y cosecha alimentos", h: "Fabrica un módulo, salta a Velia, establece base y asigna la cosechadora", ok: (s) => !!s.bases.velia && s.bases.velia.jobs.some((j) => j.type === "cosechadora") },
+  { id: "m7", t: "Reúne hierro, cobre, silicio y titanio", h: "El titanio está en las lunas de Brumar", ok: (s) => distinct(s) >= 4, n: (s) => [distinct(s), 4] },
+  { id: "m8", t: "Construye un laboratorio", h: "El escaneo profundo revela vetas raras", ok: (s) => anyBuilt(s, "laboratorio") },
+  { id: "m9", t: "Extrae tu primer iridio", h: "Bajo la veta de Kalon; necesita excavadora pesada", ok: (s) => (s.got.iridio || 0) >= 1 },
+  { id: "m10", t: "Fabrica el motor de pliegue II", h: "Abre los saltos largos", ok: (s) => s.items.pliegue2 > 0 },
+  { id: "m11", t: "Llega a Eco y extrae cristal de plasma", h: "La señal tras la nebulosa", ok: (s) => (s.got.plasma || 0) >= 1 },
+  { id: "m12", t: "Haz crecer tu colonia a 60 tripulantes", h: "Hábitats y alimentos", ok: (s) => s.crew >= 60, n: (s) => [s.crew, 60] },
+];
+export const missionDone = (s, id) => MISSIONS.find((m) => m.id === id).ok(s);
+export const currentMission = (s) => MISSIONS.find((m) => !m.ok(s)) || null;
+
+/* ---------- time ---------- */
+// advance the game by dt seconds (any size: one second while playing, hours when coming back)
+export function advance(s, dt) {
+  while (dt > 0) { const h = Math.min(dt, 30); step(s, h); dt -= h; }
+}
+function step(s, dt) {
+  const min = dt / 60;
+  if (s.ship.jump) { s.ship.jump.left -= dt; if (s.ship.jump.left <= 0) { s.ship.at = s.ship.jump.to; s.ship.jump = null; } }
+  for (const b of Object.values(s.bases)) for (const x of b.buildings) if (x.done < 1) x.done = Math.min(1, x.done + dt / BUILD[x.type].time);
+  if (s.craft) { s.craft.left -= dt; if (s.craft.left <= 0) { const k = s.craft.key; if (MACH[k]) s.machines[k]++; else s.items[k]++; s.log.push({ t: s.t, made: k }); s.craft = null; } }
+  // extraction, against what the veins have left and what the stores can hold
+  for (const [pid, b] of Object.entries(s.bases)) {
+    for (const j of b.jobs) {
+      const v = P[pid].veins.find((x) => x.id === j.vein);
+      let got = Math.min(jobRate(s, pid, j) * min, b.veins[v.id]);
+      if (MATS[v.mat]) got = Math.min(got, Math.max(0, capacity(s) - stored(s)));
+      else got = Math.min(got, Math.max(0, supplyCap(s) - s.inv[v.mat]));
+      if (got <= 0) continue;
+      if (!v.crop) b.veins[v.id] -= got;
+      s.inv[v.mat] += got; s.got[v.mat] = (s.got[v.mat] || 0) + got;
+    }
+    // veins slowly come back (deep rock moves up), so the game never runs dry
+    for (const v of P[pid].veins) b.veins[v.id] = Math.min(v.size, b.veins[v.id] + v.size * 0.002 * min);
+  }
+  s.inv.alimentos = Math.max(0, s.inv.alimentos - s.crew * 0.05 * min);
+  for (const k of Object.keys(SUPPLY)) s.inv[k] = Math.min(s.inv[k], supplyCap(s));
+  // the colony grows while there is food and room
+  if (s.inv.alimentos > 20 && s.crew < crewCap(s)) { s.grow += min / 3; while (s.grow >= 1 && s.crew < crewCap(s)) { s.grow--; s.crew++; } }
+  s.t += dt * 1000;
+}
+// catch up on the time since the last save (at most 12 hours)
+export function catchUp(s, now = Date.now()) {
+  const dt = Math.min(12 * 3600, Math.max(0, (now - s.t) / 1000));
+  const before = { ...s.inv };
+  advance(s, dt);
+  s.t = now;
+  return { dt, gained: Object.fromEntries(Object.keys(before).map((k) => [k, s.inv[k] - before[k]])) };
+}
