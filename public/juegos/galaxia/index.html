@@ -29,6 +29,10 @@ a.b{display:grid;place-items:center;text-decoration:none}
 .alert{border:none;text-align:left;border-radius:12px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;color:#fff;background:rgba(170,40,60,.85);box-shadow:0 4px 14px rgba(0,0,0,.4);animation:in .2s}
 .alert b{font-variant-numeric:tabular-nums}
 @keyframes in{from{opacity:0;transform:translateX(-10px)}}
+.hint{flex-basis:100%;text-align:center;font-size:12px;font-weight:700;color:#b9c2ef;text-shadow:0 1px 3px #000}
+.hint.on{color:#ffd75e}
+#toast{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(20,26,54,.92);padding:8px 14px;border-radius:12px;font-size:13px;font-weight:700;opacity:0;transition:.2s;pointer-events:none;z-index:6;box-shadow:0 0 0 1px rgba(140,160,255,.25)}
+#toast.on{opacity:1}
 .screen{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at center,rgba(20,30,80,.65),rgba(3,4,12,.92))}
 .card{max-width:420px;width:100%;background:rgba(14,18,40,.92);border-radius:22px;padding:22px;display:grid;gap:12px;box-shadow:0 0 0 1px rgba(140,160,255,.22),0 20px 60px rgba(0,0,0,.6)}
 .card h1{margin:0;font-size:30px;letter-spacing:4px}
@@ -52,7 +56,9 @@ a.b{display:grid;place-items:center;text-decoration:none}
   <button class="b" id="speed">×1</button>
 </div>
 <div class="alerts" id="alerts"></div>
+<div id="toast"></div>
 <div class="bar bottom">
+  <div class="hint" id="hint">Toca un planeta tuyo y luego el destino (o arrastra)</div>
   <div class="share" id="share">
     <button class="b" data-s="0.25">25%</button><button class="b on" data-s="0.5">50%</button><button class="b" data-s="0.75">75%</button><button class="b" data-s="1">Todo</button>
   </div>
@@ -65,7 +71,7 @@ import { think } from "./ai.js";
 const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
 const $ = (q) => document.querySelector(q);
 let G = null, speed = 1, paused = true, acc = 0, last = performance.now(), share = 0.5;
-let drag = null, floats = [], focus = null;
+let drag = null, floats = [], focus = null, selected = null;
 
 /* ---------- names ---------- */
 function names(seed, n) {
@@ -122,11 +128,11 @@ function draw(alpha) {
     const g = ctx.createRadialGradient(x - r * .4, y - r * .4, r * .2, x, y, r); g.addColorStop(0, c1); g.addColorStop(1, c2);
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
     if (p.size === 3) { ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(x, y, r * 1.55, r * .45, -.4, 0, 7); ctx.stroke(); }
-    ctx.lineWidth = 3; ctx.strokeStyle = p.owner ? S.CIVS[p.owner].color : "rgba(200,205,230,.35)";
+    ctx.lineWidth = p.owner === G.you ? 4 : 3; ctx.strokeStyle = p.owner ? S.CIVS[p.owner].color : "rgba(200,205,230,.35)";
     ctx.beginPath(); ctx.arc(x, y, r + 3, 0, 7); ctx.stroke();
     // a Colmena planet shows how much is left
     if (p.owner === "colmena") { const left = Math.max(0, 1 - (G.step - p.born) / S.STEPS / 300); ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 7, -Math.PI / 2, -Math.PI / 2 + left * Math.PI * 2); ctx.stroke(); }
-    if ((drag && (drag.from === i || drag.to === i)) || focus === i) { ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, r + 10 + Math.sin(t * 6) * 2, 0, 7); ctx.stroke(); }
+    if ((drag && (drag.from === i || drag.to === i)) || focus === i || selected === i) { ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, r + 10 + Math.sin(t * 6) * 2, 0, 7); ctx.stroke(); }
     ctx.font = `800 ${Math.max(12, r * .95)}px Sora, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,0,0,.7)"; ctx.strokeText(Math.floor(p.ships), x, y); ctx.fillStyle = "#fff"; ctx.fillText(Math.floor(p.ships), x, y);
     ctx.font = "600 10px Sora, sans-serif"; ctx.fillStyle = "rgba(200,210,255,.7)"; ctx.fillText(NAMES[i], x, y + r + 14);
@@ -193,31 +199,55 @@ function planetAt(x, y, slack = 22) {
   G.planets.forEach((p, i) => { const [px, py] = scr(p.x, p.y), d = Math.hypot(px - x, py - y); if (d < radius(p) + slack && d < bd) { bd = d; best = i; } });
   return best;
 }
+// two ways: drag from your planet to the target, or tap your planet and then tap the target
 cv.addEventListener("pointerdown", (e) => {
   if (!G || G.over) return;
   const i = planetAt(e.clientX, e.clientY);
-  if (i != null && G.planets[i].owner === G.you) { drag = { from: i, to: null, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} }
+  if (i != null && G.planets[i].owner === G.you && selected == null) { drag = { from: i, to: null, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} return; }
+  if (selected != null) {
+    if (i == null) { selected = null; hint(); return; }
+    if (i === selected) { selected = null; hint(); return; }
+    if (G.planets[i].owner === G.you && G.planets[selected].ships < 1) { selected = i; hint(); return; }
+    order(selected, i); selected = null; hint();
+  }
 });
 cv.addEventListener("pointermove", (e) => { if (!drag) return; drag.x = e.clientX; drag.y = e.clientY; drag.to = planetAt(e.clientX, e.clientY, 26); });
-cv.addEventListener("pointerup", () => {
+cv.addEventListener("pointerup", (e) => {
   if (!drag) return;
-  if (drag.to != null && drag.to !== drag.from) S.send(G, G.you, drag.from, drag.to, share);
-  drag = null;
+  const moved = Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 14;
+  if (drag.to != null && drag.to !== drag.from) order(drag.from, drag.to);
+  else if (!moved) selected = drag.from;          // a tap: choose this planet, then tap the target
+  drag = null; hint();
 });
-cv.addEventListener("pointercancel", () => (drag = null));
+cv.addEventListener("pointercancel", () => { drag = null; });
+function order(from, to) {
+  const n = Math.floor(G.planets[from].ships * share);
+  if (!S.send(G, G.you, from, to, share)) return toast(n < 1 ? "Ese planeta no tiene naves para mandar" : "No hay ruta hasta allá");
+  toast(n + " naves en camino a " + NAMES[to]);
+}
+function hint() {
+  const h = $("#hint"); if (!h || !G) return;
+  h.textContent = selected != null ? "Ahora toca el destino · " + Math.floor(G.planets[selected].ships * share) + " naves desde " + NAMES[selected] : "Toca un planeta tuyo y luego el destino (o arrastra)";
+  h.classList.toggle("on", selected != null);
+}
+let toastT;
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 1800); }
 
 /* ---------- start and end ---------- */
 function start(civ) {
   const seed = Math.floor(Math.random() * 1e9);
-  G = S.newGame(seed, civ); NAMES = names(seed, G.planets.length);
+  G = S.newGame(seed, civ); NAMES = names(seed, G.planets.length); selected = null;
+  window.__galaxia = () => ({ G, scr, NAMES });
   acc = 0; floats = []; resize(); setPause(false);
-  $("#screen").innerHTML = "";
+  $("#screen").innerHTML = ""; hint();
+  const home = G.planets.find((p) => p.owner === G.you); focus = home.id; setTimeout(() => (focus = null), 3000);
+  toast("Tu planeta es " + NAMES[home.id] + " (" + S.CIVS[civ].name + ")");
 }
 function menu() {
   $("#screen").innerHTML = `<div class="screen"><div class="card">
     <h1>GALAXIA</h1>
     <p>Prototipo para sentir el ritmo: planetas, flotas y el reloj. La galaxia es nueva en cada partida.</p>
-    <ul><li>Arrastra desde un planeta tuyo hasta otro para mandar naves (abajo eliges cuántas).</li>
+    <ul><li>Toca un planeta tuyo y luego el planeta al que quieres mandar naves (o arrastra de uno a otro). Abajo eliges cuántas.</li>
       <li>Cada flota muestra cuántas naves lleva y en cuántos segundos llega.</li>
       <li>Si una flota enemiga viene a tu planeta, sale una alerta: toca para ver dónde.</li>
       <li>Gana quien deje al otro sin planetas ni flotas. Pausa y ×2 arriba.</li></ul>
