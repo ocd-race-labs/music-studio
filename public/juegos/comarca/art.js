@@ -72,6 +72,8 @@ const ART = {
   GH: { city: [["cap", 1], ["cap", 3]], good: ["tela", 91, 30], houses: [[10, 42], [14, 60], [88, 70]], spots: [[50, 20], [50, 50], [50, 80]] },
   GI: { city: [["cap", 0]], road: ["M0,50 H100"], good: ["vino", 28, 12], houses: [[72, 10], [86, 6]], spots: [[20, 80], [50, 84], [80, 78]] },
   GJ: { city: [["cap", 0]], road: ["M100,50 H56", "M50,100 V56", "M0,50 H44"], hamlet: [50, 50], good: ["trigo", 28, 12], houses: [[72, 10], [86, 6]], spots: [[84, 84], [16, 84]] },
+  // Abadía y alcalde: the abbey, walled all round
+  AB: { bigAbbey: [50, 50] },
   // meadows
   PA: { forest: [[30, 30], [52, 24], [70, 36], [40, 50], [62, 56], [80, 62], [48, 76], [72, 82], [22, 56]] },
   PB: { fields: [[30, 32], [62, 30], [30, 60], [62, 58], [46, 86]], spots: [[86, 14], [86, 86]] },
@@ -179,6 +181,12 @@ export function pigArt(color) {
     <circle cx="7" cy="-1" r="3.4" fill="#f3a9b8" stroke="#1d1f23" stroke-width="1"/><ellipse cx="9.6" cy="-.6" rx="1.5" ry="1.2" fill="#e88a9c"/><circle cx="6.6" cy="-2.4" r=".6" fill="#1d1f23"/>
     <path d="M-5,5 v2.4 M-1,5.4 v2.4 M3,5.4 v2.4" stroke="#1d1f23" stroke-width="1.1"/><path d="M3.6,-2.8 h3 v6" stroke="${color}" stroke-width="2.2" fill="none"/><path d="M-8,-1 q-3,-2 -2,1" stroke="#1d1f23" stroke-width=".9" fill="none"/></g>`;
 }
+// the mayor: a follower with a tall hat and a gold chain
+export function mayorArt(color) {
+  return `<g><ellipse cx="0" cy="8.5" rx="7" ry="2" fill="rgba(0,0,0,.25)"/><path d="M0,-9 a3.6,3.6 0 1 1 0.01,0 Z M-3,-4 C-8,-4 -10,0 -9,2 L-4,1.5 L-6,8 L-1.5,8 L0,4 L1.5,8 L6,8 L4,1.5 L9,2 C10,0 8,-4 3,-4 Z"
+    fill="${color}" stroke="#1d1f23" stroke-width="1.3" stroke-linejoin="round"/><rect x="-3.4" y="-17.5" width="6.8" height="7" fill="#1d1f23"/><rect x="-5" y="-11" width="10" height="1.8" fill="#1d1f23"/>
+    <path d="M-3,-3.5 Q0,1 3,-3.5" stroke="#f4d35e" stroke-width="1.4" fill="none"/><circle cx="0" cy="-.6" r="1.2" fill="#f4d35e"/></g>`;
+}
 // the hills the river is born in
 function hills(x, y) {
   return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="0" cy="12" rx="26" ry="5" fill="rgba(0,0,0,.15)"/>
@@ -216,6 +224,9 @@ export function tileArt(k, r = 0, x = 0, y = 0, layer) {
   }
   if (a.pond) g += `<path d="M28,52 C24,38 40,30 54,34 C70,30 82,44 76,58 C80,72 62,78 50,74 C38,80 26,70 28,52 Z" fill="${C.bank}"/>
     <path d="M32,52 C29,41 42,35 54,38 C68,35 77,46 72,57 C75,68 61,73 50,70 C40,74 30,66 32,52 Z" fill="${C.water}"/><path d="M42,50 q5,-2 10,0 M54,60 q5,-2 10,0" stroke="${C.water2}" stroke-width="1.4" fill="none"/>`;
+  if (a.bigAbbey) g += `<rect x="3" y="3" width="94" height="94" rx="6" fill="${C.grass3}"/><rect x="3" y="3" width="94" height="94" rx="6" fill="none" stroke="${C.wallDark}" stroke-width="6"/>
+    <rect x="3" y="3" width="94" height="94" rx="6" fill="none" stroke="${C.wall}" stroke-width="4"/><rect x="3" y="3" width="94" height="94" rx="6" fill="none" stroke="${C.wallTop}" stroke-width="1.6" stroke-dasharray="3 2.5"/>
+    <path d="M22,74 h56 M22,82 h56" stroke="${C.flower[0]}" stroke-width="2.4" stroke-dasharray="1 3.5"/><circle cx="22" cy="28" r="5" fill="${C.leaf[1]}"/><circle cx="78" cy="28" r="5" fill="${C.leaf[2]}"/>`;
   if (a.hamlet || a.well) { const [hx, hy] = a.hamlet || a.well; g += `<circle cx="${hx}" cy="${hy}" r="9" fill="${C.road}" stroke="${C.roadEdge}" stroke-width="1.5"/>`; }
   if (layer === "ground") return `<g${rot(r)}>${g}</g>`;
   let up = "";
@@ -244,6 +255,7 @@ export function tileArt(k, r = 0, x = 0, y = 0, layer) {
   if (a.gate) { const [gx, gy] = turn(a.gate, r); up += tower(gx, gy); }
   if (a.shield) { const [sx, sy] = turn(a.shield, r); up += shield(sx, sy); }
   if (a.abbey) { const [bx, by] = turn(a.abbey, r); up += abbey(bx, by); }
+  if (a.bigAbbey) up += `<g transform="translate(50 48) scale(1.55)">${abbey(0, 0).replace(/<rect x="-17"[^>]*\/>/, "")}</g>`;
   if (a.inn) { const [ix, iy] = turn(a.inn, r); up += inn(ix, iy); }
   if (a.good) { const [gx, gy] = turn([a.good[1], a.good[2]], r); up += `<g transform="translate(${gx} ${gy})">${goodArt(a.good[0])}</g>`; }
   if (a.cathedral) { const [cx, cy] = turn(a.cathedral, r); up += cathedral(cx, cy); }

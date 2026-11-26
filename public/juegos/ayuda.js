@@ -1,4 +1,4 @@
-// Juegos en casa: the "?" button. Each game gets up to two pages of picture-first instructions.
+// Juegos en casa: the "?" button. Each game gets a few pages of picture-first instructions.
 // Use: <script src="../ayuda.js"></script> and Ayuda.open("carioca").
 (function () {
   const SYM = { "♠": "", "♣": "", "♥": "r", "♦": "r" };
@@ -16,21 +16,28 @@
   const G = {
     comarca: { name: "Comarca", pages: [
       { t: "Tu turno", rows: [
-        [big("🧩"), "Sacas una loseta y la pones junto a otras. Los bordes deben calzar: ciudad con ciudad, camino con camino, pasto con pasto. Puedes girarla."],
-        [big("♟"), "Después puedes dejar 1 de tus 7 aldeanos en esa loseta: en la ciudad, el camino, la ermita o el pasto. Solo si esa parte no tiene ya otro aldeano."],
-        [chip("Juntar"), "Dos partes con aldeanos pueden unirse después con otra loseta. Así se comparten o se disputan."],
-        [big("🧺"), "Si una loseta no cabe en ningún lado, se saca otra."]] },
+        [big("🧩"), "Sacas una loseta y la pones junto a otras, calzando los bordes: ciudad con ciudad, camino con camino, pasto con pasto. Puedes girarla; el tablero te marca dónde cabe."],
+        [big("♟"), "Después puedes dejar 1 de tus 7 aldeanos en esa loseta: en la ciudad, el camino, la ermita o el pasto, si nadie más está ya en esa parte."],
+        [chip("Juntar"), "Partes con aldeanos de distintos jugadores pueden unirse después. Gana quien tenga más aldeanos; si empatan, ganan todos los empatados."],
+        [big("🌊"), "La partida parte con el río: sus 13 losetas salen primero y lo alargan hasta un lago en cada punta."]] },
       { t: "Puntos", rows: [
-        [chip("Camino"), "Cerrado: 1 punto por loseta. Al final, igual si quedó abierto."],
+        [chip("Camino"), "Cerrado: 1 punto por loseta. Al final, igual aunque quede abierto."],
         [chip("Ciudad"), "Cerrada: 2 por loseta y 2 por escudo. Al final, abierta: 1 y 1."],
         [chip("Ermita"), "Rodeada por 8 losetas: 9 puntos. Al final: 1 más 1 por cada loseta alrededor."],
-        [chip("Pasto"), "Al final, 3 puntos por cada ciudad cerrada que toque el pasto. Gana quien tenga más aldeanos en cada parte; si empatan, ganan los dos."]] },
-      { t: "Río y expansiones", rows: [
-        [big("🌊"), "La partida parte con el río: sus 13 losetas salen primero y cada una lo alarga, hasta un lago en cada punta."],
+        [chip("Pasto"), "Al final, 3 puntos por cada ciudad cerrada que toque el pasto. Al cerrarse algo, sus aldeanos vuelven a tu mano."]] },
+      { t: "Posadas y catedrales", rows: [
         [big("🍺"), "Posada: el camino vale 2 por loseta si se cierra, pero 0 si queda abierto al final."],
         [big("⛪"), "Catedral: la ciudad vale 3 por loseta y escudo si se cierra, pero 0 si queda abierta."],
-        [chip("Grande"), "Con Posadas y catedrales tienes 1 aldeano grande que cuenta como 2 para ganar la mayoría."],
-        [big("🍷") + big("🔨") + big("🐷"), "Comerciantes: quien cierra una ciudad se lleva su vino, trigo o tela (10 puntos al final a quien tenga más de cada uno). El constructor, puesto junto a tu aldeano, te da un turno extra cada vez que agrandas ese camino o ciudad. El cerdo, en tu pasto, sube cada ciudad de 3 a 4."]] },
+        [chip("Grande"), "Tienes 1 aldeano grande que cuenta como 2 para ganar la mayoría. Al dejar un aldeano, el botón ♟ Grande lo elige."]] },
+      { t: "Comerciantes y constructores", rows: [
+        [big("🍷") + big("🌾") + big("🧵"), "Quien cierra una ciudad se lleva sus mercancías. Al final, 10 puntos a quien tenga más de cada una."],
+        [big("🔨"), "Constructor: va en un camino o ciudad donde ya tienes aldeano. Cada vez que lo agrandas, juegas un turno extra."],
+        [big("🐷"), "Cerdo: va en un pasto donde tienes granjero. Cada ciudad cerrada de ese pasto te da 4 en vez de 3."],
+        [chip("Elegir"), "Toca el círculo; si ahí cabe más de una pieza, un botón cambia entre aldeano, constructor y cerdo."]] },
+      { t: "Abadía y alcalde", rows: [
+        [big("⛪"), "Una vez por partida, en vez de jugar la loseta sacada, puedes poner tu abadía en un hoyo cerrado por los cuatro lados. Tapa lo que sea."],
+        [chip("Abadía"), "Funciona como ermita y cierra los caminos y ciudades que toca. La loseta sacada queda para el siguiente jugador."],
+        [big("🎩"), "Alcalde: va en una ciudad y cuenta como tantos aldeanos como escudos tenga la ciudad (sin escudos no cuenta)."]] },
     ] },
     ajedrez: { name: "Ajedrez", pages: [
       { t: "Cómo se mueven", rows: [

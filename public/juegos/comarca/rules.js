@@ -82,10 +82,13 @@ export const COMERCIO = {
 };
 Object.assign(TILES, COMERCIO);
 export const GOODS = ["vino", "trigo", "tela"];
+// expansion 3, Abadía y alcalde: each player's own abbey (not in the bag) fits any hole closed on its four sides
+export const ABBEY = "AB";
+TILES[ABBEY] = { n: 0, abbey: true, exp: "abadia", f: [H([50, 46])] };
 export const EXPANSIONS = [
   { id: "posadas", name: "Posadas y catedrales", icon: "🍺", ready: true },
   { id: "comercio", name: "Comerciantes y constructores", icon: "⚖️", ready: true },
-  { id: "abadia", name: "Abadía y alcalde", icon: "⛪", ready: false },
+  { id: "abadia", name: "Abadía y alcalde", icon: "⛪", ready: true },
 ];
 export const START = "D";
 export const RIVER_START = "RA";
@@ -109,7 +112,7 @@ export function newGame(names, exp = {}) {
   return {
     phase: "play", n: names.length, turn: 0, exp,
     players: names.map((name, i) => ({ name, color: i, score: 0, left: MEEPLES, ...(exp.posadas ? { big: 1 } : {}),
-      ...(exp.comercio ? { builder: 1, pig: 1, goods: { vino: 0, trigo: 0, tela: 0 } } : {}) })),
+      ...(exp.comercio ? { builder: 1, pig: 1, goods: { vino: 0, trigo: 0, tela: 0 } } : {}), ...(exp.abadia ? { abbey: 1, mayor: 1 } : {}) })),
     tiles: [{ k: RIVER_START, x: 0, y: 0, r: 1 }], meeples: [], current: null, remaining: bagSize(exp), last: null, events: [],
   };
 }
@@ -127,6 +130,7 @@ const OWN = {};
 const owner = (k, r) => OWN[k + r] || (OWN[k + r] = segOwner(k, r));
 // what a side of a placed tile shows: C city, R road, F field
 export function edge(k, r, side) {
+  if (TILES[k].abbey) return "A";
   const f = TILES[k].f[owner(k, r)[side * 3 + 1]];
   return f.t === "city" ? "C" : f.t === "road" ? "R" : f.t === "river" ? "W" : "F";
 }
@@ -142,7 +146,8 @@ export function fits(tiles, idx, k, x, y, r) {
     if (j === undefined) continue;
     any = true;
     const o = tiles[j];
-    if (edge(k, r, s) !== edge(o.k, o.r, (s + 2) % 4)) return false;
+    const a = edge(k, r, s), b = edge(o.k, o.r, (s + 2) % 4);
+    if (a !== b && a !== "A" && b !== "A") return false;
   }
   return any;
 }
@@ -218,10 +223,12 @@ export function analyse(tiles) {
       const j = idx.get(keyOf(t.x + DIR[s][0], t.y + DIR[s][1]));
       for (let q = 0; q < 3; q++) {
         const seg = s * 3 + q, fi = own[seg];
+        if (fi < 0) continue;      // the abbey's walls close whatever touches them
         if (j === undefined) { const n = ti + ":" + fi; open.set(n, (open.get(n) || 0) + 1); continue; }
         if (j < ti) continue;
-        const o = tiles[j], oseg = ((s + 2) % 4) * 3 + (2 - q);
-        union(ti + ":" + fi, j + ":" + owner(o.k, o.r)[oseg]);
+        const o = tiles[j], oseg = ((s + 2) % 4) * 3 + (2 - q), ofi = owner(o.k, o.r)[oseg];
+        if (ofi < 0) continue;
+        union(ti + ":" + fi, j + ":" + ofi);
       }
     }
   });
@@ -250,10 +257,12 @@ export function neighbours8(idx, x, y) {
 }
 // seats with the most followers on a component
 // (the big follower counts as two)
-export function majority(meeples, nodes) {
+// (the mayor counts as many as the city's shields)
+export function majority(meeples, nodes, shields = 0) {
   const set = new Set(nodes), count = {};
-  for (const m of meeples) if (!m.kind && set.has(m.t + ":" + m.f)) count[m.s] = (count[m.s] || 0) + (m.big ? 2 : 1);
+  for (const m of meeples) if ((!m.kind || m.kind === "a") && set.has(m.t + ":" + m.f)) count[m.s] = (count[m.s] || 0) + (m.kind === "a" ? shields : m.big ? 2 : 1);
   const best = Math.max(0, ...Object.values(count));
+  if (!best && Object.keys(count).length) return [];
   return best ? Object.keys(count).filter((s) => count[s] === best).map(Number) : [];
 }
 // a road with an inn: 2 a tile when finished, nothing if left open; a city with a cathedral: 3 a tile and shield, nothing if open
@@ -264,13 +273,13 @@ export function valueOf(c, final) {
   return 0;
 }
 // a follower goes back to its owner's hand
-const giveBack = (players, m) => { if (m.kind === "b") players[m.s].builder++; else if (m.kind === "p") players[m.s].pig++; else if (m.big) players[m.s].big++; else players[m.s].left++; };
+const giveBack = (players, m) => { if (m.kind === "a") players[m.s].mayor++; else if (m.kind === "b") players[m.s].builder++; else if (m.kind === "p") players[m.s].pig++; else if (m.big) players[m.s].big++; else players[m.s].left++; };
 
 // where the new tile (last in tiles) can take a follower: [featureIndex]
 export function meepleSpots(tiles, meeples, an) {
   const ti = tiles.length - 1, t = tiles[ti];
   an = an || analyse(tiles);
-  const taken = new Set(meeples.filter((m) => !m.kind).map((m) => an.comp.get(m.t + ":" + m.f)));
+  const taken = new Set(meeples.filter((m) => !m.kind || m.kind === "a").map((m) => an.comp.get(m.t + ":" + m.f)));
   return TILES[t.k].f.map((f, fi) => fi).filter((fi) => TILES[t.k].f[fi].t !== "river").filter((fi) => TILES[t.k].f[fi].t === "cloister" || !taken.has(an.comp.get(ti + ":" + fi)));
 }
 
@@ -283,7 +292,7 @@ export function specialSpots(tiles, meeples, seat, player, an) {
   if (!player || (!player.builder && !player.pig)) return out;
   const ti = tiles.length - 1, t = tiles[ti];
   an = an || analyse(tiles);
-  const mine = new Set(meeples.filter((m) => !m.kind && m.s === seat).map((m) => an.comp.get(m.t + ":" + m.f)));
+  const mine = new Set(meeples.filter((m) => (!m.kind || m.kind === "a") && m.s === seat).map((m) => an.comp.get(m.t + ":" + m.f)));
   TILES[t.k].f.forEach((f, fi) => {
     const c = an.comp.get(ti + ":" + fi);
     if (!mine.has(c)) return;
@@ -292,14 +301,28 @@ export function specialSpots(tiles, meeples, seat, player, an) {
   });
   return out;
 }
-// kind: "b" builder, "p" pig, otherwise a follower (big: the big one)
-export function play(s, x, y, r, fi, big, kind) {
-  const seat = s.turn;
-  const tiles = s.tiles.concat([{ k: s.current, x, y, r }]);
+// holes closed on all four sides, where an abbey can go
+export function abbeySpots(tiles) {
+  const idx = indexTiles(tiles), out = [], seen = new Set();
+  for (const t of tiles) for (const [dx, dy] of DIR) {
+    const x = t.x + dx, y = t.y + dy, key = keyOf(x, y);
+    if (seen.has(key) || idx.has(key)) continue;
+    seen.add(key);
+    if (DIR.every(([ax, ay]) => idx.has(keyOf(x + ax, y + ay)))) out.push({ x, y, r: 0 });
+  }
+  return out;
+}
+// kind: "b" builder, "p" pig, "a" mayor, otherwise a follower (big: the big one)
+// k: the tile to place, when it is not the one drawn (the abbey)
+export function play(s, x, y, r, fi, big, kind, k) {
+  const seat = s.turn, placed = k || s.current;
+  const tiles = s.tiles.concat([{ k: placed, x, y, r }]);
   const ti = tiles.length - 1;
   let meeples = s.meeples.slice();
   const players = s.players.map((p) => ({ ...p }));
-  if (fi != null && fi >= 0 && kind === "b" && players[seat].builder > 0) { meeples.push({ t: ti, f: fi, s: seat, kind: "b" }); players[seat].builder--; }
+  if (k === ABBEY) players[seat].abbey = 0;
+  if (fi != null && fi >= 0 && kind === "a" && players[seat].mayor > 0) { meeples.push({ t: ti, f: fi, s: seat, kind: "a" }); players[seat].mayor--; }
+  else if (fi != null && fi >= 0 && kind === "b" && players[seat].builder > 0) { meeples.push({ t: ti, f: fi, s: seat, kind: "b" }); players[seat].builder--; }
   else if (fi != null && fi >= 0 && kind === "p" && players[seat].pig > 0) { meeples.push({ t: ti, f: fi, s: seat, kind: "p" }); players[seat].pig--; }
   else if (fi != null && fi >= 0) {
     if (big && players[seat].big > 0) { meeples.push({ t: ti, f: fi, s: seat, big: true }); players[seat].big--; }
@@ -308,7 +331,9 @@ export function play(s, x, y, r, fi, big, kind) {
   const an = analyse(tiles);
   const events = [];
   // finished roads and cities that the new tile touches
-  const touched = new Set(TILES[s.current].f.map((f, i) => an.comp.get(ti + ":" + i)));
+  const touched = new Set(TILES[placed].f.map((f, i) => an.comp.get(ti + ":" + i)));
+  // an abbey also closes the roads and cities around it
+  if (TILES[placed].abbey) for (const [dx, dy] of DIR) { const j = an.idx.get(keyOf(x + dx, y + dy)); if (j !== undefined) TILES[tiles[j].k].f.forEach((f, i) => touched.add(an.comp.get(j + ":" + i))); }
   // the builder: growing its road or city gives another turn (once in a row)
   let again = false;
   if (!s.bonus) for (const m of s.meeples) if (m.kind === "b" && m.s === seat && touched.has(an.comp.get(m.t + ":" + m.f))) again = true;
@@ -324,7 +349,7 @@ export function play(s, x, y, r, fi, big, kind) {
     // a finished road or city frees its builder
     for (const m of meeples) if (m.kind === "b" && set0.has(m.t + ":" + m.f)) giveBack(players, m);
     meeples = meeples.filter((m) => !(m.kind === "b" && set0.has(m.t + ":" + m.f)));
-    const win = majority(meeples, c.nodes);
+    const win = majority(meeples, c.nodes, c.shields);
     if (!win.length) continue;
     const pts = valueOf(c, false);
     for (const w of win) players[w].score += pts;
@@ -343,7 +368,7 @@ export function play(s, x, y, r, fi, big, kind) {
       events.push({ t: "cloister", pts: 9, who: [m.s], at: [m.t] });
     }
   }
-  return { ...s, tiles, meeples, players, last: { x, y }, events, again };
+  return { ...s, tiles, meeples, players, last: { x, y }, events, again, abbey: k === ABBEY };
 }
 // the game ends: unfinished things and farmers
 export function finalScore(s) {
@@ -352,7 +377,7 @@ export function finalScore(s) {
   const events = [];
   const done = new Set();
   for (const m of s.meeples) {
-    if (m.kind) continue;
+    if (m.kind === "b" || m.kind === "p") continue;
     const id = an.comp.get(m.t + ":" + m.f), c = an.comps[id];
     if (done.has(id)) continue;
     done.add(id);
@@ -360,7 +385,7 @@ export function finalScore(s) {
     if (c.t === "cloister") { const t = s.tiles[m.t]; pts = 1 + neighbours8(an.idx, t.x, t.y); }
     else if (c.t === "field") pts = 3 * [...c.cities].filter((ci) => an.comps[ci].complete).length;
     else pts = valueOf(c, true);
-    const win = c.t === "cloister" ? [m.s] : majority(s.meeples, c.nodes);
+    const win = c.t === "cloister" ? [m.s] : majority(s.meeples, c.nodes, c.shields);
     if (!pts) continue;
     for (const w of win) {
       // the pig: 4 a city instead of 3 for its owner

@@ -3,7 +3,7 @@
 // 2 Medio: the move that adds most to its score plus what its followers on the board are worth.
 // 3 Difícil: weighs the chance of finishing each city, the hermitages, the farmers, the followers it keeps in hand,
 //    and what its best rival is worth, so it also blocks and joins rivals' cities.
-import * as G from "./rules.js?v=1795705615";
+import * as G from "./rules.js?v=1795707422";
 
 export const K={hand:0.5,handBase:0.3,rival:0.4,pc:1.5,fieldInc:0.5,cl:0.5};
 function worth(s, seat, level) {
@@ -12,6 +12,7 @@ function worth(s, seat, level) {
   const vals = new Array(s.n).fill(0);
   s.players.forEach((p, i) => (vals[i] = p.score + (p.left + (p.big || 0) * 1.6) * (level >= 3 ? K.hand * late + K.handBase : 0.8)));
   // goods count toward the 10-point bonuses; a builder or pig still in hand is worth a little
+  s.players.forEach((p, i) => { vals[i] += (p.abbey || 0) * 2.5 + (p.mayor || 0) * 1.2; });
   s.players.forEach((p, i) => { if (p.goods) vals[i] += (p.goods.vino + p.goods.trigo + p.goods.tela) * (level >= 3 ? 2.2 : 1.5) + (p.builder || 0) * 1.5 * late + (p.pig || 0) * 1; });
   const done = new Set();
   for (const m of s.meeples) {
@@ -36,7 +37,7 @@ function worth(s, seat, level) {
     }
     // who owns it
     const set = new Set(c.nodes), count = {};
-    for (const q of s.meeples) if (!q.kind && set.has(q.t + ":" + q.f)) count[q.s] = (count[q.s] || 0) + (q.big ? 2 : 1);
+    for (const q of s.meeples) if ((!q.kind || q.kind === "a") && set.has(q.t + ":" + q.f)) count[q.s] = (count[q.s] || 0) + (q.kind === "a" ? c.shields : q.big ? 2 : 1);
     const best = Math.max(...Object.values(count));
     for (const k of Object.keys(count)) if (count[k] === best) vals[k] += v;
   }
@@ -46,10 +47,22 @@ function worth(s, seat, level) {
   return level >= 3 ? mine - rival * K.rival : mine;
 }
 
+// the best move with the drawn tile, or (Abadía y alcalde) with the player's abbey in a closed hole
 export function choose(s, level) {
-  const places = G.placements(s.tiles, s.current);
+  const normal = chooseTile(s, level, null);
+  const p = s.players[s.turn];
+  if (!p.abbey || level <= 1) return normal;
+  const holes = G.abbeySpots(s.tiles);
+  if (!holes.length) return normal;
+  const ab = chooseTile(s, level, G.ABBEY, holes);
+  if (!normal) return ab;
+  return ab && ab.v > normal.v + 1 ? ab : normal;
+}
+function chooseTile(s, level, k, holes) {
+  const tile = k || s.current;
+  const places = holes || G.placements(s.tiles, tile);
   if (!places.length) return null;
-  const seat = s.turn, hasMeeple = s.players[seat].left > 0 || s.players[seat].big > 0, hasBig = s.players[seat].big > 0;
+  const seat = s.turn, hasMeeple = s.players[seat].left > 0 || s.players[seat].big > 0 || s.players[seat].mayor > 0, hasBig = s.players[seat].big > 0;
   if (level <= 1) {
     const p = places[Math.floor(Math.random() * places.length)];
     let f = null;
@@ -61,20 +74,24 @@ export function choose(s, level) {
   }
   let best = null, bv = -Infinity;
   for (const p of places) {
-    const tiles = s.tiles.concat([{ k: s.current, x: p.x, y: p.y, r: p.r }]);
+    const tiles = s.tiles.concat([{ k: tile, x: p.x, y: p.y, r: p.r }]);
     const spots = hasMeeple ? G.meepleSpots(tiles, s.meeples) : [];
     const opts = [[null, false, null]];
-    for (const f of spots) { if (s.players[seat].left > 0) opts.push([f, false, null]); if (hasBig) opts.push([f, true, null]); }
+    for (const f of spots) {
+      if (s.players[seat].left > 0) opts.push([f, false, null]);
+      if (hasBig) opts.push([f, true, null]);
+      if (s.players[seat].mayor && G.TILES[tile].f[f].t === "city") opts.push([f, false, "a"]);
+    }
     if (s.players[seat].builder || s.players[seat].pig) {
       const sp = G.specialSpots(tiles, s.meeples, seat, s.players[seat]);
       for (const f of sp.b) opts.push([f, false, "b"]);
       for (const f of sp.p) opts.push([f, false, "p"]);
     }
     for (const [f, big, kind] of opts) {
-      const next = G.play(s, p.x, p.y, p.r, f, big, kind);
+      const next = G.play(s, p.x, p.y, p.r, f, big, kind, k);
       next.remaining = s.remaining;
       const v = worth(next, seat, level) + (next.again ? 3 : 0) + Math.random() * (level === 2 ? 3 : 0.2);
-      if (v > bv) { bv = v; best = { ...p, f, big, kind }; }
+      if (v > bv) { bv = v; best = { ...p, f, big, kind, k, v }; }
     }
   }
   return best;

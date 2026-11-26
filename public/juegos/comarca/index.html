@@ -125,9 +125,9 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 <div class="actions" id="actions"></div>
 <div id="toast"></div>
 <script type="module">
-import * as G from "./rules.js?v=1795705615";
-import * as AI from "./ai.js?v=1795705615";
-import { tileArt, meepleArt, DEFS, builderArt, pigArt, goodArt } from "./art.js?v=1795705615";
+import * as G from "./rules.js?v=1795707422";
+import * as AI from "./ai.js?v=1795707422";
+import { tileArt, meepleArt, DEFS, builderArt, pigArt, goodArt, mayorArt } from "./art.js?v=1795707422";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const $ = (s) => document.querySelector(s);
@@ -151,7 +151,7 @@ const client = () => (sb || (window.supabase && (sb = window.supabase.createClie
 let mode = null, code = null, game = null, version = -1, lastSig = "", mySeat = -1, S = null, busy = false, cpuT = null;
 let localCount = 2, cpu = 0;
 let exps = Object.assign({}, load("comarca-exp") || {});   // expansions chosen for the next game
-const EXP_NOTE = { posadas: "Caminos con posada y ciudades con catedral valen más, pero nada si quedan abiertos. Aldeano grande.", comercio: "Ciudades con vino, trigo y tela (10 puntos a quien junte más de cada una), constructor que da turnos extra y cerdo para los pastos.", abadia: "Próximamente" };
+const EXP_NOTE = { posadas: "Caminos con posada y ciudades con catedral valen más, pero nada si quedan abiertos. Aldeano grande.", comercio: "Ciudades con vino, trigo y tela (10 puntos a quien junte más de cada una), constructor que da turnos extra y cerdo para los pastos.", abadia: "Cada jugador tiene una abadía que tapa cualquier hoyo cerrado por sus cuatro lados, y un alcalde que vale tantos aldeanos como escudos tenga su ciudad." };
 function expsHTML(disabled) {
   return `<div class="exps">${G.EXPANSIONS.map((x) => `<button data-exp="${x.id}" class="${exps[x.id] && x.ready ? "on" : ""}" ${!x.ready || disabled ? "disabled" : ""}><span class="ck">${exps[x.id] && x.ready ? "✓" : ""}</span><span>${x.icon} ${x.name}<small>${EXP_NOTE[x.id]}</small></span></button>`).join("")}</div>`;
 }
@@ -164,6 +164,9 @@ function bindExps(root, after) {
 }
 const chosen = () => Object.fromEntries(G.EXPANSIONS.filter((x) => x.ready && exps[x.id]).map((x) => [x.id, true]));           // cpu: the machines' level; you are seat 0
 let bag = [];                          // local games: the tiles still to come
+let abbeyMode = false;                 // Abadía y alcalde: placing your abbey instead of the drawn tile
+const inHand = () => (abbeyMode ? G.ABBEY : S.current);
+const holes = () => G.abbeySpots(S.tiles);
 let pick = null;                       // your move in progress: { x, y, r, rots, f, placed }
 let view = null;                       // the camera: { cx, cy, z } (tile units, pixels per tile)
 let seenEvents = "";
@@ -195,7 +198,8 @@ function renderStart() {
       <li>En tu turno sacas una loseta y la pones junto a otras, calzando los bordes: ciudad con ciudad, camino con camino, pasto con pasto.</li>
       <li>Después puedes dejar uno de tus 7 aldeanos en esa loseta: en la ciudad, el camino, la ermita o el pasto, si nadie más está ya en esa parte.</li>
       <li>Al cerrarse un camino (1 punto por loseta), una ciudad (2 por loseta y 2 por escudo) o una ermita rodeada (9), quien tiene más aldeanos ahí gana los puntos y los aldeanos vuelven.</li>
-      <li>Al final, lo incompleto vale la mitad y cada aldeano en un pasto da 3 puntos por cada ciudad completa que toca ese pasto.</li></ul></section>`;
+      <li>Al final, lo incompleto vale la mitad y cada aldeano en un pasto da 3 puntos por cada ciudad completa que toca ese pasto.</li>
+      <li>Parte con el río, y puedes sumar expansiones. Toca ? para ver todas las reglas con dibujos.</li></ul></section>`;
   $("#online").onclick = () => { if (takeName()) createOnline(); };
   const bindCpu = () => Maquina.bind($("#cpubox"), (lv) => { takeName(true); startLocal(lv); });
   document.querySelectorAll("[data-n]").forEach((b) => b.onclick = () => { localCount = +b.dataset.n; document.querySelectorAll("[data-n]").forEach((x) => x.classList.toggle("on", x === b)); $("#cpubox").innerHTML = Maquina.html({ note: note() }); bindCpu(); });
@@ -264,7 +268,7 @@ async function listOpen() {
 function startLocal(lv) {
   if (lv !== undefined) cpu = lv;
   clearTimeout(cpuT);
-  mode = "local"; game = null; mySeat = cpu ? 0 : -1; pick = null; view = null;
+  mode = "local"; game = null; mySeat = cpu ? 0 : -1; pick = null; view = null; abbeyMode = false;
   const names = Array.from({ length: localCount }, (_, i) => (cpu ? (i === 0 ? me.name || "Tú" : G.COLOR_NAMES[i] + " 🤖") : G.COLOR_NAMES[i]));
   if (!cpu && me.name) names[0] = me.name;
   const ex = chosen();
@@ -354,12 +358,14 @@ async function finishTurn(next) {
   if (next.again) toast("🔨 ¡Turno extra gracias al constructor!");
   if (mode === "local") {
     S = next.again ? next : { ...next, turn: (next.turn + 1) % next.n };
-    if (!bag.length) S = G.finalScore(S); else drawLocal();
+    // after an abbey the drawn tile stays for the next player
+    if (next.abbey) { if (S.current && !G.placements(S.tiles, S.current).length) drawLocal(); }
+    else if (!bag.length) S = G.finalScore(S); else drawLocal();
     render();
     if (S.phase === "over") setTimeout(celebrate, 700);
     return;
   }
-  if (!S.remaining) next = G.finalScore(next);
+  if (!S.remaining && !next.abbey) next = G.finalScore(next);
   await send(next, false);
 }
 async function send(next, discard) {
@@ -371,7 +377,7 @@ async function send(next, discard) {
 }
 function tapCell(x, y) {
   if (!myTurn() || busy || (pick && pick.placed)) return;
-  const rots = [0, 1, 2, 3].filter((r) => G.fits(S.tiles, G.indexTiles(S.tiles), S.current, x, y, r));
+  const rots = abbeyMode ? (holes().some((h) => h.x === x && h.y === y) ? [0] : []) : [0, 1, 2, 3].filter((r) => G.fits(S.tiles, G.indexTiles(S.tiles), S.current, x, y, r));
   if (!rots.length) return;
   const keep = pick && rots.includes(pick.r) ? pick.r : rots[0];
   pick = { x, y, r: keep, rots, f: null, placed: false };
@@ -386,7 +392,7 @@ function rotate() {
 function confirmTile() {
   if (!pick) return;
   pick.placed = true; pick.f = null;
-  const tiles = S.tiles.concat([{ k: S.current, x: pick.x, y: pick.y, r: pick.r }]);
+  const tiles = S.tiles.concat([{ k: inHand(), x: pick.x, y: pick.y, r: pick.r }]);
   const me_ = S.players[S.turn];
   // what can go on each part of the new tile: m follower, b builder, p pig
   const kinds = {};
@@ -394,6 +400,8 @@ function confirmTile() {
   const sp = G.specialSpots(tiles, S.meeples, S.turn, me_);
   for (const fi of sp.b) (kinds[fi] = kinds[fi] || []).push("b");
   for (const fi of sp.p) (kinds[fi] = kinds[fi] || []).push("p");
+  // the mayor: in a city nobody holds yet
+  if (me_.mayor > 0) for (const fi of G.meepleSpots(tiles, S.meeples)) if (G.TILES[inHand()].f[fi].t === "city") (kinds[fi] = kinds[fi] || []).push("a");
   pick.kinds = kinds; pick.spots = Object.keys(kinds).map(Number); pick.kind = null;
   pick.big = !(me_.left > 0);
   if (!pick.spots.length) return done();
@@ -402,7 +410,9 @@ function confirmTile() {
 function done() {
   if (!pick || busy) return;
   const kind = pick.f != null && pick.kind !== "m" ? pick.kind : null;
-  finishTurn(G.play(S, pick.x, pick.y, pick.r, pick.f, pick.f != null && !kind && pick.big, kind));
+  const k = abbeyMode ? G.ABBEY : undefined;
+  abbeyMode = false;
+  finishTurn(G.play(S, pick.x, pick.y, pick.r, pick.f, pick.f != null && !kind && pick.big, kind, k));
 }
 async function discard() {
   if (mode === "local") { drawLocal(); return render(); }
@@ -442,25 +452,26 @@ function boardSVG() {
   // where your tile fits
   if (myTurn() && S.current && !(pick && pick.placed)) {
     const spots = new Map();
-    for (const p of G.placements(S.tiles, S.current)) spots.set(p.x + "," + p.y, p);
+    for (const p of abbeyMode ? holes() : G.placements(S.tiles, S.current)) spots.set(p.x + "," + p.y, p);
     for (const p of spots.values()) s += `<rect class="spot ${pick && pick.x === p.x && pick.y === p.y ? "sel" : ""}" data-x="${p.x}" data-y="${p.y}" x="${p.x * T + 4}" y="${p.y * T + 4}" width="92" height="92" rx="8"/>`;
   }
-  if (pick) s += `<g class="ghost" pointer-events="none">${tileSVG({ k: S.current, x: pick.x, y: pick.y, r: pick.r })}</g>`;
+  if (pick) s += `<g class="ghost" pointer-events="none">${tileSVG({ k: inHand(), x: pick.x, y: pick.y, r: pick.r })}</g>`;
   if (S.last && !pick) s += `<rect class="lastt" x="${S.last.x * T + 2}" y="${S.last.y * T + 2}" width="96" height="96" rx="3" pointer-events="none"/>`;
   // followers
   for (const m of S.meeples) {
     const t = S.tiles[m.t], f = G.TILES[t.k].f[m.f], [ax, ay] = rotPoint(f.a, t.r);
     const lying = f.t === "field";
+    if (m.kind === "a") { s += `<g transform="translate(${t.x * T + ax} ${t.y * T + ay}) scale(1.5)" pointer-events="none">${mayorArt(G.COLORS[m.s])}</g>`; continue; }
     if (m.kind) { s += `<g transform="translate(${t.x * T + ax + 11} ${t.y * T + ay + 5}) scale(1.25)" pointer-events="none">${(m.kind === "b" ? builderArt : pigArt)(G.COLORS[m.s])}</g>`; continue; }
     s += `<g transform="translate(${t.x * T + ax} ${t.y * T + ay})${lying ? " rotate(-90)" : ""} scale(${m.big ? 1.95 : 1.35})" pointer-events="none">${meepleArt(G.COLORS[m.s])}</g>`;
   }
   // choosing a follower for the tile just placed
   if (pick && pick.placed) {
-    const def = G.TILES[S.current].f;
+    const def = G.TILES[inHand()].f;
     for (const fi of pick.spots) {
       const [ax, ay] = rotPoint(def[fi].a, pick.r), x = pick.x * T + ax, y = pick.y * T + ay;
       const kd = pick.f === fi ? pick.kind : null;
-      s += pick.f === fi ? `<g transform="translate(${x} ${y}) scale(${kd === "m" && pick.big ? 2.1 : 1.6})" data-f="${fi}">${(kd === "b" ? builderArt : kd === "p" ? pigArt : meepleArt)(G.COLORS[S.turn])}<circle r="12" fill="transparent"/></g>`
+      s += pick.f === fi ? `<g transform="translate(${x} ${y}) scale(${kd === "m" && pick.big ? 2.1 : 1.6})" data-f="${fi}">${(kd === "b" ? builderArt : kd === "p" ? pigArt : kd === "a" ? mayorArt : meepleArt)(G.COLORS[S.turn])}<circle r="12" fill="transparent"/></g>`
         : `<circle class="mspot" data-f="${fi}" cx="${x}" cy="${y}" r="9"/>`;
     }
   }
@@ -473,7 +484,7 @@ function boardSVG() {
   return s;
 }
 function playersHTML() {
-  return `<div class="who">${S.players.map((p, i) => `<span class="p ${S.phase === "play" && S.turn === i ? "turn" : ""}"><span class="dot" style="background:${G.COLORS[i]}"></span>${esc(seatName(i))}${i === mySeat && mode === "online" ? " (tú)" : ""} <b>${p.score}</b><small>♟${p.left}${p.big ? " +♟G" : ""}${p.builder ? " 🔨" : ""}${p.pig ? " 🐷" : ""}${p.goods ? ` 🍷${p.goods.vino} 🌾${p.goods.trigo} 🧵${p.goods.tela}` : ""}</small></span>`).join("")}</div>`;
+  return `<div class="who">${S.players.map((p, i) => `<span class="p ${S.phase === "play" && S.turn === i ? "turn" : ""}"><span class="dot" style="background:${G.COLORS[i]}"></span>${esc(seatName(i))}${i === mySeat && mode === "online" ? " (tú)" : ""} <b>${p.score}</b><small>♟${p.left}${p.big ? " +♟G" : ""}${p.builder ? " 🔨" : ""}${p.pig ? " 🐷" : ""}${p.abbey ? " ⛪" : ""}${p.mayor ? " 🎩" : ""}${p.goods ? ` 🍷${p.goods.vino} 🌾${p.goods.trigo} 🧵${p.goods.tela}` : ""}</small></span>`).join("")}</div>`;
 }
 const SAVE = "comarca-partida";
 function keepLocal() {
@@ -499,10 +510,10 @@ function render() {
   if (S.phase === "over") status = "Terminó la partida";
   else if (myTurn()) {
     const can = S.current && G.placements(S.tiles, S.current).length;
-    status = !S.current ? "Calculando el final…" : !can ? "Esta loseta no cabe en ningún lado" : pick && pick.placed ? (pick.spots.length ? "¿Dejas un aldeano? Toca un círculo" : "") : pick ? "Gira si quieres y confirma" : G.TILES[S.current].river ? "Toca un lugar marcado para seguir el río" : "Toca un lugar marcado para poner tu loseta";
+    status = !S.current ? "Calculando el final…" : !can ? "Esta loseta no cabe en ningún lado" : pick && pick.placed ? (pick.spots.length ? "¿Dejas un aldeano? Toca un círculo" : "") : pick ? (abbeyMode ? "Confirma la abadía" : "Gira si quieres y confirma") : abbeyMode ? "Toca un hoyo marcado para tu abadía" : G.TILES[S.current].river ? "Toca un lugar marcado para seguir el río" : "Toca un lugar marcado para poner tu loseta";
     if (mode === "local" && !cpu) status = esc(seatName(S.turn)) + ": " + status.charAt(0).toLowerCase() + status.slice(1);
   } else status = isCpu(S.turn) ? esc(seatName(S.turn)) + " está jugando…" : "Turno de " + esc(seatName(S.turn));
-  if (S.current && S.phase === "play") hand = `<div class="hand"><svg viewBox="0 0 100 100"><defs>${DEFS}</defs>${tileArt(S.current, pick ? pick.r : 0)}</svg>
+  if (S.current && S.phase === "play") hand = `<div class="hand"><svg viewBox="0 0 100 100"><defs>${DEFS}</defs>${tileArt(inHand(), pick ? pick.r : 0)}</svg>
       <div class="txt">${myTurn() ? "Tu loseta" : "Loseta de " + esc(seatName(S.turn))}<small>Quedan ${S.remaining} en la bolsa</small></div></div>`;
   if (first || !$("#svg")) {
     $("#app").innerHTML = `<div id="top"></div>
@@ -535,20 +546,25 @@ function render() {
   if (S.phase === "over") acts = mode === "local" || game.host_id === me.pid ? `<button class="btn gold" id="again">Jugar otra</button><button class="btn" id="res">Resultados</button>` : `<button class="btn" id="res">Resultados</button>`;
   else if (myTurn() && S.current) {
     const can = G.placements(S.tiles, S.current).length;
-    if (!can) acts = `<button class="btn gold" id="disc">Sacar otra loseta</button>`;
+    const pl0 = S.players[S.turn], abbeyOk = pl0.abbey > 0 && holes().length && !(pick && pick.placed);
+    const abbeyBtn = abbeyOk ? `<button class="btn" id="abbey">${abbeyMode ? "🧩 Usar loseta" : "⛪ Usar abadía"}</button>` : "";
+    if (abbeyMode && !(pick && pick.placed)) acts = abbeyBtn + (pick ? `<button class="btn gold" id="put">Poner aquí</button>` : "");
+    else if (!can) acts = abbeyBtn + `<button class="btn gold" id="disc">Sacar otra loseta</button>`;
     else if (pick && pick.placed) {
       const pl = S.players[S.turn], ks = pick.f != null ? pick.kinds[pick.f] || [] : [];
       const canBig = pick.f != null && pick.kind === "m" && pl.big > 0 && pl.left > 0;
-      const KN = { m: "♟ Aldeano", b: "🔨 Constructor", p: "🐷 Cerdo" };
+      const KN = { m: "♟ Aldeano", b: "🔨 Constructor", p: "🐷 Cerdo", a: "🎩 Alcalde" };
       const kindBtn = ks.length > 1 ? `<button class="btn" id="kindt">${KN[ks[(ks.indexOf(pick.kind) + 1) % ks.length]]}</button>` : "";
       acts = `<button class="btn" id="back2">↶ Mover</button>${kindBtn}${canBig ? `<button class="btn" id="bigt">${pick.big ? "♟ Normal" : "♟ Grande"}</button>` : ""}<button class="btn gold" id="ok">${pick.f != null ? "Listo" : "Sin aldeano"}</button>`;
     }
     else if (pick) acts = `<button class="btn" id="rot">⟳ Girar</button><button class="btn gold" id="put">Poner aquí</button>`;
+    else acts = abbeyBtn;
   }
   $("#actions").innerHTML = acts;
   const on = (id, f) => { const e = $("#" + id); if (e) e.onclick = f; };
   on("rot", rotate); on("put", confirmTile); on("ok", done); on("disc", discard); on("again", again); on("res", celebrate);
   on("bigt", () => { pick.big = !pick.big; render(); });
+  on("abbey", () => { abbeyMode = !abbeyMode; pick = null; render(); });
   on("kindt", () => { const ks = pick.kinds[pick.f]; pick.kind = ks[(ks.indexOf(pick.kind) + 1) % ks.length]; render(); });
   on("back2", () => { pick.placed = false; pick.f = null; render(); });
   if (mode === "online" && myTurn() && !S.current && !busy) finishTurn({ ...S, events: [] });
