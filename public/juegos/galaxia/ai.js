@@ -1,7 +1,7 @@
 // Galaxia: the machine. It thinks every 1.5 s of game time (always on the same steps, so games repeat
 // exactly). It defends planets that will fall, then attacks what it can take with a margin, and the
 // Colmena moves ships off planets that are running dry.
-import * as S from "./sim.js";
+import * as S from "./sim.js?v=1795723400";
 
 export function think(s, civ) {
   const mine = s.planets.filter((p) => p.owner === civ);
