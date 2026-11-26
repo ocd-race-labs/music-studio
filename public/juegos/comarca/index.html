@@ -491,7 +491,7 @@ function bindView() {
   };
   el.addEventListener("pointerdown", (e) => {
     if (e.target.closest(".zoom")) return;
-    el.setPointerCapture(e.pointerId);
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
     pts.set(e.pointerId, [e.clientX, e.clientY]);
     start = { cx: view.cx, cy: view.cy, x: e.clientX, y: e.clientY, d: null, z: view.z }; moved = false;
     if (pts.size === 2) { const [a, b] = [...pts.values()]; start.d = Math.hypot(a[0] - b[0], a[1] - b[1]); start.mx = (a[0] + b[0]) / 2; start.my = (a[1] + b[1]) / 2; }
@@ -500,8 +500,13 @@ function bindView() {
     if (!pts.has(e.pointerId) || !start) return;
     pts.set(e.pointerId, [e.clientX, e.clientY]);
     if (pts.size === 2 && start.d) {
+      // pinch: the point that was under the fingers stays under them
       const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-      moved = true; view.z = start.z; zoomAt(d / start.d, start.mx, start.my); return;
+      const r = el.getBoundingClientRect(), mx = (a[0] + b[0]) / 2 - r.left - r.width / 2, my = (a[1] + b[1]) / 2 - r.top - r.height / 2;
+      const z = Math.max(22, Math.min(220, start.z * d / start.d));
+      const wx = start.cx + (start.mx - r.left - r.width / 2) / start.z, wy = start.cy + (start.my - r.top - r.height / 2) / start.z;
+      moved = true; view = { z, cx: wx - mx / z, cy: wy - my / z };
+      svg().setAttribute("viewBox", viewBox()); return;
     }
     const dx = e.clientX - start.x, dy = e.clientY - start.y;
     if (Math.abs(dx) + Math.abs(dy) > 8) moved = true;
