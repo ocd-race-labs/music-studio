@@ -3048,7 +3048,9 @@ function hlsFor(s,list){if(!CAN_HLS)return null;if(HLS_BY_NAME[s.n])return HLS_B
   return null}
 function armStall(){clearTimeout(stallT);stallT=setTimeout(()=>{if(wantPlay&&current&&!trying)recover()},9000)}
 // Con la pantalla apagada los temporizadores se congelan: si la señal se ahoga, se reconecta de inmediato desde el propio aviso del reproductor
-audio.addEventListener("stalled",()=>{if(!wantPlay||!current)return;if(document.hidden&&!trying&&!recovering){recover();return}armStall()});
+// iOS avisa "stalled" también cuando el búfer está lleno y la descarga se pausa, con el audio sonando normal.
+// Solo se reconecta si de verdad no hay audio por delante (readyState < 3); si no, ese aviso se ignora (antes provocaba microcortes).
+audio.addEventListener("stalled",()=>{if(!wantPlay||!current)return;if(audio.readyState>=3&&!audio.paused)return;if(document.hidden&&!trying&&!recovering){recover();return}armStall()});
 audio.addEventListener("playing",()=>clearTimeout(stallT));
 audio.addEventListener("error",()=>{if(wantPlay&&current&&!trying)recover()});
 audio.addEventListener("ended",()=>{if(wantPlay&&current&&!trying)recover()});   // una señal en vivo que "termina" se retoma sola
@@ -3789,7 +3791,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-25k";
+const APP_VERSION="2026-11-26a";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
