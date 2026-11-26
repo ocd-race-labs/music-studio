@@ -23,7 +23,7 @@ const THREEW = [[100, 100], [87, 78], [68, 69], [51, 75], [31, 67], [14, 79], [0
 const CITY = {
   cap: { fill: P([[0, 0], ...CAPW.slice().reverse().slice(1), [100, 0]]) + " Z", wall: P(CAPW), tower: [[76, 30], [44, 35]] },
   full: { fill: "M0,0 H100 V100 H0 Z", wall: null },
-  band: { fill: P([[0, 0], ...BANDN.slice(1), ...BANDS.slice(1)]) + " Z", wall: [P(BANDN), P(BANDS)], tower: [[33, 26], [70, 28], [68, 73], [31, 72]] },
+  band: { fill: P([[0, 0], ...BANDN.slice(1), ...BANDS]) + " Z", wall: [P(BANDN), P(BANDS)], tower: [[33, 26], [70, 28], [68, 73], [31, 72]] },
   corner: { fill: P([[0, 0], ...CORNW]) + " Z", wall: P(CORNW), tower: [[66, 28], [32, 54]] },
   three: { fill: P([[0, 0], [100, 0], ...THREEW]) + " Z", wall: P(THREEW), tower: [[68, 69], [31, 67]] },
 };
