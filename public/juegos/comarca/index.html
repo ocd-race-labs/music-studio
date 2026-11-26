@@ -120,9 +120,9 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 <div class="actions" id="actions"></div>
 <div id="toast"></div>
 <script type="module">
-import * as G from "./rules.js?v=1795693329";
-import * as AI from "./ai.js?v=1795693329";
-import { tileArt, meepleArt, DEFS } from "./art.js?v=1795693329";
+import * as G from "./rules.js?v=1795702463";
+import * as AI from "./ai.js?v=1795702463";
+import { tileArt, meepleArt, DEFS } from "./art.js?v=1795702463";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const $ = (s) => document.querySelector(s);
@@ -477,6 +477,8 @@ function render() {
     bindView();
     fit(); landSig = "";
   }
+  // a new game on the same screen: frame the board again
+  if (!view) { fit(); landSig = ""; }
   $("#top").innerHTML = playersHTML();
   $("#bagc").textContent = "🧺 " + (S.remaining ?? 0);
   $("#low").innerHTML = `<div class="status">${status}</div>${hand}
