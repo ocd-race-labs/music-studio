@@ -61,6 +61,17 @@ const ART = {
   NA: { road: ["M50,100 V70"], abbey: [50, 44], inn: [74, 82], spots: [[16, 18], [84, 18], [16, 84], [20, 52], [82, 50]] },
   NS: { city: [["three", 0]], road: ["M50,100 V72"], gate: [50, 72], inn: [74, 90], houses: [[30, 14], [52, 18], [74, 14], [86, 36], [30, 40], [62, 42], [82, 60], [14, 60]] },
   CC: { city: [["full", 0]], cathedral: [50, 44], houses: [[16, 16], [84, 16], [16, 80], [84, 82], [30, 88], [70, 90], [12, 50], [88, 52]] },
+  // Comerciantes y constructores: cities with goods
+  GA: { city: [["cap", 0]], good: ["vino", 28, 12], houses: [[72, 10], [86, 6]], spots: [[20, 60], [50, 66], [80, 58], [24, 88], [76, 88]] },
+  GB: { city: [["corner", 0]], good: ["trigo", 46, 11], houses: [[12, 46], [66, 8], [12, 66]], spots: [[66, 66], [84, 46], [46, 86], [84, 84]] },
+  GC: { city: [["three", 0]], good: ["tela", 50, 14], houses: [[24, 16], [74, 14], [86, 40], [14, 52], [80, 60]], spots: [[30, 92], [70, 92]] },
+  GD: { city: [["band", 0]], good: ["vino", 22, 50], houses: [[72, 44], [66, 62], [84, 54]], spots: [[30, 6], [70, 8], [30, 94], [70, 94]] },
+  GE: { city: [["cap", 0]], road: ["M100,50 C80,50 66,58 58,64 C50,72 50,86 50,100"], good: ["trigo", 28, 12], houses: [[72, 10], [86, 6]], spots: [[22, 58], [22, 86], [88, 88]] },
+  GF: { city: [["corner", 0]], road: ["M100,50 C84,50 72,60 64,70 C56,80 50,88 50,100"], good: ["vino", 44, 10], houses: [[10, 44], [64, 6]], spots: [[90, 90], [86, 30]] },
+  GG: { city: [["three", 0]], road: ["M50,100 V72"], gate: [50, 72], good: ["tela", 50, 14], houses: [[24, 16], [74, 14], [86, 40], [14, 52], [80, 60]], spots: [[24, 92], [78, 92]] },
+  GH: { city: [["cap", 1], ["cap", 3]], good: ["tela", 91, 30], houses: [[10, 42], [14, 60], [88, 70]], spots: [[50, 20], [50, 50], [50, 80]] },
+  GI: { city: [["cap", 0]], road: ["M0,50 H100"], good: ["vino", 28, 12], houses: [[72, 10], [86, 6]], spots: [[20, 80], [50, 84], [80, 78]] },
+  GJ: { city: [["cap", 0]], road: ["M100,50 H56", "M50,100 V56", "M0,50 H44"], hamlet: [50, 50], good: ["trigo", 28, 12], houses: [[72, 10], [86, 6]], spots: [[84, 84], [16, 84]] },
   // meadows
   PA: { forest: [[30, 30], [52, 24], [70, 36], [40, 50], [62, 56], [80, 62], [48, 76], [72, 82], [22, 56]] },
   PB: { fields: [[30, 32], [62, 30], [30, 60], [62, 58], [46, 86]], spots: [[86, 14], [86, 86]] },
@@ -150,6 +161,24 @@ function cathedral(x, y) {
     <circle cx="0" cy="6" r="4" fill="#7fb2e5" stroke="#7a6a52" stroke-width=".8"/><path d="M-4,22 v-8 a4,4 0 0 1 8,0 v8 Z" fill="${C.wood}"/>
     <path d="M-19,-36 v6 M-21.5,-33.5 h5 M19,-36 v6 M16.5,-33.5 h5" stroke="#7a6a52" stroke-width="1.2"/></g>`;
 }
+// goods in a city: a wine barrel, a wheat sheaf, a bolt of cloth, on a little market stall
+export function goodArt(kind) {
+  const base = `<circle r="8.5" fill="#fff8e6" stroke="#8a6a3e" stroke-width="1.2"/>`;
+  if (kind === "vino") return base + `<rect x="-4.5" y="-5.5" width="9" height="11" rx="3.5" fill="#8a4a2a" stroke="#4d2814" stroke-width=".8"/><path d="M-4.5,-2 H4.5 M-4.5,2 H4.5" stroke="#d9b36a" stroke-width="1"/><circle cx="0" cy="0" r="1.4" fill="#7b2a5a"/>`;
+  if (kind === "trigo") return base + `<path d="M0,6 V-4 M-3,6 L-1,-3 M3,6 L1,-3" stroke="#b08a2a" stroke-width="1.2"/><ellipse cx="0" cy="-5" rx="1.8" ry="3" fill="#e2c25c"/><ellipse cx="-2.6" cy="-3.6" rx="1.6" ry="2.6" fill="#e2c25c" transform="rotate(-20 -2.6 -3.6)"/><ellipse cx="2.6" cy="-3.6" rx="1.6" ry="2.6" fill="#e2c25c" transform="rotate(20 2.6 -3.6)"/><path d="M-3,2 H3" stroke="#8a5a2b" stroke-width="1.4"/>`;
+  return base + `<rect x="-5.5" y="-3.5" width="11" height="7" rx="1" fill="#3e7cc4" stroke="#24508a" stroke-width=".8"/><path d="M-5.5,-1 H5.5 M-5.5,1.5 H5.5" stroke="#9cc4ef" stroke-width=".7"/><circle cx="5.5" cy="0" r="3.5" fill="#3e7cc4" stroke="#24508a" stroke-width=".8"/>`;
+}
+// the builder and the pig, in the player's colour
+export function builderArt(color) {
+  return `<g><ellipse cx="0" cy="9" rx="7" ry="2" fill="rgba(0,0,0,.25)"/><path d="M-4,8 L-4,-1 C-4,-4 4,-4 4,-1 L4,8 Z" fill="${color}" stroke="#1d1f23" stroke-width="1.2"/>
+    <circle cx="0" cy="-6" r="3.6" fill="${color}" stroke="#1d1f23" stroke-width="1.2"/><path d="M-5,-7.5 a5,4 0 0 1 10,0 Z" fill="#ffd75e" stroke="#1d1f23" stroke-width="1"/>
+    <path d="M5,-2 L11,4" stroke="#7a5a3a" stroke-width="1.6"/><rect x="8.5" y="1.5" width="5" height="3" fill="#8f8a7e" stroke="#1d1f23" stroke-width=".7" transform="rotate(45 11 3)"/></g>`;
+}
+export function pigArt(color) {
+  return `<g><ellipse cx="0" cy="6" rx="8" ry="2" fill="rgba(0,0,0,.22)"/><ellipse cx="0" cy="0" rx="8" ry="5.5" fill="#f3a9b8" stroke="#1d1f23" stroke-width="1.1"/>
+    <circle cx="7" cy="-1" r="3.4" fill="#f3a9b8" stroke="#1d1f23" stroke-width="1"/><ellipse cx="9.6" cy="-.6" rx="1.5" ry="1.2" fill="#e88a9c"/><circle cx="6.6" cy="-2.4" r=".6" fill="#1d1f23"/>
+    <path d="M-5,5 v2.4 M-1,5.4 v2.4 M3,5.4 v2.4" stroke="#1d1f23" stroke-width="1.1"/><path d="M3.6,-2.8 h3 v6" stroke="${color}" stroke-width="2.2" fill="none"/><path d="M-8,-1 q-3,-2 -2,1" stroke="#1d1f23" stroke-width=".9" fill="none"/></g>`;
+}
 // the hills the river is born in
 function hills(x, y) {
   return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="0" cy="12" rx="26" ry="5" fill="rgba(0,0,0,.15)"/>
@@ -216,6 +245,7 @@ export function tileArt(k, r = 0, x = 0, y = 0, layer) {
   if (a.shield) { const [sx, sy] = turn(a.shield, r); up += shield(sx, sy); }
   if (a.abbey) { const [bx, by] = turn(a.abbey, r); up += abbey(bx, by); }
   if (a.inn) { const [ix, iy] = turn(a.inn, r); up += inn(ix, iy); }
+  if (a.good) { const [gx, gy] = turn([a.good[1], a.good[2]], r); up += `<g transform="translate(${gx} ${gy})">${goodArt(a.good[0])}</g>`; }
   if (a.cathedral) { const [cx, cy] = turn(a.cathedral, r); up += cathedral(cx, cy); }
   if (a.spring) { const [mx, my] = turn([48, 40], r); up += hills(mx, my); }
   if (a.hamlet) { const [hx, hy] = turn(a.hamlet, r); up += house(hx, hy - 1, 1.1, C.roof[2]); }

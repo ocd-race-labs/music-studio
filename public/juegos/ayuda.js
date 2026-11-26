@@ -29,7 +29,8 @@
         [big("🌊"), "La partida parte con el río: sus 13 losetas salen primero y cada una lo alarga, hasta un lago en cada punta."],
         [big("🍺"), "Posada: el camino vale 2 por loseta si se cierra, pero 0 si queda abierto al final."],
         [big("⛪"), "Catedral: la ciudad vale 3 por loseta y escudo si se cierra, pero 0 si queda abierta."],
-        [chip("Grande"), "Con Posadas y catedrales tienes 1 aldeano grande que cuenta como 2 para ganar la mayoría."]] },
+        [chip("Grande"), "Con Posadas y catedrales tienes 1 aldeano grande que cuenta como 2 para ganar la mayoría."],
+        [big("🍷") + big("🔨") + big("🐷"), "Comerciantes: quien cierra una ciudad se lleva su vino, trigo o tela (10 puntos al final a quien tenga más de cada uno). El constructor, puesto junto a tu aldeano, te da un turno extra cada vez que agrandas ese camino o ciudad. El cerdo, en tu pasto, sube cada ciudad de 3 a 4."]] },
     ] },
     ajedrez: { name: "Ajedrez", pages: [
       { t: "Cómo se mueven", rows: [

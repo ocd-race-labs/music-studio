@@ -3,7 +3,7 @@
 // 2 Medio: the move that adds most to its score plus what its followers on the board are worth.
 // 3 Difícil: weighs the chance of finishing each city, the hermitages, the farmers, the followers it keeps in hand,
 //    and what its best rival is worth, so it also blocks and joins rivals' cities.
-import * as G from "./rules.js?v=1795705129";
+import * as G from "./rules.js?v=1795705615";
 
 export const K={hand:0.5,handBase:0.3,rival:0.4,pc:1.5,fieldInc:0.5,cl:0.5};
 function worth(s, seat, level) {
@@ -11,8 +11,12 @@ function worth(s, seat, level) {
   const left = s.remaining == null ? 40 : s.remaining, late = Math.min(1, left / 50);
   const vals = new Array(s.n).fill(0);
   s.players.forEach((p, i) => (vals[i] = p.score + (p.left + (p.big || 0) * 1.6) * (level >= 3 ? K.hand * late + K.handBase : 0.8)));
+  // goods count toward the 10-point bonuses; a builder or pig still in hand is worth a little
+  s.players.forEach((p, i) => { if (p.goods) vals[i] += (p.goods.vino + p.goods.trigo + p.goods.tela) * (level >= 3 ? 2.2 : 1.5) + (p.builder || 0) * 1.5 * late + (p.pig || 0) * 1; });
   const done = new Set();
   for (const m of s.meeples) {
+    if (m.kind === "b") { vals[m.s] += level >= 3 ? 4 * late : 2; continue; }
+    if (m.kind === "p") { vals[m.s] += level >= 3 ? 3 : 1.5; continue; }
     const id = an.comp.get(m.t + ":" + m.f), c = an.comps[id];
     if (done.has(id)) continue; done.add(id);
     let v = 0;
@@ -32,7 +36,7 @@ function worth(s, seat, level) {
     }
     // who owns it
     const set = new Set(c.nodes), count = {};
-    for (const q of s.meeples) if (set.has(q.t + ":" + q.f)) count[q.s] = (count[q.s] || 0) + (q.big ? 2 : 1);
+    for (const q of s.meeples) if (!q.kind && set.has(q.t + ":" + q.f)) count[q.s] = (count[q.s] || 0) + (q.big ? 2 : 1);
     const best = Math.max(...Object.values(count));
     for (const k of Object.keys(count)) if (count[k] === best) vals[k] += v;
   }
@@ -59,13 +63,18 @@ export function choose(s, level) {
   for (const p of places) {
     const tiles = s.tiles.concat([{ k: s.current, x: p.x, y: p.y, r: p.r }]);
     const spots = hasMeeple ? G.meepleSpots(tiles, s.meeples) : [];
-    const opts = [[null, false]];
-    for (const f of spots) { if (s.players[seat].left > 0) opts.push([f, false]); if (hasBig) opts.push([f, true]); }
-    for (const [f, big] of opts) {
-      const next = G.play(s, p.x, p.y, p.r, f, big);
+    const opts = [[null, false, null]];
+    for (const f of spots) { if (s.players[seat].left > 0) opts.push([f, false, null]); if (hasBig) opts.push([f, true, null]); }
+    if (s.players[seat].builder || s.players[seat].pig) {
+      const sp = G.specialSpots(tiles, s.meeples, seat, s.players[seat]);
+      for (const f of sp.b) opts.push([f, false, "b"]);
+      for (const f of sp.p) opts.push([f, false, "p"]);
+    }
+    for (const [f, big, kind] of opts) {
+      const next = G.play(s, p.x, p.y, p.r, f, big, kind);
       next.remaining = s.remaining;
-      const v = worth(next, seat, level) + Math.random() * (level === 2 ? 3 : 0.2);
-      if (v > bv) { bv = v; best = { ...p, f, big }; }
+      const v = worth(next, seat, level) + (next.again ? 3 : 0) + Math.random() * (level === 2 ? 3 : 0.2);
+      if (v > bv) { bv = v; best = { ...p, f, big, kind }; }
     }
   }
   return best;

@@ -125,9 +125,9 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 <div class="actions" id="actions"></div>
 <div id="toast"></div>
 <script type="module">
-import * as G from "./rules.js?v=1795705129";
-import * as AI from "./ai.js?v=1795705129";
-import { tileArt, meepleArt, DEFS } from "./art.js?v=1795705129";
+import * as G from "./rules.js?v=1795705615";
+import * as AI from "./ai.js?v=1795705615";
+import { tileArt, meepleArt, DEFS, builderArt, pigArt, goodArt } from "./art.js?v=1795705615";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const $ = (s) => document.querySelector(s);
@@ -151,7 +151,7 @@ const client = () => (sb || (window.supabase && (sb = window.supabase.createClie
 let mode = null, code = null, game = null, version = -1, lastSig = "", mySeat = -1, S = null, busy = false, cpuT = null;
 let localCount = 2, cpu = 0;
 let exps = Object.assign({}, load("comarca-exp") || {});   // expansions chosen for the next game
-const EXP_NOTE = { posadas: "Caminos con posada y ciudades con catedral valen más, pero nada si quedan abiertos. Aldeano grande.", comercio: "Próximamente", abadia: "Próximamente" };
+const EXP_NOTE = { posadas: "Caminos con posada y ciudades con catedral valen más, pero nada si quedan abiertos. Aldeano grande.", comercio: "Ciudades con vino, trigo y tela (10 puntos a quien junte más de cada una), constructor que da turnos extra y cerdo para los pastos.", abadia: "Próximamente" };
 function expsHTML(disabled) {
   return `<div class="exps">${G.EXPANSIONS.map((x) => `<button data-exp="${x.id}" class="${exps[x.id] && x.ready ? "on" : ""}" ${!x.ready || disabled ? "disabled" : ""}><span class="ck">${exps[x.id] && x.ready ? "✓" : ""}</span><span>${x.icon} ${x.name}<small>${EXP_NOTE[x.id]}</small></span></button>`).join("")}</div>`;
 }
@@ -290,7 +290,7 @@ function cpuStep() {
     if (mode !== "local" || S.phase !== "play" || !isCpu(S.turn)) return;
     const mv = AI.choose(S, cpu);
     if (!mv) { drawLocal(); return render(); }
-    finishTurn(G.play(S, mv.x, mv.y, mv.r, mv.f));
+    finishTurn(G.play(S, mv.x, mv.y, mv.r, mv.f, mv.big, mv.kind));
   }, 900);
 }
 
@@ -349,8 +349,11 @@ function subscribe() {
 // after a tile and maybe a follower: next player, next tile, or the end
 async function finishTurn(next) {
   pick = null;
+  // the builder: another turn for the same player
+  next = { ...next, bonus: !!next.again };
+  if (next.again) toast("🔨 ¡Turno extra gracias al constructor!");
   if (mode === "local") {
-    S = { ...next, turn: (next.turn + 1) % next.n };
+    S = next.again ? next : { ...next, turn: (next.turn + 1) % next.n };
     if (!bag.length) S = G.finalScore(S); else drawLocal();
     render();
     if (S.phase === "over") setTimeout(celebrate, 700);
@@ -385,14 +388,21 @@ function confirmTile() {
   pick.placed = true; pick.f = null;
   const tiles = S.tiles.concat([{ k: S.current, x: pick.x, y: pick.y, r: pick.r }]);
   const me_ = S.players[S.turn];
-  pick.spots = me_.left > 0 || me_.big > 0 ? G.meepleSpots(tiles, S.meeples) : [];
+  // what can go on each part of the new tile: m follower, b builder, p pig
+  const kinds = {};
+  if (me_.left > 0 || me_.big > 0) for (const fi of G.meepleSpots(tiles, S.meeples)) (kinds[fi] = kinds[fi] || []).push("m");
+  const sp = G.specialSpots(tiles, S.meeples, S.turn, me_);
+  for (const fi of sp.b) (kinds[fi] = kinds[fi] || []).push("b");
+  for (const fi of sp.p) (kinds[fi] = kinds[fi] || []).push("p");
+  pick.kinds = kinds; pick.spots = Object.keys(kinds).map(Number); pick.kind = null;
   pick.big = !(me_.left > 0);
   if (!pick.spots.length) return done();
   render();
 }
 function done() {
   if (!pick || busy) return;
-  finishTurn(G.play(S, pick.x, pick.y, pick.r, pick.f, pick.f != null && pick.big));
+  const kind = pick.f != null && pick.kind !== "m" ? pick.kind : null;
+  finishTurn(G.play(S, pick.x, pick.y, pick.r, pick.f, pick.f != null && !kind && pick.big, kind));
 }
 async function discard() {
   if (mode === "local") { drawLocal(); return render(); }
@@ -441,6 +451,7 @@ function boardSVG() {
   for (const m of S.meeples) {
     const t = S.tiles[m.t], f = G.TILES[t.k].f[m.f], [ax, ay] = rotPoint(f.a, t.r);
     const lying = f.t === "field";
+    if (m.kind) { s += `<g transform="translate(${t.x * T + ax + 11} ${t.y * T + ay + 5}) scale(1.25)" pointer-events="none">${(m.kind === "b" ? builderArt : pigArt)(G.COLORS[m.s])}</g>`; continue; }
     s += `<g transform="translate(${t.x * T + ax} ${t.y * T + ay})${lying ? " rotate(-90)" : ""} scale(${m.big ? 1.95 : 1.35})" pointer-events="none">${meepleArt(G.COLORS[m.s])}</g>`;
   }
   // choosing a follower for the tile just placed
@@ -448,12 +459,13 @@ function boardSVG() {
     const def = G.TILES[S.current].f;
     for (const fi of pick.spots) {
       const [ax, ay] = rotPoint(def[fi].a, pick.r), x = pick.x * T + ax, y = pick.y * T + ay;
-      s += pick.f === fi ? `<g transform="translate(${x} ${y}) scale(${pick.big ? 2.1 : 1.6})" data-f="${fi}">${meepleArt(G.COLORS[S.turn])}<circle r="12" fill="transparent"/></g>`
+      const kd = pick.f === fi ? pick.kind : null;
+      s += pick.f === fi ? `<g transform="translate(${x} ${y}) scale(${kd === "m" && pick.big ? 2.1 : 1.6})" data-f="${fi}">${(kd === "b" ? builderArt : kd === "p" ? pigArt : meepleArt)(G.COLORS[S.turn])}<circle r="12" fill="transparent"/></g>`
         : `<circle class="mspot" data-f="${fi}" cx="${x}" cy="${y}" r="9"/>`;
     }
   }
   // points just scored
-  for (const e of S.events || []) {
+  for (const e of (S.events || []).filter((e) => e.pts > 0)) {
     const ts = e.at.map((i) => S.tiles[i]).filter(Boolean); if (!ts.length) continue;
     const cx = ts.reduce((a, t) => a + t.x, 0) / ts.length * T + 50, cy = ts.reduce((a, t) => a + t.y, 0) / ts.length * T + 50;
     s += `<text class="float" x="${cx}" y="${cy}" style="fill:${G.COLORS[e.who[0]]}">+${e.pts}</text>`;
@@ -461,7 +473,7 @@ function boardSVG() {
   return s;
 }
 function playersHTML() {
-  return `<div class="who">${S.players.map((p, i) => `<span class="p ${S.phase === "play" && S.turn === i ? "turn" : ""}"><span class="dot" style="background:${G.COLORS[i]}"></span>${esc(seatName(i))}${i === mySeat && mode === "online" ? " (tú)" : ""} <b>${p.score}</b><small>♟${p.left}${p.big ? " +♟G" : ""}</small></span>`).join("")}</div>`;
+  return `<div class="who">${S.players.map((p, i) => `<span class="p ${S.phase === "play" && S.turn === i ? "turn" : ""}"><span class="dot" style="background:${G.COLORS[i]}"></span>${esc(seatName(i))}${i === mySeat && mode === "online" ? " (tú)" : ""} <b>${p.score}</b><small>♟${p.left}${p.big ? " +♟G" : ""}${p.builder ? " 🔨" : ""}${p.pig ? " 🐷" : ""}${p.goods ? ` 🍷${p.goods.vino} 🌾${p.goods.trigo} 🧵${p.goods.tela}` : ""}</small></span>`).join("")}</div>`;
 }
 const SAVE = "comarca-partida";
 function keepLocal() {
@@ -517,7 +529,7 @@ function render() {
   if (sig !== landSig) { $("#land").innerHTML = landSVG(); landSig = sig; }
   $("#over").innerHTML = boardSVG();
   if (!showEv) S = { ...S, events: saved };
-  if (showEv) for (const e of S.events || []) toast(e.who.map(seatName).join(" y ") + " +" + e.pts + " por " + ({ city: "la ciudad", road: "el camino", cloister: "la ermita", field: "el pasto" }[e.t]));
+  if (showEv) for (const e of S.events || []) if (e.t === "goods") toast(e.who.map(seatName).join(" y ") + " se lleva " + e.goods.map((g) => ({ vino: "🍷 vino", trigo: "🌾 trigo", tela: "🧵 tela" }[g])).join(", ")); else toast(e.who.map(seatName).join(" y ") + " +" + e.pts + " por " + ({ city: "la ciudad", road: "el camino", cloister: "la ermita", field: "el pasto" }[e.t]));
   // the buttons at the bottom
   let acts = "";
   if (S.phase === "over") acts = mode === "local" || game.host_id === me.pid ? `<button class="btn gold" id="again">Jugar otra</button><button class="btn" id="res">Resultados</button>` : `<button class="btn" id="res">Resultados</button>`;
@@ -525,8 +537,11 @@ function render() {
     const can = G.placements(S.tiles, S.current).length;
     if (!can) acts = `<button class="btn gold" id="disc">Sacar otra loseta</button>`;
     else if (pick && pick.placed) {
-      const pl = S.players[S.turn], canBig = pick.f != null && pl.big > 0 && pl.left > 0;
-      acts = `<button class="btn" id="back2">↶ Mover</button>${canBig ? `<button class="btn" id="bigt">${pick.big ? "♟ Normal" : "♟ Grande"}</button>` : ""}<button class="btn gold" id="ok">${pick.f != null ? "Listo" : "Sin aldeano"}</button>`;
+      const pl = S.players[S.turn], ks = pick.f != null ? pick.kinds[pick.f] || [] : [];
+      const canBig = pick.f != null && pick.kind === "m" && pl.big > 0 && pl.left > 0;
+      const KN = { m: "♟ Aldeano", b: "🔨 Constructor", p: "🐷 Cerdo" };
+      const kindBtn = ks.length > 1 ? `<button class="btn" id="kindt">${KN[ks[(ks.indexOf(pick.kind) + 1) % ks.length]]}</button>` : "";
+      acts = `<button class="btn" id="back2">↶ Mover</button>${kindBtn}${canBig ? `<button class="btn" id="bigt">${pick.big ? "♟ Normal" : "♟ Grande"}</button>` : ""}<button class="btn gold" id="ok">${pick.f != null ? "Listo" : "Sin aldeano"}</button>`;
     }
     else if (pick) acts = `<button class="btn" id="rot">⟳ Girar</button><button class="btn gold" id="put">Poner aquí</button>`;
   }
@@ -534,6 +549,7 @@ function render() {
   const on = (id, f) => { const e = $("#" + id); if (e) e.onclick = f; };
   on("rot", rotate); on("put", confirmTile); on("ok", done); on("disc", discard); on("again", again); on("res", celebrate);
   on("bigt", () => { pick.big = !pick.big; render(); });
+  on("kindt", () => { const ks = pick.kinds[pick.f]; pick.kind = ks[(ks.indexOf(pick.kind) + 1) % ks.length]; render(); });
   on("back2", () => { pick.placed = false; pick.f = null; render(); });
   if (mode === "online" && myTurn() && !S.current && !busy) finishTurn({ ...S, events: [] });
   cpuStep();
@@ -582,7 +598,12 @@ function bindView() {
     // a tap: what is under the finger
     const hit = document.elementFromPoint(e.clientX, e.clientY);
     const f = hit && hit.closest("[data-f]");
-    if (f && pick && pick.placed) { const fi = +f.dataset.f; pick.f = pick.f === fi ? null : fi; return render(); }
+    if (f && pick && pick.placed) {
+      const fi = +f.dataset.f, ks = pick.kinds[fi] || ["m"];
+      if (pick.f !== fi) { pick.f = fi; pick.kind = ks[0]; }
+      else { const i = ks.indexOf(pick.kind); if (i < ks.length - 1) pick.kind = ks[i + 1]; else { pick.f = null; pick.kind = null; } }
+      return render();
+    }
     const sp = hit && hit.closest("[data-x]");
     if (sp) return tapCell(+sp.dataset.x, +sp.dataset.y);
   };
@@ -632,7 +653,7 @@ function celebrate() {
   const el = document.createElement("div"); el.className = "overlay";
   el.innerHTML = `<div class="in"><div class="big">${won ? "🏆" : "🏰"}</div><h2>${won && names.length === 1 ? "¡Ganaste!" : names.length > 1 ? "Empate: " + names.map(esc).join(" y ") : "Ganó " + esc(names[0] || "")}</h2>
     <div class="final">${order.map((i, k) => { const p = S.players[i], e = p.end || {}; return `<div class="r"><span class="dot" style="background:${G.COLORS[i]}"></span>
-      <span>${esc(seatName(i))}<small>Al final: caminos ${e.road || 0} · ciudades ${e.city || 0} · ermitas ${e.cloister || 0} · pastos ${e.field || 0}</small></span><b>${p.score}</b></div>`; }).join("")}</div>
+      <span>${esc(seatName(i))}<small>Al final: caminos ${e.road || 0} · ciudades ${e.city || 0} · ermitas ${e.cloister || 0} · pastos ${e.field || 0}${S.exp && S.exp.comercio ? ` · mercancías ${e.goods || 0}` : ""}</small></span><b>${p.score}</b></div>`; }).join("")}</div>
     <button class="btn primary" id="ok">Ver la comarca</button></div>`;
   document.body.appendChild(el);
   el.querySelector("#ok").onclick = () => { el.remove(); fit(); const s = $("#svg"); if (s) s.setAttribute("viewBox", viewBox()); };
