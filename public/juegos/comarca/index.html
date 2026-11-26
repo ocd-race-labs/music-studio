@@ -120,9 +120,9 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 <div class="actions" id="actions"></div>
 <div id="toast"></div>
 <script type="module">
-import * as G from "./rules.js?v=1795684384";
-import * as AI from "./ai.js?v=1795684384";
-import { tileArt, meepleArt, DEFS } from "./art.js?v=1795684384";
+import * as G from "./rules.js?v=1795693329";
+import * as AI from "./ai.js?v=1795693329";
+import { tileArt, meepleArt, DEFS } from "./art.js?v=1795693329";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const $ = (s) => document.querySelector(s);
@@ -162,6 +162,7 @@ function renderStart() {
       <h2>Comarca</h2>
       <p class="muted">Arma la comarca loseta a loseta: ciudades, caminos, ermitas y campos. De 2 a 5 jugadores.</p>
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
+      <div id="resume"></div>
       <div id="open"></div>
       <button class="btn primary" id="online">Crear mesa nueva</button>
       <div><label class="lbl">En este teléfono</label>
@@ -189,6 +190,15 @@ function renderStart() {
   };
   $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
   listOpen();
+  const g = load(SAVE);
+  if (g && g.S && g.S.phase === "play") {
+    const when = new Date(g.at).toLocaleString("es-CL", { weekday: "short", hour: "2-digit", minute: "2-digit" });
+    $("#resume").innerHTML = `<label class="lbl">Partida guardada en este teléfono</label>
+      <div class="mrow"><button class="btn back2" id="cont"><span>Continuar ${g.cpu ? "contra la máquina · " + Maquina.NAMES[g.cpu] : "en este teléfono"}</span><small>${g.S.tiles.length} losetas · ${when}</small></button>
+      <button class="del" id="drop" aria-label="Borrar la partida guardada">✕</button></div>`;
+    $("#cont").onclick = () => resumeLocal(g);
+    $("#drop").onclick = (e) => { const b = e.currentTarget; if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "¿Seguro?"; b.classList.add("sure"); return; } try { localStorage.removeItem(SAVE); } catch (err) {} $("#resume").innerHTML = ""; };
+  }
 }
 function takeName(optional) {
   const el = $("#nm"); if (!el) return true;
@@ -387,10 +397,15 @@ const rotPoint = ([x, y], r) => { for (let i = 0; i < r; i++) [x, y] = [100 - y,
 function tileSVG(t, layer) {
   return `<g transform="translate(${t.x * T} ${t.y * T})">${tileArt(t.k, t.r, t.x, t.y, layer)}</g>`;
 }
-function boardSVG() {
+let landSig = "";
+function landSVG() {
   let s = `<defs>${DEFS}</defs>`;
   // all the grass first, then the turned ground, then houses and trees, so the map reads as one landscape
   for (const layer of ["grass", "ground", "top"]) for (const t of S.tiles) s += tileSVG(t, layer);
+  return s;
+}
+function boardSVG() {
+  let s = "";
   // where your tile fits
   if (myTurn() && S.current && !(pick && pick.placed)) {
     const spots = new Map();
@@ -425,8 +440,22 @@ function boardSVG() {
 function playersHTML() {
   return `<div class="who">${S.players.map((p, i) => `<span class="p ${S.phase === "play" && S.turn === i ? "turn" : ""}"><span class="dot" style="background:${G.COLORS[i]}"></span>${esc(seatName(i))}${i === mySeat && mode === "online" ? " (tú)" : ""} <b>${p.score}</b><small>♟${p.left}</small></span>`).join("")}</div>`;
 }
+const SAVE = "comarca-partida";
+function keepLocal() {
+  if (mode !== "local" || !S) return;
+  if (S.phase === "over") { try { localStorage.removeItem(SAVE); } catch (e) {} return; }
+  store(SAVE, { S, bag, cpu, localCount, at: Date.now() });
+}
+function resumeLocal(g) {
+  clearTimeout(cpuT);
+  mode = "local"; game = null; pick = null; view = null;
+  S = g.S; bag = g.bag; cpu = g.cpu; localCount = g.localCount; mySeat = cpu ? 0 : -1;
+  pill(cpu ? "🤖 " + Maquina.NAMES[cpu] : "Mismo teléfono");
+  render();
+}
 function render() {
   if (!S) return;
+  keepLocal();
   if (mode === "online" && S.phase === "lobby") return renderLobby();
   if (window.Perfil) Perfil.turn(mode === "online" && myTurn());
   const first = !$("#view");
@@ -443,10 +472,10 @@ function render() {
   if (first || !$("#svg")) {
     $("#app").innerHTML = `<div id="top"></div>
       <div class="view" id="view"><div class="bag" id="bagc"></div><div class="zoom"><button id="zin" aria-label="Acercar">+</button><button id="zout" aria-label="Alejar">−</button><button id="zfit" aria-label="Ver todo">⤢</button></div>
-        <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <svg id="svg" xmlns="http://www.w3.org/2000/svg"><g id="land"></g><g id="over"></g></svg></div>
       <div id="low"></div>`;
     bindView();
-    fit();
+    fit(); landSig = "";
   }
   $("#top").innerHTML = playersHTML();
   $("#bagc").textContent = "🧺 " + (S.remaining ?? 0);
@@ -459,7 +488,9 @@ function render() {
   const evSig = JSON.stringify(S.events || []) + (S.tiles || []).length;
   const showEv = evSig !== seenEvents; seenEvents = evSig;
   const saved = S.events; if (!showEv) S = { ...S, events: [] };
-  svg.innerHTML = boardSVG();
+  const sig = S.tiles.map((t) => t.k + t.x + "," + t.y + t.r).join("|");
+  if (sig !== landSig) { $("#land").innerHTML = landSVG(); landSig = sig; }
+  $("#over").innerHTML = boardSVG();
   if (!showEv) S = { ...S, events: saved };
   if (showEv) for (const e of S.events || []) toast(e.who.map(seatName).join(" y ") + " +" + e.pts + " por " + ({ city: "la ciudad", road: "el camino", cloister: "la ermita", field: "el pasto" }[e.t]));
   // the buttons at the bottom
@@ -492,6 +523,7 @@ function bindView() {
   };
   el.addEventListener("pointerdown", (e) => {
     if (e.target.closest(".zoom")) return;
+    if (e.isPrimary) pts.clear();
     try { el.setPointerCapture(e.pointerId); } catch (err) {}
     pts.set(e.pointerId, [e.clientX, e.clientY]);
     start = { cx: view.cx, cy: view.cy, x: e.clientX, y: e.clientY, d: null, z: view.z }; moved = false;
@@ -526,6 +558,7 @@ function bindView() {
     if (sp) return tapCell(+sp.dataset.x, +sp.dataset.y);
   };
   el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  el.addEventListener("lostpointercapture", (e) => pts.delete(e.pointerId));
   el.addEventListener("wheel", (e) => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY); }, { passive: false });
   $("#zin").onclick = () => { const r = el.getBoundingClientRect(); zoomAt(1.3, r.left + r.width / 2, r.top + r.height / 2); };
   $("#zout").onclick = () => { const r = el.getBoundingClientRect(); zoomAt(1 / 1.3, r.left + r.width / 2, r.top + r.height / 2); };
