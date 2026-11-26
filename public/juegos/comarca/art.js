@@ -53,6 +53,14 @@ const ART = {
   V: { road: ["M0,50 C20,50 34,58 42,64 C50,72 50,86 50,100"], spots: [[14, 86], [66, 30], [84, 74], [30, 18], [82, 14]] },
   W: { road: ["M100,50 H56", "M0,50 H44", "M50,100 V56"], hamlet: [50, 50], spots: [[30, 18], [70, 20], [86, 86], [14, 86]] },
   X: { road: ["M50,0 V44", "M100,50 H56", "M50,100 V56", "M0,50 H44"], well: [50, 50], spots: [[18, 18], [84, 84], [16, 84], [84, 16]] },
+  // Posadas y catedrales
+  NU: { road: ["M50,0 V100"], inn: [74, 40], spots: [[20, 20], [22, 64], [80, 84], [18, 88]] },
+  NV: { road: ["M0,50 C20,50 34,58 42,64 C50,72 50,86 50,100"], inn: [62, 38], spots: [[14, 86], [30, 18], [86, 16], [86, 80]] },
+  ND: { city: [["cap", 0]], road: ["M0,50 H100"], inn: [34, 72], houses: [[34, 10], [50, 14], [66, 10]], spots: [[80, 80], [14, 32], [86, 32]] },
+  NW: { road: ["M100,50 H56", "M0,50 H44", "M50,100 V56"], hamlet: [50, 50], inn: [70, 74], spots: [[30, 18], [70, 20], [14, 86]] },
+  NA: { road: ["M50,100 V70"], abbey: [50, 44], inn: [74, 82], spots: [[16, 18], [84, 18], [16, 84], [20, 52], [82, 50]] },
+  NS: { city: [["three", 0]], road: ["M50,100 V72"], gate: [50, 72], inn: [74, 90], houses: [[30, 14], [52, 18], [74, 14], [86, 36], [30, 40], [62, 42], [82, 60], [14, 60]] },
+  CC: { city: [["full", 0]], cathedral: [50, 44], houses: [[16, 16], [84, 16], [16, 80], [84, 82], [30, 88], [70, 90], [12, 50], [88, 52]] },
   // meadows
   PA: { forest: [[30, 30], [52, 24], [70, 36], [40, 50], [62, 56], [80, 62], [48, 76], [72, 82], [22, 56]] },
   PB: { fields: [[30, 32], [62, 30], [30, 60], [62, 58], [46, 86]], spots: [[86, 14], [86, 86]] },
@@ -126,6 +134,22 @@ function garden(x, y) {
   for (let i = 0; i < 5; i++) for (let j = 0; j < 7; j++) s += `<circle cx="${-21 + j * 7}" cy="${-14 + i * 7}" r="2.3" fill="${["#4d8f3c", "#e07a3a", "#5a9b45", "#c93b3b", "#4d8f3c"][i]}"/>`;
   return s + `<path d="M-28,22 H28" stroke="${C.wood}" stroke-width="1.2" stroke-dasharray="2 2"/></g>`;
 }
+// an inn by the road: a house with a hanging sign and a mug
+function inn(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="1" cy="9" rx="13" ry="3" fill="rgba(0,0,0,.16)"/>
+    <rect x="-11" y="-3" width="22" height="12" fill="#f1dcb0" stroke="${C.wood}" stroke-width="1"/><path d="M-13,-2 L0,-12 L13,-2 Z" fill="#8a3b26" stroke="#5f281a" stroke-width=".8"/>
+    <rect x="-3" y="2" width="6" height="7" fill="${C.wood}"/><path d="M11,0 H17 V3" stroke="${C.wood}" stroke-width="1.2" fill="none"/>
+    <rect x="13" y="3" width="8" height="7" rx="1" fill="#f4d35e" stroke="${C.wood}" stroke-width=".8"/><path d="M15,5 h3 v3 h-3 Z M18,6 h1.4 v1.4" stroke="#8a5a2b" stroke-width=".7" fill="#fff6d0"/></g>`;
+}
+// a cathedral in the middle of a city
+function cathedral(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="2" cy="22" rx="26" ry="4" fill="rgba(0,0,0,.18)"/>
+    <rect x="-16" y="-2" width="32" height="24" fill="#efe6d2" stroke="#7a6a52" stroke-width="1"/><path d="M-18,-1 L0,-12 L18,-1 Z" fill="#5b6f8f" stroke="#3e4d66" stroke-width=".8"/>
+    <rect x="-24" y="-14" width="10" height="36" fill="#efe6d2" stroke="#7a6a52" stroke-width="1"/><path d="M-26,-13 L-19,-30 L-12,-13 Z" fill="#5b6f8f" stroke="#3e4d66" stroke-width=".8"/>
+    <rect x="14" y="-14" width="10" height="36" fill="#efe6d2" stroke="#7a6a52" stroke-width="1"/><path d="M12,-13 L19,-30 L26,-13 Z" fill="#5b6f8f" stroke="#3e4d66" stroke-width=".8"/>
+    <circle cx="0" cy="6" r="4" fill="#7fb2e5" stroke="#7a6a52" stroke-width=".8"/><path d="M-4,22 v-8 a4,4 0 0 1 8,0 v8 Z" fill="${C.wood}"/>
+    <path d="M-19,-36 v6 M-21.5,-33.5 h5 M19,-36 v6 M16.5,-33.5 h5" stroke="#7a6a52" stroke-width="1.2"/></g>`;
+}
 // the hills the river is born in
 function hills(x, y) {
   return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="0" cy="12" rx="26" ry="5" fill="rgba(0,0,0,.15)"/>
@@ -191,6 +215,8 @@ export function tileArt(k, r = 0, x = 0, y = 0, layer) {
   if (a.gate) { const [gx, gy] = turn(a.gate, r); up += tower(gx, gy); }
   if (a.shield) { const [sx, sy] = turn(a.shield, r); up += shield(sx, sy); }
   if (a.abbey) { const [bx, by] = turn(a.abbey, r); up += abbey(bx, by); }
+  if (a.inn) { const [ix, iy] = turn(a.inn, r); up += inn(ix, iy); }
+  if (a.cathedral) { const [cx, cy] = turn(a.cathedral, r); up += cathedral(cx, cy); }
   if (a.spring) { const [mx, my] = turn([48, 40], r); up += hills(mx, my); }
   if (a.hamlet) { const [hx, hy] = turn(a.hamlet, r); up += house(hx, hy - 1, 1.1, C.roof[2]); }
   if (a.well) { const [wx, wy] = turn(a.well, r); up += `<g transform="translate(${wx} ${wy})"><circle r="4.5" fill="${C.wallTop}" stroke="${C.wallDark}" stroke-width="1"/><circle r="2.4" fill="${C.water}"/></g>`; }

@@ -10,6 +10,7 @@ const R = (s, a) => ({ t: "road", s, a });
 const F = (s, a, adj = []) => ({ t: "field", s, a, adj });
 const H = (a) => ({ t: "cloister", s: [], a });
 const W = (s) => ({ t: "river", s, a: [50, 50] });
+const I = (s, a) => ({ t: "road", s, a, inn: true });
 
 export const TILES = {
   A: { n: 2, f: [H([50, 42]), R([7], [50, 86]), F([0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11], [16, 84])] },
@@ -54,6 +55,22 @@ export const RIVER = {
   RV: { n: 1, river: true, f: [W([1, 7]), C([9, 10, 11], [12, 50]), F([8, 0], [30, 18], [1]), F([2, 3, 4, 5, 6], [78, 50])] },
 };
 Object.assign(TILES, RIVER);
+// expansion 1, Posadas y catedrales: 7 tiles with an inn by the road, 2 cities with a cathedral
+export const POSADAS = {
+  NU: { n: 2, exp: "posadas", f: [I([1, 7], [50, 66]), F([8, 9, 10, 11, 0], [22, 50]), F([2, 3, 4, 5, 6], [80, 76])] },
+  NV: { n: 1, exp: "posadas", f: [I([7, 10], [36, 64]), F([8, 9], [13, 87]), F([11, 0, 1, 2, 3, 4, 5, 6], [80, 74])] },
+  ND: { n: 1, exp: "posadas", f: [C([0, 1, 2], [50, 12]), I([4, 10], [64, 50]), F([3, 11], [24, 35], [0]), F([5, 6, 7, 8, 9], [70, 82])] },
+  NW: { n: 1, exp: "posadas", f: [R([4], [82, 50]), I([7], [50, 84]), R([10], [18, 50]), F([11, 0, 1, 2, 3], [50, 22]), F([5, 6], [86, 88]), F([8, 9], [16, 84])] },
+  NA: { n: 1, exp: "posadas", f: [H([50, 42]), I([7], [50, 88]), F([0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11], [16, 84])] },
+  NS: { n: 1, exp: "posadas", f: [C([0, 1, 2, 3, 4, 5, 9, 10, 11], [50, 32]), I([7], [50, 88]), F([6], [86, 92], [0]), F([8], [16, 92], [0])] },
+  CC: { n: 2, exp: "posadas", f: [{ t: "city", s: ALL, a: [50, 72], cathedral: true }] },
+};
+Object.assign(TILES, POSADAS);
+export const EXPANSIONS = [
+  { id: "posadas", name: "Posadas y catedrales", icon: "🍺", ready: true },
+  { id: "comercio", name: "Comerciantes y constructores", icon: "⚖️", ready: false },
+  { id: "abadia", name: "Abadía y alcalde", icon: "⛪", ready: false },
+];
 export const START = "D";
 export const RIVER_START = "RA";
 export const MEEPLES = 7;
@@ -61,18 +78,22 @@ export const COLORS = ["#d93b3b", "#2f6fd0", "#f0bd22", "#2e9e4f", "#8e44ad"];
 export const COLOR_NAMES = ["Rojo", "Azul", "Amarillo", "Verde", "Morado"];
 
 const shuffle = (a, rand) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-// the bag, drawn from the end (pop): the 72 land tiles, then the 2 lakes, then the 11 river pieces
-export function newBag(rand = Math.random) {
+// the bag, drawn from the end (pop): the land tiles (with the chosen expansions), then the 2 lakes, then the 11 river pieces
+export function newBag(rand = Math.random, exp = {}) {
   const land = [], river = [], lakes = [];
-  for (const [k, d] of Object.entries(TILES)) for (let i = 0; i < d.n - (k === RIVER_START ? 1 : 0); i++) (d.lake ? lakes : d.river ? river : land).push(k);
+  for (const [k, d] of Object.entries(TILES)) {
+    if (d.exp && !exp[d.exp]) continue;
+    for (let i = 0; i < d.n - (k === RIVER_START ? 1 : 0); i++) (d.lake ? lakes : d.river ? river : land).push(k);
+  }
   return shuffle(land, rand).concat(lakes, shuffle(river, rand));
 }
+export const bagSize = (exp = {}) => newBag(Math.random, exp).length;
 export const BAG_SIZE = 93;
-export function newGame(names) {
+export function newGame(names, exp = {}) {
   return {
-    phase: "play", n: names.length, turn: 0,
-    players: names.map((name, i) => ({ name, color: i, score: 0, left: MEEPLES })),
-    tiles: [{ k: RIVER_START, x: 0, y: 0, r: 1 }], meeples: [], current: null, remaining: BAG_SIZE, last: null, events: [],
+    phase: "play", n: names.length, turn: 0, exp,
+    players: names.map((name, i) => ({ name, color: i, score: 0, left: MEEPLES, ...(exp.posadas ? { big: 1 } : {}) })),
+    tiles: [{ k: RIVER_START, x: 0, y: 0, r: 1 }], meeples: [], current: null, remaining: bagSize(exp), last: null, events: [],
   };
 }
 
@@ -191,8 +212,9 @@ export function analyse(tiles) {
   tiles.forEach((t, ti) => TILES[t.k].f.forEach((f, fi) => {
     const n = ti + ":" + fi, root = find(n);
     let c = byRoot.get(root);
-    if (!c) { c = { id: comps.length, t: f.t, nodes: [], tiles: new Set(), open: 0, shields: 0, cities: new Set() }; byRoot.set(root, c); comps.push(c); }
+    if (!c) { c = { id: comps.length, t: f.t, nodes: [], tiles: new Set(), open: 0, shields: 0, cities: new Set(), inn: false, cathedral: false }; byRoot.set(root, c); comps.push(c); }
     c.nodes.push(n); c.tiles.add(ti); c.open += open.get(n) || 0; if (f.shield) c.shields++;
+    if (f.inn) c.inn = true; if (f.cathedral) c.cathedral = true;
     comp.set(n, c.id);
   }));
   for (const c of comps) c.complete = c.t !== "field" && c.t !== "cloister" && c.open === 0;
@@ -209,13 +231,22 @@ export function neighbours8(idx, x, y) {
   return n;
 }
 // seats with the most followers on a component
-function majority(meeples, nodes) {
+// (the big follower counts as two)
+export function majority(meeples, nodes) {
   const set = new Set(nodes), count = {};
-  for (const m of meeples) if (set.has(m.t + ":" + m.f)) count[m.s] = (count[m.s] || 0) + 1;
+  for (const m of meeples) if (set.has(m.t + ":" + m.f)) count[m.s] = (count[m.s] || 0) + (m.big ? 2 : 1);
   const best = Math.max(0, ...Object.values(count));
   return best ? Object.keys(count).filter((s) => count[s] === best).map(Number) : [];
 }
-export const valueOf = (c, final) => (c.t === "road" ? c.tiles.size : c.t === "city" ? (final && !c.complete ? 1 : 2) * (c.tiles.size + c.shields) : 0);
+// a road with an inn: 2 a tile when finished, nothing if left open; a city with a cathedral: 3 a tile and shield, nothing if open
+export function valueOf(c, final) {
+  const open = final && !c.complete;
+  if (c.t === "road") return c.inn ? (open ? 0 : 2 * c.tiles.size) : c.tiles.size;
+  if (c.t === "city") return (c.cathedral ? (open ? 0 : 3) : open ? 1 : 2) * (c.tiles.size + c.shields);
+  return 0;
+}
+// a follower goes back to its owner's hand
+const giveBack = (players, m) => { if (m.big) players[m.s].big++; else players[m.s].left++; };
 
 // where the new tile (last in tiles) can take a follower: [featureIndex]
 export function meepleSpots(tiles, meeples, an) {
@@ -228,13 +259,16 @@ export function meepleSpots(tiles, meeples, an) {
 /* ---------- a turn ---------- */
 // place the current tile, maybe a follower, and score what got finished.
 // → new state (turn not advanced; the server or the local loop draws the next tile)
-export function play(s, x, y, r, fi) {
+export function play(s, x, y, r, fi, big) {
   const seat = s.turn;
   const tiles = s.tiles.concat([{ k: s.current, x, y, r }]);
   const ti = tiles.length - 1;
   let meeples = s.meeples.slice();
   const players = s.players.map((p) => ({ ...p }));
-  if (fi != null && fi >= 0 && players[seat].left > 0) { meeples.push({ t: ti, f: fi, s: seat }); players[seat].left--; }
+  if (fi != null && fi >= 0) {
+    if (big && players[seat].big > 0) { meeples.push({ t: ti, f: fi, s: seat, big: true }); players[seat].big--; }
+    else if (players[seat].left > 0) { meeples.push({ t: ti, f: fi, s: seat }); players[seat].left--; }
+  }
   const an = analyse(tiles);
   const events = [];
   // finished roads and cities that the new tile touches
@@ -247,7 +281,7 @@ export function play(s, x, y, r, fi) {
     const pts = valueOf(c, false);
     for (const w of win) players[w].score += pts;
     const set = new Set(c.nodes);
-    for (const m of meeples) if (set.has(m.t + ":" + m.f)) players[m.s].left++;
+    for (const m of meeples) if (set.has(m.t + ":" + m.f)) giveBack(players, m);
     meeples = meeples.filter((m) => !set.has(m.t + ":" + m.f));
     events.push({ t: c.t, pts, who: win, at: [...c.tiles] });
   }
@@ -256,7 +290,7 @@ export function play(s, x, y, r, fi) {
     const mt = tiles[m.t];
     if (TILES[mt.k].f[m.f].t !== "cloister" || Math.abs(mt.x - x) > 1 || Math.abs(mt.y - y) > 1) continue;
     if (neighbours8(an.idx, mt.x, mt.y) === 8) {
-      players[m.s].score += 9; players[m.s].left++;
+      players[m.s].score += 9; giveBack(players, m);
       meeples = meeples.filter((q) => q !== m);
       events.push({ t: "cloister", pts: 9, who: [m.s], at: [m.t] });
     }

@@ -25,6 +25,11 @@
         [chip("Ciudad"), "Cerrada: 2 por loseta y 2 por escudo. Al final, abierta: 1 y 1."],
         [chip("Ermita"), "Rodeada por 8 losetas: 9 puntos. Al final: 1 más 1 por cada loseta alrededor."],
         [chip("Pasto"), "Al final, 3 puntos por cada ciudad cerrada que toque el pasto. Gana quien tenga más aldeanos en cada parte; si empatan, ganan los dos."]] },
+      { t: "Río y expansiones", rows: [
+        [big("🌊"), "La partida parte con el río: sus 13 losetas salen primero y cada una lo alarga, hasta un lago en cada punta."],
+        [big("🍺"), "Posada: el camino vale 2 por loseta si se cierra, pero 0 si queda abierto al final."],
+        [big("⛪"), "Catedral: la ciudad vale 3 por loseta y escudo si se cierra, pero 0 si queda abierta."],
+        [chip("Grande"), "Con Posadas y catedrales tienes 1 aldeano grande que cuenta como 2 para ganar la mayoría."]] },
     ] },
     ajedrez: { name: "Ajedrez", pages: [
       { t: "Cómo se mueven", rows: [
