@@ -1,6 +1,6 @@
 // Galaxia: drawings as SVG strings. Same palette as the mockup: amber for the interface, cyan for
 // holograms and what is ready, red for what is missing, violet for what is rare.
-import { MATS, SUPPLY } from "./game.js?v=1795731396";
+import { MATS, SUPPLY } from "./game.js?v=1795732939";
 
 export const AMBER = "#ff9f2e", CYAN = "#59d8ff", RED = "#ff4d5e", VIOLET = "#a879ff", INK = "#f1e9dc", DIM = "#9a8f80";
 export const matColor = (k) => (MATS[k] || SUPPLY[k] || {}).color || INK;

@@ -1,7 +1,7 @@
 // Galaxia: the screens. Inventory, cockpit, holographic map, the base field (animated) and the factory,
 // plus the sheets that open when you tap something on the field.
-import * as G from "./game.js?v=1795731396";
-import * as A from "./art.js?v=1795731396";
+import * as G from "./game.js?v=1795732939";
+import * as A from "./art.js?v=1795732939";
 const $ = (q) => document.querySelector(q);
 const KEY = "galaxia-v2";
 let S, view = "cab", baseSel = null, sheetFn = null, mapSel = null;
@@ -97,6 +97,7 @@ VIEWS.cab = () => {
   binders.push(() => {
     const e = $("#est"); if (e) e.onclick = () => { if (act(G.establish(S), "La nave baja y se despliega: base en " + p.name)) { baseSel = p.id; go("base"); } };
     const d = $("#down"); if (d) d.onclick = () => { baseSel = p.id; go("base"); };
+    const x = $("#dis"); if (x) x.onclick = () => { if (x.dataset.sure) { if (act(G.dismantle(S), "Base desmontada: el módulo volvió a la nave")) baseSel = null; } else { x.dataset.sure = 1; x.textContent = "Toca otra vez: se pierden los edificios"; } };
     $("#tomap").onclick = () => go("map");
   });
   const cf = G.crewFactor(S, p.id);
@@ -117,7 +118,7 @@ VIEWS.cab = () => {
     <div class="p" style="padding:12px;display:flex;flex-direction:column;gap:4px"><div class="lbl">Tripulación afuera</div><div style="font-size:13px">Turno máx. <b class="h" style="font-size:13px">${G.shiftHours(S, p.id)} H</b></div><div style="font-size:13px">Rinde <b class="h ${cf < 0.8 ? "no" : "ok"}" style="font-size:13px">${Math.round(cf * 100)} %</b></div><div class="dim" style="font-size:10px">${[p.rad !== "baja" ? "radiación " + p.rad : "", p.o2 ? "aire respirable" : "sin oxígeno"].filter(Boolean).join(" · ")}</div></div>
     <div class="p" style="padding:12px;display:flex;flex-direction:column;gap:4px"><div class="lbl">Bajo la superficie</div>${veins.map((v) => `<div style="font-size:13px">${matName(v.mat)} <b class="${G.MATS[v.mat] && G.MATS[v.mat].tier >= 2 ? "rare" : "ok"}">${v.purity > 0.7 ? "alto" : v.purity > 0.5 ? "medio" : "bajo"}</b></div>`).join("")}${crops ? `<div style="font-size:13px">Suelo <b class="ok">fértil</b></div>` : ""}${p.veins.some((v) => v.deep) && !G.anyBuilt(S, "laboratorio") ? `<div class="rare" style="font-size:11px">Ecos profundos sin identificar</div>` : ""}</div>
   </div>
-  ${j ? `<button class="btn" disabled>Saltando a ${G.P[j.to].name}</button>` : b ? `<button class="btn" id="down">Bajar a la base</button>` : `<button class="btn" id="est" ${S.items.modulo ? "" : "disabled"}>${S.items.modulo ? "Establecer base aquí" : "Establecer base · falta un módulo"}</button>`}
+  ${j ? `<button class="btn" disabled>Saltando a ${G.P[j.to].name}</button>` : b ? `<button class="btn" id="down">Bajar a la base</button><button class="btn2" id="dis" style="color:#ff4d5e;box-shadow:inset 0 0 0 1px rgba(255,77,94,.6);background:rgba(255,77,94,.08)">Desmontar esta base</button>` : `<button class="btn" id="est" ${S.items.modulo ? "" : "disabled"}>${S.items.modulo ? "Establecer base aquí · " + S.items.modulo + " módulo" + (S.items.modulo > 1 ? "s" : "") : "Establecer base · sin módulos"}</button>${S.items.modulo ? "" : `<div class="dim" style="font-size:12px;text-align:center">Cada base usa un módulo. Fabrica otro en la fábrica, o desmonta una base que ya tengas para recuperarlo.</div>`}`}
   <button class="btn2" id="tomap">Fijar coordenadas de salto</button>`;
 };
 
@@ -360,6 +361,7 @@ function welcome(r) {
   toast(`Mientras no estabas (${m >= 60 ? Math.floor(m / 60) + " h " : ""}${m % 60} min): ${got.length ? got.join(", ") : "nada nuevo"}`);
 }
 S = load();
+if (S && G.rescue(S)) setTimeout(() => toast("Te devolvimos un módulo de base: ya puedes fundar otra base"), 3500);
 if (S) { if (S.ship.jump) S.ship.jump.left = Math.min(S.ship.jump.left, 1); const r = G.catchUp(S); if (r.dt > 60) setTimeout(() => welcome(r), 400); view = Object.keys(S.bases).length ? "base" : "cab"; }
 else { S = G.newGame(); setTimeout(() => toast("Orbitando Kalon. Revisa los indicadores y establece tu base."), 300); }
 let lastMission = G.currentMission(S) && G.currentMission(S).id;

@@ -95,7 +95,7 @@ export function newGame(now = Date.now()) {
     v: 1, t: now, created: now,
     inv: { hierro: 60, cobre: 30, silicio: 0, titanio: 0, iridio: 0, plasma: 0, alimentos: 120, combustible: 35 },
     got: {},                        // everything ever collected, for the missions
-    crew: 24, machines: { excavadora: 2, cosechadora: 1, pesada: 0, robot: 0 }, items: { modulo: 1, pliegue2: 0 },
+    crew: 24, machines: { excavadora: 2, cosechadora: 1, pesada: 0, robot: 0 }, items: { modulo: 2, pliegue2: 0 },
     ship: { at: "kalon", jump: null },
     bases: {},                      // planet id -> { buildings: [{type, slot, done}], jobs: [{id, type, vein}], veins: {id: left} }
     craft: null, nextId: 1, grow: 0, log: [],
@@ -165,6 +165,15 @@ export function establish(s) {
   s.bases[pid] = { buildings: [{ type: "cuartel", slot: 0, done: 1 }], jobs: [], veins: Object.fromEntries(P[pid].veins.map((v) => [v.id, v.size])) };
   return { ok: true };
 }
+// take a base down: the module goes back into the ship (buildings are lost, machines come back)
+export function dismantle(s) {
+  const pid = s.ship.at;
+  if (!s.bases[pid]) return fail("No hay base aquí");
+  delete s.bases[pid]; s.items.modulo++;
+  return { ok: true };
+}
+// an old save could be stuck: no module, no factory to make one
+export function rescue(s) { if (s.items.modulo < 1 && !anyBuilt(s, "fabrica") && !(s.craft && s.craft.key === "modulo")) { s.items.modulo = 1; return true; } return false; }
 export const SLOTS = 8;
 export function build(s, pid, type, slot) {
   const b = s.bases[pid], d = BUILD[type];
