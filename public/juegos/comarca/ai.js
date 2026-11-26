@@ -3,7 +3,7 @@
 // 2 Medio: the move that adds most to its score plus what its followers on the board are worth.
 // 3 Difícil: weighs the chance of finishing each city, the hermitages, the farmers, the followers it keeps in hand,
 //    and what its best rival is worth, so it also blocks and joins rivals' cities.
-import * as G from "./rules.js?v=1795702463";
+import * as G from "./rules.js?v=1795704760";
 
 export const K={hand:0.5,handBase:0.3,rival:0.4,pc:1.5,fieldInc:0.5,cl:0.5};
 function worth(s, seat, level) {

@@ -53,6 +53,15 @@ const ART = {
   V: { road: ["M0,50 C20,50 34,58 42,64 C50,72 50,86 50,100"], spots: [[14, 86], [66, 30], [84, 74], [30, 18], [82, 14]] },
   W: { road: ["M100,50 H56", "M0,50 H44", "M50,100 V56"], hamlet: [50, 50], spots: [[30, 18], [70, 20], [86, 86], [14, 86]] },
   X: { road: ["M50,0 V44", "M100,50 H56", "M50,100 V56", "M0,50 H44"], well: [50, 50], spots: [[18, 18], [84, 84], [16, 84], [84, 16]] },
+  // meadows
+  PA: { forest: [[30, 30], [52, 24], [70, 36], [40, 50], [62, 56], [80, 62], [48, 76], [72, 82], [22, 56]] },
+  PB: { fields: [[30, 32], [62, 30], [30, 60], [62, 58], [46, 86]], spots: [[86, 14], [86, 86]] },
+  PC: { pond: true, spots: [[18, 86], [86, 18], [84, 84]] },
+  PD: { mill: [52, 44], spots: [[18, 18], [20, 84], [84, 20]] },
+  PE: { garden: [50, 48], spots: [[16, 16], [86, 86], [84, 16]] },
+  PF: { sheep: [[40, 46], [56, 54], [64, 40], [48, 66], [70, 66], [30, 62]], spots: [[16, 16], [86, 86]] },
+  PG: { bloom: true, spots: [[20, 20], [80, 80]] },
+  PH: { spots: [[24, 30], [76, 70]] },
   // the river
   RL: { river: ["M50,0 C50,12 48,22 50,34"], lake: true, spots: [[12, 14], [88, 14], [8, 94], [92, 94]] },
   RA: { river: ["M50,0 C50,18 34,30 38,46 C42,62 62,66 60,80 C58,90 50,90 50,100"], spots: [[18, 20], [20, 70], [82, 34], [80, 84]] },
@@ -100,6 +109,23 @@ function abbey(x, y) {
     <rect x="5" y="-17" width="6" height="12" fill="${C.plaster}" stroke="${C.wood}" stroke-width=".8"/><path d="M4,-17 L8,-22 L12,-17 Z" fill="${C.roof[0]}"/><path d="M8,-28 V-22 M5.5,-25.5 H10.5" stroke="${C.wood}" stroke-width="1.2"/>
     <rect x="-2.5" y="4" width="5" height="7" rx="2.5" fill="${C.wood}"/></g>`;
 }
+function mill(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="2" cy="16" rx="12" ry="3" fill="rgba(0,0,0,.18)"/>
+    <path d="M-7,15 L-5,-6 L5,-6 L7,15 Z" fill="${C.plaster}" stroke="${C.wood}" stroke-width="1"/><path d="M-7,-5 L0,-13 L7,-5 Z" fill="${C.roof[1]}"/>
+    <rect x="-2" y="8" width="4" height="7" fill="${C.wood}"/>
+    <g transform="translate(0 -6)" stroke="${C.wood}" stroke-width="1.2"><path d="M0,0 L-14,-14 M0,0 L14,-14 M0,0 L14,14 M0,0 L-14,14"/>
+    <path d="M-14,-14 l5,-2 l4,5 Z M14,-14 l2,5 l-5,4 Z M14,14 l-5,2 l-4,-5 Z M-14,14 l-2,-5 l5,-4 Z" fill="#f6efe0"/></g></g>`;
+}
+function sheep(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="0" cy="3.5" rx="5" ry="1.4" fill="rgba(0,0,0,.15)"/>
+    <path d="M-2.5,2 v2.4 M2.5,2 v2.4" stroke="#3a3a3a" stroke-width="1"/><ellipse cx="0" cy="0" rx="5" ry="3.6" fill="#fbfaf5" stroke="#cfcac0" stroke-width=".6"/>
+    <ellipse cx="4.6" cy="-1.4" rx="1.9" ry="1.6" fill="#3a3a3a"/></g>`;
+}
+function garden(x, y) {
+  let s = `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><rect x="-26" y="-20" width="52" height="40" rx="3" fill="#a5814f" stroke="#8a6a3e" stroke-width="1"/>`;
+  for (let i = 0; i < 5; i++) for (let j = 0; j < 7; j++) s += `<circle cx="${-21 + j * 7}" cy="${-14 + i * 7}" r="2.3" fill="${["#4d8f3c", "#e07a3a", "#5a9b45", "#c93b3b", "#4d8f3c"][i]}"/>`;
+  return s + `<path d="M-28,22 H28" stroke="${C.wood}" stroke-width="1.2" stroke-dasharray="2 2"/></g>`;
+}
 // the hills the river is born in
 function hills(x, y) {
   return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="0" cy="12" rx="26" ry="5" fill="rgba(0,0,0,.15)"/>
@@ -135,6 +161,8 @@ export function tileArt(k, r = 0, x = 0, y = 0, layer) {
     for (const w of [].concat(sh.wall || [])) g += `<path d="${w}" stroke="${C.wallDark}" stroke-width="7" fill="none" stroke-linejoin="round"/><path d="${w}" stroke="${C.wall}" stroke-width="5" fill="none"/><path d="${w}" stroke="${C.wallTop}" stroke-width="2" stroke-dasharray="3 2.5" fill="none"/>`;
     g += `</g>`;
   }
+  if (a.pond) g += `<path d="M28,52 C24,38 40,30 54,34 C70,30 82,44 76,58 C80,72 62,78 50,74 C38,80 26,70 28,52 Z" fill="${C.bank}"/>
+    <path d="M32,52 C29,41 42,35 54,38 C68,35 77,46 72,57 C75,68 61,73 50,70 C40,74 30,66 32,52 Z" fill="${C.water}"/><path d="M42,50 q5,-2 10,0 M54,60 q5,-2 10,0" stroke="${C.water2}" stroke-width="1.4" fill="none"/>`;
   if (a.hamlet || a.well) { const [hx, hy] = a.hamlet || a.well; g += `<circle cx="${hx}" cy="${hy}" r="9" fill="${C.road}" stroke="${C.roadEdge}" stroke-width="1.5"/>`; }
   if (layer === "ground") return `<g${rot(r)}>${g}</g>`;
   let up = "";
@@ -147,6 +175,13 @@ export function tileArt(k, r = 0, x = 0, y = 0, layer) {
     else if (roll < 0.68) up += flowers(px, py, R);
     else if (roll < 0.78 && !(a.city && a.city.length)) up += wheat(px, py);
   }
+  for (const [fx, fy] of (a.forest || []).map((p) => turn(p, r))) up += tree(fx, fy, 0.9 + R() * 0.4, Math.floor(R() * 3));
+  for (const [fx, fy] of (a.fields || []).map((p) => turn(p, r))) up += wheat(fx, fy) + wheat(fx + 0.1, fy + 0.1);
+  for (const [fx, fy] of (a.sheep || []).map((p) => turn(p, r))) up += sheep(fx, fy);
+  if (a.mill) { const [mx, my] = turn(a.mill, r); up += mill(mx, my); }
+  if (a.garden) { const [gx, gy] = turn(a.garden, r); up += garden(gx, gy); }
+  if (a.pond) { const [px, py] = turn([46, 46], r); up += `<g fill="#fff" stroke="#c9a43e" stroke-width=".5"><ellipse cx="${px}" cy="${py}" rx="2.6" ry="1.6"/><ellipse cx="${px + 12}" cy="${py + 10}" rx="2.6" ry="1.6"/></g>`; }
+  if (a.bloom) { const g2 = rng(x + 7, y + 3, 9); for (let i = 0; i < 6; i++) up += flowers(14 + g2() * 72, 14 + g2() * 72, g2); }
   // cities: towers, houses, shield
   for (const [shape, q] of a.city || []) {
     const t = CITY[shape].tower; if (!t) continue;

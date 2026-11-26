@@ -35,6 +35,9 @@ export const TILES = {
   U: { n: 8, f: [R([1, 7], [50, 50]), F([8, 9, 10, 11, 0], [22, 50]), F([2, 3, 4, 5, 6], [78, 50])] },
   V: { n: 9, f: [R([7, 10], [36, 64]), F([8, 9], [13, 87]), F([11, 0, 1, 2, 3, 4, 5, 6], [68, 32])] },
   W: { n: 4, f: [R([4], [82, 50]), R([7], [50, 84]), R([10], [18, 50]), F([11, 0, 1, 2, 3], [50, 22]), F([5, 6], [84, 84]), F([8, 9], [16, 84])] },
+  // meadows (not in the original game): all grass, to fill the holes between fields
+  PA: { n: 1, f: [F(ALL, [26, 74])] }, PB: { n: 1, f: [F(ALL, [26, 74])] }, PC: { n: 1, f: [F(ALL, [24, 24])] }, PD: { n: 1, f: [F(ALL, [76, 76])] },
+  PE: { n: 1, f: [F(ALL, [26, 74])] }, PF: { n: 1, f: [F(ALL, [26, 26])] }, PG: { n: 1, f: [F(ALL, [50, 50])] }, PH: { n: 1, f: [F(ALL, [50, 50])] },
   X: { n: 1, f: [R([1], [50, 16]), R([4], [84, 50]), R([7], [50, 84]), R([10], [16, 50]), F([2, 3], [84, 16]), F([5, 6], [84, 84]), F([8, 9], [16, 84]), F([11, 0], [16, 16])] },
 };
 // the river: 14 tiles played first, a winding river that crosses the whole map with a lake at each end.
@@ -64,7 +67,7 @@ export function newBag(rand = Math.random) {
   for (const [k, d] of Object.entries(TILES)) for (let i = 0; i < d.n - (k === RIVER_START ? 1 : 0); i++) (d.lake ? lakes : d.river ? river : land).push(k);
   return shuffle(land, rand).concat(lakes, shuffle(river, rand));
 }
-export const BAG_SIZE = 85;
+export const BAG_SIZE = 93;
 export function newGame(names) {
   return {
     phase: "play", n: names.length, turn: 0,
