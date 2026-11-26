@@ -1,60 +1,172 @@
-// Comarca: the drawings. Each tile is drawn in a 100×100 box, unrotated; the board rotates it.
-const FIELD = "#94c46c", FIELD2 = "#86b85f", CITY = "#e2c48f", CITY2 = "#d4b07a", WALL = "#8a5a2b", ROAD = "#f4ebd3", ROADE = "#b9a57a";
+// Comarca: the drawings. The ground of each tile (grass, river, roads, city floors and walls) is drawn in a
+// 100×100 box and turned with the tile; houses, trees, towers and the hermitage are drawn upright on top,
+// so the map reads as one landscape whatever the turns. Fields get a few trees, bushes, flowers or wheat
+// that change with the tile's place, so two copies of a tile never look the same.
 
-const CAP = { fill: "M0,0 H100 C78,30 22,30 0,0 Z", wall: ["M100,0 C78,30 22,30 0,0"] };
-const SHAPES = {
-  full: { fill: "M0,0 H100 V100 H0 Z", wall: [] },
-  band: { fill: "M0,0 C30,28 70,28 100,0 V100 C70,72 30,72 0,100 Z", wall: ["M0,0 C30,28 70,28 100,0", "M0,100 C30,72 70,72 100,100"] },
-  corner: { fill: "M0,0 H100 C60,25 25,60 0,100 Z", wall: ["M100,0 C60,25 25,60 0,100"] },
-  three: { fill: "M0,0 H100 V100 C70,62 30,62 0,100 Z", wall: ["M100,100 C70,62 30,62 0,100"] },
+const C = {
+  grass: "#8dbd5c", grass2: "#7fae50", grass3: "#a3cd6f",
+  road: "#e4d3a6", roadEdge: "#b99d68", track: "#cdb685",
+  floor: "#d9c49b", wall: "#8d8273", wallTop: "#b9ae9c", wallDark: "#6c6356",
+  water: "#4f9fd6", water2: "#7cc0ec", bank: "#6f9a46",
+  roof: ["#c0533a", "#a8452f", "#d0663f", "#b3573c"], plaster: "#f3e7cc", wood: "#7a5a3a",
+  leaf: ["#3f7d36", "#4d8f3c", "#5a9b45"], trunk: "#6b4a2b", wheat: "#e2c25c", wheat2: "#c9a43e", flower: ["#f4d35e", "#ffffff", "#e57aa0", "#b98ee0"],
 };
-const rot = (s) => (s ? ` transform="rotate(${s * 90} 50 50)"` : "");
-// cities: [shape, rotation], shield position, houses
-const CITIES = {
-  C: [["full", 0]], D: [["cap", 0]], E: [["cap", 0]], F: [["band", 0]], G: [["band", 0]], H: [["cap", 1], ["cap", 3]], I: [["cap", 1], ["cap", 2]],
-  J: [["cap", 0]], K: [["cap", 0]], L: [["cap", 0]], M: [["corner", 0]], N: [["corner", 0]], O: [["corner", 0]], P: [["corner", 0]],
-  Q: [["three", 0]], R: [["three", 0]], S: [["three", 0]], T: [["three", 0]],
-};
-// note: a "band" turned once runs left to right
-const SHIELD = { C: [30, 28], F: [24, 50], M: [16, 18], O: [16, 18], Q: [26, 22], S: [26, 22] };
-const HOUSES = {
-  C: [[56, 30], [40, 62], [66, 66], [24, 48]], D: [[38, 6], [58, 6]], E: [[38, 6], [58, 6]], F: [[44, 44], [62, 52], [80, 44]], G: [[34, 46], [56, 52], [74, 44]],
-  H: [[90, 40], [4, 52]], I: [[90, 40], [44, 90]], J: [[38, 6], [58, 6]], K: [[38, 6], [58, 6]], L: [[38, 6], [58, 6]],
-  M: [[40, 10], [12, 40], [30, 26]], N: [[40, 10], [12, 40], [30, 26]], O: [[40, 8], [10, 40]], P: [[40, 8], [10, 40]],
-  Q: [[48, 34], [70, 20], [80, 50]], R: [[38, 30], [60, 36], [80, 50], [16, 52]], S: [[48, 40], [70, 22], [82, 56]], T: [[38, 34], [62, 40], [82, 56], [16, 56]],
-};
-const ROADS = {
-  A: ["M50,100 V68"], D: ["M0,50 H100"], J: ["M100,50 C70,50 50,70 50,100"], K: ["M0,50 C30,50 50,70 50,100"],
-  L: ["M100,50 H50", "M50,100 V50", "M0,50 H50"], O: ["M100,50 C76,54 54,76 50,100"], P: ["M100,50 C76,54 54,76 50,100"],
-  S: ["M50,100 V74"], T: ["M50,100 V74"], U: ["M50,0 V100"], V: ["M0,50 C30,50 50,70 50,100"],
-  W: ["M100,50 H50", "M0,50 H50", "M50,100 V50"], X: ["M50,0 V50", "M100,50 H50", "M50,100 V50", "M0,50 H50"],
-};
-const JUNCTION = { L: [50, 50], W: [50, 50], X: [50, 50] };
 
-const house = ([x, y]) => `<g transform="translate(${x} ${y})"><rect x="0" y="4" width="9" height="7" fill="#f6ead2" stroke="${WALL}" stroke-width=".8"/><path d="M-1,4.5 L4.5,0 L10,4.5 Z" fill="#c4553a"/></g>`;
+/* ---------- shapes (in the unrotated 100×100 box) ---------- */
+const P = (pts) => "M" + pts.map((p) => p.join(",")).join(" L");
+// city walls are bent lines with towers at the corners, so no two towns look like the same curve
+const CAPW = [[100, 0], [92, 17], [76, 30], [60, 27], [44, 35], [26, 29], [10, 18], [0, 0]];
+const BANDN = [[0, 0], [14, 19], [33, 26], [52, 21], [70, 28], [87, 17], [100, 0]];
+const BANDS = [[100, 100], [86, 81], [68, 73], [50, 79], [31, 72], [13, 81], [0, 100]];
+const CORNW = [[100, 0], [86, 18], [66, 28], [54, 46], [32, 54], [22, 72], [0, 100]];
+const THREEW = [[100, 100], [87, 78], [68, 69], [51, 75], [31, 67], [14, 79], [0, 100]];
+const CITY = {
+  cap: { fill: P([[0, 0], ...CAPW.slice().reverse().slice(1), [100, 0]]) + " Z", wall: P(CAPW), tower: [[76, 30], [44, 35]] },
+  full: { fill: "M0,0 H100 V100 H0 Z", wall: null },
+  band: { fill: P([[0, 0], ...BANDN.slice(1), ...BANDS.slice(1)]) + " Z", wall: [P(BANDN), P(BANDS)], tower: [[33, 26], [70, 28], [68, 73], [31, 72]] },
+  corner: { fill: P([[0, 0], ...CORNW]) + " Z", wall: P(CORNW), tower: [[66, 28], [32, 54]] },
+  three: { fill: P([[0, 0], [100, 0], ...THREEW]) + " Z", wall: P(THREEW), tower: [[68, 69], [31, 67]] },
+};
+// per tile: cities [shape, quarter turns], roads, rivers, houses inside the cities, junction, hermitage, free spots in the fields
+const ART = {
+  A: { road: ["M50,100 V70"], abbey: [50, 46], spots: [[16, 18], [84, 18], [16, 84], [84, 84], [20, 52], [80, 56]] },
+  B: { abbey: [50, 50], spots: [[16, 18], [84, 18], [16, 84], [84, 84], [20, 52], [80, 56], [50, 86]] },
+  C: { city: [["full", 0]], shield: [26, 24], houses: [[50, 24], [72, 30], [36, 46], [60, 52], [80, 60], [26, 70], [48, 76], [72, 82], [18, 44]] },
+  D: { city: [["cap", 0]], road: ["M0,50 H100"], houses: [[34, 10], [50, 14], [66, 10]], spots: [[20, 80], [50, 84], [80, 78], [14, 32], [86, 32]] },
+  E: { city: [["cap", 0]], houses: [[34, 10], [50, 14], [66, 10]], spots: [[20, 60], [50, 66], [80, 58], [24, 88], [76, 88], [50, 44]] },
+  F: { city: [["band", 0]], shield: [22, 50], houses: [[40, 44], [58, 52], [76, 44], [50, 60], [30, 56], [70, 62]], spots: [[30, 6], [70, 8], [30, 94], [70, 94]] },
+  G: { city: [["band", 0]], houses: [[30, 44], [50, 52], [70, 44], [40, 60], [62, 62], [84, 54]], spots: [[30, 6], [70, 8], [30, 94], [70, 94]] },
+  H: { city: [["cap", 1], ["cap", 3]], houses: [[90, 40], [86, 58], [10, 42], [14, 60]], spots: [[50, 20], [50, 50], [50, 80], [36, 34], [64, 66]] },
+  I: { city: [["cap", 1], ["cap", 2]], houses: [[90, 40], [86, 58], [42, 90], [60, 86]], spots: [[24, 24], [44, 50], [18, 70], [66, 18]] },
+  J: { city: [["cap", 0]], road: ["M100,50 C80,50 66,58 58,64 C50,72 50,86 50,100"], houses: [[34, 10], [50, 14], [66, 10]], spots: [[22, 58], [22, 86], [88, 88], [40, 44]] },
+  K: { city: [["cap", 0]], road: ["M0,50 C20,50 34,58 42,64 C50,72 50,86 50,100"], houses: [[34, 10], [50, 14], [66, 10]], spots: [[78, 58], [78, 86], [12, 88], [60, 44]] },
+  L: { city: [["cap", 0]], road: ["M100,50 H56", "M50,100 V56", "M0,50 H44"], hamlet: [50, 50], houses: [[34, 10], [50, 14], [66, 10]], spots: [[84, 84], [16, 84], [22, 34], [78, 34]] },
+  M: { city: [["corner", 0]], shield: [16, 18], houses: [[38, 12], [60, 10], [14, 40], [30, 28], [12, 62]], spots: [[66, 66], [84, 46], [46, 86], [84, 84]] },
+  N: { city: [["corner", 0]], houses: [[38, 12], [60, 10], [14, 40], [30, 28], [12, 62]], spots: [[66, 66], [84, 46], [46, 86], [84, 84]] },
+  O: { city: [["corner", 0]], shield: [16, 18], road: ["M100,50 C84,50 72,60 64,70 C56,80 50,88 50,100"], houses: [[38, 12], [60, 8], [14, 40], [28, 26]], spots: [[90, 90], [56, 52], [86, 30]] },
+  P: { city: [["corner", 0]], road: ["M100,50 C84,50 72,60 64,70 C56,80 50,88 50,100"], houses: [[38, 12], [60, 8], [14, 40], [28, 26]], spots: [[90, 90], [56, 52], [86, 30]] },
+  Q: { city: [["three", 0]], shield: [24, 20], houses: [[46, 18], [68, 14], [84, 34], [30, 40], [54, 40], [80, 58], [14, 58]], spots: [[30, 92], [70, 92]] },
+  R: { city: [["three", 0]], houses: [[30, 14], [52, 18], [74, 14], [86, 36], [30, 40], [56, 42], [82, 60], [14, 60]], spots: [[30, 92], [70, 92]] },
+  S: { city: [["three", 0]], shield: [24, 20], road: ["M50,100 V72"], gate: [50, 72], houses: [[46, 18], [68, 14], [84, 34], [30, 40], [62, 40], [82, 58], [14, 58]], spots: [[24, 92], [78, 92]] },
+  T: { city: [["three", 0]], road: ["M50,100 V72"], gate: [50, 72], houses: [[30, 14], [52, 18], [74, 14], [86, 36], [30, 40], [62, 42], [82, 60], [14, 60]], spots: [[24, 92], [78, 92]] },
+  U: { road: ["M50,0 V100"], spots: [[20, 20], [22, 62], [78, 30], [80, 76], [18, 88]] },
+  V: { road: ["M0,50 C20,50 34,58 42,64 C50,72 50,86 50,100"], spots: [[14, 86], [66, 30], [84, 74], [30, 18], [82, 14]] },
+  W: { road: ["M100,50 H56", "M0,50 H44", "M50,100 V56"], hamlet: [50, 50], spots: [[30, 18], [70, 20], [86, 86], [14, 86]] },
+  X: { road: ["M50,0 V44", "M100,50 H56", "M50,100 V56", "M0,50 H44"], well: [50, 50], spots: [[18, 18], [84, 84], [16, 84], [84, 16]] },
+  // the river
+  RL: { river: ["M50,0 C50,12 48,22 50,34"], lake: true, spots: [[12, 14], [88, 14], [8, 94], [92, 94]] },
+  RA: { river: ["M50,0 C50,18 34,30 38,46 C42,62 62,66 60,80 C58,90 50,90 50,100"], spots: [[18, 20], [20, 70], [82, 34], [80, 84]] },
+  RC: { river: ["M0,50 C20,50 34,58 42,64 C50,72 50,86 50,100"], spots: [[14, 86], [66, 30], [84, 74], [30, 18]] },
+  RB: { river: ["M50,0 V100"], road: ["M0,50 H100"], bridge: true, spots: [[18, 18], [84, 18], [18, 84], [84, 84]] },
+  RT: { river: ["M50,0 V100"], city: [["cap", 1], ["cap", 3]], houses: [[90, 40], [86, 58], [10, 42], [14, 60]], spots: [[32, 12], [68, 88]] },
+  RK: { river: ["M0,50 C20,50 34,58 42,64 C50,72 50,86 50,100"], city: [["corner", 1]], houses: [[62, 12], [86, 38], [72, 26], [88, 62]], spots: [[14, 86], [30, 24], [40, 50]] },
+  RM: { river: ["M50,0 C50,20 38,34 42,50 C46,66 50,80 50,100"], road: ["M100,62 H80"], abbey: [76, 46], spots: [[18, 20], [20, 70], [84, 88]] },
+  RN: { river: ["M50,0 C50,16 56,30 64,38 C72,46 84,50 100,50"], road: ["M0,50 C20,50 34,58 42,64 C50,72 50,86 50,100"], spots: [[86, 14], [14, 86], [80, 84], [22, 22]] },
+  RV: { river: ["M50,0 V100"], city: [["cap", 3]], houses: [[10, 42], [14, 60]], spots: [[30, 14], [80, 30], [76, 76], [30, 86]] },
+};
 
-export function tileArt(k) {
-  let s = `<rect width="100" height="100" fill="${FIELD}"/>`;
-  // a little texture in the grass
-  s += `<path d="M12,70 l2,-4 l2,4 M78,24 l2,-4 l2,4 M30,88 l2,-4 l2,4 M86,80 l2,-4 l2,4 M16,30 l2,-4 l2,4" stroke="${FIELD2}" stroke-width="1.3" fill="none"/>`;
-  for (const r of ROADS[k] || []) s += `<path d="${r}" stroke="${ROADE}" stroke-width="12" fill="none" stroke-linecap="butt"/>`;
-  for (const r of ROADS[k] || []) s += `<path d="${r}" stroke="${ROAD}" stroke-width="8" fill="none" stroke-linecap="butt"/>`;
-  if (JUNCTION[k]) { const [x, y] = JUNCTION[k]; s += `<g transform="translate(${x - 7} ${y - 8})"><rect y="5" width="14" height="10" fill="#f6ead2" stroke="${WALL}" stroke-width="1"/><path d="M-1.5,5.5 L7,-1 L15.5,5.5 Z" fill="#c4553a"/></g>`; }
-  for (const [shape, r] of CITIES[k] || []) {
-    const sh = shape === "cap" ? CAP : SHAPES[shape];
-    s += `<g${rot(r)}><path d="${sh.fill}" fill="${CITY}"/>${sh.wall.map((w) => `<path d="${w}" stroke="${WALL}" stroke-width="3.5" fill="none" stroke-dasharray="${shape === "full" ? "0" : "6 1.5"}"/>`).join("")}</g>`;
-  }
-  if (CITIES[k]) s += `<g opacity=".95">${(HOUSES[k] || []).map(house).join("")}</g>`;
-  if (SHIELD[k]) { const [x, y] = SHIELD[k]; s += `<g transform="translate(${x} ${y})"><path d="M-7,-8 H7 V0 C7,6 0,9 0,9 C0,9 -7,6 -7,0 Z" fill="#2f5fb3" stroke="#fff" stroke-width="1.6"/><path d="M0,-5 V5 M-4,-1 H4" stroke="#ffd75e" stroke-width="1.8"/></g>`; }
-  if (k === "A" || k === "B") {
-    // the hermitage
-    s += `<g transform="translate(50 ${k === "A" ? 44 : 48})"><rect x="-13" y="-6" width="26" height="20" rx="1" fill="#f3e7cc" stroke="#7a5a3a" stroke-width="1.4"/><path d="M-16,-5 L0,-18 L16,-5 Z" fill="#b5462f" stroke="#7a3322" stroke-width="1"/>
-      <rect x="-3.5" y="5" width="7" height="9" rx="3.5" fill="#7a5a3a"/><path d="M0,-28 V-18 M-4,-24 H4" stroke="#7a5a3a" stroke-width="2"/></g>`;
-  }
+/* ---------- a little deterministic noise ---------- */
+function rng(x, y, salt) {
+  let h = (x * 374761393 + y * 668265263 + salt * 2654435761) | 0;
+  return () => { h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return ((h >>> 0) % 10000) / 10000; };
+}
+const rot = (r) => (r ? ` transform="rotate(${r * 90} 50 50)"` : "");
+const turn = ([x, y], r) => { for (let i = 0; i < r; i++) [x, y] = [100 - y, x]; return [x, y]; };
+
+/* ---------- upright things ---------- */
+function house(x, y, s, roof) {
+  const w = 9 * s, h = 6 * s;
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><rect x="${(-w / 2).toFixed(1)}" y="${(-h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${C.plaster}" stroke="${C.wood}" stroke-width=".6"/>
+    <path d="M${(-w / 2 - 1.2).toFixed(1)},${(-h / 2 + .4).toFixed(1)} L0,${(-h / 2 - 5 * s).toFixed(1)} L${(w / 2 + 1.2).toFixed(1)},${(-h / 2 + .4).toFixed(1)} Z" fill="${roof}" stroke="#7a3322" stroke-width=".5"/>
+    <rect x="${(-1.2 * s).toFixed(1)}" y="${(h / 2 - 3.2 * s).toFixed(1)}" width="${(2.4 * s).toFixed(1)}" height="${(3.2 * s).toFixed(1)}" fill="${C.wood}"/></g>`;
+}
+function tree(x, y, s, k) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(2)})"><ellipse cx="1.5" cy="6.5" rx="7" ry="2.4" fill="rgba(0,0,0,.18)"/>
+    <rect x="-1" y="1" width="2" height="5" fill="${C.trunk}"/><circle cx="-3" cy="0" r="4.6" fill="${C.leaf[k % 3]}"/><circle cx="3" cy="-1" r="4.8" fill="${C.leaf[(k + 1) % 3]}"/><circle cx="0" cy="-4.5" r="4.8" fill="${C.leaf[(k + 2) % 3]}"/>
+    <circle cx="-1.5" cy="-6" r="1.6" fill="rgba(255,255,255,.18)"/></g>`;
+}
+function bush(x, y) { return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle cx="-2.5" cy="0" r="3" fill="${C.leaf[1]}"/><circle cx="2" cy=".5" r="3.2" fill="${C.leaf[2]}"/><circle cx="0" cy="-2" r="2.8" fill="${C.leaf[0]}"/></g>`; }
+function flowers(x, y, g) {
+  let s = ""; for (let i = 0; i < 7; i++) s += `<circle cx="${(x + (g() - .5) * 16).toFixed(1)}" cy="${(y + (g() - .5) * 12).toFixed(1)}" r="1.3" fill="${C.flower[Math.floor(g() * 4)]}"/>`;
   return s;
 }
+function wheat(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><rect x="-9" y="-6" width="18" height="12" rx="2" fill="${C.wheat}" stroke="${C.wheat2}" stroke-width=".8"/>
+    <path d="M-6,-5 V5 M-2,-5 V5 M2,-5 V5 M6,-5 V5" stroke="${C.wheat2}" stroke-width=".8"/></g>`;
+}
+function abbey(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><rect x="-17" y="-12" width="34" height="30" rx="5" fill="${C.grass3}"/><path d="M-12,14 h24" stroke="${C.flower[0]}" stroke-width="2" stroke-dasharray="1 3"/>
+    <rect x="-11" y="-4" width="22" height="15" fill="${C.plaster}" stroke="${C.wood}" stroke-width="1"/><path d="M-13,-3 L0,-14 L13,-3 Z" fill="${C.roof[1]}" stroke="#7a3322" stroke-width=".8"/>
+    <rect x="5" y="-17" width="6" height="12" fill="${C.plaster}" stroke="${C.wood}" stroke-width=".8"/><path d="M4,-17 L8,-22 L12,-17 Z" fill="${C.roof[0]}"/><path d="M8,-28 V-22 M5.5,-25.5 H10.5" stroke="${C.wood}" stroke-width="1.2"/>
+    <rect x="-2.5" y="4" width="5" height="7" rx="2.5" fill="${C.wood}"/></g>`;
+}
+// the hills the river is born in
+function hills(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><ellipse cx="0" cy="12" rx="26" ry="5" fill="rgba(0,0,0,.15)"/>
+    <path d="M-26,12 L-10,-14 L2,4 L10,-6 L26,12 Z" fill="#8f8a7e" stroke="#6c665b" stroke-width="1"/>
+    <path d="M-10,-14 L-15,-6 L-11,-8 L-7,-5 Z M10,-6 L6,0 L10,-2 L13,0 Z" fill="#fff"/>
+    <path d="M-20,12 L-6,-4 L4,12 Z" fill="#a19b8e"/><path d="M-2,8 q2,3 0,6" stroke="${C.water2}" stroke-width="2.5" fill="none"/></g>`;
+}
+function tower(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><rect x="-4.5" y="-6" width="9" height="11" fill="${C.wallTop}" stroke="${C.wallDark}" stroke-width=".8"/>
+    <path d="M-5,-6 h2.5 v-2.5 h2.5 v2.5 h2.5 v-2.5 h2.5 v2.5" fill="${C.wallTop}" stroke="${C.wallDark}" stroke-width=".8"/></g>`;
+}
+function shield(x, y) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><path d="M-6,-7 H6 V0 C6,5 0,8 0,8 C0,8 -6,5 -6,0 Z" fill="#2f5fb3" stroke="#fff" stroke-width="1.4"/><path d="M0,-4.5 V4.5 M-3.5,-1 H3.5" stroke="#ffd75e" stroke-width="1.6"/></g>`;
+}
+
+/* ---------- a whole tile, drawn in its own 100×100 box with turn r (x, y only vary the decoration) ---------- */
+// layer: "grass" (draw it for every tile first), "ground" (the rest of the turned ground), "top" (upright things), or all
+export function tileArt(k, r = 0, x = 0, y = 0, layer) {
+  const a = ART[k] || {};
+  if (layer === "grass") return `<rect x="-.8" y="-.8" width="101.6" height="101.6" fill="url(#grass)"/>`;
+  let g = layer ? "" : `<rect x="-.8" y="-.8" width="101.6" height="101.6" fill="url(#grass)"/>`;
+  if (a.lake) g += `<path d="M6,60 C2,40 18,28 32,32 C38,22 62,20 68,30 C82,24 98,40 94,58 C100,74 88,90 72,90 C62,98 40,98 30,92 C14,96 2,84 6,74 C2,70 4,64 6,60 Z" fill="${C.bank}"/>
+    <path d="M11,60 C8,44 20,34 33,38 C40,29 60,27 66,36 C79,31 92,44 89,59 C94,72 84,85 71,85 C61,92 41,92 31,87 C17,90 7,81 10,73 C7,69 8,64 11,60 Z" fill="${C.water}"/>
+    <path d="M22,56 q7,-3 14,0 M56,52 q7,-3 14,0 M36,70 q6,-2 12,0 M64,72 q5,-2 10,0 M24,80 q4,-2 8,0" stroke="${C.water2}" stroke-width="1.6" fill="none"/>
+    <path d="M14,52 l-2,-6 M17,51 l0,-7 M20,52 l2,-6 M84,78 l-2,-6 M87,77 l0,-7 M90,78 l2,-6" stroke="#4d7a32" stroke-width="1.4"/>`;
+  for (const p of a.river || []) g += `<path d="${p}" stroke="${C.bank}" stroke-width="30" fill="none"/><path d="${p}" stroke="${C.water}" stroke-width="23" fill="none"/><path d="${p}" stroke="${C.water2}" stroke-width="1.4" stroke-dasharray="4 11" fill="none"/>`;
+  if (a.spring) g += `<ellipse cx="48" cy="58" rx="10" ry="6" fill="${C.water}" stroke="${C.bank}" stroke-width="2.5"/>`;
+  for (const p of a.road || []) g += `<path d="${p}" stroke="${C.roadEdge}" stroke-width="12" fill="none"/><path d="${p}" stroke="${C.road}" stroke-width="9" fill="none"/><path d="${p}" stroke="${C.track}" stroke-width="5" stroke-dasharray="3 4" fill="none" opacity=".7"/>`;
+  if (a.bridge) g += `<rect x="32" y="40" width="36" height="20" fill="${C.road}" stroke="${C.wallDark}" stroke-width="1.2"/><path d="M32,40 H68 M32,60 H68" stroke="${C.wall}" stroke-width="3"/>`;
+  for (const [shape, q] of a.city || []) {
+    const sh = CITY[shape];
+    g += `<g${rot(q)}><path d="${sh.fill}" fill="${C.floor}" stroke="${C.floor}" stroke-width="1.2"/>`;
+    for (const w of [].concat(sh.wall || [])) g += `<path d="${w}" stroke="${C.wallDark}" stroke-width="7" fill="none" stroke-linejoin="round"/><path d="${w}" stroke="${C.wall}" stroke-width="5" fill="none"/><path d="${w}" stroke="${C.wallTop}" stroke-width="2" stroke-dasharray="3 2.5" fill="none"/>`;
+    g += `</g>`;
+  }
+  if (a.hamlet || a.well) { const [hx, hy] = a.hamlet || a.well; g += `<circle cx="${hx}" cy="${hy}" r="9" fill="${C.road}" stroke="${C.roadEdge}" stroke-width="1.5"/>`; }
+  if (layer === "ground") return `<g${rot(r)}>${g}</g>`;
+  let up = "";
+  const R = rng(x, y, k.charCodeAt(0) * 7 + (k.charCodeAt(1) || 0));
+  // fields: trees, bushes, flowers, wheat
+  for (const s of a.spots || []) {
+    const [px, py] = turn(s, r), roll = R();
+    if (roll < 0.34) { up += tree(px, py, 0.8 + R() * 0.45, Math.floor(R() * 3)); if (R() < 0.4) up += tree(px + 6, py + 4, 0.7, 1); }
+    else if (roll < 0.52) up += bush(px, py);
+    else if (roll < 0.68) up += flowers(px, py, R);
+    else if (roll < 0.78 && !(a.city && a.city.length)) up += wheat(px, py);
+  }
+  // cities: towers, houses, shield
+  for (const [shape, q] of a.city || []) {
+    const t = CITY[shape].tower; if (!t) continue;
+    for (const p of t) { const [tx, ty] = turn(turn(p, q), r); up += tower(tx, ty); }
+  }
+  (a.houses || []).forEach((h, i) => { const [hx, hy] = turn(h, r); up += house(hx, hy, 0.85 + R() * 0.3, C.roof[i % 4]); });
+  if (a.gate) { const [gx, gy] = turn(a.gate, r); up += tower(gx, gy); }
+  if (a.shield) { const [sx, sy] = turn(a.shield, r); up += shield(sx, sy); }
+  if (a.abbey) { const [bx, by] = turn(a.abbey, r); up += abbey(bx, by); }
+  if (a.spring) { const [mx, my] = turn([48, 40], r); up += hills(mx, my); }
+  if (a.hamlet) { const [hx, hy] = turn(a.hamlet, r); up += house(hx, hy - 1, 1.1, C.roof[2]); }
+  if (a.well) { const [wx, wy] = turn(a.well, r); up += `<g transform="translate(${wx} ${wy})"><circle r="4.5" fill="${C.wallTop}" stroke="${C.wallDark}" stroke-width="1"/><circle r="2.4" fill="${C.water}"/></g>`; }
+  return layer === "top" ? up : `<g${rot(r)}>${g}</g>${up}`;
+}
+// shared definitions: the grass texture (put once in each <svg>'s <defs>)
+export const DEFS = `<pattern id="grass" width="50" height="50" patternUnits="userSpaceOnUse"><rect width="50" height="50" fill="${C.grass}"/>
+  <path d="M6,9 l1.5,-3 l1.5,3 M28,6 l1.5,-3 l1.5,3 M40,30 l1.5,-3 l1.5,3 M14,36 l1.5,-3 l1.5,3 M33,46 l1.5,-3 l1.5,3 M2,24 l1.5,-3 l1.5,3" stroke="${C.grass2}" stroke-width="1" fill="none"/>
+  <circle cx="20" cy="18" r="5" fill="${C.grass3}" opacity=".35"/><circle cx="44" cy="10" r="4" fill="${C.grass2}" opacity=".25"/><circle cx="8" cy="44" r="6" fill="${C.grass3}" opacity=".25"/></pattern>`;
 // a follower, centred at (0,0), about 16 units tall
 export function meepleArt(color, ghost) {
-  return `<g${ghost ? ' opacity=".55"' : ""}><path d="M0,-9 a3.6,3.6 0 1 1 0.01,0 Z M-3,-4 C-8,-4 -10,0 -9,2 L-4,1.5 L-6,8 L-1.5,8 L0,4 L1.5,8 L6,8 L4,1.5 L9,2 C10,0 8,-4 3,-4 Z"
+  return `<g${ghost ? ' opacity=".55"' : ""}><ellipse cx="0" cy="8.5" rx="7" ry="2" fill="rgba(0,0,0,.25)"/><path d="M0,-9 a3.6,3.6 0 1 1 0.01,0 Z M-3,-4 C-8,-4 -10,0 -9,2 L-4,1.5 L-6,8 L-1.5,8 L0,4 L1.5,8 L6,8 L4,1.5 L9,2 C10,0 8,-4 3,-4 Z"
     fill="${color}" stroke="#1d1f23" stroke-width="1.3" stroke-linejoin="round"/></g>`;
 }

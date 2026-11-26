@@ -120,9 +120,9 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 <div class="actions" id="actions"></div>
 <div id="toast"></div>
 <script type="module">
-import * as G from "./rules.js?v=1795681695";
-import * as AI from "./ai.js?v=1795681695";
-import { tileArt, meepleArt } from "./art.js?v=1795681695";
+import * as G from "./rules.js?v=1795684384";
+import * as AI from "./ai.js?v=1795684384";
+import { tileArt, meepleArt, DEFS } from "./art.js?v=1795684384";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const $ = (s) => document.querySelector(s);
@@ -384,12 +384,13 @@ function viewBox() {
   return [(view.cx - w / 2 / view.z) * T, (view.cy - h / 2 / view.z) * T, w / view.z * T, h / view.z * T].map((v) => v.toFixed(1)).join(" ");
 }
 const rotPoint = ([x, y], r) => { for (let i = 0; i < r; i++) [x, y] = [100 - y, x]; return [x, y]; };
-function tileSVG(t, extra = "") {
-  return `<g transform="translate(${t.x * T} ${t.y * T})${extra}"><g transform="rotate(${t.r * 90} 50 50)">${tileArt(t.k)}</g><rect width="100" height="100" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1"/></g>`;
+function tileSVG(t, layer) {
+  return `<g transform="translate(${t.x * T} ${t.y * T})">${tileArt(t.k, t.r, t.x, t.y, layer)}</g>`;
 }
 function boardSVG() {
-  let s = "";
-  for (const t of S.tiles) s += tileSVG(t);
+  let s = `<defs>${DEFS}</defs>`;
+  // all the grass first, then the turned ground, then houses and trees, so the map reads as one landscape
+  for (const layer of ["grass", "ground", "top"]) for (const t of S.tiles) s += tileSVG(t, layer);
   // where your tile fits
   if (myTurn() && S.current && !(pick && pick.placed)) {
     const spots = new Map();
@@ -434,10 +435,10 @@ function render() {
   if (S.phase === "over") status = "Terminó la partida";
   else if (myTurn()) {
     const can = S.current && G.placements(S.tiles, S.current).length;
-    status = !S.current ? "Calculando el final…" : !can ? "Esta loseta no cabe en ningún lado" : pick && pick.placed ? (pick.spots.length ? "¿Dejas un aldeano? Toca un círculo" : "") : pick ? "Gira si quieres y confirma" : "Toca un lugar marcado para poner tu loseta";
+    status = !S.current ? "Calculando el final…" : !can ? "Esta loseta no cabe en ningún lado" : pick && pick.placed ? (pick.spots.length ? "¿Dejas un aldeano? Toca un círculo" : "") : pick ? "Gira si quieres y confirma" : G.TILES[S.current].river ? "Toca un lugar marcado para seguir el río" : "Toca un lugar marcado para poner tu loseta";
     if (mode === "local" && !cpu) status = esc(seatName(S.turn)) + ": " + status.charAt(0).toLowerCase() + status.slice(1);
   } else status = isCpu(S.turn) ? esc(seatName(S.turn)) + " está jugando…" : "Turno de " + esc(seatName(S.turn));
-  if (S.current && S.phase === "play") hand = `<div class="hand"><svg viewBox="0 0 100 100"><g transform="rotate(${(pick ? pick.r : 0) * 90} 50 50)">${tileArt(S.current)}</g></svg>
+  if (S.current && S.phase === "play") hand = `<div class="hand"><svg viewBox="0 0 100 100"><defs>${DEFS}</defs>${tileArt(S.current, pick ? pick.r : 0)}</svg>
       <div class="txt">${myTurn() ? "Tu loseta" : "Loseta de " + esc(seatName(S.turn))}<small>Quedan ${S.remaining} en la bolsa</small></div></div>`;
   if (first || !$("#svg")) {
     $("#app").innerHTML = `<div id="top"></div>
