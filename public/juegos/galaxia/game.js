@@ -64,6 +64,35 @@ export const PLANETS = [
 ];
 export const P = Object.fromEntries(PLANETS.map((p) => [p.id, p]));
 
+/* ---------- the terrain: 3×3 sectors; you land in the middle one ---------- */
+export const SW = 360, SH = 470, CENTER = 4;
+export const sectorOf = (v) => Math.floor(v.y / SH) * 3 + Math.floor(v.x / SW);
+export const sectorName = (i) => "ABC"[i % 3] + (Math.floor(i / 3) + 1);
+// building lots, around the headquarters, in the middle sector
+export const SLOTXY = [[180, 300], [72, 262], [288, 262], [58, 362], [302, 362], [128, 418], [232, 418], [180, 212]].map(([x, y]) => [x + SW, y + SH]);
+function seeded(str) { let h = 7; for (const c of str) h = (h * 31 + c.charCodeAt(0)) >>> 0; let s = h || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+const VCACHE = {};
+// the planet's veins: the known ones in the middle, and richer ones out in the fog (the corners can hide rare ones)
+export function veinsOf(pid) {
+  if (VCACHE[pid]) return VCACHE[pid];
+  const p = P[pid], R = seeded("veins-" + pid), out = p.veins.map((v) => ({ ...v, x: v.x + SW, y: v.y + SH }));
+  const pool = p.veins.filter((v) => !v.deep), rare = p.veins.find((v) => v.deep);
+  for (let sec = 0; sec < 9; sec++) {
+    if (sec === CENTER) continue;
+    const sx = (sec % 3) * SW, sy = Math.floor(sec / 3) * SH, corner = sec % 2 === 0, placed = [];
+    const n = 1 + (R() < 0.6 ? 1 : 0) + (corner && R() < 0.4 ? 1 : 0);
+    const spot = () => { for (let k = 0; k < 30; k++) { const x = sx + 60 + R() * (SW - 120), y = sy + 70 + R() * (SH - 150); if (placed.every(([a, b]) => Math.hypot(a - x, b - y) > 110)) { placed.push([x, y]); return [x, y]; } } return [sx + SW / 2, sy + SH / 2]; };
+    for (let i = 0; i < n; i++) {
+      const base = pool[Math.floor(R() * pool.length)], [x, y] = spot();
+      out.push({ ...base, id: pid[0] + sec + "-" + i, x: Math.round(x), y: Math.round(y), purity: Math.round((0.6 + R() * 0.35) * 100) / 100, size: base.crop ? 99999 : Math.round(2000 + R() * 2500), deep: false });
+    }
+    if (corner && rare && R() < 0.45) { const [x, y] = spot(); out.push({ ...rare, id: pid[0] + sec + "-r", x: Math.round(x), y: Math.round(y), purity: Math.round((0.55 + R() * 0.35) * 100) / 100, size: Math.round(rare.size * 1.5) }); }
+  }
+  return (VCACHE[pid] = out);
+}
+export const veinById = (pid, id) => veinsOf(pid).find((v) => v.id === id);
+export const leftOf = (b, v) => (b.veins[v.id] == null ? v.size : b.veins[v.id]);
+
 // buildings on the base, with their cost and seconds to build
 export const BUILD = {
   cuartel: { name: "Cuartel", cost: {}, time: 0, note: "La nave convertida en base. Guarda 200." },
@@ -84,6 +113,7 @@ export const MACH = {
   robot: { name: "Robot minero", cost: { silicio: 30, titanio: 20, cobre: 20 }, time: 45, rate: 25, crew: 0, ene: 2, note: "Sin tripulación; no le afecta la radiación" },
 };
 export const ITEMS = {
+  dron: { name: "Dron explorador", cost: { hierro: 40, cobre: 25 }, time: 30, note: "Revela un sector en niebla y vuelve" },
   modulo: { name: "Módulo de base", cost: { hierro: 150, cobre: 60 }, time: 60, note: "Para fundar una base en otro planeta" },
   pliegue2: { name: "Motor de pliegue II", cost: { titanio: 40, iridio: 20, silicio: 30 }, time: 90, note: "Saltos sin límite de distancia", needs: "lab" },
 };
@@ -95,7 +125,7 @@ export function newGame(now = Date.now()) {
     v: 1, t: now, created: now,
     inv: { hierro: 60, cobre: 30, silicio: 0, titanio: 0, iridio: 0, plasma: 0, alimentos: 120, combustible: 35 },
     got: {},                        // everything ever collected, for the missions
-    crew: 24, machines: { excavadora: 2, cosechadora: 1, pesada: 0, robot: 0 }, items: { modulo: 2, pliegue2: 0 },
+    crew: 24, machines: { excavadora: 2, cosechadora: 1, pesada: 0, robot: 0 }, items: { modulo: 2, pliegue2: 0, dron: 1 },
     ship: { at: "kalon", jump: null },
     bases: {},                      // planet id -> { buildings: [{type, slot, done}], jobs: [{id, type, vein}], veins: {id: left} }
     craft: null, nextId: 1, grow: 0, log: [],
@@ -134,19 +164,28 @@ export function crewFactor(s, pid) {
 export const shiftHours = (s, pid) => Math.round(8 * crewFactor(s, pid) * 2) / 2;
 // what a job makes per minute right now
 export function jobRate(s, pid, j) {
-  const b = s.bases[pid], v = P[pid].veins.find((x) => x.id === j.vein), m = MACH[j.type];
-  if (!v || b.veins[v.id] <= 0) return 0;
+  const b = s.bases[pid], v = veinById(pid, j.vein), m = MACH[j.type];
+  if (!v || leftOf(b, v) <= 0) return 0;
   if (MATS[v.mat] ? stored(s) >= capacity(s) : s.inv[v.mat] >= supplyCap(s)) return 0;
   const people = m.crew ? crewFactor(s, pid) : 1;
-  return m.rate * v.purity * people * energy(s, pid).f;
+  return m.rate * v.purity * people * energy(s, pid).f * haul(b, v);
 }
 export function income(s) {
   const o = {}; for (const k of [...Object.keys(MATS), ...Object.keys(SUPPLY)]) o[k] = 0;
-  for (const [pid, b] of Object.entries(s.bases)) for (const j of b.jobs) { const v = P[pid].veins.find((x) => x.id === j.vein); o[v.mat] += jobRate(s, pid, j); }
+  for (const [pid, b] of Object.entries(s.bases)) for (const j of b.jobs) { const v = veinById(pid, j.vein); o[v.mat] += jobRate(s, pid, j); }
   o.alimentos -= s.crew * 0.05;
   return o;
 }
-export const visibleVeins = (s, pid) => P[pid].veins.filter((v) => !v.deep || anyBuilt(s, "laboratorio"));
+export const seen = (s, pid, sec) => { const b = s.bases[pid]; return sec === CENTER || !!(b && b.seen && b.seen[sec]); };
+export const visibleVeins = (s, pid) => veinsOf(pid).filter((v) => (!v.deep || anyBuilt(s, "laboratorio")) && seen(s, pid, sectorOf(v)));
+// the store a vein's material goes to: the nearest finished store, or the headquarters
+export function depotFor(b, v) {
+  let best = SLOTXY[0], bd = Infinity;
+  for (const x of b.buildings) if ((x.type === "bodega" && x.done >= 1) || x.type === "cuartel") { const [px, py] = SLOTXY[x.slot], d = Math.hypot(px - v.x, py - v.y); if (d < bd) { bd = d; best = [px, py]; } }
+  return best;
+}
+// far veins give less: the machines spend their time on the road (transport comes later)
+export function haul(b, v) { const [x, y] = depotFor(b, v), d = Math.hypot(x - v.x, y - v.y); return d < 280 ? 1 : 280 / d; }
 export function canWork(type, v) {
   if (v.crop) return type === "cosechadora";
   if (type === "cosechadora") return false;
@@ -162,7 +201,7 @@ export function establish(s) {
   if (s.bases[pid]) return fail("Ya tienes una base aquí");
   if (s.items.modulo < 1) return fail("Necesitas un módulo de base (se fabrica)");
   s.items.modulo--;
-  s.bases[pid] = { buildings: [{ type: "cuartel", slot: 0, done: 1 }], jobs: [], veins: Object.fromEntries(P[pid].veins.map((v) => [v.id, v.size])) };
+  s.bases[pid] = { buildings: [{ type: "cuartel", slot: 0, done: 1 }], jobs: [], veins: {}, seen: { [CENTER]: true }, explore: [] };
   return { ok: true };
 }
 // take a base down: the module goes back into the ship (buildings are lost, machines come back)
@@ -174,6 +213,26 @@ export function dismantle(s) {
 }
 // an old save could be stuck: no module, no factory to make one
 export function rescue(s) { if (s.items.modulo < 1 && !anyBuilt(s, "fabrica") && !(s.craft && s.craft.key === "modulo")) { s.items.modulo = 1; return true; } return false; }
+// send an explorer drone to a sector next to one you already know
+export const dronesFree = (s) => s.items.dron - Object.values(s.bases).reduce((a, b) => a + (b.explore ? b.explore.length : 0), 0);
+export function exploreTime(s, pid, sec) { const d = Math.abs((sec % 3) - 1) + Math.abs(Math.floor(sec / 3) - 1); return Math.round((40 + 30 * d) * (1 + P[pid].storm * 0.5)); }
+export function explore(s, pid, sec) {
+  const b = s.bases[pid];
+  if (!b) return fail("Necesitas una base aquí");
+  if (seen(s, pid, sec)) return fail("Ese sector ya está explorado");
+  if (b.explore.some((x) => x.sector === sec)) return fail("Un dron ya va en camino");
+  const near = [sec - 3, sec + 3, sec % 3 ? sec - 1 : -1, sec % 3 < 2 ? sec + 1 : -1].some((n) => n >= 0 && n < 9 && seen(s, pid, n));
+  if (!near) return fail("Primero explora un sector vecino");
+  if (dronesFree(s) < 1) return fail("No tienes drones libres (se fabrican)");
+  const t = exploreTime(s, pid, sec); b.explore.push({ sector: sec, left: t, total: t });
+  return { ok: true };
+}
+// saves from before the big terrain
+export function migrate(s) {
+  if (s.items.dron == null) s.items.dron = 1;
+  for (const b of Object.values(s.bases)) { if (!b.seen) b.seen = { [CENTER]: true }; if (!b.explore) b.explore = []; }
+  for (const [pid, b] of Object.entries(s.bases)) for (const id of Object.keys(b.veins)) if (!veinById(pid, id)) delete b.veins[id];
+}
 export const SLOTS = 8;
 export function build(s, pid, type, slot) {
   const b = s.bases[pid], d = BUILD[type];
@@ -186,8 +245,9 @@ export function build(s, pid, type, slot) {
   return { ok: true };
 }
 export function assign(s, pid, type, vein) {
-  const b = s.bases[pid], v = P[pid].veins.find((x) => x.id === vein);
+  const b = s.bases[pid], v = veinById(pid, vein);
   if (!b || !v) return fail("No se puede");
+  if (!seen(s, pid, sectorOf(v))) return fail("Ese sector aún no está explorado");
   if (v.deep && !anyBuilt(s, "laboratorio")) return fail("Aún no la ves");
   if (!canWork(type, v)) return fail(v.crop ? "Aquí se cosecha: usa una cosechadora" : v.deep ? "Veta profunda: necesita excavadora pesada" : "Esa máquina no sirve aquí");
   if (machinesFree(s, type) < 1) return fail("No tienes " + MACH[type].name.toLowerCase() + " libre");
@@ -224,6 +284,7 @@ export const MISSIONS = [
   { id: "m2", t: "Instala paneles solares", h: "En la base, toca un terreno libre", ok: (s) => anyBuilt(s, "paneles") },
   { id: "m3", t: "Pon una excavadora a trabajar", h: "Toca una veta de hierro y asigna una excavadora", ok: (s) => Object.values(s.bases).some((b) => b.jobs.some((j) => j.type === "excavadora")) },
   { id: "m4", t: "Junta 150 de hierro", h: "Más excavadoras rinden más", ok: (s) => (s.got.hierro || 0) >= 150, n: (s) => [Math.floor(s.got.hierro || 0), 150] },
+  { id: "mx1", t: "Explora un sector con el dron", h: "En la base, toca un sector en niebla o usa el minimapa", ok: (s) => Object.values(s.bases).some((b) => b.seen && Object.keys(b.seen).length > 1) },
   { id: "m5", t: "Construye una fábrica", h: "Abre la fabricación", ok: (s) => anyBuilt(s, "fabrica") },
   { id: "m6", t: "Funda una base en Velia y cosecha alimentos", h: "Fabrica un módulo, salta a Velia, establece base y asigna la cosechadora", ok: (s) => !!s.bases.velia && s.bases.velia.jobs.some((j) => j.type === "cosechadora") },
   { id: "m7", t: "Reúne hierro, cobre, silicio y titanio", h: "El titanio está en las lunas de Brumar", ok: (s) => distinct(s) >= 4, n: (s) => [distinct(s), 4] },
@@ -249,16 +310,22 @@ function step(s, dt) {
   // extraction, against what the veins have left and what the stores can hold
   for (const [pid, b] of Object.entries(s.bases)) {
     for (const j of b.jobs) {
-      const v = P[pid].veins.find((x) => x.id === j.vein);
-      let got = Math.min(jobRate(s, pid, j) * min, b.veins[v.id]);
+      const v = veinById(pid, j.vein);
+      let got = Math.min(jobRate(s, pid, j) * min, leftOf(b, v));
       if (MATS[v.mat]) got = Math.min(got, Math.max(0, capacity(s) - stored(s)));
       else got = Math.min(got, Math.max(0, supplyCap(s) - s.inv[v.mat]));
       if (got <= 0) continue;
-      if (!v.crop) b.veins[v.id] -= got;
+      if (!v.crop) b.veins[v.id] = leftOf(b, v) - got;
       s.inv[v.mat] += got; s.got[v.mat] = (s.got[v.mat] || 0) + got;
     }
     // veins slowly come back (deep rock moves up), so the game never runs dry
-    for (const v of P[pid].veins) b.veins[v.id] = Math.min(v.size, b.veins[v.id] + v.size * 0.002 * min);
+    for (const id of Object.keys(b.veins)) { const v = veinById(pid, id); if (v) b.veins[id] = Math.min(v.size, b.veins[id] + v.size * 0.002 * min); }
+    // explorer drones flying over the fog
+    if (b.explore && b.explore.length) {
+      for (const x of b.explore) x.left -= dt;
+      for (const x of b.explore.filter((x) => x.left <= 0)) { b.seen[x.sector] = true; s.log.push({ t: s.t, seen: pid + ":" + x.sector }); }
+      b.explore = b.explore.filter((x) => x.left > 0);
+    }
   }
   s.inv.alimentos = Math.max(0, s.inv.alimentos - s.crew * 0.05 * min);
   for (const k of Object.keys(SUPPLY)) s.inv[k] = Math.min(s.inv[k], supplyCap(s));

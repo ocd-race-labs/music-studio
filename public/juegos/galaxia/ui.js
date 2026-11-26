@@ -1,7 +1,7 @@
 // Galaxia: the screens. Inventory, cockpit, holographic map, the base field (animated) and the factory,
 // plus the sheets that open when you tap something on the field.
-import * as G from "./game.js?v=1795732939";
-import * as A from "./art.js?v=1795732939";
+import * as G from "./game.js?v=1795734178";
+import * as A from "./art.js?v=1795734178";
 const $ = (q) => document.querySelector(q);
 const KEY = "galaxia-v2";
 let S, view = "cab", baseSel = null, sheetFn = null, mapSel = null;
@@ -85,7 +85,7 @@ VIEWS.inv = () => {
     ${[["alimentos", "#f1e9dc"], ["combustible", "#ff9f2e"]].map(([k, c]) => `<div style="display:flex;align-items:center;gap:10px"><span class="dim" style="width:96px;font-size:11px;letter-spacing:2px">${G.SUPPLY[k].name.toUpperCase()}</span>${seg(10, Math.round((10 * S.inv[k]) / G.supplyCap(S)), c)}<b class="h" style="font-size:11px;width:78px;text-align:right">${fmt(S.inv[k])} <span class="${inc[k] >= 0 ? "ok" : "no"}" style="font-size:9px">${rate(inc[k])}</span></b></div>`).join("")}
   </div>
   <div class="lbl">Máquinas · libres / total</div><div class="g4">${machines}</div>
-  <div class="lbl">Objetos</div><div class="g2"><div class="slot"><b class="h">${S.items.modulo}</b><span>MÓDULOS DE BASE</span></div><div class="slot${S.items.pliegue2 ? " rareb" : ""}"><b class="h ${S.items.pliegue2 ? "rare" : ""}">${S.items.pliegue2 ? "INSTALADO" : "—"}</b><span>PLIEGUE II</span></div></div>`;
+  <div class="lbl">Objetos</div><div class="g2"><div class="slot"><b class="h">${S.items.modulo}</b><span>MÓDULOS DE BASE</span></div><div class="slot${S.items.pliegue2 ? " rareb" : ""}"><b class="h ${S.items.pliegue2 ? "rare" : ""}">${S.items.pliegue2 ? "INSTALADO" : "—"}</b><span>PLIEGUE II</span></div><div class="slot"><b class="h">${G.dronesFree(S)}/${S.items.dron}</b><span>DRONES EXPLORADORES</span></div></div>`;
 };
 
 // 2. cockpit
@@ -174,9 +174,9 @@ function warp(p) {
   const t = setInterval(() => { if (!S.ship.jump) { clearInterval(t); $("#warp").classList.remove("on"); mapSel = null; go("cab"); toast("Llegaste a " + p.name); } }, 200);
 }
 
-// 4. base: the field, drawn once per change and animated every frame
-const SLOTXY = [[180, 300], [72, 262], [288, 262], [58, 362], [302, 362], [128, 418], [232, 418], [180, 212]];
-let fieldSig = "", animIds = [];
+// 4. base: a 3×3 terrain you drag and pinch; the middle sector is where you landed
+const WW = G.SW * 3, WH = G.SH * 3;
+let fieldSig = "", animIds = [], vb = null, vbPid = null;
 function baseView() {
   const ids = Object.keys(S.bases);
   if (!ids.length) {
@@ -186,31 +186,97 @@ function baseView() {
   }
   if (!S.bases[baseSel]) baseSel = S.bases[S.ship.at] ? S.ship.at : ids[0];
   const pid = baseSel, p = G.P[pid], b = S.bases[pid], e = G.energy(S, pid), cf = G.crewFactor(S, pid);
-  const sig = pid + "|" + JSON.stringify(b.buildings.map((x) => [x.type, x.slot, x.done >= 1])) + JSON.stringify(b.jobs) + G.visibleVeins(S, pid).length + ids.join();
+  const sig = pid + "|" + JSON.stringify(b.buildings.map((x) => [x.type, x.slot, x.done >= 1])) + JSON.stringify(b.jobs) + G.visibleVeins(S, pid).length + ids.join() + JSON.stringify(b.seen) + b.explore.map((x) => x.sector).join();
   const hud = `<div style="display:flex;gap:8px;align-items:center"><div style="flex:1"><div class="lbl">// ${p.name} · base</div><div class="h" style="font-weight:900;font-size:18px;margin-top:2px">Operación minera</div></div>
-    <div style="text-align:right;font-size:10px;letter-spacing:2px;line-height:1.7"><span class="${cf < 0.8 ? "no" : "ok"}">TURNO ${G.shiftHours(S, pid)} H · RINDE ${Math.round(cf * 100)} %</span><br><span class="${e.f < 1 ? "no" : "dim"}">ENERGÍA ${rate(e.prod - e.cons)}</span> · <span class="${G.stored(S) >= G.capacity(S) ? "no" : "dim"}">BODEGA ${Math.round((100 * G.stored(S)) / G.capacity(S))} %</span></div></div>`;
+    <div style="text-align:right;font-size:10px;letter-spacing:2px;line-height:1.7"><span class="${cf < 0.8 ? "no" : "ok"}">TURNO ${G.shiftHours(S, pid)} H · RINDE ${Math.round(cf * 100)} %</span><br><span class="${e.f < 1 ? "no" : "dim"}">ENERGÍA ${rate(e.prod - e.cons)}</span> · <span class="${G.stored(S) >= G.capacity(S) ? "no" : "dim"}">BODEGA ${Math.round((100 * G.stored(S)) / G.capacity(S))} %</span> · <span class="dim">DRONES ${G.dronesFree(S)}/${S.items.dron}</span></div></div>`;
   if (sig !== fieldSig || !$("#field")) {
     fieldSig = sig;
-    $("#view").innerHTML = (ids.length > 1 ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${ids.map((id) => `<button class="${id === pid ? "btn" : "btn2"}" style="width:auto;padding:8px 16px;font-size:10px" data-b="${id}">${G.P[id].name}</button>`).join("")}</div>` : "") + `<div id="bhud">${hud}</div><div class="field" id="field">${fieldSVG(pid)}</div><div class="dim" style="font-size:12px;text-align:center">Toca una veta, una máquina, un edificio o un terreno libre (+)</div>`;
+    if (vbPid !== pid || !vb) { vb = { x: G.SW, y: null, w: G.SW }; vbPid = pid; }
+    $("#view").innerHTML = (ids.length > 1 ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${ids.map((id) => `<button class="${id === pid ? "btn" : "btn2"}" style="width:auto;padding:8px 16px;font-size:10px" data-b="${id}">${G.P[id].name}</button>`).join("")}</div>` : "") +
+      `<div id="bhud">${hud}</div><div class="field" id="field" style="height:max(380px,calc(100dvh - ${ids.length > 1 ? 360 : 310}px))">${fieldSVG(pid)}<div id="mini" style="position:absolute;right:10px;top:10px;width:72px;height:94px"></div><div style="position:absolute;left:10px;bottom:10px;display:flex;flex-direction:column;gap:6px"><button class="btn2" id="zin" style="width:40px;padding:8px 0;font-size:16px" aria-label="Acercar">+</button><button class="btn2" id="zout" style="width:40px;padding:8px 0;font-size:16px" aria-label="Alejar">−</button></div></div><div class="dim" style="font-size:12px;text-align:center">Arrastra para moverte · toca vetas, máquinas, edificios, terrenos (+) o la niebla</div>`;
     document.querySelectorAll("[data-b]").forEach((x) => (x.onclick = () => { baseSel = x.dataset.b; fieldSig = ""; render(); }));
-    $("#field").addEventListener("click", fieldTap);
+    setupField(); applyVB();
   } else $("#bhud").innerHTML = hud;
   for (const x of b.buildings) { const r = document.getElementById("pr" + x.slot); if (r) r.setAttribute("stroke-dasharray", `${x.done * 113} 200`); }
-  for (const v of G.visibleVeins(S, pid)) { const r = document.getElementById("vl" + v.id); if (r) r.setAttribute("width", Math.max(0, (36 * b.veins[v.id]) / v.size)); }
+  for (const v of G.visibleVeins(S, pid)) { const r = document.getElementById("vl" + v.id); if (r) r.setAttribute("width", Math.max(0, (36 * G.leftOf(b, v)) / v.size)); }
+  for (const x of b.explore) { const t = document.getElementById("ext" + x.sector); if (t) t.textContent = "DRON EXPLORANDO · " + Math.ceil(x.left) + " S"; }
+  mini();
 }
-function depot(b) { const bod = b.buildings.find((x) => x.type === "bodega" && x.done >= 1); return SLOTXY[(bod || b.buildings[0]).slot]; }
+function applyVB() {
+  const sv = $("#fsv"); if (!sv || !vb) return;
+  const ar = sv.clientHeight / Math.max(1, sv.clientWidth);
+  vb.w = Math.max(220, Math.min(WW + 80, vb.w)); const h = vb.w * ar;
+  if (vb.y == null) vb.y = G.SH + (G.SH - h) / 2 + 40;
+  vb.x = Math.max(-40, Math.min(WW - vb.w + 40, vb.x)); vb.y = Math.max(-40, Math.min(WH - h + 40, vb.y));
+  if (vb.w > WW) vb.x = (WW - vb.w) / 2; if (h > WH) vb.y = (WH - h) / 2;
+  sv.setAttribute("viewBox", `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${h.toFixed(1)}`);
+  mini();
+}
+function zoom(f, cx, cy) {
+  const sv = $("#fsv"), r = sv.getBoundingClientRect(), ar = r.height / r.width;
+  const px = cx == null ? 0.5 : (cx - r.left) / r.width, py = cy == null ? 0.5 : (cy - r.top) / r.height;
+  const wx = vb.x + px * vb.w, wy = vb.y + py * vb.w * ar;
+  vb.w = Math.max(220, Math.min(WW + 80, vb.w * f)); vb.x = wx - px * vb.w; vb.y = wy - py * vb.w * ar; applyVB();
+}
+function setupField() {
+  const f = $("#field"), sv = $("#fsv"), pts = new Map(); let st = null;
+  const snap = () => ({ vb: { ...vb }, pts: new Map([...pts].map(([k, v]) => [k, { ...v }])), moved: st ? st.moved : false });
+  sv.addEventListener("pointerdown", (e) => { if (e.isPrimary) pts.clear(); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); st = snap(); try { sv.setPointerCapture(e.pointerId); } catch (x) {} });
+  sv.addEventListener("pointermove", (e) => {
+    if (!pts.has(e.pointerId) || !st) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const r = sv.getBoundingClientRect(), k = st.vb.w / r.width, a = [...st.pts.values()], c = [...pts.values()];
+    if (pts.size === 1 && a.length === 1) {
+      const dx = c[0].x - a[0].x, dy = c[0].y - a[0].y;
+      if (Math.hypot(dx, dy) > 8) st.moved = true;
+      if (st.moved) { vb.x = st.vb.x - dx * k; vb.y = st.vb.y - dy * k; vb.w = st.vb.w; applyVB(); }
+    } else if (pts.size >= 2 && a.length >= 2) {
+      st.moved = true;
+      const d0 = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y), d1 = Math.hypot(c[0].x - c[1].x, c[0].y - c[1].y);
+      const m0 = { x: (a[0].x + a[1].x) / 2 - r.left, y: (a[0].y + a[1].y) / 2 - r.top }, m1 = { x: (c[0].x + c[1].x) / 2 - r.left, y: (c[0].y + c[1].y) / 2 - r.top };
+      const wx = st.vb.x + m0.x * k, wy = st.vb.y + m0.y * k;
+      vb.w = Math.max(220, Math.min(WW + 80, st.vb.w * (d0 / Math.max(1, d1)))); const k2 = vb.w / r.width;
+      vb.x = wx - m1.x * k2; vb.y = wy - m1.y * k2; applyVB();
+    }
+  });
+  const end = (e) => {
+    if (!pts.has(e.pointerId)) return;
+    const tap = st && !st.moved && pts.size === 1 && e.type === "pointerup";
+    pts.delete(e.pointerId); st = pts.size ? snap() : null;
+    if (tap) { const el = document.elementFromPoint(e.clientX, e.clientY); const g = el && el.closest("[data-t]"); if (g) fieldTap(g); }
+  };
+  sv.addEventListener("pointerup", end); sv.addEventListener("pointercancel", end); sv.addEventListener("lostpointercapture", (e) => { pts.delete(e.pointerId); if (!pts.size) st = null; });
+  sv.addEventListener("wheel", (e) => { e.preventDefault(); zoom(e.deltaY > 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY); }, { passive: false });
+  $("#zin").onclick = () => zoom(1 / 1.4); $("#zout").onclick = () => zoom(1.4);
+}
+function mini() {
+  const m = $("#mini"), b = S.bases[baseSel]; if (!m || !b || !vb) return;
+  const k = 72 / WW, sv = $("#fsv"), h = vb.w * (sv.clientHeight / Math.max(1, sv.clientWidth));
+  let s = "";
+  for (let i = 0; i < 9; i++) {
+    const x = (i % 3) * G.SW * k, y = Math.floor(i / 3) * G.SH * k, ex = b.explore.find((q) => q.sector === i), seen = G.seen(S, baseSel, i);
+    s += `<rect data-sec="${i}" x="${x + 0.5}" y="${y + 0.5}" width="${G.SW * k - 1}" height="${G.SH * k - 1}" fill="${seen ? G.P[baseSel].ground : "#0b0c10"}" stroke="${ex ? "#ff9f2e" : "rgba(255,159,46,.35)"}"/>`;
+    if (!seen) s += `<text x="${x + 12}" y="${y + 19}" text-anchor="middle" font-size="10" fill="${ex ? "#ff9f2e" : "#6e6458"}" pointer-events="none">${ex ? "•" : "?"}</text>`;
+  }
+  for (const v of G.visibleVeins(S, baseSel)) s += `<circle cx="${v.x * k}" cy="${v.y * k}" r="1.6" fill="${A.matColor(v.mat)}" pointer-events="none"/>`;
+  s += `<circle cx="${G.SLOTXY[0][0] * k}" cy="${G.SLOTXY[0][1] * k}" r="2" fill="#ff9f2e" pointer-events="none"/><rect x="${vb.x * k}" y="${vb.y * k}" width="${vb.w * k}" height="${h * k}" fill="none" stroke="#59d8ff" stroke-width="1" pointer-events="none"/>`;
+  m.innerHTML = `<svg width="72" height="94" viewBox="0 0 72 94" style="background:#07080c;box-shadow:0 0 0 1px rgba(255,159,46,.5)">${s}</svg>`;
+  m.querySelectorAll("[data-sec]").forEach((r) => (r.onclick = () => { const i = +r.dataset.sec, ar = sv.clientHeight / sv.clientWidth; vb.w = G.SW; vb.x = (i % 3) * G.SW; vb.y = Math.floor(i / 3) * G.SH + (G.SH - G.SW * ar) / 2; applyVB(); }));
+}
 function fieldSVG(pid) {
   const p = G.P[pid], b = S.bases[pid];
   let seed = [...pid].reduce((a, c) => a + c.charCodeAt(0), 0); const r = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
-  let rocks = ""; for (let i = 0; i < 9; i++) rocks += A.rock(20 + r() * 320, 40 + r() * 400, 6 + r() * 9, i + 3);
-  const dep = depot(b);
-  let roads = "", veins = "", jobs = "", crew = "", blds = "", power = "";
+  let ground = "", rocks = "";
+  for (let i = 0; i < 9; i++) { const x = (i % 3) * G.SW, y = Math.floor(i / 3) * G.SH; ground += `<rect x="${x}" y="${y}" width="${G.SW}" height="${G.SH}" fill="${p.ground}" opacity="${0.85 + r() * 0.15}"/>`; for (let k = 0; k < 2; k++) ground += `<circle cx="${x + 40 + r() * 280}" cy="${y + 40 + r() * 390}" r="${18 + r() * 40}" fill="#000" opacity=".12"/><circle cx="${x + 40 + r() * 280}" cy="${y + 40 + r() * 390}" r="${10 + r() * 20}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="3"/>`; }
+  for (let i = 0; i < 40; i++) rocks += A.rock(20 + r() * (WW - 40), 30 + r() * (WH - 60), 6 + r() * 10, i + 3);
+  let roads = "", veins = "", jobs = "", crew = "", blds = "", power = "", fog = "", lines = "";
   animIds = [];
+  for (let i = 1; i < 3; i++) lines += `<path d="M${i * G.SW} 0 V${WH} M0 ${i * G.SH} H${WW}" stroke="#ff9f2e" stroke-opacity=".18" stroke-dasharray="10 8"/>`;
+  for (let i = 0; i < 9; i++) lines += `<text x="${(i % 3) * G.SW + 10}" y="${Math.floor(i / 3) * G.SH + 18}" font-size="10" font-family="Orbitron" font-weight="800" letter-spacing="2" fill="#ff9f2e" opacity=".5">SECTOR ${G.sectorName(i)}</text>`;
   for (const v of G.visibleVeins(S, pid)) {
-    const worked = b.jobs.filter((j) => j.vein === v.id);
+    const worked = b.jobs.filter((j) => j.vein === v.id), dep = G.depotFor(b, v), left = G.leftOf(b, v);
     const road = `M${v.x} ${v.y + 10} Q${(v.x + dep[0]) / 2 + 30} ${(v.y + dep[1]) / 2} ${dep[0]} ${dep[1] - 10}`;
     if (worked.length && !v.crop) roads += `<path d="${road}" stroke="#1f140e" stroke-opacity=".7" stroke-width="16" fill="none" stroke-linecap="round"/><path d="${road}" stroke="#ff9f2e" stroke-opacity=".7" stroke-width="2" stroke-dasharray="6 6" fill="none"/>`;
-    veins += `<g data-t="vein" data-id="${v.id}" transform="translate(${v.x} ${v.y})"><circle r="38" fill="transparent"/>${A.vein(v, b.veins[v.id] / v.size)}${v.crop ? "" : `<rect x="-18" y="22" width="36" height="3" fill="#1e1a14"/><rect id="vl${v.id}" x="-18" y="22" width="${(36 * b.veins[v.id]) / v.size}" height="3" fill="${A.matColor(v.mat)}"/>`}${A.tag(0, 36, v.crop ? "CULTIVO" : matName(v.mat).toUpperCase(), v.deep ? "#a879ff" : "#f1e9dc")}</g>`;
+    veins += `<g data-t="vein" data-id="${v.id}" transform="translate(${v.x} ${v.y})"><circle r="38" fill="transparent"/>${A.vein(v, left / v.size)}${v.crop ? "" : `<rect x="-18" y="22" width="36" height="3" fill="#1e1a14"/><rect id="vl${v.id}" x="-18" y="22" width="${(36 * left) / v.size}" height="3" fill="${A.matColor(v.mat)}"/>`}${A.tag(0, 36, v.crop ? "CULTIVO" : matName(v.mat).toUpperCase(), v.deep ? "#a879ff" : "#f1e9dc")}</g>`;
     worked.forEach((j, i) => {
       jobs += `<g data-t="job" data-id="${j.id}" id="m${j.id}" transform="translate(${v.x} ${v.y})">${A.machine(j.type, false)}</g>`;
       animIds.push({ id: j.id, v, i, type: j.type });
@@ -218,30 +284,36 @@ function fieldSVG(pid) {
     });
   }
   for (let i = 0; i < G.SLOTS; i++) {
-    const [x, y] = SLOTXY[i], bl = b.buildings.find((q) => q.slot === i);
+    const [x, y] = G.SLOTXY[i], bl = b.buildings.find((q) => q.slot === i);
     if (!bl) { blds += `<g data-t="slot" data-id="${i}" transform="translate(${x} ${y})"><path d="M0 -20 l22 12 v20 l-22 12 l-22 -12 v-20z" fill="rgba(255,159,46,.05)" stroke="#ff9f2e" stroke-opacity=".5" stroke-dasharray="4 4"/><text y="7" text-anchor="middle" font-size="20" fill="#ff9f2e" opacity=".75">+</text></g>`; continue; }
-    if (["paneles", "colector", "reactor"].includes(bl.type) && bl.done >= 1) power += `<path d="M${x} ${y} L${SLOTXY[0][0]} ${SLOTXY[0][1]}" stroke="#59d8ff" stroke-opacity=".5" stroke-width="1.5"/>`;
+    if (["paneles", "colector", "reactor"].includes(bl.type) && bl.done >= 1) power += `<path d="M${x} ${y} L${G.SLOTXY[0][0]} ${G.SLOTXY[0][1]}" stroke="#59d8ff" stroke-opacity=".5" stroke-width="1.5"/>`;
     blds += `<g data-t="bld" data-id="${i}" transform="translate(${x} ${y})" opacity="${bl.done >= 1 ? 1 : 0.55}"><circle r="32" fill="transparent"/>${A.building(bl.type)}${bl.done < 1 ? `<circle r="18" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="4"/><circle id="pr${i}" r="18" fill="none" stroke="#ff9f2e" stroke-width="4" stroke-dasharray="${bl.done * 113} 200" transform="rotate(-90)"/>` : ""}</g>${A.tag(x, y + 42, G.BUILD[bl.type].name.toUpperCase())}`;
   }
-  return `<svg viewBox="0 0 360 470" role="img" aria-label="Base en ${p.name}">
+  for (let i = 0; i < 9; i++) {
+    if (G.seen(S, pid, i)) continue;
+    const x = (i % 3) * G.SW, y = Math.floor(i / 3) * G.SH, ex = b.explore.find((q) => q.sector === i), cx = x + G.SW / 2, cy = y + G.SH / 2;
+    fog += `<g data-t="fog" data-id="${i}"><rect x="${x}" y="${y}" width="${G.SW}" height="${G.SH}" fill="#07080c" opacity=".9"/><rect x="${x}" y="${y}" width="${G.SW}" height="${G.SH}" fill="url(#fogp)"/>
+      <text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="16" font-family="Orbitron" font-weight="900" letter-spacing="3" fill="${ex ? "#ff9f2e" : "#6e6458"}">SECTOR ${G.sectorName(i)}</text>
+      <text id="ext${i}" x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="11" font-family="Chakra Petch" letter-spacing="2" fill="${ex ? "#ff9f2e" : "#9a8f80"}">${ex ? "DRON EXPLORANDO · " + Math.ceil(ex.left) + " S" : "SIN EXPLORAR · TOCA PARA ENVIAR UN DRON"}</text></g>`;
+    if (ex) fog += `<path d="M${G.SLOTXY[0][0]} ${G.SLOTXY[0][1]} L${cx} ${cy}" stroke="#59d8ff" stroke-opacity=".5" stroke-dasharray="4 6"/><g id="dr${i}" pointer-events="none"><circle r="10" fill="#59d8ff" opacity=".25"/><path d="M-8 0 h16 M0 -8 v16" stroke="#59d8ff" stroke-width="2"/><circle r="4" fill="#59d8ff"/></g>`;
+  }
+  return `<svg id="fsv" viewBox="${G.SW} ${G.SH} ${G.SW} ${G.SH}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;touch-action:none" role="img" aria-label="Terreno de ${p.name}">
     <defs><pattern id="gr" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" stroke="#ff9f2e" stroke-opacity=".06" fill="none"/></pattern>
-    <radialGradient id="fog" cx="50%" cy="50%" r="72%"><stop offset=".6" stop-color="#07080c" stop-opacity="0"/><stop offset="1" stop-color="#07080c" stop-opacity=".95"/></radialGradient>
-    <pattern id="rad" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V10" stroke="#ff4d5e" stroke-opacity=".14" stroke-width="3"/></pattern></defs>
-    <rect width="360" height="470" fill="${p.ground}"/><rect width="360" height="470" fill="url(#gr)"/>
-    ${p.rad === "alta" || p.rad === "extrema" ? `<rect width="360" height="470" fill="url(#rad)"/>` : ""}
-    <path d="M0 0 H360 V34 Q300 56 250 40 Q200 26 160 46 Q110 60 70 40 Q30 24 0 44Z" fill="#000" opacity=".35"/>
-    ${rocks}${roads}${power}${veins}${blds}${crew}${jobs}
-    <rect width="360" height="470" fill="url(#fog)" pointer-events="none"/>
+    <pattern id="fogp" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V14" stroke="#ff9f2e" stroke-opacity=".05" stroke-width="4"/></pattern>
+    <pattern id="rad" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V10" stroke="#ff4d5e" stroke-opacity=".12" stroke-width="3"/></pattern></defs>
+    <rect x="-200" y="-200" width="${WW + 400}" height="${WH + 400}" fill="#07080c"/>${ground}<rect width="${WW}" height="${WH}" fill="url(#gr)"/>
+    ${p.rad === "alta" || p.rad === "extrema" ? `<rect width="${WW}" height="${WH}" fill="url(#rad)"/>` : ""}
+    ${rocks}${lines}${roads}${power}${veins}${blds}${crew}${jobs}${fog}
   </svg>`;
 }
-// machines go to the vein, dig, and come back loaded to the store (only for the eye)
+// machines go to the vein, dig, and come back loaded to the store; drones circle over the fog
 function animate() {
   if (view === "base" && baseSel && S.bases[baseSel]) {
-    const b = S.bases[baseSel], dep = depot(b), now = performance.now() / 1000;
+    const b = S.bases[baseSel], now = performance.now() / 1000;
     for (const a of animIds) {
       const el = document.getElementById("m" + a.id); if (!el) continue;
-      const j = b.jobs.find((q) => q.id === a.id), working = j && G.jobRate(S, baseSel, j) > 0;
-      const ph = ((now + a.id * 3.7) % 16) / 16;
+      const j = b.jobs.find((q) => q.id === a.id), working = j && G.jobRate(S, baseSel, j) > 0, dep = G.depotFor(b, a.v);
+      const dist = Math.hypot(dep[0] - a.v.x, dep[1] - a.v.y), T = 10 + dist / 25, ph = ((now + a.id * 3.7) % T) / T;
       const vx = a.v.x + 28 + a.i * 6, vy = a.v.y + 14 + a.i * 9, dx = dep[0] + 20, dy = dep[1] - 14;
       let x, y, ang, load = false;
       if (!working || a.type === "cosechadora") { const w = working ? Math.sin(now * 0.8 + a.id) * 18 : 0; x = a.v.x + w; y = a.v.y + 4 + a.i * 10; ang = working && Math.cos(now * 0.8 + a.id) < 0 ? 180 : 0; }
@@ -252,17 +324,33 @@ function animate() {
       el.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${ang.toFixed(0)})`);
       if (el.dataset.load !== String(load)) { el.dataset.load = String(load); el.innerHTML = A.machine(a.type, load); }
     }
+    for (const x of b.explore) {
+      const el = document.getElementById("dr" + x.sector); if (!el) continue;
+      const cx = (x.sector % 3) * G.SW + G.SW / 2, cy = Math.floor(x.sector / 3) * G.SH + G.SH / 2, [hx, hy] = G.SLOTXY[0];
+      const k = Math.min(1, (1 - x.left / x.total) * 4), px = hx + (cx - hx) * k + Math.cos(now * 1.3) * 90 * k, py = hy + (cy - hy) * k + Math.sin(now * 1.3) * 120 * k;
+      el.setAttribute("transform", `translate(${px.toFixed(1)} ${py.toFixed(1)})`);
+    }
   }
   requestAnimationFrame(animate);
 }
 requestAnimationFrame(animate);
-function fieldTap(ev) {
-  const g = ev.target.closest("[data-t]"); if (!g) return;
+function fieldTap(g) {
   const t = g.dataset.t, id = g.dataset.id, pid = baseSel;
   if (t === "vein") openSheet(() => veinSheet(pid, id), true);
   if (t === "job") openSheet(() => jobSheet(pid, +id), true);
   if (t === "slot") openSheet(() => buildSheet(pid, +id));
   if (t === "bld") openSheet(() => bldSheet(pid, +id), true);
+  if (t === "fog") openSheet(() => fogSheet(pid, +id), true);
+}
+function fogSheet(pid, sec) {
+  const b = S.bases[pid]; if (!b || G.seen(S, pid, sec)) return null;
+  const ex = b.explore.find((q) => q.sector === sec), t = G.exploreTime(S, pid, sec), free = G.dronesFree(S);
+  const near = [sec - 3, sec + 3, sec % 3 ? sec - 1 : -1, sec % 3 < 2 ? sec + 1 : -1].some((n) => n >= 0 && n < 9 && G.seen(S, pid, n));
+  return { kind: "Niebla", title: "Sector " + G.sectorName(sec),
+    body: (ex ? `<div style="display:flex;justify-content:space-between;font-size:12px"><span class="dim">Dron explorando</span><b>${Math.ceil(ex.left)} s</b></div>${bar(1 - ex.left / ex.total, "#59d8ff")}` :
+      `<div class="dim" style="font-size:13px">Nadie sabe qué hay aquí. Los sectores lejanos suelen tener vetas más ricas, y en las esquinas a veces hay algo raro.</div>` + kv("Tiempo de vuelo", t + " s" + (G.P[pid].storm > 0.5 ? " (tormentas)" : "")) + kv("Drones libres", free + " de " + S.items.dron, free ? "ok" : "no") +
+      (near ? `<button class="btn" id="go" ${free ? "" : "disabled"}>Enviar dron explorador</button>${free ? "" : `<div class="dim" style="font-size:12px">Fabrica más drones en la fábrica.</div>`}` : `<div class="no" style="font-size:12px">Primero explora un sector vecino a este.</div>`)),
+    bind: (el) => { const g = el.querySelector("#go"); if (g) g.onclick = () => { if (act(G.explore(S, pid, sec), "Dron en vuelo hacia el sector " + G.sectorName(sec))) closeSheet(); }; } };
 }
 
 /* ---------- sheets ---------- */
@@ -285,15 +373,15 @@ function refreshSheet() {
   const sc = $("#sheet>.p").scrollTop; openSheet(sheetFn, true); $("#sheet>.p").scrollTop = sc;
 }
 function veinSheet(pid, id) {
-  const v = G.P[pid].veins.find((x) => x.id === id), b = S.bases[pid]; if (!b) return null;
+  const v = G.veinById(pid, id), b = S.bases[pid]; if (!b || !v) return null;
   const jobs = b.jobs.filter((j) => j.vein === id), tier = G.MATS[v.mat] ? G.MATS[v.mat].tier : 0;
   const types = Object.keys(G.MACH).filter((t) => G.canWork(t, v));
-  const total = jobs.reduce((a, j) => a + G.jobRate(S, pid, j), 0), left = b.veins[id];
+  const total = jobs.reduce((a, j) => a + G.jobRate(S, pid, j), 0), left = G.leftOf(b, v), hl = G.haul(b, v);
   return { kind: v.crop ? "Suelo fértil" : "Fuente de mineral", title: v.crop ? "Cultivo" : "Veta de " + matName(v.mat).toLowerCase() + (v.deep ? " · profunda" : ""),
     body: (v.crop ? kv("Produce", "alimentos", "ok") : `<div style="display:flex;justify-content:space-between;font-size:12px"><span class="dim">Reserva</span><b>${fmt(left)} / ${fmt(v.size)}</b></div>${bar(left / v.size, A.matColor(v.mat))}` + kv("Rareza", G.TIER[tier], tier >= 2 ? "rare" : "")) +
       kv("Pureza", Math.round(v.purity * 100) + " %") + kv("Extrayendo", jobs.length ? `${jobs.length} máquina${jobs.length > 1 ? "s" : ""} · ${rate(total)}/min` : "nadie", jobs.length ? "ok" : "") +
       (!v.crop && total > 0 ? kv("Se agota en", "~" + Math.max(1, Math.round(left / total)) + " min (se repone lento)") : "") +
-      (G.P[pid].veins.some((x) => x.deep) && !G.anyBuilt(S, "laboratorio") && !v.deep ? `<div class="rare" style="font-size:12px">Hay ecos de algo más profundo en este planeta. Un laboratorio podría identificarlo.</div>` : "") +
+      (hl < 1 ? kv("Distancia a la bodega", "lejos: rinde " + Math.round(hl * 100) + " %", "no") + `<div class="dim" style="font-size:12px">Las máquinas pasan mucho tiempo en el camino. Pronto: transportes.</div>` : "") + (G.veinsOf(pid).some((x) => x.deep) && !G.anyBuilt(S, "laboratorio") && !v.deep ? `<div class="rare" style="font-size:12px">Hay ecos de algo más profundo en este planeta. Un laboratorio podría identificarlo.</div>` : "") +
       `<div class="lbl">Poner a trabajar</div><div class="g2">${types.map((t) => { const free = G.machinesFree(S, t); return `<button class="${free ? "btn" : "btn2"}" data-as="${t}" ${free ? "" : "disabled"} style="font-size:10px;padding:12px 6px">${G.MACH[t].name} · ${free} libre${free === 1 ? "" : "s"}</button>`; }).join("")}</div>` +
       (jobs.length ? `<button class="btn2" data-un="${jobs[jobs.length - 1].id}">Retirar una máquina</button>` : ""),
     bind: (el) => {
@@ -303,8 +391,8 @@ function veinSheet(pid, id) {
 }
 function jobSheet(pid, id) {
   const b = S.bases[pid], j = b && b.jobs.find((x) => x.id === id); if (!j) return null;
-  const v = G.P[pid].veins.find((x) => x.id === j.vein), m = G.MACH[j.type], r = G.jobRate(S, pid, j), e = G.energy(S, pid), cf = G.crewFactor(S, pid);
-  const why = r === 0 ? (b.veins[v.id] <= 0 ? "veta agotada" : "bodegas llenas") : [m.crew && cf < 1 ? "tripulación al " + Math.round(cf * 100) + " %" : "", e.f < 1 ? "energía al " + Math.round(e.f * 100) + " %" : ""].filter(Boolean).join(" · ") || "a pleno";
+  const v = G.veinById(pid, j.vein), m = G.MACH[j.type], r = G.jobRate(S, pid, j), e = G.energy(S, pid), cf = G.crewFactor(S, pid);
+  const why = r === 0 ? (G.leftOf(b, v) <= 0 ? "veta agotada" : "bodegas llenas") : [m.crew && cf < 1 ? "tripulación al " + Math.round(cf * 100) + " %" : "", e.f < 1 ? "energía al " + Math.round(e.f * 100) + " %" : "", G.haul(b, v) < 1 ? "lejos de la bodega" : ""].filter(Boolean).join(" · ") || "a pleno";
   return { kind: "Máquina", title: m.name + " " + String(id).padStart(2, "0"),
     body: kv("Trabaja en", v.crop ? "cultivo" : "veta de " + matName(v.mat).toLowerCase()) + kv("Rinde", rate(r) + " " + (v.crop ? "alimentos" : matName(v.mat).toLowerCase()) + "/min", r ? "ok" : "no") + kv("Estado", why, why === "a pleno" ? "ok" : "no") +
       kv("Operadores", m.crew ? m.crew + " tripulantes" : "ninguno (autónomo)") + kv("Energía", m.ene + "/min") + `<button class="btn2" id="unj">Retirar de la veta</button>`,
@@ -361,6 +449,7 @@ function welcome(r) {
   toast(`Mientras no estabas (${m >= 60 ? Math.floor(m / 60) + " h " : ""}${m % 60} min): ${got.length ? got.join(", ") : "nada nuevo"}`);
 }
 S = load();
+if (S) G.migrate(S);
 if (S && G.rescue(S)) setTimeout(() => toast("Te devolvimos un módulo de base: ya puedes fundar otra base"), 3500);
 if (S) { if (S.ship.jump) S.ship.jump.left = Math.min(S.ship.jump.left, 1); const r = G.catchUp(S); if (r.dt > 60) setTimeout(() => welcome(r), 400); view = Object.keys(S.bases).length ? "base" : "cab"; }
 else { S = G.newGame(); setTimeout(() => toast("Orbitando Kalon. Revisa los indicadores y establece tu base."), 300); }
