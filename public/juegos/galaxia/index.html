@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#05060f">
+<title>Galaxia · Juegos en casa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#05060f;color:#e8ecff;font-family:Sora,system-ui,sans-serif;overflow:hidden;overscroll-behavior:none}
+canvas{position:fixed;inset:0;width:100vw;height:100dvh;display:block;touch-action:none}
+.bar{position:fixed;left:0;right:0;display:flex;align-items:center;gap:8px;padding:10px 12px;z-index:5;pointer-events:none}
+.bar>*{pointer-events:auto}
+.top{top:0;padding-top:calc(10px + env(safe-area-inset-top))}
+.bottom{bottom:0;padding-bottom:calc(10px + env(safe-area-inset-bottom));flex-wrap:wrap;justify-content:center}
+.b{border:none;border-radius:12px;background:rgba(20,26,54,.82);color:#e8ecff;font:inherit;font-weight:800;font-size:14px;min-height:40px;min-width:40px;padding:0 12px;backdrop-filter:blur(6px);box-shadow:0 0 0 1px rgba(140,160,255,.18)}
+.b.on{background:#4aa3ff;color:#06101f}
+a.b{display:grid;place-items:center;text-decoration:none}
+.clock{font-variant-numeric:tabular-nums;font-size:18px;font-weight:800;padding:6px 12px;border-radius:12px;background:rgba(20,26,54,.82);box-shadow:0 0 0 1px rgba(140,160,255,.18)}
+.sp{flex:1}
+.title{font-weight:800;letter-spacing:3px;font-size:15px}
+.title small{font-weight:600;letter-spacing:0;color:#8f9bd6;margin-left:6px;font-size:11px}
+.share{display:flex;gap:4px;background:rgba(20,26,54,.82);padding:4px;border-radius:14px;box-shadow:0 0 0 1px rgba(140,160,255,.18)}
+.share .b{min-height:36px;background:transparent;box-shadow:none;font-size:13px;padding:0 10px}
+.share .b.on{background:#4aa3ff;color:#06101f}
+.alerts{position:fixed;left:12px;top:calc(64px + env(safe-area-inset-top));display:grid;gap:6px;z-index:5;max-width:min(70vw,360px)}
+.alert{border:none;text-align:left;border-radius:12px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;color:#fff;background:rgba(170,40,60,.85);box-shadow:0 4px 14px rgba(0,0,0,.4);animation:in .2s}
+.alert b{font-variant-numeric:tabular-nums}
+@keyframes in{from{opacity:0;transform:translateX(-10px)}}
+.screen{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at center,rgba(20,30,80,.65),rgba(3,4,12,.92))}
+.card{max-width:420px;width:100%;background:rgba(14,18,40,.92);border-radius:22px;padding:22px;display:grid;gap:12px;box-shadow:0 0 0 1px rgba(140,160,255,.22),0 20px 60px rgba(0,0,0,.6)}
+.card h1{margin:0;font-size:30px;letter-spacing:4px}
+.card p{margin:0;color:#b9c2ef;font-size:14px;line-height:1.45}
+.card ul{margin:0;padding-left:18px;color:#b9c2ef;font-size:13px;line-height:1.5}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pick button{border:none;border-radius:16px;padding:14px 10px;font:inherit;font-weight:800;font-size:15px;color:#06101f;display:grid;gap:4px;text-align:left}
+.pick button small{font-weight:600;font-size:12px;opacity:.8}
+.go{border:none;border-radius:16px;min-height:52px;font:inherit;font-weight:800;font-size:17px;background:#ffd75e;color:#2a1d00}
+.ghost{background:transparent;color:#b9c2ef;border:none;font:inherit;font-weight:700}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="bar top">
+  <a class="b" href="../" aria-label="Volver al menú">‹</a>
+  <span class="title">GALAXIA<small>prototipo</small></span>
+  <span class="sp"></span>
+  <span class="clock" id="clock">0:00</span>
+  <button class="b" id="pause" aria-label="Pausa">❚❚</button>
+  <button class="b" id="speed">×1</button>
+</div>
+<div class="alerts" id="alerts"></div>
+<div class="bar bottom">
+  <div class="share" id="share">
+    <button class="b" data-s="0.25">25%</button><button class="b on" data-s="0.5">50%</button><button class="b" data-s="0.75">75%</button><button class="b" data-s="1">Todo</button>
+  </div>
+</div>
+<div id="screen"></div>
+<script type="module">
+import * as S from "./sim.js";
+import { think } from "./ai.js";
+
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const $ = (q) => document.querySelector(q);
+let G = null, speed = 1, paused = true, acc = 0, last = performance.now(), share = 0.5;
+let drag = null, floats = [], focus = null;
+
+/* ---------- names ---------- */
+function names(seed, n) {
+  const R = S.rng(seed * 7 + 3), a = ["Ka", "Ve", "Lo", "Zu", "Mi", "Ar", "Te", "No", "Xa", "Ri", "Sol", "Eo", "Pra", "Ty", "Ul"], b = ["ra", "lon", "tis", "mar", "dex", "ny", "pe", "kor", "lia", "ros", "gan", "vi"];
+  const out = new Set(); while (out.size < n) out.add(a[Math.floor(R() * a.length)] + b[Math.floor(R() * b.length)]);
+  return [...out];
+}
+let NAMES = [];
+const KIND = [["#c9744a", "#6b2f1c"], ["#4b8fd6", "#173b6b"], ["#6fbf5a", "#215a2a"], ["#d9e6f2", "#7c93ad"], ["#e0a245", "#7a4b12"], ["#a77ad9", "#45246b"]];
+
+/* ---------- the view ---------- */
+let W = 0, H = 0, dpr = 1, k = 1, ox = 0, oy = 0, portrait = false;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (!G) return;
+  portrait = H > W;
+  const gw = portrait ? G.H : G.W, gh = portrait ? G.W : G.H;
+  const top = portrait ? 70 : 56, bottom = portrait ? 70 : 56, side = 16;
+  k = Math.min((W - side * 2) / gw, (H - top - bottom) / gh);
+  ox = (W - gw * k) / 2; oy = top + (H - top - bottom - gh * k) / 2;
+}
+addEventListener("resize", resize);
+const scr = (x, y) => (portrait ? [ox + y * k, oy + x * k] : [ox + x * k, oy + y * k]);
+const radius = (p) => (5 + p.size * 3.2) * Math.max(0.8, Math.min(1.6, k / 9));
+const STARS = (() => { const R = S.rng(918273645); return Array.from({ length: 240 }, () => [R(), R(), R() * 1.4 + .2, R()]); })();
+
+/* ---------- drawing ---------- */
+function draw(alpha) {
+  ctx.clearRect(0, 0, W, H);
+  const t = performance.now() / 1000;
+  for (const [x, y, r, tw] of STARS) { ctx.globalAlpha = .35 + .35 * Math.sin(t * (0.6 + tw) + tw * 9); ctx.fillStyle = "#cfd8ff"; ctx.beginPath(); ctx.arc(x * W, y * H, r, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  if (!G) return;
+  // routes
+  ctx.lineWidth = 1.2; ctx.strokeStyle = "rgba(120,140,230,.22)";
+  for (const [a, b] of G.links) { const [x1, y1] = scr(G.planets[a].x, G.planets[a].y), [x2, y2] = scr(G.planets[b].x, G.planets[b].y); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+  // the route you are drawing
+  if (drag && drag.to != null && drag.to !== drag.from) {
+    const path = S.route(G, drag.from, drag.to);
+    if (path) {
+      ctx.strokeStyle = "rgba(255,215,94,.9)"; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.beginPath();
+      path.forEach((id, i) => { const [x, y] = scr(G.planets[id].x, G.planets[id].y); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.setLineDash([]);
+    }
+  } else if (drag) {
+    const [x1, y1] = scr(G.planets[drag.from].x, G.planets[drag.from].y);
+    ctx.strokeStyle = "rgba(255,215,94,.6)"; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(drag.x, drag.y); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // planets
+  G.planets.forEach((p, i) => {
+    const [x, y] = scr(p.x, p.y), r = radius(p), [c1, c2] = KIND[p.kind];
+    if (p.owner) { const c = S.CIVS[p.owner]; const g = ctx.createRadialGradient(x, y, r, x, y, r * 2.4); g.addColorStop(0, c.color + "55"); g.addColorStop(1, c.color + "00"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 2.4, 0, 7); ctx.fill(); }
+    const g = ctx.createRadialGradient(x - r * .4, y - r * .4, r * .2, x, y, r); g.addColorStop(0, c1); g.addColorStop(1, c2);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    if (p.size === 3) { ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(x, y, r * 1.55, r * .45, -.4, 0, 7); ctx.stroke(); }
+    ctx.lineWidth = 3; ctx.strokeStyle = p.owner ? S.CIVS[p.owner].color : "rgba(200,205,230,.35)";
+    ctx.beginPath(); ctx.arc(x, y, r + 3, 0, 7); ctx.stroke();
+    // a Colmena planet shows how much is left
+    if (p.owner === "colmena") { const left = Math.max(0, 1 - (G.step - p.born) / S.STEPS / 300); ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 7, -Math.PI / 2, -Math.PI / 2 + left * Math.PI * 2); ctx.stroke(); }
+    if ((drag && (drag.from === i || drag.to === i)) || focus === i) { ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, r + 10 + Math.sin(t * 6) * 2, 0, 7); ctx.stroke(); }
+    ctx.font = `800 ${Math.max(12, r * .95)}px Sora, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,0,0,.7)"; ctx.strokeText(Math.floor(p.ships), x, y); ctx.fillStyle = "#fff"; ctx.fillText(Math.floor(p.ships), x, y);
+    ctx.font = "600 10px Sora, sans-serif"; ctx.fillStyle = "rgba(200,210,255,.7)"; ctx.fillText(NAMES[i], x, y + r + 14);
+  });
+  // fleets: between steps they glide (alpha), and each shows its countdown
+  for (const f of G.fleets) {
+    const pos = S.fleetPos(G, f, (alpha * S.TICK) / 1000), [x, y] = scr(pos.x, pos.y);
+    const nx = G.planets[f.path[f.leg + 1]], [tx, ty] = scr(nx.x, nx.y), ang = Math.atan2(ty - y, tx - x);
+    const c = S.CIVS[f.owner].color, n = Math.min(6, 1 + Math.floor(f.ships / 6));
+    ctx.fillStyle = c;
+    for (let j = 0; j < n; j++) {
+      const ax = x - Math.cos(ang) * j * 5 + Math.cos(ang + 1.57) * ((j % 2) * 6 - 3), ay = y - Math.sin(ang) * j * 5 + Math.sin(ang + 1.57) * ((j % 2) * 6 - 3);
+      ctx.save(); ctx.translate(ax, ay); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, 3.5); ctx.lineTo(-2, 0); ctx.lineTo(-4, -3.5); ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+    const hostile = f.owner !== G.you && G.planets[f.to].owner === G.you;
+    const label = f.ships + " · " + Math.ceil(S.eta(G, f) - (alpha * S.TICK) / 1000) + " s";
+    ctx.font = "800 11px Sora, sans-serif"; ctx.textAlign = "center";
+    ctx.lineWidth = 3.5; ctx.strokeStyle = "rgba(0,0,0,.75)"; ctx.strokeText(label, x, y - 12);
+    ctx.fillStyle = hostile ? "#ff8a9a" : "#fff"; ctx.fillText(label, x, y - 12);
+  }
+  // captures
+  floats = floats.filter((fl) => t - fl.t < 1.6);
+  for (const fl of floats) { const [x, y] = scr(G.planets[fl.p].x, G.planets[fl.p].y); ctx.globalAlpha = 1 - (t - fl.t) / 1.6; ctx.font = "800 14px Sora"; ctx.fillStyle = fl.c; ctx.fillText(fl.text, x, y - 30 - (t - fl.t) * 20); ctx.globalAlpha = 1; }
+}
+
+/* ---------- time ---------- */
+function frame(now) {
+  const dt = Math.min(250, now - last); last = now;
+  if (G && !paused && !G.over) {
+    acc += dt * speed;
+    while (acc >= S.TICK) {
+      acc -= S.TICK;
+      const before = G.log.length;
+      S.step(G);
+      if (G.step % 15 === 0) think(G, G.you === "humanos" ? "colmena" : "humanos");
+      for (const e of G.log.slice(before)) if (e.kind === "capture" && (e.by === G.you || e.from === G.you)) floats.push({ p: e.planet, t: performance.now() / 1000, text: (e.by === G.you ? "¡Nuestro!" : "Perdido"), c: e.by === G.you ? "#9effa4" : "#ff8a9a" });
+      if (G.over) { setTimeout(end, 600); break; }
+    }
+  }
+  draw(paused || !G ? 0 : acc / S.TICK);
+  if (G) { const sec = Math.floor(G.step / S.STEPS); $("#clock").textContent = Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); alerts(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+document.addEventListener("visibilitychange", () => { if (document.hidden && G && !G.over) setPause(true); });
+function setPause(v) { paused = v; $("#pause").textContent = paused ? "▶" : "❚❚"; }
+$("#pause").onclick = () => setPause(!paused);
+$("#speed").onclick = () => { speed = speed === 1 ? 2 : 1; $("#speed").textContent = "×" + speed; $("#speed").classList.toggle("on", speed === 2); };
+document.querySelectorAll("[data-s]").forEach((b) => b.onclick = () => { share = +b.dataset.s; document.querySelectorAll("[data-s]").forEach((x) => x.classList.toggle("on", x === b)); });
+
+/* ---------- warnings: enemy fleets coming to your planets ---------- */
+let alertSig = "";
+function alerts() {
+  const list = G.fleets.filter((f) => f.owner !== G.you && G.planets[f.to].owner === G.you).sort((a, b) => S.eta(G, a) - S.eta(G, b)).slice(0, 3);
+  const sig = list.map((f) => f.id + ":" + Math.ceil(S.eta(G, f))).join("|");
+  if (sig === alertSig) return; alertSig = sig;
+  $("#alerts").innerHTML = list.map((f) => { const p = G.planets[f.to], hold = p.ships + S.rate(G, p) * S.eta(G, f) >= f.ships; return `<button class="alert" data-p="${p.id}" style="${hold ? "background:rgba(160,110,30,.85)" : ""}">⚠ ${f.ships} naves → ${NAMES[p.id]} en <b>${Math.ceil(S.eta(G, f))} s</b>${hold ? " · aguanta" : " · ¡cae!"}</button>`; }).join("");
+  document.querySelectorAll(".alert").forEach((b) => b.onclick = () => { focus = +b.dataset.p; setTimeout(() => (focus = null), 2000); });
+}
+
+/* ---------- touch and mouse ---------- */
+function planetAt(x, y, slack = 22) {
+  let best = null, bd = Infinity;
+  G.planets.forEach((p, i) => { const [px, py] = scr(p.x, p.y), d = Math.hypot(px - x, py - y); if (d < radius(p) + slack && d < bd) { bd = d; best = i; } });
+  return best;
+}
+cv.addEventListener("pointerdown", (e) => {
+  if (!G || G.over) return;
+  const i = planetAt(e.clientX, e.clientY);
+  if (i != null && G.planets[i].owner === G.you) { drag = { from: i, to: null, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} }
+});
+cv.addEventListener("pointermove", (e) => { if (!drag) return; drag.x = e.clientX; drag.y = e.clientY; drag.to = planetAt(e.clientX, e.clientY, 26); });
+cv.addEventListener("pointerup", () => {
+  if (!drag) return;
+  if (drag.to != null && drag.to !== drag.from) S.send(G, G.you, drag.from, drag.to, share);
+  drag = null;
+});
+cv.addEventListener("pointercancel", () => (drag = null));
+
+/* ---------- start and end ---------- */
+function start(civ) {
+  const seed = Math.floor(Math.random() * 1e9);
+  G = S.newGame(seed, civ); NAMES = names(seed, G.planets.length);
+  acc = 0; floats = []; resize(); setPause(false);
+  $("#screen").innerHTML = "";
+}
+function menu() {
+  $("#screen").innerHTML = `<div class="screen"><div class="card">
+    <h1>GALAXIA</h1>
+    <p>Prototipo para sentir el ritmo: planetas, flotas y el reloj. La galaxia es nueva en cada partida.</p>
+    <ul><li>Arrastra desde un planeta tuyo hasta otro para mandar naves (abajo eliges cuántas).</li>
+      <li>Cada flota muestra cuántas naves lleva y en cuántos segundos llega.</li>
+      <li>Si una flota enemiga viene a tu planeta, sale una alerta: toca para ver dónde.</li>
+      <li>Gana quien deje al otro sin planetas ni flotas. Pausa y ×2 arriba.</li></ul>
+    <div class="pick"><button style="background:#4aa3ff" data-civ="humanos">Humanos<small>Producción pareja</small></button>
+      <button style="background:#7ee04a" data-civ="colmena">Colmena<small>Muy rápida, pero agota sus planetas en 5 min</small></button></div>
+  </div></div>`;
+  document.querySelectorAll("[data-civ]").forEach((b) => b.onclick = () => start(b.dataset.civ));
+}
+function end() {
+  const won = G.over.winner === G.you, sec = Math.floor(G.over.at / S.STEPS);
+  $("#screen").innerHTML = `<div class="screen"><div class="card" style="text-align:center">
+    <h1>${won ? "¡Victoria!" : "Derrota"}</h1>
+    <p>${won ? "La galaxia es tuya" : "La " + S.CIVS[G.over.winner].name + " se quedó con la galaxia"} en ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}.</p>
+    <button class="go" id="again">Jugar otra</button><button class="ghost" id="other">Cambiar de civilización</button></div></div>`;
+  $("#again").onclick = () => start(G.you); $("#other").onclick = menu;
+}
+resize(); menu();
+</script>
+</body>
+</html>
