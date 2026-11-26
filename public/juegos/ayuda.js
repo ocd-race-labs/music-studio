@@ -14,6 +14,18 @@
   const arrow = `<span class="ay-ar">→</span>`;
 
   const G = {
+    comarca: { name: "Comarca", pages: [
+      { t: "Tu turno", rows: [
+        [big("🧩"), "Sacas una loseta y la pones junto a otras. Los bordes deben calzar: ciudad con ciudad, camino con camino, pasto con pasto. Puedes girarla."],
+        [big("♟"), "Después puedes dejar 1 de tus 7 aldeanos en esa loseta: en la ciudad, el camino, la ermita o el pasto. Solo si esa parte no tiene ya otro aldeano."],
+        [chip("Juntar"), "Dos partes con aldeanos pueden unirse después con otra loseta. Así se comparten o se disputan."],
+        [big("🧺"), "Si una loseta no cabe en ningún lado, se saca otra."]] },
+      { t: "Puntos", rows: [
+        [chip("Camino"), "Cerrado: 1 punto por loseta. Al final, igual si quedó abierto."],
+        [chip("Ciudad"), "Cerrada: 2 por loseta y 2 por escudo. Al final, abierta: 1 y 1."],
+        [chip("Ermita"), "Rodeada por 8 losetas: 9 puntos. Al final: 1 más 1 por cada loseta alrededor."],
+        [chip("Pasto"), "Al final, 3 puntos por cada ciudad cerrada que toque el pasto. Gana quien tenga más aldeanos en cada parte; si empatan, ganan los dos."]] },
+    ] },
     ajedrez: { name: "Ajedrez", pages: [
       { t: "Cómo se mueven", rows: [
         [big("♙"), "El peón avanza 1 casilla (2 en su primera jugada) y come en diagonal. Al llegar al fondo se corona: eliges en qué se convierte."],

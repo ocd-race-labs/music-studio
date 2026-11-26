@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Comarca · Juegos en casa</title>
+<meta name="apple-mobile-web-app-title" content="Juegos">
+<meta name="theme-color" content="#c99a5e">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<script src="../supabase.js"></script>
+<style>
+@font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(../fonts/sora-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(../fonts/sora-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url(../fonts/sora-latin-800-normal.woff2) format("woff2")}
+:root{--wood1:#c99a5e;--wood2:#b98748;--wood3:#d6aa6f;--ink:#1d1f23;--paper:#fbfbfa;--gold:#ffcf3f;
+  --red:#e04545;--green:#2e9e4f;--yellow:#f0bd22;--blue:#2f6fd0}
+*{box-sizing:border-box;margin:0;padding:0}
+html{min-height:100%;background:var(--wood1)}
+body{min-height:100vh;font-family:Sora,system-ui,sans-serif;color:var(--ink);-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;padding-bottom:120px;
+  background:repeating-linear-gradient(92deg,rgba(255,255,255,.05) 0 2px,transparent 2px 9px),repeating-linear-gradient(88deg,rgba(90,50,10,.07) 0 1px,transparent 1px 23px),linear-gradient(180deg,var(--wood3),var(--wood1) 40%,var(--wood2));background-attachment:fixed}
+header{display:flex;align-items:center;gap:8px;padding:12px 12px 8px;max-width:560px;margin:0 auto;position:sticky;top:0;z-index:10;
+  background:rgba(201,154,94,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-radius:0 0 16px 16px}
+.back,.gear{display:grid;place-items:center;width:36px;height:38px;flex:none;border-radius:12px;background:rgba(255,255,255,.85);color:var(--ink);text-decoration:none;font-size:22px;font-weight:800;border:none;font-family:inherit}
+.gear{font-size:17px}
+.logo{font-weight:800;font-size:19px;letter-spacing:.5px;color:#fff;background:linear-gradient(90deg,#5f8f3a,#94c46c 55%,#c9a060);padding:5px 12px;border-radius:10px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.sp{flex:1}
+.pill{font-size:12px;font-weight:700;background:rgba(255,255,255,.85);border-radius:999px;padding:6px 10px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+main{max-width:560px;margin:0 auto;padding:8px;display:grid;gap:10px}
+.panel{background:var(--paper);border-radius:20px;box-shadow:0 1px 2px rgba(0,0,0,.14),0 8px 20px rgba(40,30,20,.16);padding:16px}
+.panel h2{font-size:18px;font-weight:800;margin-bottom:10px}
+.muted{color:#6c6f75;font-size:14px}
+.stack{display:grid;gap:10px}
+.two{display:grid;grid-template-columns:1fr auto;gap:8px}
+.btn{border:none;border-radius:14px;padding:12px 16px;font:inherit;font-weight:800;font-size:15px;background:#eeefef;color:var(--ink);cursor:pointer;min-height:46px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:#24272d;color:#fff}
+.btn.gold{background:var(--gold);color:#2a1d00}
+.btn.wa{background:#25d366;color:#08331a}
+.btn:disabled{opacity:.4}
+input[type=text]{font:inherit;font-size:17px;padding:12px 14px;border-radius:12px;border:1.5px solid #d5d6d8;background:#fff;width:100%}
+label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6c6f75;margin:4px 0 6px}
+.tables{display:grid;gap:8px}
+.btn.tbl{justify-content:space-between;background:#fff4d0;text-align:left}
+.btn.tbl small,.btn.back2 small{font-weight:700;color:#6c6f75;font-size:12px}
+.btn.back2{justify-content:space-between;background:#d9f2e1;text-align:left}
+.mrow{display:grid;grid-template-columns:1fr auto;gap:6px}
+.mrow .del.sure{width:auto;padding:0 10px;background:#fde2e1;color:#a3262f;font-size:13px}
+.mrow .del{border:none;border-radius:14px;width:46px;background:#eeefef;font:inherit;font-weight:800;font-size:16px;color:#6c6f75}
+.code{display:grid;grid-template-columns:1fr auto;gap:8px}
+.code input{text-transform:uppercase;letter-spacing:2px;font-weight:800}
+.or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
+.count{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.count .btn.on{background:#24272d;color:#fff}
+.rules{font-size:13px;color:#4a4d53;line-height:1.5}
+.rules li{margin-left:18px}
+.seats{display:grid;gap:6px}
+.seat{display:flex;align-items:center;gap:10px;background:#f1f1f0;border-radius:12px;padding:9px 12px;font-weight:700}
+.dot{width:20px;height:20px;border-radius:50%;flex:none;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+
+
+/* players strip */
+.who{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.who .p{display:flex;align-items:center;gap:6px;background:var(--paper);border-radius:999px;padding:4px 10px 4px 4px;font-size:13px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.who .p.turn{box-shadow:0 0 0 3px var(--gold)}
+.who .p b{font-size:15px}
+.who .p small{color:#6c6f75;font-weight:700}
+.dot{width:20px;height:20px;border-radius:50%;flex:none;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+
+/* board */
+.view{position:relative;height:min(62vh,560px);border-radius:16px;overflow:hidden;background:#4f7a35;
+  background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:18px 18px;
+  box-shadow:inset 0 0 0 4px #5a3a20,0 10px 26px rgba(40,20,0,.35);touch-action:none}
+.view svg{width:100%;height:100%;display:block}
+.zoom{position:absolute;right:8px;top:8px;display:grid;gap:6px;z-index:2}
+.zoom button{width:38px;height:38px;border-radius:10px;border:none;background:rgba(255,255,255,.9);font:inherit;font-weight:800;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.bag{position:absolute;left:8px;top:8px;background:rgba(255,255,255,.9);border-radius:10px;padding:5px 9px;font-size:12px;font-weight:800;z-index:2}
+.spot{fill:rgba(255,255,255,.18);stroke:#fff;stroke-width:3;stroke-dasharray:10 7;cursor:pointer}
+.spot.sel{fill:rgba(255,215,94,.25);stroke:#ffd75e}
+.lastt{fill:none;stroke:#ffd75e;stroke-width:5}
+.ghost{opacity:.92}
+.mspot{fill:rgba(255,255,255,.85);stroke:#1d1f23;stroke-width:2;cursor:pointer}
+.mspot.on{fill:#ffd75e}
+.float{font:800 34px Sora,system-ui,sans-serif;fill:#fff;stroke:#1d1f23;stroke-width:5;paint-order:stroke;text-anchor:middle;animation:up 1.8s ease-out forwards}
+@keyframes up{0%{opacity:0;transform:translateY(10px)}15%{opacity:1}100%{opacity:0;transform:translateY(-40px)}}
+
+/* the tile in hand */
+.hand{display:flex;align-items:center;gap:12px;background:var(--paper);border-radius:16px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,.14)}
+.hand svg{width:64px;height:64px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.25);flex:none}
+.hand .txt{font-size:14px;font-weight:700;line-height:1.35}
+.hand .txt small{display:block;color:#6c6f75;font-weight:600;font-size:12px}
+.status{text-align:center;font-weight:800;font-size:15px;color:#fff;text-shadow:0 1px 3px rgba(60,30,0,.5)}
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:12;padding:10px 12px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,rgba(60,35,10,.55) 30%);display:flex;gap:8px;justify-content:center}
+.actions:empty{display:none}
+.actions .btn{flex:1;max-width:200px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.minor{display:flex;justify-content:center;gap:8px}
+.minor button,.minor a{border:none;background:rgba(255,255,255,.7);border-radius:999px;padding:7px 12px;font:inherit;font-size:12px;font-weight:700;color:var(--ink);text-decoration:none}
+.overlay{position:fixed;inset:0;z-index:40;background:rgba(10,12,16,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+.overlay .in{background:var(--paper);border-radius:22px;padding:22px;max-width:360px;width:100%;text-align:center;display:grid;gap:10px}
+.overlay .big{font-size:46px}
+.final{display:grid;gap:6px;text-align:left}
+.final .r{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;background:#f3f3f1;border-radius:12px;padding:8px 10px;font-weight:700;font-size:14px}
+.final .r small{display:block;color:#6c6f75;font-size:11px;font-weight:600}
+.final .r b{font-size:18px}
+#toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+</style>
+<script src="../perfil.js"></script>
+<script src="../ayuda.js"></script>
+<script src="../maquina.js"></script>
+</head>
+<body>
+<header>
+  <a class="back" id="back" href="../" aria-label="Volver al menú de juegos">‹</a>
+  <span class="logo">COMARCA</span><span class="sp"></span>
+  <span class="pill" id="pill"></span>
+  <button class="gear" aria-label="Cómo jugar" onclick="Ayuda.open('comarca')" style="font-size:19px">?</button>
+  <button class="gear" aria-label="Tu perfil" onclick="Perfil.open()">⚙</button>
+</header>
+<main id="app"></main>
+<div class="actions" id="actions"></div>
+<div id="toast"></div>
+<script type="module">
+import * as G from "./rules.js";
+import * as AI from "./ai.js";
+import { tileArt, meepleArt } from "./art.js";
+const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
+const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); }));
+function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+const me = Object.assign({ name: "", pid: null, pkey: null }, load("juegos-yo") || {});
+if (!me.pid) { me.pid = uid(); me.pkey = uid() + uid(); }
+store("juegos-yo", me);
+document.addEventListener("perfil-cambio", (e) => { if (e.detail.name) me.name = e.detail.name; });
+const keepHost = () => { const m = location.hash.match(/anfitrion=[A-Za-z0-9_-]{8,64}/); return m ? "&" + m[0] : ""; };
+(() => { const k = keepHost(); if (k) $("#back").href = "../#" + k.slice(1); })();
+let toastT;
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600); }
+const pill = (t) => ($("#pill").textContent = t);
+let sb = null;
+const client = () => (sb || (window.supabase && (sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } }))));
+
+/* ---------- state ---------- */
+let mode = null, code = null, game = null, version = -1, lastSig = "", mySeat = -1, S = null, busy = false, cpuT = null;
+let localCount = 2, cpu = 0;           // cpu: the machines' level; you are seat 0
+let bag = [];                          // local games: the tiles still to come
+let pick = null;                       // your move in progress: { x, y, r, rots, f, placed }
+let view = null;                       // the camera: { cx, cy, z } (tile units, pixels per tile)
+let seenEvents = "";
+const codeFromHash = () => { const m = location.hash.match(/(?:^#|&)c=([A-Z0-9]{4,10})/); return m ? m[1] : null; };
+const seatName = (i) => (mode === "local" ? (cpu ? (i === 0 ? me.name || "Tú" : G.COLOR_NAMES[i] + " 🤖") : S.players[i].name) : (game && game.seat_names[i]) || G.COLOR_NAMES[i]);
+const myTurn = () => S && S.phase === "play" && (mode === "local" ? !cpu || S.turn === 0 : S.turn === mySeat);
+const isCpu = (i) => mode === "local" && cpu && i !== 0;
+
+/* ---------- start ---------- */
+function renderStart() {
+  mode = null; pill("Elige cómo jugar"); $("#actions").innerHTML = "";
+  const note = () => "Tú y " + (localCount - 1) + (localCount === 2 ? " máquina" : " máquinas") + ", según el número de jugadores de arriba.";
+  $("#app").innerHTML = `<section class="panel stack">
+      <h2>Comarca</h2>
+      <p class="muted">Arma la comarca loseta a loseta: ciudades, caminos, ermitas y campos. De 2 a 5 jugadores.</p>
+      <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
+      <div id="open"></div>
+      <button class="btn primary" id="online">Crear mesa nueva</button>
+      <div><label class="lbl">En este teléfono</label>
+        <div class="count" style="grid-template-columns:repeat(4,1fr)">${[2, 3, 4, 5].map((n) => `<button class="btn ${n === localCount ? "on" : ""}" data-n="${n}">${n}</button>`).join("")}</div></div>
+      <button class="btn" id="local">Jugar en este teléfono</button>
+      <div id="cpubox">${Maquina.html({ note: note() })}</div>
+      <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
+        <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: K7MP2Q" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
+    </section>
+    <section class="panel rules"><b>Cómo se juega</b><ul>
+      <li>En tu turno sacas una loseta y la pones junto a otras, calzando los bordes: ciudad con ciudad, camino con camino, pasto con pasto.</li>
+      <li>Después puedes dejar uno de tus 7 aldeanos en esa loseta: en la ciudad, el camino, la ermita o el pasto, si nadie más está ya en esa parte.</li>
+      <li>Al cerrarse un camino (1 punto por loseta), una ciudad (2 por loseta y 2 por escudo) o una ermita rodeada (9), quien tiene más aldeanos ahí gana los puntos y los aldeanos vuelven.</li>
+      <li>Al final, lo incompleto vale la mitad y cada aldeano en un pasto da 3 puntos por cada ciudad completa que toca ese pasto.</li></ul></section>`;
+  $("#online").onclick = () => { if (takeName()) createOnline(); };
+  const bindCpu = () => Maquina.bind($("#cpubox"), (lv) => { takeName(true); startLocal(lv); });
+  document.querySelectorAll("[data-n]").forEach((b) => b.onclick = () => { localCount = +b.dataset.n; document.querySelectorAll("[data-n]").forEach((x) => x.classList.toggle("on", x === b)); $("#cpubox").innerHTML = Maquina.html({ note: note() }); bindCpu(); });
+  $("#local").onclick = () => { takeName(true); startLocal(0); };
+  bindCpu();
+  const goCode = () => {
+    const c = ($("#cod").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!/^[A-Z0-9]{4,10}$/.test(c)) return toast("Escribe el código de la mesa (6 letras o números)");
+    if (!takeName()) return;
+    location.hash = "c=" + c + keepHost();
+  };
+  $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  listOpen();
+}
+function takeName(optional) {
+  const el = $("#nm"); if (!el) return true;
+  const v = (el.value || "").trim().slice(0, 24);
+  if (!v && !optional) { el.focus(); toast("Escribe tu nombre"); return false; }
+  if (v) { me.name = v; store("juegos-yo", Object.assign(load("juegos-yo") || {}, me)); }
+  return true;
+}
+async function delTable(id) {
+  if (!client()) return false;
+  const { data, error } = await sb.rpc("comarca_delete", { p_id: id, p_player: me.pid, p_key: me.pkey });
+  return !error && data === true;
+}
+let openT = null;
+async function listOpen() {
+  clearTimeout(openT);
+  const box = $("#open"); if (!box || mode || !client()) return;
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString(), fresh = Date.now() - 30 * 60 * 1000;
+  const { data } = await sb.from("comarca_games").select("id,host_id,seat_ids,seat_names,updated_at,phase:state->>phase").gt("updated_at", since).order("updated_at", { ascending: false }).limit(40);
+  if (!$("#open") || mode) return;
+  const hidden = load("juegos-ocultas") || [];
+  const all = data || [];
+  const mine = all.filter((r) => r.seat_ids.includes(me.pid) && r.phase !== "over" && !hidden.includes(r.id)).slice(0, 4);
+  const rows = all.filter((r) => r.phase === "lobby" && !r.seat_ids.includes(me.pid) && r.seat_ids.length < 5 && Date.parse(r.updated_at) > fresh && !hidden.includes(r.id));
+  box.innerHTML = (mine.length ? `<label class="lbl">Tus partidas</label><div class="tables">${mine.map((r) => `
+      <div class="mrow"><button class="btn back2" data-join="${esc(r.id)}"><span>${r.phase === "lobby" ? "Volver a tu mesa" : "Volver a la partida"} · ${esc(r.id)}</span><small>${r.phase === "lobby" ? "esperando" : "en juego"} · ${r.seat_ids.length} jug.</small></button>
+      <button class="del" data-del="${esc(r.id)}" aria-label="Cerrar o quitar esta mesa">✕</button></div>`).join("")}</div>` : "")
+    + (rows.length ? `<label class="lbl">Mesas esperando jugadores</label><div class="tables">${rows.map((r) => `
+      <button class="btn tbl" data-join="${esc(r.id)}"><span>Unirse a la mesa de ${esc(r.seat_names[0] || "alguien")}</span><small>${r.seat_ids.length} ${r.seat_ids.length === 1 ? "persona" : "personas"}</small></button>`).join("")}</div>` : "")
+    + (mine.length || rows.length ? `<div class="or">o</div>` : "");
+  box.querySelectorAll("[data-join]").forEach((b) => b.onclick = () => { if (!takeName()) return; location.hash = "c=" + b.dataset.join + keepHost(); });
+  box.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    const id = b.dataset.del;
+    if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "¿Seguro?"; b.classList.add("sure"); return; }
+    if (await delTable(id)) toast("Mesa cerrada");
+    else { store("juegos-ocultas", [id].concat(load("juegos-ocultas") || []).slice(0, 40)); toast("La quitamos de tu lista"); }
+    listOpen();
+  });
+  openT = setTimeout(listOpen, 4000);
+}
+
+/* ---------- local game ---------- */
+function startLocal(lv) {
+  if (lv !== undefined) cpu = lv;
+  clearTimeout(cpuT);
+  mode = "local"; game = null; mySeat = cpu ? 0 : -1; pick = null; view = null;
+  const names = Array.from({ length: localCount }, (_, i) => (cpu ? (i === 0 ? me.name || "Tú" : G.COLOR_NAMES[i] + " 🤖") : G.COLOR_NAMES[i]));
+  if (!cpu && me.name) names[0] = me.name;
+  bag = G.newBag();
+  S = G.newGame(names);
+  drawLocal();
+  pill(cpu ? "🤖 " + Maquina.NAMES[cpu] : "Mismo teléfono");
+  render();
+}
+// local games: the next tile for the player whose turn it is; tiles that fit nowhere are put away
+function drawLocal() {
+  while (bag.length) {
+    const k = bag.pop();
+    if (G.placements(S.tiles, k).length) { S = { ...S, current: k, remaining: bag.length }; return; }
+    toast("Una loseta no cabía en ningún lado; se sacó otra");
+  }
+  S = G.finalScore({ ...S, current: null, remaining: 0 });
+}
+function cpuStep() {
+  clearTimeout(cpuT);
+  if (mode !== "local" || !S || S.phase !== "play" || !isCpu(S.turn)) return;
+  cpuT = setTimeout(() => {
+    if (mode !== "local" || S.phase !== "play" || !isCpu(S.turn)) return;
+    const mv = AI.choose(S, cpu);
+    if (!mv) { drawLocal(); return render(); }
+    finishTurn(G.play(S, mv.x, mv.y, mv.r, mv.f));
+  }, 900);
+}
+
+/* ---------- online ---------- */
+function newCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; for (let i = 0; i < 6; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+async function createOnline() {
+  if (!client()) return toast("Sin conexión");
+  for (let i = 0; i < 3; i++) {
+    const c = newCode();
+    const { error } = await sb.rpc("comarca_create", { p_id: c, p_player: me.pid, p_key: me.pkey, p_name: me.name });
+    if (!error) { location.hash = "c=" + c + keepHost(); return; }
+    if (!String(error.message || "").includes("duplicate")) return toast("No se pudo crear la mesa");
+  }
+}
+async function openOnline(c) {
+  mode = "online"; code = c;
+  if (!client()) { $("#app").innerHTML = `<section class="panel">Sin conexión. Revisa internet y vuelve a abrir el link.</section>`; return; }
+  if (!me.name) return renderJoin(c);
+  const { data, error } = await sb.rpc("comarca_join", { p_id: c, p_player: me.pid, p_key: me.pkey, p_name: me.name });
+  if (error) { $("#app").innerHTML = `<section class="panel stack"><h2>No encontré esa mesa</h2><p class="muted">Puede que la hayan cerrado. Crea una nueva.</p><a class="btn primary" href="./">Nueva mesa</a></section>`; return; }
+  mySeat = data;
+  await refresh(true);
+  subscribe();
+}
+function renderJoin(c) {
+  pill("Te invitaron");
+  $("#app").innerHTML = `<section class="panel stack"><h2>Te invitaron a jugar Comarca</h2>
+    <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Rodrigo"></div>
+    <button class="btn primary" id="go">Entrar</button></section>`;
+  const go = () => { if (takeName()) openOnline(c); };
+  $("#go").onclick = go; $("#nm").onkeydown = (e) => { if (e.key === "Enter") go(); };
+}
+async function refresh(force) {
+  const { data, error } = await sb.from("comarca_games").select("*").eq("id", code).maybeSingle();
+  if (error || !data) return;
+  const sig = [data.version, data.seat_ids.join(), data.seat_names.join()].join("|");
+  if (!force && sig === lastSig) return;
+  lastSig = sig;
+  const prev = S;
+  game = data; S = data.state; version = data.version;
+  mySeat = data.seat_ids.indexOf(me.pid);
+  if (S.phase === "play" && S.players) S = { ...S, players: S.players.map((p, i) => ({ ...p, name: data.seat_names[i] || p.name })) };
+  if (!prev || (prev.tiles || []).length !== (S.tiles || []).length) pick = null;
+  render();
+  if (S.phase === "over" && prev && prev.phase !== "over") setTimeout(celebrate, 600);
+}
+let watching = false;
+function subscribe() {
+  if (watching) return; watching = true;
+  sb.channel("comarca-" + code).on("postgres_changes", { event: "*", schema: "public", table: "comarca_games", filter: "id=eq." + code }, () => refresh()).subscribe();
+  setInterval(() => { if (!document.hidden && !busy) refresh(); }, 1500);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+}
+
+/* ---------- a turn ---------- */
+// after a tile and maybe a follower: next player, next tile, or the end
+async function finishTurn(next) {
+  pick = null;
+  if (mode === "local") {
+    S = { ...next, turn: (next.turn + 1) % next.n };
+    if (!bag.length) S = G.finalScore(S); else drawLocal();
+    render();
+    if (S.phase === "over") setTimeout(celebrate, 700);
+    return;
+  }
+  if (!S.remaining) next = G.finalScore(next);
+  await send(next, false);
+}
+async function send(next, discard) {
+  busy = true;
+  const { error } = await sb.rpc("comarca_move", { p_id: code, p_player: me.pid, p_key: me.pkey, p_state: next, p_version: version, p_discard: discard });
+  busy = false;
+  if (error) toast(String(error.message).includes("stale") ? "El tablero cambió; intenta de nuevo" : "No se pudo jugar");
+  await refresh(true);
+}
+function tapCell(x, y) {
+  if (!myTurn() || busy || (pick && pick.placed)) return;
+  const rots = [0, 1, 2, 3].filter((r) => G.fits(S.tiles, G.indexTiles(S.tiles), S.current, x, y, r));
+  if (!rots.length) return;
+  const keep = pick && rots.includes(pick.r) ? pick.r : rots[0];
+  pick = { x, y, r: keep, rots, f: null, placed: false };
+  render();
+}
+function rotate() {
+  if (!pick || pick.placed) return;
+  const i = pick.rots.indexOf(pick.r); pick.r = pick.rots[(i + 1) % pick.rots.length];
+  if (pick.rots.length === 1) toast("En este lugar cabe de una sola forma");
+  render();
+}
+function confirmTile() {
+  if (!pick) return;
+  pick.placed = true; pick.f = null;
+  const tiles = S.tiles.concat([{ k: S.current, x: pick.x, y: pick.y, r: pick.r }]);
+  pick.spots = S.players[S.turn].left > 0 ? G.meepleSpots(tiles, S.meeples) : [];
+  if (!pick.spots.length) return done();
+  render();
+}
+function done() {
+  if (!pick || busy) return;
+  finishTurn(G.play(S, pick.x, pick.y, pick.r, pick.f));
+}
+async function discard() {
+  if (mode === "local") { drawLocal(); return render(); }
+  await send(S, true);
+}
+
+/* ---------- drawing ---------- */
+const T = 100;
+function bounds() {
+  let x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+  for (const t of S.tiles) { x0 = Math.min(x0, t.x); x1 = Math.max(x1, t.x); y0 = Math.min(y0, t.y); y1 = Math.max(y1, t.y); }
+  return { x0, x1, y0, y1 };
+}
+function fit() {
+  const el = $("#view"); if (!el) return;
+  const b = bounds(), w = el.clientWidth, h = el.clientHeight;
+  const z = Math.max(34, Math.min(110, Math.min(w / (b.x1 - b.x0 + 3), h / (b.y1 - b.y0 + 3))));
+  view = { cx: (b.x0 + b.x1) / 2 + 0.5, cy: (b.y0 + b.y1) / 2 + 0.5, z };
+}
+function viewBox() {
+  const el = $("#view"); const w = el.clientWidth, h = el.clientHeight;
+  return [(view.cx - w / 2 / view.z) * T, (view.cy - h / 2 / view.z) * T, w / view.z * T, h / view.z * T].map((v) => v.toFixed(1)).join(" ");
+}
+const rotPoint = ([x, y], r) => { for (let i = 0; i < r; i++) [x, y] = [100 - y, x]; return [x, y]; };
+function tileSVG(t, extra = "") {
+  return `<g transform="translate(${t.x * T} ${t.y * T})${extra}"><g transform="rotate(${t.r * 90} 50 50)">${tileArt(t.k)}</g><rect width="100" height="100" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1"/></g>`;
+}
+function boardSVG() {
+  let s = "";
+  for (const t of S.tiles) s += tileSVG(t);
+  // where your tile fits
+  if (myTurn() && S.current && !(pick && pick.placed)) {
+    const spots = new Map();
+    for (const p of G.placements(S.tiles, S.current)) spots.set(p.x + "," + p.y, p);
+    for (const p of spots.values()) s += `<rect class="spot ${pick && pick.x === p.x && pick.y === p.y ? "sel" : ""}" data-x="${p.x}" data-y="${p.y}" x="${p.x * T + 4}" y="${p.y * T + 4}" width="92" height="92" rx="8"/>`;
+  }
+  if (pick) s += `<g class="ghost" pointer-events="none">${tileSVG({ k: S.current, x: pick.x, y: pick.y, r: pick.r })}</g>`;
+  if (S.last && !pick) s += `<rect class="lastt" x="${S.last.x * T + 2}" y="${S.last.y * T + 2}" width="96" height="96" rx="3" pointer-events="none"/>`;
+  // followers
+  for (const m of S.meeples) {
+    const t = S.tiles[m.t], f = G.TILES[t.k].f[m.f], [ax, ay] = rotPoint(f.a, t.r);
+    const lying = f.t === "field";
+    s += `<g transform="translate(${t.x * T + ax} ${t.y * T + ay})${lying ? " rotate(-90)" : ""} scale(1.35)" pointer-events="none">${meepleArt(G.COLORS[m.s])}</g>`;
+  }
+  // choosing a follower for the tile just placed
+  if (pick && pick.placed) {
+    const def = G.TILES[S.current].f;
+    for (const fi of pick.spots) {
+      const [ax, ay] = rotPoint(def[fi].a, pick.r), x = pick.x * T + ax, y = pick.y * T + ay;
+      s += pick.f === fi ? `<g transform="translate(${x} ${y}) scale(1.6)" data-f="${fi}">${meepleArt(G.COLORS[S.turn])}<circle r="12" fill="transparent"/></g>`
+        : `<circle class="mspot" data-f="${fi}" cx="${x}" cy="${y}" r="9"/>`;
+    }
+  }
+  // points just scored
+  for (const e of S.events || []) {
+    const ts = e.at.map((i) => S.tiles[i]).filter(Boolean); if (!ts.length) continue;
+    const cx = ts.reduce((a, t) => a + t.x, 0) / ts.length * T + 50, cy = ts.reduce((a, t) => a + t.y, 0) / ts.length * T + 50;
+    s += `<text class="float" x="${cx}" y="${cy}" style="fill:${G.COLORS[e.who[0]]}">+${e.pts}</text>`;
+  }
+  return s;
+}
+function playersHTML() {
+  return `<div class="who">${S.players.map((p, i) => `<span class="p ${S.phase === "play" && S.turn === i ? "turn" : ""}"><span class="dot" style="background:${G.COLORS[i]}"></span>${esc(seatName(i))}${i === mySeat && mode === "online" ? " (tú)" : ""} <b>${p.score}</b><small>♟${p.left}</small></span>`).join("")}</div>`;
+}
+function render() {
+  if (!S) return;
+  if (mode === "online" && S.phase === "lobby") return renderLobby();
+  if (window.Perfil) Perfil.turn(mode === "online" && myTurn());
+  const first = !$("#view");
+  if (mode === "online") pill("Mesa " + code);
+  let status = "", hand = "";
+  if (S.phase === "over") status = "Terminó la partida";
+  else if (myTurn()) {
+    const can = S.current && G.placements(S.tiles, S.current).length;
+    status = !S.current ? "Calculando el final…" : !can ? "Esta loseta no cabe en ningún lado" : pick && pick.placed ? (pick.spots.length ? "¿Dejas un aldeano? Toca un círculo" : "") : pick ? "Gira si quieres y confirma" : "Toca un lugar marcado para poner tu loseta";
+    if (mode === "local" && !cpu) status = esc(seatName(S.turn)) + ": " + status.charAt(0).toLowerCase() + status.slice(1);
+  } else status = isCpu(S.turn) ? esc(seatName(S.turn)) + " está jugando…" : "Turno de " + esc(seatName(S.turn));
+  if (S.current && S.phase === "play") hand = `<div class="hand"><svg viewBox="0 0 100 100"><g transform="rotate(${(pick ? pick.r : 0) * 90} 50 50)">${tileArt(S.current)}</g></svg>
+      <div class="txt">${myTurn() ? "Tu loseta" : "Loseta de " + esc(seatName(S.turn))}<small>Quedan ${S.remaining} en la bolsa</small></div></div>`;
+  if (first || !$("#svg")) {
+    $("#app").innerHTML = `<div id="top"></div>
+      <div class="view" id="view"><div class="bag" id="bagc"></div><div class="zoom"><button id="zin" aria-label="Acercar">+</button><button id="zout" aria-label="Alejar">−</button><button id="zfit" aria-label="Ver todo">⤢</button></div>
+        <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div id="low"></div>`;
+    bindView();
+    fit();
+  }
+  $("#top").innerHTML = playersHTML();
+  $("#bagc").textContent = "🧺 " + (S.remaining ?? 0);
+  $("#low").innerHTML = `<div class="status">${status}</div>${hand}
+    <div class="minor">${mode === "online" ? `<button id="copy">🔗 Invitar</button>` : ""}<a href="./${keepHost() ? "#" + keepHost().slice(1) : ""}">Salir</a></div>`;
+  const cp = $("#copy"); if (cp) cp.onclick = copyLink;
+  const svg = $("#svg");
+  svg.setAttribute("viewBox", viewBox());
+  // show the score floats once
+  const evSig = JSON.stringify(S.events || []) + (S.tiles || []).length;
+  const showEv = evSig !== seenEvents; seenEvents = evSig;
+  const saved = S.events; if (!showEv) S = { ...S, events: [] };
+  svg.innerHTML = boardSVG();
+  if (!showEv) S = { ...S, events: saved };
+  if (showEv) for (const e of S.events || []) toast(e.who.map(seatName).join(" y ") + " +" + e.pts + " por " + ({ city: "la ciudad", road: "el camino", cloister: "la ermita", field: "el pasto" }[e.t]));
+  // the buttons at the bottom
+  let acts = "";
+  if (S.phase === "over") acts = mode === "local" || game.host_id === me.pid ? `<button class="btn gold" id="again">Jugar otra</button><button class="btn" id="res">Resultados</button>` : `<button class="btn" id="res">Resultados</button>`;
+  else if (myTurn() && S.current) {
+    const can = G.placements(S.tiles, S.current).length;
+    if (!can) acts = `<button class="btn gold" id="disc">Sacar otra loseta</button>`;
+    else if (pick && pick.placed) acts = `<button class="btn" id="back2">↶ Mover</button><button class="btn gold" id="ok">${pick.f != null ? "Listo" : "Sin aldeano"}</button>`;
+    else if (pick) acts = `<button class="btn" id="rot">⟳ Girar</button><button class="btn gold" id="put">Poner aquí</button>`;
+  }
+  $("#actions").innerHTML = acts;
+  const on = (id, f) => { const e = $("#" + id); if (e) e.onclick = f; };
+  on("rot", rotate); on("put", confirmTile); on("ok", done); on("disc", discard); on("again", again); on("res", celebrate);
+  on("back2", () => { pick.placed = false; pick.f = null; render(); });
+  if (mode === "online" && myTurn() && !S.current && !busy) finishTurn({ ...S, events: [] });
+  cpuStep();
+}
+
+/* ---------- moving around the board ---------- */
+function bindView() {
+  const el = $("#view"), svg = () => $("#svg");
+  const pts = new Map();
+  let start = null, moved = false;
+  const zoomAt = (f, px, py) => {
+    const r = el.getBoundingClientRect(), z = Math.max(22, Math.min(220, view.z * f));
+    const wx = view.cx + (px - r.left - r.width / 2) / view.z, wy = view.cy + (py - r.top - r.height / 2) / view.z;
+    view = { z, cx: wx - (px - r.left - r.width / 2) / z, cy: wy - (py - r.top - r.height / 2) / z };
+    svg().setAttribute("viewBox", viewBox());
+  };
+  el.addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".zoom")) return;
+    el.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, [e.clientX, e.clientY]);
+    start = { cx: view.cx, cy: view.cy, x: e.clientX, y: e.clientY, d: null, z: view.z }; moved = false;
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; start.d = Math.hypot(a[0] - b[0], a[1] - b[1]); start.mx = (a[0] + b[0]) / 2; start.my = (a[1] + b[1]) / 2; }
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!pts.has(e.pointerId) || !start) return;
+    pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 2 && start.d) {
+      const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      moved = true; view.z = start.z; zoomAt(d / start.d, start.mx, start.my); return;
+    }
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (Math.abs(dx) + Math.abs(dy) > 8) moved = true;
+    if (moved) { view.cx = start.cx - dx / view.z; view.cy = start.cy - dy / view.z; svg().setAttribute("viewBox", viewBox()); }
+  });
+  const up = (e) => {
+    const was = pts.has(e.pointerId); pts.delete(e.pointerId);
+    if (!was) return;
+    if (pts.size === 1) { const [p] = pts.values(); start = { cx: view.cx, cy: view.cy, x: p[0], y: p[1], z: view.z }; moved = true; return; }
+    if (moved || e.type === "pointercancel") return;
+    // a tap: what is under the finger
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const f = hit && hit.closest("[data-f]");
+    if (f && pick && pick.placed) { const fi = +f.dataset.f; pick.f = pick.f === fi ? null : fi; return render(); }
+    const sp = hit && hit.closest("[data-x]");
+    if (sp) return tapCell(+sp.dataset.x, +sp.dataset.y);
+  };
+  el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  el.addEventListener("wheel", (e) => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY); }, { passive: false });
+  $("#zin").onclick = () => { const r = el.getBoundingClientRect(); zoomAt(1.3, r.left + r.width / 2, r.top + r.height / 2); };
+  $("#zout").onclick = () => { const r = el.getBoundingClientRect(); zoomAt(1 / 1.3, r.left + r.width / 2, r.top + r.height / 2); };
+  $("#zfit").onclick = () => { fit(); svg().setAttribute("viewBox", viewBox()); };
+}
+
+/* ---------- lobby and end ---------- */
+function renderLobby() {
+  const isHost = game.host_id === me.pid, n = game.seat_ids.length;
+  pill("Mesa " + code);
+  $("#app").innerHTML = `<section class="panel stack"><h2>Mesa ${code}</h2>
+      <div class="seats">${game.seat_names.map((nm, i) => `<div class="seat"><span class="dot" style="background:${G.COLORS[i]}"></span>${esc(nm)}${i === mySeat ? " (tú)" : ""}<span class="sp"></span><span class="muted">${i === 0 ? "creó la mesa" : ""}</span></div>`).join("")}</div>
+      <p class="muted">${n < 2 ? "Invita al menos a una persona (hasta 5)." : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(game.seat_names[0]) + " empiece."}</p>
+      <div class="two"><button class="btn primary" id="copy">🔗 Copiar link</button><a class="btn wa" target="_blank" rel="noopener" href="${waLink()}">WhatsApp</a></div>
+      ${isHost ? `<button class="btn" id="delt" style="background:none;color:#a3262f;min-height:36px">Borrar esta mesa</button>` : ""}
+    </section>`;
+  $("#copy").onclick = copyLink;
+  const dt = $("#delt"); if (dt) dt.onclick = async () => {
+    if (dt.dataset.sure !== "1") { dt.dataset.sure = "1"; dt.textContent = "¿Seguro? Toca otra vez para borrarla"; return; }
+    if (await delTable(code)) location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); else toast("No se pudo borrar");
+  };
+  $("#actions").innerHTML = isHost ? `<button class="btn gold" id="start" ${n < 2 ? "disabled" : ""}>Empezar partida (${n})</button>` : "";
+  const st = $("#start"); if (st) st.onclick = again;
+}
+async function again() {
+  document.querySelectorAll(".overlay").forEach((o) => o.remove());
+  if (mode === "local") return startLocal();
+  if (busy) return; busy = true;
+  const { error } = await sb.rpc("comarca_start", { p_id: code, p_player: me.pid, p_key: me.pkey, p_state: G.newGame(game.seat_names) });
+  busy = false;
+  if (error) toast("No se pudo empezar");
+  view = null; $("#app").innerHTML = "";
+  await refresh(true);
+}
+function celebrate() {
+  if (document.querySelector(".overlay") || !S || S.phase !== "over") return;
+  const order = S.players.map((p, i) => i).sort((a, b) => S.players[b].score - S.players[a].score);
+  const won = (S.winners || []).includes(mode === "local" ? (cpu ? 0 : -1) : mySeat);
+  const names = (S.winners || []).map(seatName);
+  const el = document.createElement("div"); el.className = "overlay";
+  el.innerHTML = `<div class="in"><div class="big">${won ? "🏆" : "🏰"}</div><h2>${won && names.length === 1 ? "¡Ganaste!" : names.length > 1 ? "Empate: " + names.map(esc).join(" y ") : "Ganó " + esc(names[0] || "")}</h2>
+    <div class="final">${order.map((i, k) => { const p = S.players[i], e = p.end || {}; return `<div class="r"><span class="dot" style="background:${G.COLORS[i]}"></span>
+      <span>${esc(seatName(i))}<small>Al final: caminos ${e.road || 0} · ciudades ${e.city || 0} · ermitas ${e.cloister || 0} · pastos ${e.field || 0}</small></span><b>${p.score}</b></div>`; }).join("")}</div>
+    <button class="btn primary" id="ok">Ver la comarca</button></div>`;
+  document.body.appendChild(el);
+  el.querySelector("#ok").onclick = () => { el.remove(); fit(); const s = $("#svg"); if (s) s.setAttribute("viewBox", viewBox()); };
+}
+
+/* ---------- invitations ---------- */
+const playLink = () => location.origin + location.pathname + "#c=" + code;
+const inviteText = () => "¿Jugamos Comarca? Entra aquí: " + playLink();
+const waLink = () => "https://wa.me/?text=" + encodeURIComponent(inviteText());
+async function copyLink() {
+  try { await navigator.clipboard.writeText(inviteText()); return toast("Link copiado; pégalo en WhatsApp"); } catch (e) {}
+  try { const ta = document.createElement("textarea"); ta.value = inviteText(); document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); toast("Link copiado"); }
+  catch (e) { toast("No se pudo copiar; usa WhatsApp"); }
+}
+
+/* ---------- boot ---------- */
+window.addEventListener("resize", () => { if ($("#svg") && view) $("#svg").setAttribute("viewBox", viewBox()); });
+const c0 = codeFromHash();
+if (c0) openOnline(c0); else renderStart();
+window.addEventListener("hashchange", () => { const c = codeFromHash(); if (c !== code) location.reload(); });
+</script>
+</body>
+</html>
