@@ -395,7 +395,13 @@ const playing = () => state.phase === "jugando";
 let state = { ...EMPTY };
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
-const GAME = "casa";
+// which table: #m=CODE (or the old host link, which is the table "casa"); with neither, the list of tables
+const ROOM = (() => { const h = location.hash; const m = h.match(/[#&]m=([a-z0-9]{6}|casa)/); if (m) return m[1]; if (/anfitrion=/.test(h)) return "casa"; return null; })();
+const GAME = ROOM || "casa", LOBBY = !ROOM;
+// the tables this phone created, with their host keys
+const MESAS = "bingo-mesas";
+const mesas = () => { try { return JSON.parse(localStorage.getItem(MESAS)) || {}; } catch (e) { return {}; } };
+const saveMesas = (o) => { try { localStorage.setItem(MESAS, JSON.stringify(o)); } catch (e) {} };
 let sb = null, live = false, hostKey = null, staleHost = false;
 const SAVED_HOST = "bingo-anfitrion";
 let offline = false;
@@ -860,6 +866,7 @@ $("#chatForm").onsubmit = (e) => { e.preventDefault(); sendChat($("#chatInput").
 document.querySelectorAll(".chat-quick [data-q]").forEach((b) => b.onclick = () => sendChat(b.dataset.q));
 
 function render() {
+  if (LOBBY) return renderLobby();
   netPill();
   const app = $("#app");
   if (offline && !localMode) { renderSignIn(); return; }
@@ -1001,7 +1008,7 @@ function prizeIcon(mode, t) {
   if (mode === "l90") return miniCard("l90", t === "linea" ? [9, 10, 11, 13, 15, 19, 21, 22, 25] .filter((i) => i >= 9 && i < 18) : t === "dos" ? [...Array(18).keys()] : [...Array(27).keys()], true);
   return miniCard("b75", t === "linea" ? R5(1) : SHAPES75[t], true);
 }
-const playerLink = () => location.origin + location.pathname;
+const playerLink = () => location.origin + location.pathname + "#m=" + GAME;
 const inviteText = () => "¡Juguemos bingo! Entra con tu nombre aquí: " + playerLink();
 const waLink = () => "https://wa.me/?text=" + encodeURIComponent(inviteText());
 async function copyInvite() {
@@ -1217,13 +1224,75 @@ async function checkUpdate() {
 setInterval(checkUpdate, 60000);
 setTimeout(checkUpdate, 3000);
 
+
+/* ---------- the tables: join one, create one as host, close the ones you created ---------- */
+let lobbyList = null, lobbySig = "";
+async function loadLobby() {
+  try {
+    const [g, p] = await Promise.all([
+      sb.from("bingo_games").select("id,host_name,phase,updated_at").order("updated_at", { ascending: false }).limit(30),
+      sb.from("bingo_players").select("game_id").gt("seen_at", new Date(Date.now() - ACTIVE_MS).toISOString()),
+    ]);
+    if (g.error) throw g.error;
+    const n = {}; for (const r of p.data || []) n[r.game_id] = (n[r.game_id] || 0) + 1;
+    const day = Date.now() - 24 * 3600e3, own = mesas();
+    lobbyList = (g.data || []).map((r) => ({ ...r, n: n[r.id] || 0 })).filter((r) => r.n > 0 || own[r.id] || new Date(r.updated_at).getTime() > day);
+  } catch (e) { lobbyList = lobbyList || []; }
+  renderLobby();
+}
+function renderLobby() {
+  $("#netPill").textContent = "Mesas"; $("#netPill").className = "pill";
+  const own = mesas();
+  // the old host key of the table "casa" also counts as yours
+  try { const k = localStorage.getItem(SAVED_HOST); if (k && !own.casa) { own.casa = k; saveMesas(own); } } catch (e) {}
+  const label = (g) => g.phase === "jugando" ? "jugando ahora" : g.phase === "terminado" ? "partida terminada" : "esperando partida";
+  const rows = lobbyList == null ? `<p class="muted">Buscando mesas…</p>` : !lobbyList.length ? `<p class="muted">No hay mesas abiertas. Crea una y comparte el link.</p>` :
+    lobbyList.map((g) => `<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid rgba(42,29,18,.1)">
+      <div style="flex:1;min-width:0"><b>${own[g.id] ? "Tu mesa" : "Mesa de " + esc(g.host_name || "alguien")}</b>${own[g.id] ? ` <small class="muted">anfitrión</small>` : ""}
+      <div class="muted" style="font-size:13px">${g.n} jugador${g.n === 1 ? "" : "es"} · ${label(g)}</div></div>
+      ${own[g.id] ? `<button class="btn" data-close="${g.id}">Cerrar</button>` : ""}
+      <a class="btn primary" href="#m=${g.id}" style="text-decoration:none;display:flex;align-items:center">${own[g.id] ? "Entrar" : "Unirme"}</a></div>`).join("");
+  const sig = rows + me.name;
+  if (sig === lobbySig && $("#lname")) return; lobbySig = sig;
+  const typed = $("#lname") ? $("#lname").value : me.name;
+  $("#app").innerHTML = `<section class="panel"><h2>Bingo</h2>
+      <label class="muted" for="lname" style="display:block;font-size:13px;margin:4px 0">Tu nombre</label>
+      <input id="lname" maxlength="24" value="${esc(typed || "")}" placeholder="Ej: Rodrigo" style="width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border-radius:12px;border:1.5px solid rgba(42,29,18,.25)">
+      <button class="btn primary" id="lnew" style="width:100%;margin-top:10px">Crear mesa nueva como anfitrión</button></section>
+    <section class="panel" style="margin-top:12px"><h2>Mesas abiertas</h2>${rows}</section>`;
+  $("#lnew").onclick = createTable;
+  document.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => closeTable(b)));
+}
+async function createTable() {
+  const name = ($("#lname").value || "").trim();
+  if (!name) return toast("Escribe tu nombre");
+  if (!sb) return toast("Sin conexión");
+  me.name = name.slice(0, 24); persist();
+  const abc = "abcdefghjkmnpqrstuvwxyz23456789", key = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789_-"[b % 58]).join("");
+  for (let i = 0; i < 3; i++) {
+    const code = Array.from({ length: 6 }, () => abc[Math.floor(Math.random() * abc.length)]).join("");
+    const { error } = await sb.rpc("bingo_create", { p_id: code, p_name: me.name, p_hostkey: key });
+    if (!error) { const o = mesas(); o[code] = key; saveMesas(o); location.hash = "m=" + code; return; }
+    if (!String(error.message || "").includes("duplicate")) return toast(String(error.message || "").includes("too many") ? "Hay demasiadas mesas abiertas; cierra alguna" : "No se pudo crear la mesa");
+  }
+}
+async function closeTable(b) {
+  if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "¿Seguro?"; return; }
+  const id = b.dataset.close, o = mesas();
+  const { error } = await sb.rpc("bingo_close", { p_id: id, p_hostkey: o[id] });
+  if (error) return toast("No se pudo cerrar");
+  delete o[id]; saveMesas(o); if (id === "casa") { try { localStorage.removeItem(SAVED_HOST); } catch (e) {} }
+  toast("Mesa cerrada"); lobbySig = ""; loadLobby();
+}
+
 /* ---------- boot ---------- */
 // the link decides the role: the host link (#anfitrion=<key>, or a home-screen icon made from it) makes you host;
 // the invitation link always makes you a player, even on a phone that was host before
 (() => {
   const m = location.hash.match(/anfitrion=([A-Za-z0-9_-]{8,64})/);
-  hostKey = m ? m[1] : null;
-  if (m) $("#backMenu").href = "../juegos/#anfitrion=" + m[1];
+  hostKey = m ? m[1] : mesas()[GAME] || null;
+  // inside a table the back arrow goes to the list of tables
+  if (!LOBBY) $("#backMenu").href = "./";
   try { localStorage.removeItem("bingo-host-key"); } catch (e) {}
 })();
 // opening the host link on a page that is already open only changes the #part: reload so the role is read again
@@ -1246,6 +1315,7 @@ async function loadAll() {
 (async () => {
   if (!window.supabase || !window.supabase.createClient) { stale = true; loaded = true; renderGame(); return; }
   sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+  if (LOBBY) { loadLobby(); setInterval(loadLobby, 8000); return; }
   if (hostKey) {
     let { data } = await sb.rpc("bingo_host_check", { p_game: GAME, p_key: hostKey });
     // an old icon: try the key this phone remembers from the last time it was host
