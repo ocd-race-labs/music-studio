@@ -187,6 +187,8 @@ header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../maquina.js"></script>
+<script src="../local.js"></script>
 <script src="../ayuda.js"></script>
 </head>
 <body>
@@ -202,6 +204,33 @@ header .gear{width:36px;flex:none}
 <div id="toast"></div>
 <script type="module">
 import * as O from "./engine.js";
+/* ---------- against the machine ---------- */
+function applyLocal(s, pi, action, b, rand) {
+  if (action === "start") return O.start(s, pi, rand);
+  if (action === "act") return O.act(s, pi, { action: b.move, amount: b.amount }, rand);
+  const e = new Error("Acción desconocida"); e.user = true; throw e;
+}
+// the machines at the table bet a little and play the basic strategy against the dealer's up card
+function botLocal(s, pi) {
+  if (s.phase !== "playing") return null;
+  const p = s.players[pi];
+  if (s.stage === "betting") return p.inRound ? null : { action: "act", move: "bet", amount: Math.min(p.chips, O.MIN_BET * (1 + Math.floor(Math.random() * 3))) };
+  if (s.stage !== "turns" || s.turn !== pi) return null;
+  const t = O.total(p.hand), up = s.dealer[0] ? O.total([s.dealer[0]]) : 10, soft = O.soft(p.hand);
+  const up_ = up === 1 ? 11 : up;
+  if (p.hand.length === 2 && p.chips >= p.bet && (t === 11 || (t === 10 && up_ < 10) || (t === 9 && up_ >= 3 && up_ <= 6))) return { action: "act", move: "double" };
+  let hit;
+  if (soft) hit = t <= 17 || (t === 18 && up_ >= 9);
+  else hit = t <= 11 || (t === 12 && (up_ <= 3 || up_ >= 7)) || (t >= 13 && t <= 16 && up_ >= 7);
+  return { action: "act", move: hit ? "hit" : "stand" };
+}
+function startMachine(lv) {
+  cpuLv = lv;
+  local = Local.table({ E: O, apply: applyLocal, bot: botLocal, level: lv, opponents: 2, me, onChange: (v) => show(v) });
+  code = "MAQ";
+  const v = local.call("start"); if (v && !v.error) show(v);
+}
+
 const GAME = "blackjack";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
@@ -221,9 +250,11 @@ let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2400); }
 const pill = (t) => ($("#pill").textContent = t);
 let sb = null;
+let local = null, cpuLv = 0;           // a table against the machine, only on this phone
 
 /* ---------- server ---------- */
 async function call(action, extra = {}) {
+  if (local) { const v = local.call(action, extra); if (v && v.error) { toast(v.error); return null; } return v; }
   try {
     const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY },
       body: JSON.stringify(Object.assign({ action, code, player: me.pid, key: me.pkey, name: me.name }, extra)) });
@@ -257,6 +288,7 @@ function renderStart() {
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="mine"></div>
       <div id="open"></div>
+      ${Maquina.html({ noLevels: true, note: "Tú y 2 máquinas contra la banca, en este teléfono." })}
       <button class="btn primary" id="create">Crear mesa nueva</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: 3WFVTE" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
@@ -279,6 +311,7 @@ function renderStart() {
     location.hash = "m=" + c + keepHost();
   };
   $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  Maquina.bind($("#app"), (lv) => { if (takeName()) startMachine(lv); });
   listMine();
   listOpen();
 }
@@ -382,7 +415,7 @@ async function poll() {
 
 /* ---------- render ---------- */
 function show(v) {
-  if (code && (!V || V.code !== v.code)) remember(code);
+  if (code && !local && (!V || V.code !== v.code)) remember(code);
   const was = V;
   V = v; lastVersion = v.version;
   if (V.phase === "lobby") return renderLobby();
@@ -390,7 +423,7 @@ function show(v) {
 }
 function renderLobby() {
   const isHost = V.players[V.me].host;
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   $("#app").innerHTML = `<section class="panel stack"><h2>Mesa ${code}</h2>
       <div class="plist">${V.players.map((p, i) => `<div><span>${esc(p.name)}${i === V.me ? " (tú)" : ""}</span><span class="muted">${p.host ? "creó la mesa" : ""}</span></div>`).join("")}</div>
       <p class="muted">${false ? "" : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(V.players.find((p) => p.host).name) + " empiece."}</p>
@@ -430,7 +463,7 @@ function renderTable(was) {
   const me = V.players[V.me], playing = V.phase === "playing", betting = V.stage === "betting";
   const myTurn = playing && V.stage === "turns" && V.turn === V.me;
   if (window.Perfil) Perfil.turn(myTurn || (betting && !me.inRound));
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   // keep the finished hand on the table, faded, until the next deal
   if (V.stage === "result") lastRound = { dealer: V.dealer, dealerTotal: V.dealerTotal, players: V.players.map((p) => ({ hand: p.hand, total: p.total, outcome: p.outcome, paid: p.paid, bet: p.bet })) };
   if (!betting) stake = [];

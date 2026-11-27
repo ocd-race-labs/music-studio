@@ -170,6 +170,8 @@ header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../maquina.js"></script>
+<script src="../local.js"></script>
 <script src="../ayuda.js"></script>
 </head>
 <body>
@@ -185,6 +187,38 @@ header .gear{width:36px;flex:none}
 <div id="toast"></div>
 <script type="module">
 import * as O from "./engine.js";
+/* ---------- against the machine ---------- */
+function applyLocal(s, pi, action, b, rand) {
+  switch (action) {
+    case "start": O.start(s, pi, rand); break;
+    case "play": O.play(s, pi, String(b.card)); break;
+    case "next": O.next(s, pi, rand); break;
+    default: { const e = new Error("Acción desconocida"); e.user = true; throw e; }
+  }
+}
+// easy plays at random; medium wins a trick worth taking as cheaply as it can and otherwise throws its least valuable card;
+// hard also keeps trumps for tricks worth 10 or more and leads with cards that give little away
+function botLocal(s, pi, lv) {
+  if (s.phase !== "playing" || s.turn !== pi) return null;
+  const hand = s.players[pi].hand, T = s.trumpSuit;
+  if (lv <= 1) return { action: "play", card: hand[Math.floor(Math.random() * hand.length)] };
+  const cost = (c) => O.points(c) * 2 + (O.suitOf(c) === T ? (lv >= 3 ? 9 : 4) : 0) + O.numOf(c) / 20;
+  const cheapest = (cs) => cs.slice().sort((a, b) => cost(a) - cost(b))[0];
+  if (!s.trick.length) return { action: "play", card: cheapest(hand) };
+  const pts = s.trick.reduce((a, t) => a + O.points(t.c), 0);
+  const winners = hand.filter((c) => O.trickWinner(s.trick.concat([{ p: pi, c }]), T) === pi);
+  const worth = lv >= 3 ? 10 : 2;
+  const cheapWin = winners.filter((c) => O.suitOf(c) !== T || pts >= worth);
+  if (cheapWin.length && (pts > 0 || winners.some((c) => O.suitOf(c) !== T))) return { action: "play", card: cheapest(cheapWin) };
+  return { action: "play", card: cheapest(hand) };
+}
+function startMachine(lv) {
+  cpuLv = lv;
+  local = Local.table({ E: O, apply: applyLocal, bot: botLocal, level: lv, opponents: 1, me, onChange: (v) => show(v) });
+  code = "MAQ";
+  const v = local.call("start"); if (v && !v.error) show(v);
+}
+
 const GAME = "brisca";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
@@ -204,9 +238,11 @@ let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2400); }
 const pill = (t) => ($("#pill").textContent = t);
 let sb = null;
+let local = null, cpuLv = 0;           // a table against the machine, only on this phone
 
 /* ---------- server ---------- */
 async function call(action, extra = {}) {
+  if (local) { const v = local.call(action, extra); if (v && v.error) { toast(v.error); return null; } return v; }
   try {
     const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY },
       body: JSON.stringify(Object.assign({ action, code, player: me.pid, key: me.pkey, name: me.name }, extra)) });
@@ -245,6 +281,7 @@ function renderStart() {
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="mine"></div>
       <div id="open"></div>
+      ${Maquina.html({ note: "Juegas contra la máquina en este teléfono." })}
       <button class="btn primary" id="create">Crear mesa nueva</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: 3WFVTE" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
@@ -267,6 +304,7 @@ function renderStart() {
     location.hash = "m=" + c + keepHost();
   };
   $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  Maquina.bind($("#app"), (lv) => { if (takeName()) startMachine(lv); });
   listMine();
   listOpen();
 }
@@ -370,7 +408,7 @@ async function poll() {
 
 /* ---------- render ---------- */
 function show(v) {
-  if (code && (!V || V.code !== v.code)) remember(code);
+  if (code && !local && (!V || V.code !== v.code)) remember(code);
   const was = V;
   V = v; lastVersion = v.version;
   if (V.phase === "lobby") return renderLobby();
@@ -378,7 +416,7 @@ function show(v) {
 }
 function renderLobby() {
   const isHost = V.players[V.me].host;
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   $("#app").innerHTML = `<section class="panel stack"><h2>Mesa ${code}</h2>
       <div class="plist">${V.players.map((p, i) => `<div><span>${esc(p.name)}${i === V.me ? " (tú)" : ""}</span><span class="muted">${p.host ? "creó la mesa" : ""}</span></div>`).join("")}</div>
       <p class="muted">${V.players.length < 2 ? "Invita al menos a una persona." : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(V.players.find((p) => p.host).name) + " empiece."}</p>
@@ -398,7 +436,7 @@ const teamName = (i) => (V.teams ? (i % 2 === 0 ? "Pareja 1" : "Pareja 2") : "")
 function renderTable(was) {
   const mine = V.players[V.me], playing = V.phase === "playing", myTurn = playing && V.turn === V.me;
   if (window.Perfil) Perfil.turn(myTurn);
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   const hand = sortHand(mine.hand || []);
   // a finished trick stays on view for a moment before the table clears
   const LT = V.lastTrick, ltKey = LT ? JSON.stringify(LT.cards) : "";

@@ -131,6 +131,8 @@ header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../maquina.js"></script>
+<script src="../local.js"></script>
 <script src="../ayuda.js"></script>
 </head>
 <body>
@@ -146,6 +148,128 @@ header .gear{width:36px;flex:none}
 <div id="toast"></div>
 <script type="module">
 import * as C from "./engine.js";
+/* ---------- against the machine ---------- */
+function applyLocal(s, pi, action, b, rand) {
+  switch (action) {
+    case "start": return C.start(s, pi, rand);
+    case "draw": return C.draw(s, pi, rand);
+    case "take": return C.takeDiscard(s, pi);
+    case "laydown": return C.laydown(s, pi, b.groups);
+    case "add": return C.addTo(s, pi, +b.group, b.cards);
+    case "discard": return C.discard(s, pi, String(b.card));
+    case "next": return C.nextRound(s, pi, rand);
+    case "rematch": return C.rematch(s, pi, rand);
+  }
+  const e = new Error("Acción desconocida"); e.user = true; throw e;
+}
+// every trío and escala the hand could lay down, smallest first and without jokers first
+function cariocaGroups(hand, real) {
+  const jk = hand.filter(C.isJoker), nat = hand.filter((c) => !C.isJoker(c)), trios = [], escalas = [];
+  const byRank = {};
+  for (const c of nat) (byRank[C.parse(c).r] = byRank[C.parse(c).r] || []).push(c);
+  for (const cs of Object.values(byRank)) {
+    for (let a = 0; a < cs.length; a++) for (let b = a + 1; b < cs.length; b++) {
+      for (let d = b + 1; d < cs.length; d++) trios.push([cs[a], cs[b], cs[d]]);
+      if (jk.length) trios.push([cs[a], cs[b], jk[0]]);
+    }
+  }
+  const L = real ? 13 : 4, maxJ = real ? 2 : 1;
+  for (const suit of C.SUITS) {
+    const byVal = new Map();
+    for (const c of nat) if (C.parse(c).s === suit) { const v = C.rankVal(C.parse(c).r); byVal.set(v, (byVal.get(v) || []).concat([c])); }
+    for (let st = 1; st <= 13; st++) {
+      const win = Array.from({ length: L }, (_, k) => ((st - 1 + k) % 13) + 1);
+      const miss = win.filter((v) => !byVal.has(v)).length;
+      if (miss > Math.min(maxJ, jk.length) || L - miss < 2) continue;
+      // with two decks a value may come twice: try the first copies and the second copies, so two escalas can share values
+      for (const pickLast of [false, true]) {
+        let j = 0; const g = win.map((v) => { const cs = byVal.get(v); return cs ? cs[pickLast ? cs.length - 1 : 0] : jk[j++]; });
+        if (!pickLast || g.some((c, k) => c !== (byVal.get(win[k]) || [])[0] && !C.isJoker(c))) escalas.push(g);
+      }
+    }
+  }
+  const nj = (g) => g.filter(C.isJoker).length;
+  trios.sort((a, b) => nj(a) - nj(b)); escalas.sort((a, b) => nj(a) - nj(b));
+  return { trios, escalas };
+}
+function cariocaContract(hand, R) {
+  const { trios, escalas } = cariocaGroups(hand, R.real);
+  const need = Array(R.t).fill("trio").concat(Array(R.e).fill("escala"));
+  let nodes = 0;
+  const go = (k, used, out, minT, minE) => {
+    if (++nodes > 20000) return null;
+    if (k === need.length) return out;
+    const type = need[k], list = type === "trio" ? trios : escalas, from = type === "trio" ? minT : minE;
+    for (let i = from; i < list.length; i++) {
+      const g = list[i];
+      if (g.some((c) => used.has(c))) continue;
+      if (!C.validGroup(type, g, R.real)) continue;
+      const u = new Set(used); g.forEach((c) => u.add(c));
+      const r = go(k + 1, u, out.concat([{ type, cards: g }]), type === "trio" ? i + 1 : minT, type === "escala" ? i + 1 : minE);
+      if (r) return r;
+    }
+    return null;
+  };
+  return go(0, new Set(), [], 0, 0);
+}
+// how much a card helps toward this round's contract
+function cariocaUse(c, hand, R) {
+  if (C.isJoker(c)) return 100;
+  const p = C.parse(c), v = C.rankVal(p.r);
+  if (R.real) {
+    // the escala real wants 13 different cards of one suit: keep the suit closest to it, one copy of each
+    const distinct = (su) => new Set(hand.filter((o) => !C.isJoker(o) && C.parse(o).s === su).map((o) => C.parse(o).r)).size;
+    const best = C.SUITS.slice().sort((a, b) => distinct(b) - distinct(a))[0];
+    const first = hand.find((o) => !C.isJoker(o) && C.parse(o).r === p.r && C.parse(o).s === p.s) === c;
+    return p.s === best && first ? 10 : 0;
+  }
+  let same = 0, run = 0;
+  for (const o of hand) {
+    if (o === c || C.isJoker(o)) continue;
+    const q = C.parse(o);
+    if (q.r === p.r) same++;
+    if (R.e && q.s === p.s) { const d = Math.min(Math.abs(C.rankVal(q.r) - v), 13 - Math.abs(C.rankVal(q.r) - v)); if (d && d <= (R.real ? 12 : 2)) run += d === 1 ? 2.5 : 1.5; }
+  }
+  // a fourth or fifth card of one rank adds little; escalas count more when the round asks for several
+  const u = (R.t ? Math.min(2, same) * 3 : 0) + run * (R.e ? 1 + 0.25 * R.e : 0);
+  return u;
+}
+// easy draws from the deck, lays down when it can and throws a fairly useless card;
+// medium also picks up a discard that helps; hard weighs the discard more closely, dumps its heaviest useless cards
+// and does not throw a card the next player could add to the table
+function botLocal(s, pi, lv) {
+  if (s.phase !== "playing" || s.turn !== pi) return null;
+  const p = s.players[pi], R = C.ROUNDS[s.round], top = s.discard[s.discard.length - 1];
+  if (!s.drew) {
+    if (top && lv >= 2) {
+      const after = p.hand.concat([top]);
+      if (!p.down && cariocaContract(after, R) && !cariocaContract(p.hand, R)) return { action: "take" };
+      if (p.down && s.table.some((g) => C.validGroup(g.type, g.cards.concat([top]), false) && !(g.type === "escala" && R.real))) return { action: "take" };
+      if (!p.down && cariocaUse(top, after, R) >= (lv >= 3 ? 4 : 5.5)) return { action: "take" };
+    }
+    return { action: "draw" };
+  }
+  if (!p.down) { const g = cariocaContract(p.hand, R); if (g) return { action: "laydown", groups: g }; }
+  if (p.down && !R.real && (lv >= 2 || Math.random() < 0.6)) {
+    for (const c of p.hand) for (let gi = 0; gi < s.table.length; gi++) {
+      const g = s.table[gi];
+      if (g.type === "escala" && R.real) continue;
+      if (C.validGroup(g.type, g.cards.concat([c]), false) && (p.hand.length > 1 || true)) return { action: "add", group: gi, cards: [c] };
+    }
+  }
+  const fitsTable = (c) => s.table.some((g) => C.validGroup(g.type, g.cards.concat([c]), false));
+  const scored = p.hand.map((c) => ({ c, u: cariocaUse(c, p.hand, R) * (p.down ? 0 : 1) - C.points(c) / (lv >= 3 ? 8 : 20) + (lv >= 3 && fitsTable(c) ? 6 : 0) + (C.isJoker(c) && !p.down ? 100 : 0) }));
+  scored.sort((a, b) => a.u - b.u);
+  const pick = lv <= 1 ? scored[Math.floor(Math.random() * Math.min(3, scored.length))] : scored[0];
+  return { action: "discard", card: pick.c };
+}
+function startMachine(lv) {
+  cpuLv = lv;
+  local = Local.table({ E: C, apply: applyLocal, bot: botLocal, level: lv, opponents: 2, me, onChange: (v) => show(v) });
+  code = "MAQ";
+  const v = local.call("start"); if (v && !v.error) show(v);
+}
+
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const FN = SB_URL + "/functions/v1/carioca";
@@ -164,9 +288,11 @@ let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2400); }
 const pill = (t) => ($("#pill").textContent = t);
 let sb = null;
+let local = null, cpuLv = 0;           // a table against the machine, only on this phone
 
 /* ---------- server ---------- */
 async function call(action, extra = {}) {
+  if (local) { const v = local.call(action, extra); if (v && v.error) { toast(v.error); return null; } return v; }
   try {
     const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY },
       body: JSON.stringify(Object.assign({ action, code, player: me.pid, key: me.pkey, name: me.name }, extra)) });
@@ -206,6 +332,7 @@ function renderStart() {
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="mine"></div>
       <div id="open"></div>
+      ${Maquina.html({ note: "Juegas contra 2 máquinas en este teléfono." })}
       <button class="btn primary" id="create">Crear mesa nueva</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: 3WFVTE" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
@@ -229,6 +356,7 @@ function renderStart() {
     location.hash = "m=" + c + keepHost();
   };
   $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  Maquina.bind($("#app"), (lv) => { if (takeName()) startMachine(lv); });
   listMine();
   listOpen();
 }
@@ -332,7 +460,7 @@ async function poll() {
 
 /* ---------- render ---------- */
 function show(v) {
-  if (code && (!V || V.code !== v.code)) remember(code);
+  if (code && !local && (!V || V.code !== v.code)) remember(code);
   const was = V;
   V = v; lastVersion = v.version;
   const mine = V.players[V.me];
@@ -346,7 +474,7 @@ function show(v) {
 }
 function renderLobby() {
   const isHost = V.players[V.me].host;
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   $("#app").innerHTML = `<section class="panel stack"><h2>Mesa ${code}</h2>
       <div class="plist">${V.players.map((p, i) => `<div><span>${esc(p.name)}${i === V.me ? " (tú)" : ""}</span><span class="muted">${p.host ? "creó la mesa" : ""}</span></div>`).join("")}</div>
       <p class="muted">${V.players.length < 2 ? "Invita al menos a una persona." : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(V.players.find((p) => p.host).name) + " empiece."}</p>
@@ -365,7 +493,7 @@ function renderLobby() {
 function renderTable(was) {
   const R = C.ROUNDS[V.round], mine = V.players[V.me], myTurn = V.phase === "playing" && V.turn === V.me;
   if (window.Perfil) Perfil.turn(myTurn);
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   const pendingCards = new Set(pending.flatMap((g) => g.cards));
   const hand = sortHand((mine.hand || []).filter((c) => !pendingCards.has(c)));
   const fresh = was && was.players[V.me].hand ? new Set(hand.filter((c) => !was.players[V.me].hand.includes(c))) : new Set();

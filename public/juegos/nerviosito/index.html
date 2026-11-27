@@ -117,6 +117,8 @@ header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../maquina.js"></script>
+<script src="../local.js"></script>
 <script src="../ayuda.js"></script>
 </head>
 <body>
@@ -133,6 +135,52 @@ header .gear{width:36px;flex:none}
 <div id="toast"></div>
 <script type="module">
 import { SAY, RANKS, MAX_PLAYERS } from "./engine.js";
+import * as N from "./engine.js";
+/* ---------- against the machine ---------- */
+function applyLocal(s, pi, action, b, rand) {
+  const now = Date.now();
+  switch (action) {
+    case "start": return N.start(s, pi, rand);
+    case "flip": return N.flip(s, pi, now);
+    case "slap": return N.slap(s, pi, now);
+    case "tick": return N.tick(s, now);
+  }
+  const e = new Error("Acción desconocida"); e.user = true; throw e;
+}
+// the machines flip in their turn; their hand on the table is timed apart, by how quick each level is
+function botLocal(s, pi) {
+  if (s.phase !== "playing" || s.window || s.turn !== pi) return null;
+  return s.players[pi].pile.length ? { action: "flip" } : null;
+}
+const REACT = { 1: [900, 2100, 0.12], 2: [550, 1300, 0.04], 3: [300, 800, 0] }; // fastest, slowest (ms), chance of missing it
+let slapFor = null;
+function machineSlaps() {
+  const s = local.s, w = s.window;
+  if (!w || slapFor === w.opened) return;
+  slapFor = w.opened;
+  const [lo, hi, miss] = REACT[cpuLv] || REACT[2];
+  for (let pi = 1; pi < s.players.length; pi++) {
+    if (Math.random() < miss) continue;
+    setTimeout(() => {
+      if (!local || local.s.window !== w || w.slaps.includes(pi)) return;
+      applyLocal(local.s, pi, "slap"); local.s.version++; local.show(); local.step();
+    }, lo + Math.random() * (hi - lo));
+  }
+  setTimeout(() => {
+    if (!local || local.s.window !== w) return;
+    applyLocal(local.s, 0, "tick"); local.s.version++; local.show(); local.step();
+  }, w.deadline - Date.now() + 80);
+}
+function startMachine(lv) {
+  cpuLv = lv;
+  local = Local.table({ E: N, apply: applyLocal, bot: botLocal, level: lv, opponents: 2, me, pace: 1000,
+    view: (s) => N.publicView(s, Date.now()), onChange: (v) => { show(v); machineSlaps(); } });
+  const call0 = local.call;
+  local.call = (a, e) => { const v = call0(a, e); setTimeout(machineSlaps, 0); return v; };
+  code = "MAQ";
+  const v = local.call("start"); if (v && !v.error) show(v);
+}
+
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const FN = SB_URL + "/functions/v1/nerviosito";
@@ -152,10 +200,12 @@ let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600); }
 const pill = (t) => ($("#pill").textContent = t);
 let sb = null;
+let local = null, cpuLv = 0;           // a table against the machine, only on this phone
 const client = () => (sb || (window.supabase && (sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } }))));
 
 /* ---------- server ---------- */
 async function call(action, extra = {}) {
+  if (local) { const v = local.call(action, extra); if (v && v.error) { toast(v.error); return null; } return v; }
   try {
     const t0 = Date.now();
     const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY },
@@ -191,6 +241,7 @@ function renderStart() {
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="mine"></div>
       <div id="open"></div>
+      ${Maquina.html({ note: "Juegas contra 2 máquinas en este teléfono. Fácil, medio o difícil cambia qué tan rápido ponen la mano." })}
       <button class="btn primary" id="create">Crear mesa nueva</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: VY7AU4" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
@@ -213,6 +264,7 @@ function renderStart() {
     location.hash = "m=" + c + keepHost();
   };
   $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  Maquina.bind($("#app"), (lv) => { if (takeName()) startMachine(lv); });
   listMine();
   listOpen();
 }
@@ -317,7 +369,7 @@ function show(v) {
 }
 function renderLobby() {
   const isHost = V.hostId === me.pid;
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   Perfil.turn(false);
   $("#app").innerHTML = `<section class="panel stack"><h2>Mesa ${code}</h2>
       <div class="plist">${V.players.map((p, i) => `<div><span>${esc(p.name)}${i === myIdx ? " (tú)" : ""}</span><span class="muted">${p.id === V.hostId ? "creó la mesa" : ""}</span></div>`).join("")}</div>
@@ -335,7 +387,7 @@ function renderLobby() {
   const s = $("#start"); if (s) s.onclick = () => act("start");
 }
 function renderTable() {
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   const P = V.players, mine = P[myIdx] || { count: 0 }, w = V.window;
   const playing = V.phase === "playing";
   const myTurn = playing && !w && V.turn === myIdx;

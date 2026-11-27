@@ -157,6 +157,8 @@ header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../maquina.js"></script>
+<script src="../local.js"></script>
 <script src="../ayuda.js"></script>
 </head>
 <body>
@@ -172,6 +174,43 @@ header .gear{width:36px;flex:none}
 <div id="toast"></div>
 <script type="module">
 import * as O from "./engine.js";
+/* ---------- against the machine ---------- */
+function applyLocal(s, pi, action, b, rand) {
+  switch (action) {
+    case "start": O.start(s, pi, rand); break;
+    case "play": O.play(s, pi, String(b.card), Array.isArray(b.take) ? b.take.map(String) : []); break;
+    case "next": O.next(s, pi, rand); break;
+    default: { const e = new Error("Acción desconocida"); e.user = true; throw e; }
+  }
+}
+// the machine weighs every card and every way of making 15: escobas, oros, sevens and the 7 de oros count most;
+// the hard level also avoids leaving the table at 10 or less (an easy escoba for the next player)
+function botLocal(s, pi, lv) {
+  if (s.phase !== "playing" || s.turn !== pi) return null;
+  const hand = s.players[pi].hand, opts = [];
+  for (const c of hand) {
+    for (const t of O.captures(c, s.table)) opts.push({ card: c, take: t });
+    opts.push({ card: c, take: [] });
+  }
+  const worth = (c) => 1 + (O.suitOf(c) === "O" ? 1.5 : 0) + (O.numOf(c) === 7 ? 2 : 0) + (c === "7-O" ? 6 : 0);
+  const score = (o) => {
+    const left = s.table.filter((c) => !o.take.includes(c)).concat(o.take.length ? [] : [o.card]);
+    let v = o.take.length ? o.take.concat([o.card]).reduce((a, c) => a + worth(c), 0) + (left.length ? 0 : 12) : -worth(o.card) * 0.6;
+    if (lv >= 3) { const t = O.sum(left); if (left.length && t >= 5 && t <= 14) v -= 7; }
+    return v;
+  };
+  let pick;
+  if (lv <= 1) { const caps = opts.filter((o) => o.take.length); const pool = caps.length && Math.random() < 0.7 ? caps : opts; pick = pool[Math.floor(Math.random() * pool.length)]; }
+  else pick = opts.slice().sort((a, b) => score(b) - score(a))[0];
+  return { action: "play", card: pick.card, take: pick.take };
+}
+function startMachine(lv) {
+  cpuLv = lv;
+  local = Local.table({ E: O, apply: applyLocal, bot: botLocal, level: lv, opponents: 1, me, onChange: (v) => show(v) });
+  code = "MAQ";
+  const v = local.call("start"); if (v && !v.error) show(v);
+}
+
 const GAME = "escoba";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
@@ -191,9 +230,11 @@ let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2400); }
 const pill = (t) => ($("#pill").textContent = t);
 let sb = null;
+let local = null, cpuLv = 0;           // a table against the machine, only on this phone
 
 /* ---------- server ---------- */
 async function call(action, extra = {}) {
+  if (local) { const v = local.call(action, extra); if (v && v.error) { toast(v.error); return null; } return v; }
   try {
     const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY },
       body: JSON.stringify(Object.assign({ action, code, player: me.pid, key: me.pkey, name: me.name }, extra)) });
@@ -232,6 +273,7 @@ function renderStart() {
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="mine"></div>
       <div id="open"></div>
+      ${Maquina.html({ note: "Juegas contra la máquina en este teléfono." })}
       <button class="btn primary" id="create">Crear mesa nueva</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: 3WFVTE" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
@@ -254,6 +296,7 @@ function renderStart() {
     location.hash = "m=" + c + keepHost();
   };
   $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  Maquina.bind($("#app"), (lv) => { if (takeName()) startMachine(lv); });
   listMine();
   listOpen();
 }
@@ -357,7 +400,7 @@ async function poll() {
 
 /* ---------- render ---------- */
 function show(v) {
-  if (code && (!V || V.code !== v.code)) remember(code);
+  if (code && !local && (!V || V.code !== v.code)) remember(code);
   const was = V;
   V = v; lastVersion = v.version;
   if (V.phase === "lobby") return renderLobby();
@@ -365,7 +408,7 @@ function show(v) {
 }
 function renderLobby() {
   const isHost = V.players[V.me].host;
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   $("#app").innerHTML = `<section class="panel stack"><h2>Mesa ${code}</h2>
       <div class="plist">${V.players.map((p, i) => `<div><span>${esc(p.name)}${i === V.me ? " (tú)" : ""}</span><span class="muted">${p.host ? "creó la mesa" : ""}</span></div>`).join("")}</div>
       <p class="muted">${V.players.length < 2 ? "Invita al menos a una persona." : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(V.players.find((p) => p.host).name) + " empiece."}</p>
@@ -384,7 +427,7 @@ function renderLobby() {
 function renderTable(was) {
   const mine = V.players[V.me], playing = V.phase === "playing", myTurn = playing && V.turn === V.me;
   if (window.Perfil) Perfil.turn(myTurn);
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   const hand = sortHand(mine.hand || []);
   // drop choices that no longer fit what is on the table
   if (!myTurn || (selCard && !hand.includes(selCard))) { selCard = null; selTable.clear(); }

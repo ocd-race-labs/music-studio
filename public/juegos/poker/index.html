@@ -162,6 +162,8 @@ header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
+<script src="../maquina.js"></script>
+<script src="../local.js"></script>
 <script src="../ayuda.js"></script>
 </head>
 <body>
@@ -177,6 +179,60 @@ header .gear{width:36px;flex:none}
 <div id="toast"></div>
 <script type="module">
 import * as O from "./engine.js";
+/* ---------- against the machine ---------- */
+function applyLocal(s, pi, action, b, rand) {
+  if (action === "start") return O.start(s, pi, rand);
+  if (action === "act") return O.act(s, pi, { action: b.move, amount: b.amount }, rand);
+  const e = new Error("Acción desconocida"); e.user = true; throw e;
+}
+// share of the pot this hand wins on average against the players still in, by dealing out the unknown cards many times
+function equity(s, pi, sims) {
+  const me = s.players[pi], rivals = s.players.filter((p, i) => i !== pi && !p.folded && !p.out).length;
+  const known = new Set(me.hole.concat(s.board));
+  const rest = O.buildDeck().filter((c) => !known.has(c));
+  let got = 0;
+  for (let k = 0; k < sims; k++) {
+    const d = rest.slice();
+    for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
+    let at = 0; const board = s.board.concat(d.slice(at, at + 5 - s.board.length)); at += 5 - s.board.length;
+    const mine = O.best(me.hole.concat(board));
+    let lose = false, ties = 0;
+    for (let r = 0; r < rivals; r++) { const c = O.cmp(O.best(d.slice(at, at + 2).concat(board)), mine); at += 2; if (c > 0) { lose = true; break; } if (c === 0) ties++; }
+    if (!lose) got += 1 / (1 + ties);
+  }
+  return got / sims;
+}
+// easy calls loosely and raises now and then at random; medium plays the odds of the pot;
+// hard reads the odds more closely, sizes its bets to the hand and bluffs once in a while
+function botLocal(s, pi, lv) {
+  if (s.stage === "result" && pi === 1 && s.players[0].out && s.phase === "playing") return { action: "act", move: "next" };
+  if (s.phase !== "playing" || s.stage !== "hand" || s.turn !== pi) return null;
+  const p = s.players[pi], toCall = Math.max(0, s.currentBet - p.bet), max = p.bet + p.chips;
+  const pot = s.players.reduce((a, q) => a + q.total, 0), minTo = s.currentBet + s.minRaise, r = Math.random();
+  const pass = () => ({ action: "act", move: toCall ? (toCall >= p.chips ? "allin" : "call") : "check" });
+  const raise = (to) => { to = Math.floor(Math.max(minTo, to) / 10) * 10; return to >= max ? { action: "act", move: "allin" } : { action: "act", move: "raise", amount: to }; };
+  const fold = () => (toCall ? { action: "act", move: "fold" } : { action: "act", move: "check" });
+  if (lv <= 1) {
+    if (r < 0.1) return raise(s.currentBet + s.minRaise * 2);
+    if (toCall > p.chips * 0.5 && r < 0.5) return fold();
+    return pass();
+  }
+  const eq = equity(s, pi, Math.max(20, Math.round((lv >= 3 ? 350 : 140) * (globalThis.__SIMF || 1))));
+  const odds = toCall / (pot + toCall || 1);
+  const live = s.players.filter((q) => !q.folded && !q.out).length;
+  const strong = lv >= 3 ? 1.6 / live : 1.8 / live;
+  if (eq > strong && r < (lv >= 3 ? 0.75 : 0.6)) return raise(s.currentBet + (lv >= 3 ? Math.round(pot * (0.5 + eq)) : pot * 0.6));
+  if (lv >= 3 && !toCall && r < 0.08) return raise(s.currentBet + pot * 0.5); // a bluff now and then
+  if (eq >= odds * (lv >= 3 ? 1.05 : 0.9) || !toCall) return pass();
+  return fold();
+}
+function startMachine(lv) {
+  cpuLv = lv;
+  local = Local.table({ E: O, apply: applyLocal, bot: botLocal, level: lv, opponents: 3, me, onChange: (v) => show(v) });
+  code = "MAQ";
+  const v = local.call("start"); if (v && !v.error) show(v);
+}
+
 const GAME = "poker";
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
@@ -196,9 +252,11 @@ let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2400); }
 const pill = (t) => ($("#pill").textContent = t);
 let sb = null;
+let local = null, cpuLv = 0;           // a table against the machine, only on this phone
 
 /* ---------- server ---------- */
 async function call(action, extra = {}) {
+  if (local) { const v = local.call(action, extra); if (v && v.error) { toast(v.error); return null; } return v; }
   try {
     const r = await fetch(FN, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY },
       body: JSON.stringify(Object.assign({ action, code, player: me.pid, key: me.pkey, name: me.name }, extra)) });
@@ -232,6 +290,7 @@ function renderStart() {
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="mine"></div>
       <div id="open"></div>
+      ${Maquina.html({ note: "Juegas contra 3 máquinas en este teléfono." })}
       <button class="btn primary" id="create">Crear mesa nueva</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: 3WFVTE" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
@@ -254,6 +313,7 @@ function renderStart() {
     location.hash = "m=" + c + keepHost();
   };
   $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
+  Maquina.bind($("#app"), (lv) => { if (takeName()) startMachine(lv); });
   listMine();
   listOpen();
 }
@@ -357,7 +417,7 @@ async function poll() {
 
 /* ---------- render ---------- */
 function show(v) {
-  if (code && (!V || V.code !== v.code)) remember(code);
+  if (code && !local && (!V || V.code !== v.code)) remember(code);
   const was = V;
   V = v; lastVersion = v.version;
   if (V.phase === "lobby") return renderLobby();
@@ -365,7 +425,7 @@ function show(v) {
 }
 function renderLobby() {
   const isHost = V.players[V.me].host;
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   $("#app").innerHTML = `<section class="panel stack"><h2>Mesa ${code}</h2>
       <div class="plist">${V.players.map((p, i) => `<div><span>${esc(p.name)}${i === V.me ? " (tú)" : ""}</span><span class="muted">${p.host ? "creó la mesa" : ""}</span></div>`).join("")}</div>
       <p class="muted">${V.players.length < 2 ? "Invita al menos a una persona." : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(V.players.find((p) => p.host).name) + " empiece."}</p>
@@ -385,7 +445,7 @@ let raiseTo = 0, raising = false;
 function renderTable(was) {
   const me = V.players[V.me], playing = V.phase === "playing", hand = V.stage === "hand", myTurn = playing && hand && V.turn === V.me;
   if (window.Perfil) Perfil.turn(myTurn);
-  pill("Mesa " + code);
+  pill(local ? "🤖 " + Maquina.label(cpuLv) : "Mesa " + code);
   if (!myTurn) raising = false;
   const R = V.result;
   const won = (i) => (R && R.winnings ? R.winnings[i] : 0);
