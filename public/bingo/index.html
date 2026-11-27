@@ -304,6 +304,9 @@ select,input[type=text]{font:inherit;padding:10px 12px;border-radius:10px;border
 .upd{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:40;border:none;border-radius:999px;padding:10px 16px;background:#24272d;color:#fff;font-weight:800;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
 @media(max-width:400px){header h1{font-size:22px;padding:2px 9px}.chat-fab{padding:0 10px}.chat-lbl{display:none}.pill{font-size:11px;padding:5px 8px}}
 .back{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.85);color:#2a1d12;text-decoration:none;font-size:22px;font-weight:800;flex:none}
+#admitBox{position:fixed;left:50%;top:76px;transform:translateX(-50%);z-index:60;display:grid;gap:8px;width:min(92vw,420px)}
+#admitBox .adm{background:#fffaf0;border-radius:14px;box-shadow:0 8px 28px rgba(42,29,18,.35);padding:12px 14px;display:flex;align-items:center;gap:8px;border:2px solid var(--red,#c8323a)}
+#admitBox .adm b{flex:1;font-size:15px}
 #toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;
   font-weight:700;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -403,6 +406,7 @@ const MESAS = "bingo-mesas";
 const mesas = () => { try { return JSON.parse(localStorage.getItem(MESAS)) || {}; } catch (e) { return {}; } };
 const saveMesas = (o) => { try { localStorage.setItem(MESAS, JSON.stringify(o)); } catch (e) {} };
 let sb = null, live = false, hostKey = null, staleHost = false;
+let admits = new Map(), admitsLoaded = false, admitBusy = new Set();
 const SAVED_HOST = "bingo-anfitrion";
 let offline = false;
 let isHost = false, localMode = false, loaded = false, stale = false;
@@ -643,6 +647,7 @@ function onPlayerRow(r) {
 function playersNow() {
   const byName = new Map();
   for (const p of playersHere()) {
+    if (admitsLoaded && admits.get(p.id) === "no") continue;
     if (p.round !== state.round) continue;
     const k = p.name.trim().toLowerCase();
     const cur0 = byName.get(k);
@@ -872,6 +877,8 @@ function render() {
   if (offline && !localMode) { renderSignIn(); return; }
   chatVisible();
   if (!me.name || !me.cards.length) { renderJoin(); return; }
+  // the host lets each player in: until then, a waiting screen
+  if (!isHost && !localMode && admitsLoaded && admits.get(me.pid) !== "ok") { renderPending(); return; }
   if (!app.querySelector("#sec-ball")) {
     app.innerHTML = `
       <div id="sec-winners"></div>
@@ -1165,6 +1172,7 @@ function renderCards() {
   el.querySelectorAll(".sq.num").forEach((c) => c.onclick = () => toggleMark(+c.dataset.i, +c.dataset.n, c));
 }
 function renderPlayers() {
+  if (typeof renderAdmitBox === "function" && sb) renderAdmitBox();
   const el = $("#sec-players");
   if (!el) return;
   if (localMode) { el.hidden = true; return; }
@@ -1236,7 +1244,9 @@ async function loadLobby() {
     if (g.error) throw g.error;
     const n = {}; for (const r of p.data || []) n[r.game_id] = (n[r.game_id] || 0) + 1;
     const day = Date.now() - 24 * 3600e3, own = mesas();
-    lobbyList = (g.data || []).map((r) => ({ ...r, n: n[r.id] || 0 })).filter((r) => r.n > 0 || own[r.id] || new Date(r.updated_at).getTime() > day);
+    const order = { espera: 0, terminado: 1, jugando: 2, linea: 2, bingo: 2 };
+    lobbyList = (g.data || []).map((r) => ({ ...r, n: n[r.id] || 0 })).filter((r) => r.n > 0 || own[r.id] || new Date(r.updated_at).getTime() > day)
+      .sort((a, b) => (order[a.phase] ?? 1) - (order[b.phase] ?? 1) || new Date(b.updated_at) - new Date(a.updated_at));
   } catch (e) { lobbyList = lobbyList || []; }
   renderLobby();
 }
@@ -1310,6 +1320,41 @@ async function loadAll() {
   if (!(isHost && inflight > 0)) applyState(clean(g.data));
   players = new Map((p.data || []).map((r) => [r.id, r]));
   renderPlayers(); netPill();
+  await loadAdmits();
+}
+/* ---------- the host accepts or turns away each player who joins ---------- */
+async function loadAdmits() {
+  const { data, error } = await sb.from("bingo_admits").select("player_id,status").eq("game_id", GAME);
+  if (error) return;
+  const before = admits.get(me.pid), first = !admitsLoaded;
+  admits = new Map((data || []).map((r) => [r.player_id, r.status])); admitsLoaded = true;
+  // the host is always in
+  if (isHost && me.pid && admits.get(me.pid) !== "ok") { admits.set(me.pid, "ok"); sb.rpc("bingo_admit", { p_game: GAME, p_key: hostKey, p_player: me.pid, p_ok: true }); }
+  if (!isHost && (first || before !== admits.get(me.pid))) { if (admits.get(me.pid) === "ok" && before !== undefined) toast("¡El anfitrión te aceptó!"); render(); }
+  renderAdmitBox(); renderPlayers();
+}
+function renderPending() {
+  const no = admits.get(me.pid) === "no";
+  const app = $("#app");
+  const html = `<section class="panel" style="text-align:center;padding:26px 18px"><h2>${no ? "No te aceptaron en esta mesa" : "Esperando al anfitrión"}</h2>
+    <p class="muted" style="margin:8px 0 16px">${no ? "El anfitrión no te aceptó. Puedes volver y unirte a otra mesa." : "Le avisamos al anfitrión que quieres unirte, " + esc(me.name) + ". Apenas te acepte, entras al juego."}</p>
+    <a class="btn ${no ? "primary" : ""}" href="./" style="text-decoration:none;display:inline-flex">Volver a las mesas</a></section>`;
+  if (app.dataset.pending !== html) { app.innerHTML = html; app.dataset.pending = html; }
+}
+function renderAdmitBox() {
+  let box = $("#admitBox");
+  if (!box) { box = document.createElement("div"); box.id = "admitBox"; document.body.appendChild(box); }
+  if (!isHost || !admitsLoaded) { box.innerHTML = ""; return; }
+  const wait = [...players.values()].filter((p) => p.id !== me.pid && !admits.has(p.id) && !admitBusy.has(p.id));
+  const html = wait.map((p) => `<div class="adm"><b>${esc(p.name)} quiere unirse</b><button class="btn primary" data-adm="${p.id}" data-ok="1">Aceptar</button><button class="btn" data-adm="${p.id}" data-ok="0">Rechazar</button></div>`).join("");
+  if (box.dataset.sig === html) return; box.dataset.sig = html; box.innerHTML = html;
+  box.querySelectorAll("[data-adm]").forEach((b) => (b.onclick = async () => {
+    const id = b.dataset.adm, ok = b.dataset.ok === "1"; admitBusy.add(id); renderAdmitBox();
+    const { error } = await sb.rpc("bingo_admit", { p_game: GAME, p_key: hostKey, p_player: id, p_ok: ok });
+    admitBusy.delete(id);
+    if (error) { toast("No se pudo"); renderAdmitBox(); return; }
+    admits.set(id, ok ? "ok" : "no"); toast(ok ? "Aceptado" : "Rechazado"); renderAdmitBox(); renderPlayers();
+  }));
 }
 
 (async () => {
@@ -1336,6 +1381,7 @@ async function loadAll() {
       if (pl.new && pl.new.id) applyState(clean(pl.new));
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "bingo_messages", filter: "game_id=eq." + GAME }, () => loadChat())
+    .on("postgres_changes", { event: "*", schema: "public", table: "bingo_admits", filter: "game_id=eq." + GAME }, () => loadAdmits())
     .on("postgres_changes", { event: "*", schema: "public", table: "bingo_players", filter: "game_id=eq." + GAME }, (pl) => {
       if (pl.eventType === "DELETE") { players.delete(pl.old && pl.old.id); renderPlayers(); return; }
       onPlayerRow(pl.new);
