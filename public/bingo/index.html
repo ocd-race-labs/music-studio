@@ -780,6 +780,9 @@ function netPill() {
   const n = playersNow().length;
   p.textContent = (isHost ? "Anfitrión" : "Jugador") + ` · ${n} en sala` + (stale ? " · sin conexión" : "");
   p.className = "pill" + (isHost ? " host" : "");
+  // a player who is really the host taps "Jugador" to enter the host key
+  p.style.cursor = isHost ? "" : "pointer";
+  p.onclick = isHost || !sb ? null : () => { staleHost = true; renderHost(); const el = $("#sec-host"); if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); const i = $("#h-key"); if (i) { try { i.value = localStorage.getItem(SAVED_HOST) || ""; } catch (e) {} } } };
 }
 
 /* ---------- render ---------- */
@@ -1020,8 +1023,8 @@ function renderHost() {
   if (!isHost && staleHost) {
     // the home-screen icon carries an old host key: let the host paste the new one once; this phone then remembers it
     el.hidden = false;
-    el.innerHTML = `<h2>Anfitrión <small>clave vencida</small></h2>
-      <p style="margin:0 0 10px">Este ícono tiene una clave de anfitrión antigua. Pega la clave nueva una vez y este teléfono la recordará.</p>
+    el.innerHTML = `<h2>Anfitrión <small>entrar con clave</small></h2>
+      <p style="margin:0 0 10px">Si eres el anfitrión, pega tu clave una vez y este teléfono la recordará.</p>
       <div style="display:flex;gap:8px"><input id="h-key" placeholder="Clave de anfitrión" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1;min-width:0;font:inherit;padding:10px 12px;border-radius:12px;border:1.5px solid rgba(42,29,18,.25)"><button class="btn primary" id="h-keyok">Entrar</button></div>`;
     $("#h-keyok").onclick = async () => {
       const k = ($("#h-key").value.match(/[A-Za-z0-9_-]{8,64}$/) || [""])[0];
