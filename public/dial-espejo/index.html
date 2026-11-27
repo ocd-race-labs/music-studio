@@ -1576,6 +1576,11 @@ html.band-hide .player{transform:translateY(calc(100% + 14px));opacity:0;pointer
 .np-meta .np-song{white-space:normal!important;overflow:hidden;height:calc(1.2em*2);display:flex;align-items:flex-start}
 .np-meta .np-song .mq-i{display:block;width:100%;white-space:normal;overflow-wrap:anywhere}
 .np-meta .np-song.mq-on{-webkit-mask:linear-gradient(180deg,#000 0,#000 82%,transparent);mask:linear-gradient(180deg,#000 0,#000 82%,transparent)}
+
+/* Pantalla de la radio: sin espacios vacíos bajo el título y bajo el álbum, para subir la fila de botones */
+.np-meta .np-song{height:auto!important;max-height:calc(1.2em*2)}
+.np-lkt{position:absolute;left:0;right:0;top:100%;margin-top:4px}
+.np-lrow:not(:has(.np-it:not([hidden]))){display:none}
 </style>
 </head>
 <body>
@@ -3793,7 +3798,7 @@ window.altShow=()=>show(view||"constelacion");
 <script>
 /* ===================== Dial Espejo · navegación, versión y Noticias ===================== */
 (function(){
-const APP_VERSION="2026-11-26b";
+const APP_VERSION="2026-11-27a";
 const SB="https://yfjaznujnvkqgdlbnviu.supabase.co";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmamF6bnVqbnZrcWdkbGJudml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MTQ0MzUsImV4cCI6MjA5NDM5MDQzNX0.MXqauoUi_6_VWWfjZEokpRVXg2cB8N5uo9nHbt5tXvM";
 const H={apikey:KEY,Authorization:"Bearer "+KEY};
