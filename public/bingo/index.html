@@ -396,7 +396,7 @@ let state = { ...EMPTY };
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 // which table: #m=CODE (or the old host link, which is the table "casa"); with neither, the list of tables
-const ROOM = (() => { const h = location.hash; const m = h.match(/[#&]m=([a-z0-9]{6}|casa)/); if (m) return m[1]; if (/anfitrion=/.test(h)) return "casa"; return null; })();
+const ROOM = (() => { const h = location.hash; const m = h.match(/[#&]m=([a-z0-9]{6}|casa)/); if (m) return m[1]; return null; })();
 const GAME = ROOM || "casa", LOBBY = !ROOM;
 // the tables this phone created, with their host keys
 const MESAS = "bingo-mesas";
@@ -1315,7 +1315,11 @@ async function loadAll() {
 (async () => {
   if (!window.supabase || !window.supabase.createClient) { stale = true; loaded = true; renderGame(); return; }
   sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
-  if (LOBBY) { loadLobby(); setInterval(loadLobby, 8000); return; }
+  if (LOBBY) {
+    // the old host link (#anfitrion=…) now opens the list of tables: its key makes the table "casa" yours
+    if (hostKey) { const { data } = await sb.rpc("bingo_host_check", { p_game: "casa", p_key: hostKey }); if (data === true) { const o = mesas(); o.casa = hostKey; saveMesas(o); } }
+    loadLobby(); setInterval(loadLobby, 8000); return;
+  }
   if (hostKey) {
     let { data } = await sb.rpc("bingo_host_check", { p_game: GAME, p_key: hostKey });
     // an old icon: try the key this phone remembers from the last time it was host
