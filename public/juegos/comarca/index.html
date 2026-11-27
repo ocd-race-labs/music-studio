@@ -294,16 +294,26 @@ function drawLocal() {
   }
   S = G.finalScore({ ...S, current: null, remaining: 0 });
 }
+let cpuAt = 0;
 function cpuStep() {
   clearTimeout(cpuT);
   if (mode !== "local" || !S || S.phase !== "play" || !isCpu(S.turn)) return;
+  cpuAt = Date.now();
   cpuT = setTimeout(() => {
+    cpuAt = 0;
     if (mode !== "local" || S.phase !== "play" || !isCpu(S.turn)) return;
-    const mv = AI.choose(S, cpu);
+    let mv = null;
+    try { mv = AI.choose(S, cpu); } catch (e) { console.error(e); }
+    // if the machine's thinking fails, it still plays: the tile in any place that fits, without a villager
+    if (!mv) { const ps = S.current ? G.placements(S.tiles, S.current) : []; if (ps.length) mv = { ...ps[Math.floor(Math.random() * ps.length)], f: null, big: false }; }
     if (!mv) { drawLocal(); return render(); }
-    finishTurn(G.play(S, mv.x, mv.y, mv.r, mv.f, mv.big, mv.kind));
+    try { finishTurn(G.play(S, mv.x, mv.y, mv.r, mv.f, mv.big, mv.kind)); }
+    catch (e) { console.error(e); const ps = G.placements(S.tiles, S.current); if (ps.length) finishTurn(G.play(S, ps[0].x, ps[0].y, ps[0].r, null, false)); else { drawLocal(); render(); } }
   }, 900);
 }
+// a watchdog: if the phone paused the page (screen off, app in the background), the machine picks up its turn again
+setInterval(() => { if (mode === "local" && S && S.phase === "play" && isCpu(S.turn) && (!cpuAt || Date.now() - cpuAt > 4000)) cpuStep(); }, 2500);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && mode === "local") cpuStep(); });
 
 /* ---------- online ---------- */
 function newCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; for (let i = 0; i < 6; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
