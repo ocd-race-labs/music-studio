@@ -396,7 +396,8 @@ let state = { ...EMPTY };
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
 const SB_KEY = "sb_publishable_HyGsQ2i78GnWfRDUsW3ByQ_SQ6dCy_S";
 const GAME = "casa";
-let sb = null, live = false, hostKey = null;
+let sb = null, live = false, hostKey = null, staleHost = false;
+const SAVED_HOST = "bingo-anfitrion";
 let offline = false;
 let isHost = false, localMode = false, loaded = false, stale = false;
 let players = new Map();
@@ -1016,6 +1017,21 @@ function wireInvite() {
 }
 function renderHost() {
   const el = $("#sec-host");
+  if (!isHost && staleHost) {
+    // the home-screen icon carries an old host key: let the host paste the new one once; this phone then remembers it
+    el.hidden = false;
+    el.innerHTML = `<h2>Anfitrión <small>clave vencida</small></h2>
+      <p style="margin:0 0 10px">Este ícono tiene una clave de anfitrión antigua. Pega la clave nueva una vez y este teléfono la recordará.</p>
+      <div style="display:flex;gap:8px"><input id="h-key" placeholder="Clave de anfitrión" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1;min-width:0;font:inherit;padding:10px 12px;border-radius:12px;border:1.5px solid rgba(42,29,18,.25)"><button class="btn primary" id="h-keyok">Entrar</button></div>`;
+    $("#h-keyok").onclick = async () => {
+      const k = ($("#h-key").value.match(/[A-Za-z0-9_-]{8,64}$/) || [""])[0];
+      const { data } = k ? await sb.rpc("bingo_host_check", { p_game: GAME, p_key: k }) : { data: false };
+      if (data !== true) return toast("Esa clave no sirve");
+      try { localStorage.setItem(SAVED_HOST, k); } catch (e) {}
+      hostKey = k; isHost = true; staleHost = false; toast("Listo: eres el anfitrión"); render();
+    };
+    return;
+  }
   if (!isHost) { el.hidden = true; return; }
   el.hidden = false;
   const left = MODES[state.mode].max - state.drawn.length;
@@ -1228,8 +1244,11 @@ async function loadAll() {
   if (!window.supabase || !window.supabase.createClient) { stale = true; loaded = true; renderGame(); return; }
   sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
   if (hostKey) {
-    const { data } = await sb.rpc("bingo_host_check", { p_game: GAME, p_key: hostKey });
+    let { data } = await sb.rpc("bingo_host_check", { p_game: GAME, p_key: hostKey });
+    // an old icon: try the key this phone remembers from the last time it was host
+    if (data !== true) { let saved = null; try { saved = localStorage.getItem(SAVED_HOST); } catch (e) {} if (saved && saved !== hostKey) { const r = await sb.rpc("bingo_host_check", { p_game: GAME, p_key: saved }); if (r.data === true) { hostKey = saved; data = true; } } }
     isHost = data === true;
+    if (isHost) { try { localStorage.setItem(SAVED_HOST, hostKey); } catch (e) {} } else staleHost = true;
     // a home-screen icon saves the current address: make sure it is the host link on a host's phone
     if (!isHost) hostKey = null;
   }
