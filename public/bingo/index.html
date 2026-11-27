@@ -1207,6 +1207,8 @@ setTimeout(checkUpdate, 3000);
   if (m) $("#backMenu").href = "../juegos/#anfitrion=" + m[1];
   try { localStorage.removeItem("bingo-host-key"); } catch (e) {}
 })();
+// opening the host link on a page that is already open only changes the #part: reload so the role is read again
+addEventListener("hashchange", () => location.reload());
 render();
 
 async function loadAll() {
