@@ -308,7 +308,7 @@ function cpuStep() {
     // if the machine's thinking fails, it still plays: the tile in any place that fits, without a villager
     if (!mv) { const ps = S.current ? G.placements(S.tiles, S.current) : []; if (ps.length) mv = { ...ps[Math.floor(Math.random() * ps.length)], f: null, big: false }; }
     if (!mv) { drawLocal(); return render(); }
-    try { finishTurn(G.play(S, mv.x, mv.y, mv.r, mv.f, mv.big, mv.kind)); }
+    try { finishTurn(G.play(S, mv.x, mv.y, mv.r, mv.f, mv.big, mv.kind, mv.k)); }
     catch (e) { console.error(e); const ps = G.placements(S.tiles, S.current); if (ps.length) finishTurn(G.play(S, ps[0].x, ps[0].y, ps[0].r, null, false)); else { drawLocal(); render(); } }
   }, 900);
 }

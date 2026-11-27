@@ -316,6 +316,8 @@ export function abbeySpots(tiles) {
 // k: the tile to place, when it is not the one drawn (the abbey)
 export function play(s, x, y, r, fi, big, kind, k) {
   const seat = s.turn, placed = k || s.current;
+  // a drawn tile must match every side it touches; only the abbey goes in a closed hole regardless
+  if (placed !== ABBEY && !fits(s.tiles, indexTiles(s.tiles), placed, x, y, r)) { const e = new Error("Esa loseta no calza ahí"); e.user = true; throw e; }
   const tiles = s.tiles.concat([{ k: placed, x, y, r }]);
   const ti = tiles.length - 1;
   let meeples = s.meeples.slice();
