@@ -657,6 +657,7 @@ function renderLobby() {
       <p class="muted">${n < 2 ? "Invita al menos a una persona (hasta 5)." : isHost ? "Cuando estén todos, empieza." : "Esperando que " + esc(game.seat_names[0]) + " empiece."}</p>
       <div class="two"><button class="btn primary" id="copy">🔗 Copiar link</button><a class="btn wa" target="_blank" rel="noopener" href="${waLink()}">WhatsApp</a></div>
       ${isHost ? `<div><label class="lbl">Expansiones</label>${expsHTML()}</div>` : `<p class="muted">Quien creó la mesa elige las expansiones.</p>`}
+      ${isHost ? `<button class="btn gold" id="start" ${n < 2 ? "disabled" : ""}>${n < 2 ? "Empezar partida · falta otro jugador" : "Empezar partida (" + n + " jugadores)"}</button>` : ""}
       ${isHost ? `<button class="btn" id="delt" style="background:none;color:#a3262f;min-height:36px">Borrar esta mesa</button>` : ""}
     </section>`;
   $("#copy").onclick = copyLink;
@@ -665,7 +666,8 @@ function renderLobby() {
     if (dt.dataset.sure !== "1") { dt.dataset.sure = "1"; dt.textContent = "¿Seguro? Toca otra vez para borrarla"; return; }
     if (await delTable(code)) location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); else toast("No se pudo borrar");
   };
-  $("#actions").innerHTML = isHost ? `<button class="btn gold" id="start" ${n < 2 ? "disabled" : ""}>Empezar partida (${n})</button>` : "";
+  // the start button lives in the card, right under the options (at the bottom of a big screen it got lost)
+  $("#actions").innerHTML = "";
   const st = $("#start"); if (st) st.onclick = again;
 }
 async function again() {
