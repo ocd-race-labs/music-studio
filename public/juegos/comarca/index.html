@@ -171,6 +171,7 @@ function bindExps(root, after) {
 }
 const chosen = () => Object.fromEntries(G.EXPANSIONS.filter((x) => x.ready && exps[x.id]).map((x) => [x.id, true]));           // cpu: the machines' level; you are seat 0
 let bag = [];                          // local games: the tiles still to come
+let undoStack = [];                    // local games: the board before each of your moves
 let abbeyMode = false;                 // Abadía y alcalde: placing your abbey instead of the drawn tile
 const inHand = () => (abbeyMode ? G.ABBEY : S.current);
 const holes = () => G.abbeySpots(S.tiles);
@@ -279,7 +280,7 @@ function startLocal(lv) {
   const names = Array.from({ length: localCount }, (_, i) => (cpu ? (i === 0 ? me.name || "Tú" : G.COLOR_NAMES[i] + " 🤖") : G.COLOR_NAMES[i]));
   if (!cpu && me.name) names[0] = me.name;
   const ex = chosen();
-  bag = G.newBag(Math.random, ex);
+  bag = G.newBag(Math.random, ex); undoStack = [];
   S = G.newGame(names, ex);
   drawLocal();
   pill(cpu ? "🤖 " + Maquina.NAMES[cpu] : "Mismo teléfono");
@@ -374,6 +375,7 @@ async function finishTurn(next) {
   next = { ...next, bonus: !!next.again };
   if (next.again) toast("🔨 ¡Turno extra gracias al constructor!");
   if (mode === "local") {
+    snapshot();
     S = next.again ? next : { ...next, turn: (next.turn + 1) % next.n };
     // after an abbey the drawn tile stays for the next player
     if (next.abbey) { if (S.current && !G.placements(S.tiles, S.current).length) drawLocal(); }
@@ -432,8 +434,22 @@ function done() {
   finishTurn(G.play(S, pick.x, pick.y, pick.r, pick.f, pick.f != null && !kind && pick.big, kind, k));
 }
 async function discard() {
-  if (mode === "local") { drawLocal(); return render(); }
+  if (mode === "local") { snapshot(); drawLocal(); return render(); }
   await send(S, true);
+}
+
+// undo (local games only): back to just before your last move; the machine's answer goes back with it
+function snapshot() {
+  if (isCpu(S.turn)) return;
+  undoStack.push(JSON.parse(JSON.stringify({ S, bag })));
+  if (undoStack.length > 15) undoStack.shift();
+}
+function undo() {
+  const u = undoStack.pop(); if (!u) return;
+  clearTimeout(cpuT); cpuAt = 0;
+  S = u.S; bag = u.bag; pick = null; abbeyMode = false; landSig = "";
+  document.querySelectorAll(".overlay").forEach((o) => o.remove());
+  toast("Jugada deshecha"); render();
 }
 
 /* ---------- drawing ---------- */
@@ -507,12 +523,12 @@ const SAVE = "comarca-partida";
 function keepLocal() {
   if (mode !== "local" || !S) return;
   if (S.phase === "over") { try { localStorage.removeItem(SAVE); } catch (e) {} return; }
-  store(SAVE, { S, bag, cpu, localCount, at: Date.now() });
+  store(SAVE, { S, bag, cpu, localCount, at: Date.now(), undo: undoStack.slice(-5) });
 }
 function resumeLocal(g) {
   clearTimeout(cpuT);
   mode = "local"; game = null; pick = null; view = null;
-  S = g.S; bag = g.bag; cpu = g.cpu; localCount = g.localCount; mySeat = cpu ? 0 : -1;
+  S = g.S; bag = g.bag; cpu = g.cpu; localCount = g.localCount; mySeat = cpu ? 0 : -1; undoStack = g.undo || [];
   pill(cpu ? "🤖 " + Maquina.NAMES[cpu] : "Mismo teléfono");
   render();
 }
@@ -577,8 +593,10 @@ function render() {
     else if (pick) acts = `<button class="btn" id="rot">⟳ Girar</button><button class="btn gold" id="put">Poner aquí</button>`;
     else acts = abbeyBtn;
   }
+  if (mode === "local" && undoStack.length && !(pick && pick.placed)) acts = `<button class="btn" id="undo">↶ Deshacer</button>` + acts;
   $("#actions").innerHTML = acts;
   const on = (id, f) => { const e = $("#" + id); if (e) e.onclick = f; };
+  on("undo", undo);
   on("rot", rotate); on("put", confirmTile); on("ok", done); on("disc", discard); on("again", again); on("res", celebrate);
   on("bigt", () => { pick.big = !pick.big; render(); });
   on("abbey", () => { abbeyMode = !abbeyMode; pick = null; render(); });
