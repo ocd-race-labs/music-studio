@@ -171,14 +171,14 @@ function machineSlaps() {
     applyLocal(local.s, 0, "tick"); local.s.version++; local.show(); local.step();
   }, w.deadline - Date.now() + 80);
 }
-function startMachine(lv) {
+function startMachine(lv, st) {
   cpuLv = lv;
-  local = Local.table({ E: N, apply: applyLocal, bot: botLocal, level: lv, opponents: 2, me, pace: 1000,
+  local = Local.table({ E: N, apply: applyLocal, bot: botLocal, level: lv, key: "nerviosito", state: st, opponents: 2, me, pace: 1000,
     view: (s) => N.publicView(s, Date.now()), onChange: (v) => { show(v); machineSlaps(); } });
   const call0 = local.call;
   local.call = (a, e) => { const v = call0(a, e); setTimeout(machineSlaps, 0); return v; };
   code = "MAQ";
-  const v = local.call("start"); if (v && !v.error) show(v);
+  const v = local.call(st ? "view" : "start"); if (v && !v.error) show(v);
 }
 
 const SB_URL = "https://yfjaznujnvkqgdlbnviu.supabase.co";
@@ -241,7 +241,7 @@ function renderStart() {
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="mine"></div>
       <div id="open"></div>
-      ${Maquina.html({ note: "Juegas contra 2 máquinas en este teléfono. Fácil, medio o difícil cambia qué tan rápido ponen la mano." })}
+      ${Local.resumeHTML("nerviosito")}${Maquina.html({ note: "Juegas contra 2 máquinas en este teléfono. Fácil, medio o difícil cambia qué tan rápido ponen la mano." })}
       <button class="btn primary" id="create">Crear mesa nueva</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: VY7AU4" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
@@ -265,6 +265,7 @@ function renderStart() {
   };
   $("#go-cod").onclick = goCode; $("#cod").onkeydown = (e) => { if (e.key === "Enter") goCode(); };
   Maquina.bind($("#app"), (lv) => { if (takeName()) startMachine(lv); });
+  Local.bindResume($("#app"), "nerviosito", (d) => { if (takeName()) startMachine(d.level, d.s); });
   listMine();
   listOpen();
 }
@@ -383,7 +384,9 @@ function renderLobby() {
     if (await delTable(code)) { location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); } else toast("No se pudo borrar");
   };
   $("#copy").onclick = copyLink;
-  $("#bar").innerHTML = isHost ? `<button class="btn gold" id="start" ${V.players.length < 2 ? "disabled" : ""}>Empezar partida (${V.players.length})</button>` : "";
+  $("#bar").innerHTML = "";
+  // the start button sits in the table card, right under the invite buttons
+  if (isHost) $("#app .two").insertAdjacentHTML("afterend", `<button class="btn gold" id="start" ${V.players.length < 2 ? "disabled" : ""}>Empezar partida (${V.players.length})</button>`);
   const s = $("#start"); if (s) s.onclick = () => act("start");
 }
 function renderTable() {

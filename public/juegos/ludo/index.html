@@ -101,7 +101,7 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 </style>
 <script src="../perfil.js"></script>
 <script src="../ayuda.js"></script>
-<script src="../maquina.js"></script>
+<script src="../maquina.js"></script><script src="../local.js"></script>
 </head>
 <body>
 <header>
@@ -152,7 +152,7 @@ function renderStart() {
       <p class="muted">De 2 a 4 jugadores, cada uno en su teléfono o todos en uno.</p>
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="open"></div>
-      <button class="btn primary" id="online">Crear mesa nueva</button>
+      ${Local.resumeHTML("ludo")}<button class="btn primary" id="online">Crear mesa nueva</button>
       <div><label class="lbl">En este teléfono</label>
         <div class="count">${[2, 3, 4].map((n) => `<button class="btn ${n === localCount ? "on" : ""}" data-n="${n}">${n} jugadores</button>`).join("")}</div></div>
       <button class="btn" id="local">Jugar en este teléfono</button>
@@ -166,6 +166,7 @@ function renderStart() {
       <li>Si caes donde hay una ficha rival, la mandas de vuelta a su casa; menos en las salidas y las estrellas ★.</li>
       <li>Con un 6, al comer o al llegar a la meta, vuelves a tirar. Tres 6 seguidos pierden el turno.</li>
       <li>Para entrar a la meta necesitas el número exacto. Gana quien lleva sus 4 fichas primero.</li></ul></section>`;
+  Local.bindResume($("#app"), "ludo", (d) => { takeName(true); resumeLocal(d.g); });
   $("#online").onclick = () => { if (takeName()) createOnline(); };
   const bindCpu = () => Maquina.bind($("#cpubox"), (lv) => { takeName(true); startLocal(lv === 0 ? 9 : lv); });
   document.querySelectorAll("[data-n]").forEach((b) => b.onclick = () => { localCount = +b.dataset.n; document.querySelectorAll("[data-n]").forEach((x) => x.classList.toggle("on", x === b)); $("#cpubox").innerHTML = Maquina.html({ note: "Tú y " + (localCount - 1) + (localCount === 2 ? " máquina" : " máquinas") + ", según el número de jugadores de arriba." }); bindCpu(); });
@@ -221,6 +222,9 @@ async function listOpen() {
 
 /* ---------- local ---------- */
 function startLocal(lv) { if (lv !== undefined) cpu = lv; mode = "local"; game = null; mySeat = -1; S = L.newState(localCount); render(); }
+
+// a game on this phone picked up again where it was left
+function resumeLocal(g) { cpu = g.cpu; localCount = g.localCount; mode = "local"; game = null; mySeat = -1; S = g.S; render(); }
 
 /* ---------- online ---------- */
 function newCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; for (let i = 0; i < 6; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
@@ -344,6 +348,8 @@ function dieHTML(n, anim) {
 function render() {
   if (!S) return;
   if (S.phase === "lobby") return renderLobby();
+  // a game on this phone is kept, so leaving and coming back picks it up
+  if (mode === "local") Local.keep("ludo", { S, cpu, localCount }, S.phase === "over", cpu, cpu ? (cpu === 9 ? "Contra la máquina" : "Contra la " + Maquina.label(cpu).toLowerCase()) : "En este teléfono");
   clearTimeout(autoT);
   const mine = myTurn();
   let moving = null, info = null;
@@ -413,7 +419,9 @@ function renderLobby() {
     if (dt.dataset.sure !== "1") { dt.dataset.sure = "1"; dt.textContent = "¿Seguro? Toca otra vez para borrarla"; return; }
     if (await delTable(code)) location.href = "./" + (keepHost() ? "#" + keepHost().slice(1) : ""); else toast("No se pudo borrar");
   };
-  $("#actions").innerHTML = isHost ? `<button class="btn gold" id="start" ${n < 2 ? "disabled" : ""}>Empezar partida (${n})</button>` : "";
+  $("#actions").innerHTML = "";
+  // the start button sits in the table card, right under the invite buttons
+  if (isHost) $("#app .two").insertAdjacentHTML("afterend", `<button class="btn gold" id="start" ${n < 2 ? "disabled" : ""}>Empezar partida (${n})</button>`);
   const st = $("#start"); if (st) st.onclick = again;
 }
 async function again() {

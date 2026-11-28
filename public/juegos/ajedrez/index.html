@@ -137,7 +137,7 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 header .gear{display:grid;place-items:center;width:36px;height:38px;flex:none;border-radius:12px;background:rgba(255,255,255,.9);color:#1d1f23;border:none;font:inherit;font-size:17px;font-weight:800}
 header .pill{min-width:0;overflow:hidden;text-overflow:ellipsis}
 </style>
-<script src="../perfil.js"></script>
+<script src="../perfil.js"></script><script src="../local.js"></script>
 <script src="../ayuda.js"></script>
 </head>
 <body>
@@ -268,7 +268,7 @@ function renderStart() {
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="open"></div>
       <div><label class="lbl">Reloj</label><div class="seg tc">${TCS.map(([k, t]) => `<button data-tc="${k}" class="${prefs.tc === k ? "on" : ""}">${t}</button>`).join("")}</div></div>
-      <button class="btn primary" id="online">Crear mesa nueva</button>
+      ${Local.resumeHTML("ajedrez")}<button class="btn primary" id="online">Crear mesa nueva</button>
       <button class="btn" id="local">Dos jugadores en este teléfono</button>
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
         <div class="code"><input type="text" id="cod" maxlength="10" placeholder="Ej: K7MP2Q" autocapitalize="characters" autocomplete="off"><button class="btn" id="go-cod">Entrar</button></div></div>
@@ -289,6 +289,7 @@ function renderStart() {
       <li>También hay tablas por repetir tres veces la posición, por 50 jugadas sin capturas ni peones, o si no queda material para dar mate.</li>
       <li>Toca una pieza para ver dónde puede ir; toca el destino para moverla.</li></ul>
       <p class="credit" style="margin-top:8px">Piezas: Cburnett, Wikimedia Commons, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>. Motor: Stockfish, <a href="STOCKFISH-COPYING.txt" target="_blank">GPL v3</a>.</p></section>`;
+  Local.bindResume($("#app"), "ajedrez", (d) => { takeName(true); resumeLocal(d.g); });
   $("#online").onclick = async () => { if (!takeName()) return; await createOnline(); };
   $("#local").onclick = () => { takeName(true); startLocal(0); };
   $("#arch").onclick = () => { takeName(true); renderArchive(); };
@@ -403,6 +404,18 @@ function startLocal(lv) {
   const tc = cpu === 5 && prefs.tc === "0" ? "10+0" : prefs.tc;
   state = newState(tc); rebuild(); myColor = null; sel = null; hint = null; alts = null;
   flip = cpu ? cpuColor === "w" : false;
+  const you = me.name || "Tú";
+  game = cpu ? (cpuColor === "w" ? { white_name: "Máquina · " + LEVELS[cpu - 1].name, black_name: you } : { white_name: you, black_name: "Máquina · " + LEVELS[cpu - 1].name }) : { white_name: "Blancas", black_name: "Negras" };
+  pill(cpu ? "🤖 " + LEVELS[cpu - 1].name : "Mismo teléfono");
+  renderGame();
+  if (cpu) cpuMove();
+}
+
+// a game on this phone picked up again where it was left; the clock does not run while you were away
+function resumeLocal(g) {
+  mode = "local"; cpu = g.cpu || 0; cpuToken++; cpuColor = g.cpuColor; flip = g.flip;
+  state = g.state; if (state.clock && state.clock.since) state = { ...state, clock: { ...state.clock, since: Date.now() } };
+  rebuild(); myColor = null; sel = null; hint = null; alts = null;
   const you = me.name || "Tú";
   game = cpu ? (cpuColor === "w" ? { white_name: "Máquina · " + LEVELS[cpu - 1].name, black_name: you } : { white_name: you, black_name: "Máquina · " + LEVELS[cpu - 1].name }) : { white_name: "Blancas", black_name: "Negras" };
   pill(cpu ? "🤖 " + LEVELS[cpu - 1].name : "Mismo teléfono");
@@ -561,6 +574,7 @@ function captured() {
   return { took, diff: sum(took.w) - sum(took.b) };
 }
 function renderGame() {
+  if (mode === "local" && state) Local.keep("ajedrez", { state, cpu, cpuColor, flip }, !!state.winner, cpu, cpu ? "Contra la máquina · " + LEVELS[cpu - 1].name : "Dos jugadores en este teléfono");
   if (window.Perfil) Perfil.turn(mode === "online" && myTurn());
   const top = flip ? "w" : "b", bot = flip ? "b" : "w";
   const turn = state.winner ? null : state.turn;

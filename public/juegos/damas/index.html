@@ -10,7 +10,7 @@
 <script src="../supabase.js"></script>
 <script src="rules.js"></script>
 <script src="ai.js"></script>
-<script src="../maquina.js"></script>
+<script src="../maquina.js"></script><script src="../local.js"></script>
 <style>
 @font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(../fonts/sora-latin-600-normal.woff2) format("woff2")}
 @font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(../fonts/sora-latin-700-normal.woff2) format("woff2")}
@@ -156,7 +156,7 @@ function renderStart() {
       <h2>Damas</h2>
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="open"></div>
-      <button class="btn primary" id="online">Crear mesa nueva</button>
+      ${Local.resumeHTML("damas")}<button class="btn primary" id="online">Crear mesa nueva</button>
       <button class="btn" id="local">Dos jugadores en este teléfono</button>
       ${Maquina.html({ note: "Tú juegas con blancas y empiezas." })}
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
@@ -167,6 +167,7 @@ function renderStart() {
       <li>Comer es obligatorio; si después de comer puedes seguir comiendo, sigues.</li>
       <li>El peón que llega al fondo se corona dama: se mueve y come a lo largo de toda la diagonal.</li>
       <li>Gana quien deja al otro sin piezas o sin movimientos.</li></ul></section>`;
+  Local.bindResume($("#app"), "damas", (d) => { takeName(true); resumeLocal(d.g); });
   $("#online").onclick = async () => { if (!takeName()) return; await createOnline(); };
   $("#local").onclick = () => { if (!takeName(true)) return; startLocal(); };
   Maquina.bind($("#app"), (lv) => { takeName(true); startLocal(lv); });
@@ -237,6 +238,12 @@ function startLocal(lv) {
   game = cpu ? { white_name: me.name || "Tú", black_name: Maquina.label(cpu) } : { white_name: "Blancas", black_name: "Negras" };
   pill(cpu ? "🤖 " + Maquina.NAMES[cpu] : "Mismo teléfono");
   renderGame();
+}
+
+// a game on this phone picked up again where it was left
+function resumeLocal(g) {
+  startLocal(g.cpu); state = g.state; renderGame();
+  if (cpu && !state.winner && state.turn === "b") cpuT = setTimeout(() => { if (mode === "local" && cpu && !state.winner && state.turn === "b") commit(DamasAI.choose(state, cpu)); }, 650);
 }
 
 /* ---------- online game ---------- */
@@ -349,6 +356,7 @@ function tap(i) {
 /* ---------- render ---------- */
 const nameOf = (c) => (c === "w" ? game.white_name || "Blancas" : game.black_name || (mode === "online" ? "Esperando rival…" : "Negras"));
 function renderGame() {
+  if (mode === "local") Local.keep("damas", { state, cpu }, !!state.winner, cpu, cpu ? (cpu === 9 ? "Contra la máquina" : "Contra la " + Maquina.label(cpu).toLowerCase()) : "En este teléfono");
   if (window.Perfil) Perfil.turn(mode === "online" && myTurn());
   const top = flip ? "w" : "b", bot = flip ? "b" : "w";
   const turn = state.winner ? null : state.turn;

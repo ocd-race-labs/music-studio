@@ -111,7 +111,7 @@ header .gear{width:36px;flex:none}
 </style>
 <script src="../perfil.js"></script>
 <script src="../ayuda.js"></script>
-<script src="../maquina.js"></script>
+<script src="../maquina.js"></script><script src="../local.js"></script>
 </head>
 <body>
 <header>
@@ -166,7 +166,7 @@ function renderStart() {
       <h2>Backgammon</h2>
       <div><label class="lbl" for="nm">Tu nombre</label><input type="text" id="nm" maxlength="24" placeholder="Ej: Magda" value="${esc(me.name)}"></div>
       <div id="open"></div>
-      <button class="btn primary" id="online">Crear mesa nueva</button>
+      ${Local.resumeHTML("backgammon")}<button class="btn primary" id="online">Crear mesa nueva</button>
       <button class="btn" id="local">Dos jugadores en este teléfono</button>
       ${Maquina.html({ note: "Tú juegas con blancas." })}
       <div><label class="lbl" for="cod">¿Tienes el código de una mesa?</label>
@@ -178,6 +178,7 @@ function renderStart() {
       <li>Con fichas en la barra, primero tienes que entrarlas.</li>
       <li>Cuando todas tus fichas están en tu casa, las empiezas a sacar. Gana quien saca las 15 primero.</li>
       <li>Hay que usar todos los dados que se puedan; si solo se puede uno, el mayor.</li></ul></section>`;
+  Local.bindResume($("#app"), "backgammon", (d) => { takeName(true); resumeLocal(d.g); });
   $("#online").onclick = () => { if (takeName()) createOnline(); };
   $("#local").onclick = () => { takeName(true); startLocal(0); };
   Maquina.bind($("#app"), (lv) => { takeName(true); startLocal(lv); });
@@ -264,6 +265,9 @@ function localRoll() {
   } else { const a = rnd(), b = rnd(); S = { ...S, phase: "move", dice: a === b ? [a, a, a, a] : [a, b], opening: null }; }
   beginTurn(true);
 }
+
+// a game on this phone picked up again where it was left
+function resumeLocal(g) { startLocal(g.cpu); clearTimeout(cpuT); cpuT = null; cpuPlan = null; S = g.S; render(); }
 
 /* ---------- online game ---------- */
 function newCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; for (let i = 0; i < 6; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
@@ -389,6 +393,7 @@ function diceHTML(v) {
 }
 function render() {
   if (!S) return;
+  if (mode === "local") Local.keep("backgammon", { S, cpu }, !!S.winner, cpu, cpu ? (cpu === 9 ? "Contra la máquina" : "Contra la " + Maquina.label(cpu).toLowerCase()) : "En este teléfono");
   const v = view();
   const flip = mode === "online" && myColor === "b";
   const bottom = flip ? "b" : "w", top = G.other(bottom);
