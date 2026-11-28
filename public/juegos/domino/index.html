@@ -126,17 +126,17 @@ label.lbl{display:block;font-size:12px;font-weight:800;text-transform:uppercase;
 .or{text-align:center;color:#6c6f75;font-weight:700;font-size:13px;margin:2px 0}
 :root{--felt:#2f5d50;--felt2:#22463c}
 .dline{gap:10px}
-.line{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;align-items:center}
+.line{display:flex;flex-wrap:wrap;gap:calc(var(--u,22px) * .15);row-gap:calc(var(--u,22px) * .4);justify-content:center;align-items:center}
 .dm{display:inline-flex;background:#fffaf0;border-radius:5px;box-shadow:0 1px 0 #cbbf9f,0 2px 4px rgba(0,0,0,.35);align-items:stretch;flex:none}
-.dm.h{flex-direction:row;height:22px}.dm.v{flex-direction:column;width:22px}
-.dm .hf{width:22px;height:22px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:3px}
-.dm .hf b{width:4px;height:4px;border-radius:50%;background:#1d1f23;place-self:center}
+.dm.h{flex-direction:row;height:var(--u,22px)}.dm.v{flex-direction:column;width:var(--u,22px)}
+.dm .hf{width:var(--u,22px);height:var(--u,22px);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:calc(var(--u,22px) * .14)}
+.dm .hf b{width:calc(var(--u,22px) * .19);height:calc(var(--u,22px) * .19);border-radius:50%;background:#1d1f23;place-self:center}
 .dm.h .mid{width:1px;background:#bdb39a;margin:3px 0}.dm.v .mid{height:1px;background:#bdb39a;margin:0 3px}
 .dm.last{box-shadow:0 0 0 2px var(--gold),0 2px 4px rgba(0,0,0,.35)}
 .dm.xs.h{height:16px}.dm.xs .hf{width:16px;height:16px;padding:2px}.dm.xs .hf b{width:3px;height:3px}
 .ends{display:flex;justify-content:space-between;width:100%;color:#fff;font-weight:800;font-size:13px}
 .dhand{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.dm.hd{width:40px;cursor:pointer;transition:transform .12s}.dm.hd .hf{width:40px;height:40px;padding:6px}.dm.hd .hf b{width:7px;height:7px}
+.dm.hd{--u:32px;cursor:pointer;transition:transform .12s}
 .dm.hd.ok{transform:translateY(-6px);box-shadow:0 0 0 3px var(--gold),0 6px 12px rgba(0,0,0,.35)}
 .dm.hd.sel{transform:translateY(-10px);box-shadow:0 0 0 3px #fff,0 0 0 6px var(--gold)}
 .dm.hd.dim{opacity:.55}
@@ -409,6 +409,16 @@ let selTile = null;
 const PIPS = { 0: [], 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
 const half = (n) => `<i class="hf">${PIPS[n].map((k) => `<b style="grid-area:${Math.ceil(k / 3)}/${((k - 1) % 3) + 1}"></b>`).join("")}</i>`;
 // a tile: horizontal on the table (doubles stand across), vertical in the hand
+// the table's tiles take the biggest size that still lets the whole game fit on the screen without scrolling
+function fitLine() {
+  const line = document.querySelector(".line"); if (!line) return;
+  const bar = document.querySelector(".bar");
+  for (let u = 40; u >= 14; u -= 2) {
+    line.style.setProperty("--u", u + "px");
+    if (document.documentElement.scrollHeight <= window.innerHeight - (bar ? bar.offsetHeight : 0) + 2) return;
+  }
+}
+window.addEventListener("resize", () => fitLine());
 const tileHTML = (a, b, cls = "", attrs = "") => `<span class="dm ${cls}" ${attrs}>${half(a)}<span class="mid"></span>${half(b)}</span>`;
 function renderTable(was) {
   const me = V.players[V.me], hand = V.stage === "hand", myTurn = V.phase === "playing" && hand && V.turn === V.me;
@@ -444,6 +454,7 @@ function renderTable(was) {
       <div class="dhand" id="hand">${(me.hand || []).map((t) => { const [a, b] = O.halves(t); return tileHTML(a, b, "v hd" + (can.has(t) ? " ok" : myTurn ? " dim" : "") + (selTile === t ? " sel" : ""), `data-t="${t}"`); }).join("")}</div>
     </div>
     <div class="log">Mano ${V.round + 1} · ${(V.log || []).slice(0, 2).map(esc).join(" · ")}</div>`;
+  fitLine();
   $("#hand").querySelectorAll("[data-t]").forEach((el) => el.onclick = () => {
     const t = el.dataset.t;
     if (!myTurn) return toast(hand ? "No es tu turno" : "La mano terminó");
