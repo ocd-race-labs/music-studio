@@ -418,10 +418,13 @@ function fitLine() {
   const bar = document.querySelector(".bar");
   for (let u = 40; u >= 14; u -= 2) {
     line.style.setProperty("--u", u + "px");
-    if (document.documentElement.scrollHeight <= window.innerHeight - (bar ? bar.offsetHeight : 0) + 2) return;
+    // measured from the game itself (the page's bottom padding for the button bar would count twice)
+    const app = $("#app"), bottom = app.getBoundingClientRect().bottom + window.scrollY;
+    if (bottom <= window.innerHeight - (bar && bar.children.length ? bar.offsetHeight : 0) - 8) return;
   }
 }
 window.addEventListener("resize", () => fitLine());
+if (document.fonts) document.fonts.ready.then(() => fitLine());
 const tileHTML = (a, b, cls = "", attrs = "") => `<span class="dm ${cls}" ${attrs}>${half(a)}<span class="mid"></span>${half(b)}</span>`;
 function renderTable(was) {
   const me = V.players[V.me], hand = V.stage === "hand", myTurn = V.phase === "playing" && hand && V.turn === V.me;
